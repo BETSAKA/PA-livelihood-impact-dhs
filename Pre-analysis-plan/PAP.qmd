@@ -1,42 +1,46 @@
 ---
 title: "Conservation and development: Socioeconomic Impact evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys"
-author: "Iriana Razafimahenina"
+author: |
+  Iriana Razafimahenina\footnote{University of Antananarivo, University of Paris Saclay, Development Centre for Economic Studies and Research (CERED), French National Research Institute for Sustainable Development (IRD), Antananarivo, Madagascar (ema Dil : iriana_ny_aina.razafimahenina@ird.fr)}  
+  Florent Bédécarrats\footnote{University of Saint Quentin en Yvelines, IRD, UMI- Sustainability and Resilience (SOURCE), France}  
+  Ingrid Dallmann\footnote{Agence Française de Développement (AFD), Department of Learning and Evaluation, Paris, France}  
+  Holimalala Randriamanampisoa\footnote{University of Antananarivo, Development Centre for Economic Studies and Research (CERED)/ UMI- Sustainability and Resilience (SOURCE), Antananarivo, Madagascar}  
 format: pdf
+documentclass: article
+longauthor: true
+keep-tex: true
 editor: visual
+header-includes: |
+  \renewcommand{\maketitle}{
+    \begin{center}
+      \textbf{Journal of Development Economics} \\  
+      \textbf{Registered Report Stage 1 : Proposal} \\[1em]  % Texte avant le titre
+      \Huge \textbf{Conservation and development: Socioeconomic Impact evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys} \\[1em]
+      \Large Iriana Razafimahenina, Florent Bédécarrats, Ingrid Dallmann and Holimalala Randriamanampisoa \\
+    \end{center}
+  }
+  \usepackage{sectsty}
+  \usepackage{titlesec}
+  \newcommand{\mycenteredsection}[1]{\section*{\centering #1}}
+  \usepackage{geometry}
+  \geometry{margin=1.2in} % Ajuste les marges pour éviter la coupure
+  \usepackage{ragged2e}
+  \justifying % Justifie le texte pour éviter la coupure
 bibliography: references.bib
 ---
 
-## Quarto
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+\mycenteredsection{Date of latest draft: 04/12/2024}
 
-### Ceci est un titre de rang 2
+\mycenteredsection{Abstract}
 
-un texte
+Protected Areas are the most widely used tool for biodiversity conservation. However, their implementation raises concerns about the well-being of local populations, especially when they are very poor and dependent on natural resources, as is the case in Madagascar. This pre-analysis plan outlines the data, methods, and empirical strategies used to evaluate the impact of protected areas on local household well-being and the inequalities among them. Our study focuses on terrestrial protected areas and relies on Demographic Health Surveys spanning a 13-years period (2008-2021). We will also use data from the previous 11 years (1997-2008) to assess whether parallel trends prior to the study period confirm the validity of the comparisons. The data will be analyzed using spatio-temporal models, matching, and difference-in-differences methods.
 
-#### Ceci est un titre de rang 3
+[Keywords]{.underline} : Biodiversity Conservation, Well-Being, Demographic and Health Surveys, Spatio-Temporal Models, Geospatial impact evaluation, Madagascar
 
-un texte en *italique* et ceci **en gras**
+JEL codes : Q57, I31, C31, Q56, O55
 
-~~un texte barré~~
 
-**un texte souligné**
 
-## Running Code
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
 
-```{r}
- 1 + 1
-```
-
-You can add options to executable code like this
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
-
-[@weiskopf2021; @gondard-delcroix2004]
