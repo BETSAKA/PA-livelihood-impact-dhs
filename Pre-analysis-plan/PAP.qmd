@@ -1,0 +1,42 @@
+---
+title: "Conservation and development: Socioeconomic Impact evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys"
+author: "Iriana Razafimahenina"
+format: pdf
+editor: visual
+bibliography: references.bib
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+### Ceci est un titre de rang 2
+
+un texte
+
+#### Ceci est un titre de rang 3
+
+un texte en *italique* et ceci **en gras**
+
+~~un texte barré~~
+
+**un texte souligné**
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+ 1 + 1
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
+[@weiskopf2021; @gondard-delcroix2004]
