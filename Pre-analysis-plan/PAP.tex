@@ -85,33 +85,50 @@
 \makesavenoteenv{longtable}
 \usepackage{graphicx}
 \makeatletter
-\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
-\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
-\makeatother
-% Scale images if necessary, so that they will not overflow the page
-% margins by default, and it is still possible to overwrite the defaults
-% using explicit options in \includegraphics[width, height, ...]{}
-\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
 % Set default figure placement to htbp
-\makeatletter
 \def\fps@figure{htbp}
 \makeatother
+
+\usepackage{times} % Police Times New Roman
+\usepackage{setspace} % Pour interligne
+\onehalfspacing % Interligne de 1.5
 
 \renewcommand{\maketitle}{
   \begin{center}
     \textbf{Journal of Development Economics} \\
-    \textbf{Registered Report Stage 1 : Proposal} \\[1em]  % Texte avant le titre
+    \textbf{Registered Report Stage 1 : Proposal} \\[1em]
     \Huge \textbf{Conservation and development: Socioeconomic Impact evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys} \\[1em]
-    \Large Iriana Razafimahenina, Florent Bédécarrats, Ingrid Dallmann and Holimalala Randriamanampisoa \\
+    \Large Iriana Razafimahenina\footnotemark[1]\footnotemark[2]\footnotemark[3]\footnotemark[4],
+    Florent Bédécarrats\footnotemark[5]\footnotemark[6],
+    Ingrid Dallmann\footnotemark[7],
+    Holimalala Randriamanampisoa\footnotemark[1]\footnotemark[3]\footnotemark[6] \\
   \end{center}
+  \footnotetext[1]{University of Antananarivo, Madagascar}
+  \footnotetext[2]{University of Paris Saclay, France}
+  \footnotetext[3]{Development Centre for Economic Studies and Research (CERED), Madagascar}
+  \footnotetext[4]{French National Research Institute for Sustainable Development (IRD), Madagascar}
+  \footnotetext[5]{University of Saint Quentin en Yvelines, France}
+  \footnotetext[6]{UMI - Sustainability and Resilience (SOURCE), IRD, France}
+  \footnotetext[7]{Agence Française de Développement (AFD), Department of Learning and Evaluation, France}
 }
 \usepackage{sectsty}
 \usepackage{titlesec}
 \newcommand{\mycenteredsection}[1]{\section*{\centering #1}}
 \usepackage{geometry}
-\geometry{margin=1.2in} % Ajuste les marges pour éviter la coupure
+\geometry{margin=1.2in}
 \usepackage{ragged2e}
-\justifying % Justifie le texte pour éviter la coupure
+\justifying
+\interfootnotelinepenalty=10000
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -154,16 +171,13 @@
 \@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
 \makeatother
 
-\ifLuaTeX
-  \usepackage{selnolig}  % disable illegal ligatures
-\fi
 \usepackage{bookmark}
 
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same} % disable monospaced font for URLs
 \hypersetup{
   pdftitle={Conservation and development: Socioeconomic Impact evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys},
-  pdfauthor={Iriana Razafimahenina Florent Bédécarrats Ingrid Dallmann Holimalala Randriamanampisoa},
+  pdfauthor={Iriana Razafimahenina; Florent Bédécarrats; Ingrid Dallmann; Holimalala Randriamanampisoa},
   colorlinks=true,
   linkcolor={blue},
   filecolor={Maroon},
@@ -175,7 +189,11 @@
 \title{Conservation and development: Socioeconomic Impact evaluation of
 Terrestrial Protected Areas in Madagascar based on large national
 surveys}
-\author{}
+\author{Iriana
+Razafimahenina\footnotemark[1]\footnotemark[2]\footnotemark[3]\footnotemark[4] \and Florent
+Bédécarrats\footnotemark[5]\footnotemark[6] \and Ingrid
+Dallmann\footnotemark[7] \and Holimalala
+Randriamanampisoa\footnotemark[1]\footnotemark[3]\footnotemark[6]}
 \date{}
 
 \begin{document}

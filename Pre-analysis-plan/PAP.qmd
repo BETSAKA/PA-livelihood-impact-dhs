@@ -1,34 +1,70 @@
 ---
 title: "Conservation and development: Socioeconomic Impact evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys"
-author: |
-  Iriana Razafimahenina\footnote{University of Antananarivo, University of Paris Saclay, Development Centre for Economic Studies and Research (CERED), French National Research Institute for Sustainable Development (IRD), Antananarivo, Madagascar (ema Dil : iriana_ny_aina.razafimahenina@ird.fr)}  
-  Florent Bédécarrats\footnote{University of Saint Quentin en Yvelines, IRD, UMI- Sustainability and Resilience (SOURCE), France}  
-  Ingrid Dallmann\footnote{Agence Française de Développement (AFD), Department of Learning and Evaluation, Paris, France}  
-  Holimalala Randriamanampisoa\footnote{University of Antananarivo, Development Centre for Economic Studies and Research (CERED)/ UMI- Sustainability and Resilience (SOURCE), Antananarivo, Madagascar}  
+author: 
+  - name: Iriana Razafimahenina\footnotemark[1]\footnotemark[2]\footnotemark[3]\footnotemark[4]
+    email: iriana_ny_aina.razafimahenina@ird.fr
+  - name: Florent Bédécarrats\footnotemark[5]\footnotemark[6]
+  - name: Ingrid Dallmann\footnotemark[7]
+  - name: Holimalala Randriamanampisoa\footnotemark[1]\footnotemark[3]\footnotemark[6]
+affiliations:
+  - id: univ_antananarivo
+    name: University of Antananarivo
+    country: Madagascar
+  - id: univ_paris_saclay
+    name: University of Paris Saclay
+    country: France
+  - id: cered
+    name: Development Centre for Economic Studies and Research (CERED)
+    country: Madagascar
+  - id: ird_mada
+    name: French National Research Institute for Sustainable Development (IRD)
+    country: Madagascar
+  - id: univ_sqy
+    name: University of Saint Quentin en Yvelines
+    country: France
+  - id: ird_source
+    name: UMI - Sustainability and Resilience (SOURCE), IRD
+    country: France
+  - id: afd
+    name: Agence Française de Développement (AFD), Department of Learning and Evaluation
+    country: France  
 format: pdf
 documentclass: article
 longauthor: true
 keep-tex: true
 editor: visual
 header-includes: |
+  \usepackage{times} % Police Times New Roman
+  \usepackage{setspace} % Pour interligne
+  \onehalfspacing % Interligne de 1.5
+  
   \renewcommand{\maketitle}{
     \begin{center}
       \textbf{Journal of Development Economics} \\  
-      \textbf{Registered Report Stage 1 : Proposal} \\[1em]  % Texte avant le titre
+      \textbf{Registered Report Stage 1 : Proposal} \\[1em]
       \Huge \textbf{Conservation and development: Socioeconomic Impact evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys} \\[1em]
-      \Large Iriana Razafimahenina, Florent Bédécarrats, Ingrid Dallmann and Holimalala Randriamanampisoa \\
+      \Large Iriana Razafimahenina\footnotemark[1]\footnotemark[2]\footnotemark[3]\footnotemark[4], 
+      Florent Bédécarrats\footnotemark[5]\footnotemark[6], 
+      Ingrid Dallmann\footnotemark[7], 
+      Holimalala Randriamanampisoa\footnotemark[1]\footnotemark[3]\footnotemark[6] \\
     \end{center}
+    \footnotetext[1]{University of Antananarivo, Madagascar}
+    \footnotetext[2]{University of Paris Saclay, France}
+    \footnotetext[3]{Development Centre for Economic Studies and Research (CERED), Madagascar}
+    \footnotetext[4]{French National Research Institute for Sustainable Development (IRD), Madagascar}
+    \footnotetext[5]{University of Saint Quentin en Yvelines, France}
+    \footnotetext[6]{UMI - Sustainability and Resilience (SOURCE), IRD, France}
+    \footnotetext[7]{Agence Française de Développement (AFD), Department of Learning and Evaluation, France}
   }
   \usepackage{sectsty}
   \usepackage{titlesec}
   \newcommand{\mycenteredsection}[1]{\section*{\centering #1}}
   \usepackage{geometry}
-  \geometry{margin=1.2in} % Ajuste les marges pour éviter la coupure
+  \geometry{margin=1.2in}
   \usepackage{ragged2e}
-  \justifying % Justifie le texte pour éviter la coupure
-bibliography: references.bib
+  \justifying
+  \interfootnotelinepenalty=10000
 ---
-
 
 \mycenteredsection{Date of latest draft: 04/12/2024}
 
@@ -39,8 +75,3 @@ Protected Areas are the most widely used tool for biodiversity conservation. How
 [Keywords]{.underline} : Biodiversity Conservation, Well-Being, Demographic and Health Surveys, Spatio-Temporal Models, Geospatial impact evaluation, Madagascar
 
 JEL codes : Q57, I31, C31, Q56, O55
-
-
-
-
-
