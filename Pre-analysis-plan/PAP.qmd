@@ -28,7 +28,9 @@ affiliations:
   - id: afd
     name: \href{https://www.afd.fr}{Agence Française de Développement (AFD)}
     country: France  
-format: pdf
+format: 
+  pdf:
+    number-sections: true
 documentclass: article
 longauthor: true
 keep-tex: true
@@ -37,8 +39,8 @@ header-includes: |
   \usepackage{times} % Police Times New Roman
   \usepackage{setspace} % Pour interligne
   \onehalfspacing % Interligne de 1.5
-  \usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref} % Activation des liens cliquables
-  
+  \usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref} % Activation des liens cliquable
+
   \renewcommand{\maketitle}{
     \begin{center}
       \textbf{Journal of Development Economics} \\  
@@ -53,8 +55,8 @@ header-includes: |
     \footnotetext[2]{\href{https://www.universite-paris-saclay.fr}{University of Paris Saclay}, France}
     \footnotetext[3]{Development Centre for Economic Studies and Research (CERED), Madagascar}
     \footnotetext[4]{\href{https://www.ird.fr}{French National Research Institute for Sustainable Development (IRD)}, Madagascar}
-    \footnotetext[5]{University of Saint Quentin en Yvelines, France}
-    \footnotetext[6]{UMI - Sustainability and Resilience (SOURCE), IRD, France}
+    \footnotetext[5]{\href{https://www.uvsq.fr}{University of Saint Quentin en Yvelines}, France}
+    \footnotetext[6]{\href{https://www.umi-source.uvsq.fr/}{UMI - Sustainability and Resilience (SOURCE)}, IRD, France}
     \footnotetext[7]{\href{https://www.afd.fr}{Agence Française de Développement (AFD)}, France}
   }
   \usepackage{sectsty}
@@ -65,6 +67,8 @@ header-includes: |
   \usepackage{ragged2e}
   \justifying
   \interfootnotelinepenalty=10000
+
+bibliography: C:\\Users\\irian\\Documents\\Statistiques\\PA-livelihood-impact-dhs2\\Pre-analysis-plan\\references\\references.bib
 ---
 
 \mycenteredsection{Date of latest draft: 04/12/2024}
@@ -73,12 +77,38 @@ header-includes: |
 
 Protected Areas are the most widely used tool for biodiversity conservation. However, their implementation raises concerns about the well-being of local populations, especially when they are very poor and dependent on natural resources, as is the case in Madagascar. This pre-analysis plan outlines the data, methods, and empirical strategies used to evaluate the impact of protected areas on local household well-being and the inequalities among them. Our study focuses on terrestrial protected areas and relies on Demographic Health Surveys spanning a 13-years period (2008-2021). We will also use data from the previous 11 years (1997-2008) to assess whether parallel trends prior to the study period confirm the validity of the comparisons. The data will be analyzed using spatio-temporal models, matching, and difference-in-differences methods.
 
-[**Keywords**]{.underline} : Biodiversity Conservation, Well-Being, Demographic and Health Surveys, Spatio-Temporal Models, Geospatial impact evaluation, Madagascar
+**Keywords** : Biodiversity Conservation, Well-Being, Demographic and Health Surveys, Spatio-Temporal Models, Geospatial impact evaluation, Madagascar
 
 JEL codes : Q57, I31, C31, Q56, O55
 
-\textbf{Study pre-registration}: On open Science Framework (OSF) with the title “Conservation and development: socioeconomic impact evaluation of terrestrial Protected Areas in Madagascar based on large national surveys” \url{https://osf.io/bgu5n/}
+\textbf{Study pre-registration}: On open Science Framework (OSF) with the title 'Conservation and development: socioeconomic impact evaluation of terrestrial Protected Areas in Madagascar based on large national surveys' \href{https://osf.io/bgu5n/}{https://osf.io/bgu5n/}
 
+\newpage
 
+**Proposed timeline**
 
+| Phases | Dates |
+|----------------------------------------------|--------------------------|
+| Literature Review, Conceptualization, and writing of the Registered report | May 2024 - January 2025 |
+| Retrieve data from selected sources | February 2025 |
+| Data cleaning and analysis | February - March 2025 |
+| Writing the scientific article | March 2025 - April 2025 |
+| Submission to the journal | April 2025 |
 
+\newpage
+
+# Introduction
+
+The reconciliation between conservation and development has been a long-discussed issue within the scientific community [@adams2004] , but its importance has grown considerably over the past decade with the rapid expansion of protected areas (PAs). This issue is particularly relevant for all 195 COP15 signatory states, which have committed to increasing protected areas coverage to 30% of terrestrial land by 2030.
+
+In theory, protected areas can have significant impacts on local livelihoods, both positive and negative. They are recognized as an essential tool for biodiversity conservation [@maxwell2020], but their creation can deprive nearby communities of access to natural resources (gathering, hunting, fishing, and medicinal plants), reduce the amount of land available and restrict economic activities (agriculture, livestock, construction) [@kandel2022]. Conversely, they can be accompanied by compensation measures (local development projects, cash transfers), generate economic benefits (jobs in protected areas, tourism), and enhance ecosystem services (increased water resources, erosion control, fire prevention) [@kandel2022].
+
+Despite these ambivalent potential effects, empirical studies that rigorously assess the impact of protected areas on people’s livelihoods are still rare. Of the 1,043 studies reviewed by McKinnon et al.{[@mckinnon2016]} , only 19 used quantitative methods to evaluate impacts on material living conditions or economic well-being. This meta-analysis shows that the results of studies vary widely depending on the methods used, the context studied, and the location. Kandel et al. {[@kandel2022]} have updated and extended this analysis by focusing on a corpus of 30 quantitative evaluations that specifically address the impact of protected areas on household income. They show that protected areas can have a positive impact on local economies, but that this effect is generally modest and depends on the local context. This variability in impacts highlights the importance of conducting context-specific studies using robust quantitative methods.
+
+Madagascar stands out as a particularly relevant case study for analyzing the relationship between conservation and socioeconomic conditions. The country is the poorest in terms of the first target of the Sustainable Development Goals (SDG 1-1), with the highest proportion of the population living below the international poverty line in the world (Conceição 2024, 298-99). In 2008, terrestrial protected areas covered 3.6% of Madagascar and 9% of the population lived within 10 km of a protected area. Today, they cover 10.8% and 28% of the population live within 10 km of protected areas^[\[1\]](#_ftn1)^. Madagascar is also characterized by a low state capacity [@hanson2021], which makes it difficult to implement conservation and sustainable development policies and the social measures that should accompany them. These factors, combined with the high dependence of the rural population on natural resources, mean that the impacts of protected areas are potentially different from those observed in less precarious contexts.
+
+However, empirical studies at the national scale are almost non-existent for Madagascar. None of the quantitative impact evaluations identified by McKinnon et al.[@mckinnon2016] covered the country. One of the references consolidated by Kandel et al. [@kandel2022] is a multi-country study that includes Madagascar, but it is based on an estimate of an aggregate impact at the commune level and covers only one date. It uses the 1993 census data to match the country’s municipalities [@mammides2020], without a before-and-after comparison, and in a context where less than 3 % of the territory was covered by protected areas, most of which had been created several decades earlier.
+
+Our contribution to the literature is twofold, both empirical and methodological. Empirically, this study provides an unprecedented national analysis, covering 71 protected areas established between 2008 and 2021, to evaluate the socioeconomic impacts of conservation in contexts of extreme poverty and weak governance. Methodologically, it articulates the state of the art in econometrics, incorporating recent developments to adapt these methods to the study of protected areas. The procedure we propose here could be replicated in other countries, starting with the 39 countries that have at least three geolocated DHS surveys. This approach paves the way for a more systematic evaluation of the impact of protected areas, taking into account the specific context of each country.
+
+[\[1\]](#_ftnref1)     Calculations by the authors based on the location of the DHS survey clusters. The detailed calculation is provided as supplementary material to the study.

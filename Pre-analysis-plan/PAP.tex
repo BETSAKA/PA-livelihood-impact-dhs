@@ -38,15 +38,8 @@
   \KOMAoptions{parskip=half}}
 \makeatother
 \usepackage{xcolor}
-\ifLuaTeX
-  \usepackage{luacolor}
-  \usepackage[soul]{lua-ul}
-\else
-  \usepackage{soul}
-  
-\fi
 \setlength{\emergencystretch}{3em} % prevent overfull lines
-\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\setcounter{secnumdepth}{5}
 % Make \paragraph and \subparagraph free-standing
 \makeatletter
 \ifx\paragraph\undefined\else
@@ -98,11 +91,44 @@
 % Set default figure placement to htbp
 \def\fps@figure{htbp}
 \makeatother
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
+  \fi
+  % set entry spacing
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
 
 \usepackage{times} % Police Times New Roman
 \usepackage{setspace} % Pour interligne
 \onehalfspacing % Interligne de 1.5
-\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref} % Activation des liens cliquables
+\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref} % Activation des liens cliquable
 
 \renewcommand{\maketitle}{
   \begin{center}
@@ -118,8 +144,8 @@
   \footnotetext[2]{\href{https://www.universite-paris-saclay.fr}{University of Paris Saclay}, France}
   \footnotetext[3]{Development Centre for Economic Studies and Research (CERED), Madagascar}
   \footnotetext[4]{\href{https://www.ird.fr}{French National Research Institute for Sustainable Development (IRD)}, Madagascar}
-  \footnotetext[5]{University of Saint Quentin en Yvelines, France}
-  \footnotetext[6]{UMI - Sustainability and Resilience (SOURCE), IRD, France}
+  \footnotetext[5]{\href{https://www.uvsq.fr}{University of Saint Quentin en Yvelines}, France}
+  \footnotetext[6]{\href{https://www.umi-source.uvsq.fr/}{UMI - Sustainability and Resilience (SOURCE)}, IRD, France}
   \footnotetext[7]{\href{https://www.afd.fr}{Agence Française de Développement (AFD)}, France}
 }
 \usepackage{sectsty}
@@ -219,16 +245,166 @@ the study period confirm the validity of the comparisons. The data will
 be analyzed using spatio-temporal models, matching, and
 difference-in-differences methods.
 
-\ul{\textbf{Keywords}} : Biodiversity Conservation, Well-Being,
-Demographic and Health Surveys, Spatio-Temporal Models, Geospatial
-impact evaluation, Madagascar
+\textbf{Keywords} : Biodiversity Conservation, Well-Being, Demographic
+and Health Surveys, Spatio-Temporal Models, Geospatial impact
+evaluation, Madagascar
 
 JEL codes : Q57, I31, C31, Q56, O55
 
 \textbf{Study pre-registration}: On open Science Framework (OSF) with
-the title ``Conservation and development: socioeconomic impact
-evaluation of terrestrial Protected Areas in Madagascar based on large
-national surveys'' \url{https://osf.io/bgu5n/}
+the title `Conservation and development: socioeconomic impact evaluation
+of terrestrial Protected Areas in Madagascar based on large national
+surveys' \href{https://osf.io/bgu5n/}{https://osf.io/bgu5n/}
+
+\newpage
+
+\textbf{Proposed timeline}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.6389}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.3611}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Phases
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Dates
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Literature Review, Conceptualization, and writing of the Registered
+report & May 2024 - January 2025 \\
+Retrieve data from selected sources & February 2025 \\
+Data cleaning and analysis & February - March 2025 \\
+Writing the scientific article & March 2025 - April 2025 \\
+Submission to the journal & April 2025 \\
+\end{longtable}
+
+\newpage
+
+\section{Introduction}\label{introduction}
+
+The reconciliation between conservation and development has been a
+long-discussed issue within the scientific community (Adams et al. 2004)
+, but its importance has grown considerably over the past decade with
+the rapid expansion of protected areas (PAs). This issue is particularly
+relevant for all 195 COP15 signatory states, which have committed to
+increasing protected areas coverage to 30\% of terrestrial land by 2030.
+
+In theory, protected areas can have significant impacts on local
+livelihoods, both positive and negative. They are recognized as an
+essential tool for biodiversity conservation (Maxwell et al. 2020), but
+their creation can deprive nearby communities of access to natural
+resources (gathering, hunting, fishing, and medicinal plants), reduce
+the amount of land available and restrict economic activities
+(agriculture, livestock, construction) (Kandel et al. 2022). Conversely,
+they can be accompanied by compensation measures (local development
+projects, cash transfers), generate economic benefits (jobs in protected
+areas, tourism), and enhance ecosystem services (increased water
+resources, erosion control, fire prevention) (Kandel et al. 2022).
+
+Despite these ambivalent potential effects, empirical studies that
+rigorously assess the impact of protected areas on people's livelihoods
+are still rare. Of the 1,043 studies reviewed by McKinnon et
+al.\{(McKinnon et al. 2016)\} , only 19 used quantitative methods to
+evaluate impacts on material living conditions or economic well-being.
+This meta-analysis shows that the results of studies vary widely
+depending on the methods used, the context studied, and the location.
+Kandel et al.~\{(Kandel et al. 2022)\} have updated and extended this
+analysis by focusing on a corpus of 30 quantitative evaluations that
+specifically address the impact of protected areas on household income.
+They show that protected areas can have a positive impact on local
+economies, but that this effect is generally modest and depends on the
+local context. This variability in impacts highlights the importance of
+conducting context-specific studies using robust quantitative methods.
+
+Madagascar stands out as a particularly relevant case study for
+analyzing the relationship between conservation and socioeconomic
+conditions. The country is the poorest in terms of the first target of
+the Sustainable Development Goals (SDG 1-1), with the highest proportion
+of the population living below the international poverty line in the
+world (Conceição 2024, 298-99). In 2008, terrestrial protected areas
+covered 3.6\% of Madagascar and 9\% of the population lived within 10 km
+of a protected area. Today, they cover 10.8\% and 28\% of the population
+live within 10 km of protected
+areas\textsuperscript{\hyperref[_ftn1]{{[}1{]}}}. Madagascar is also
+characterized by a low state capacity (Hanson and Sigman 2021), which
+makes it difficult to implement conservation and sustainable development
+policies and the social measures that should accompany them. These
+factors, combined with the high dependence of the rural population on
+natural resources, mean that the impacts of protected areas are
+potentially different from those observed in less precarious contexts.
+
+However, empirical studies at the national scale are almost non-existent
+for Madagascar. None of the quantitative impact evaluations identified
+by McKinnon et al.(McKinnon et al. 2016) covered the country. One of the
+references consolidated by Kandel et al. (Kandel et al. 2022) is a
+multi-country study that includes Madagascar, but it is based on an
+estimate of an aggregate impact at the commune level and covers only one
+date. It uses the 1993 census data to match the country's municipalities
+(Mammides 2020), without a before-and-after comparison, and in a context
+where less than 3~\% of the territory was covered by protected areas,
+most of which had been created several decades earlier.
+
+Our contribution to the literature is twofold, both empirical and
+methodological. Empirically, this study provides an unprecedented
+national analysis, covering 71 protected areas established between 2008
+and 2021, to evaluate the socioeconomic impacts of conservation in
+contexts of extreme poverty and weak governance. Methodologically, it
+articulates the state of the art in econometrics, incorporating recent
+developments to adapt these methods to the study of protected areas. The
+procedure we propose here could be replicated in other countries,
+starting with the 39 countries that have at least three geolocated DHS
+surveys. This approach paves the way for a more systematic evaluation of
+the impact of protected areas, taking into account the specific context
+of each country.
+
+\hyperref[_ftnref1]{{[}1{]}}~~~~ Calculations by the authors based on
+the location of the DHS survey clusters. The detailed calculation is
+provided as supplementary material to the study.
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{1}{0}
+\bibitem[\citeproctext]{ref-adams2004}
+Adams, William. M., Ros Aveling, Dan Brockington, Barney Dickson, Jo
+Elliott, Jon Hutton, Dilys Roe, Bhaskar Vira, and William Wolmer. 2004.
+{``Biodiversity Conservation and the Eradication of Poverty.''}
+\emph{Science} 306 (5699): 11461149.
+\url{https://doi.org/10.1126/science.1097920}.
+
+\bibitem[\citeproctext]{ref-hanson2021}
+Hanson, Jonathan K., and Rachel Sigman. 2021. {``Leviathan{'}s Latent
+Dimensions: Measuring State Capacity for Comparative Political
+Research.''} \emph{The Journal of Politics} 83 (4): 14951510.
+\url{https://doi.org/10.1086/715066}.
+
+\bibitem[\citeproctext]{ref-kandel2022}
+Kandel, Pratikshya, Ram Pandit, Benedict White, and Maksym Polyakov.
+2022. {``Do Protected Areas Increase Household Income? Evidence from a
+Meta-Analysis.''} \emph{World Development} 159 (November): 106024.
+\url{https://doi.org/10.1016/j.worlddev.2022.106024}.
+
+\bibitem[\citeproctext]{ref-mammides2020}
+Mammides, Christos. 2020. {``Evidence from Eleven Countries in Four
+Continents Suggests That Protected Areas Are Not Associated with Higher
+Poverty Rates.''} \emph{Biological Conservation} 241: 108353.
+\url{https://www.sciencedirect.com/science/article/pii/S0006320719312777?casa_token=1saHx-9SppkAAAAA:sw9KzbZvzqu2WLub5u-K06mA2kgTygSvTi5AEsjBz0rUm8h3h9SKsdId52pG5VEr4SobaFTfguA}.
+
+\bibitem[\citeproctext]{ref-maxwell2020}
+Maxwell, Sean L., Victor Cazalis, Nigel Dudley, Michael Hoffmann, Ana SL
+Rodrigues, Sue Stolton, Piero Visconti, Stephen Woodley, Naomi Kingston,
+and Edward Lewis. 2020. {``Area-Based Conservation in the Twenty-First
+Century.''} \emph{Nature} 586 (7828): 217227.
+
+\bibitem[\citeproctext]{ref-mckinnon2016}
+McKinnon, Madeleine C., Samantha H. Cheng, Samuel Dupre, Janet Edmond,
+Ruth Garside, Louise Glew, Margaret B. Holland, et al. 2016. {``What Are
+the Effects of Nature Conservation on Human Well-Being? A Systematic Map
+of Empirical Evidence from Developing Countries.''} \emph{Environmental
+Evidence} 5 (1): 8. \url{https://doi.org/10.1186/s13750-016-0058-7}.
+
+\end{CSLReferences}
 
 
 
