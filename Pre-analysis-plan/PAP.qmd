@@ -40,6 +40,12 @@ header-includes: |
   \usepackage{setspace} % Pour interligne
   \onehalfspacing % Interligne de 1.5
   \usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref} % Activation des liens cliquable
+  
+  %Packages pour les figures
+  \usepackage{graphicx} %Inclusion d'images
+  \usepackage{float} %Positionnement des figures
+  \usepackage{caption} %Personnalisation des légendes
+  \usepackage{subcaption} %Gestion des sous-figures
 
   \renewcommand{\maketitle}{
     \begin{center}
@@ -89,7 +95,7 @@ JEL codes : Q57, I31, C31, Q56, O55
 **Proposed timeline**
 
 | Phases | Dates |
-|------------------------------------|------------------------------------|
+|------------------------------------------------------|------------------------------------|
 | Literature Review, Conceptualization, and writing of the Registered report | May 2024 - January 2025 |
 | Retrieve data from selected sources | February 2025 |
 | Data cleaning and analysis | February - March 2025 |
@@ -106,10 +112,30 @@ In theory, protected areas can have significant impacts on local livelihoods, bo
 
 Despite these ambivalent potential effects, empirical studies that rigorously assess the impact of protected areas on people’s livelihoods are still rare. Of the 1,043 studies reviewed by McKinnon et al. -@mckinnon_what_2016 , only 19 used quantitative methods to evaluate impacts on material living conditions or economic well-being. This meta-analysis shows that the results of studies vary widely depending on the methods used, the context studied, and the location. Kandel et al. -@kandel_protected_2022 have updated and extended this analysis by focusing on a corpus of 30 quantitative evaluations that specifically address the impact of protected areas on household income. They show that protected areas can have a positive impact on local economies, but that this effect is generally modest and depends on the local context. This variability in impacts highlights the importance of conducting context-specific studies using robust quantitative methods.
 
-Madagascar stands out as a particularly relevant case study for analyzing the relationship between conservation and socioeconomic conditions. The country is the poorest in terms of the first target of the Sustainable Development Goals (SDG 1-1), with the highest proportion of the population living below the international poverty line in the world (@conceicao_breaking_2024, p. 298-99\]. In 2008, terrestrial protected areas covered 3.6% of Madagascar and 9% of the population lived within 10 km of a protected area. Today, they cover 10.8% and 28% of the population live within 10 km of protected areas^[\[1\]](#_ftn1)^. Madagascar is also characterized by a low state capacity [@hanson_leviathans_2021], which makes it difficult to implement conservation and sustainable development policies and the social measures that should accompany them. These factors, combined with the high dependence of the rural population on natural resources, mean that the impacts of protected areas are potentially different from those observed in less precarious contexts.
+Madagascar stands out as a particularly relevant case study for analyzing the relationship between conservation and socioeconomic conditions. The country is the poorest in terms of the first target of the Sustainable Development Goals (SDG 1-1), with the highest proportion of the population living below the international poverty line in the world (@conceicao_breaking_2024, p. 298-99). In 2008, terrestrial protected areas covered 3.6% of Madagascar and 9% of the population lived within 10 km of a protected area. Today, they cover 10.8% and 28% of the population live within 10 km of protected areas^[\[1\]](#_ftn1)^. Madagascar is also characterized by a low state capacity [@hanson_leviathans_2021], which makes it difficult to implement conservation and sustainable development policies and the social measures that should accompany them. These factors, combined with the high dependence of the rural population on natural resources, mean that the impacts of protected areas are potentially different from those observed in less precarious contexts.
 
 However, empirical studies at the national scale are almost non-existent for Madagascar. None of the quantitative impact evaluations identified by McKinnon et al. -@mckinnon_what_2016 covered the country. One of the references consolidated by Kandel et al. -@kandel_protected_2022 is a multi-country study that includes Madagascar, but it is based on an estimate of an aggregate impact at the commune level and covers only one date. It uses the 1993 census data to match the country’s municipalities [@mammides_evidence_2020], without a before-and-after comparison, and in a context where less than 3 % of the territory was covered by protected areas, most of which had been created several decades earlier.
 
 Our contribution to the literature is twofold, both empirical and methodological. Empirically, this study provides an unprecedented national analysis, covering 71 protected areas established between 2008 and 2021, to evaluate the socioeconomic impacts of conservation in contexts of extreme poverty and weak governance. Methodologically, it articulates the state of the art in econometrics, incorporating recent developments to adapt these methods to the study of protected areas. The procedure we propose here could be replicated in other countries, starting with the 39 countries that have at least three geolocated DHS surveys. This approach paves the way for a more systematic evaluation of the impact of protected areas, taking into account the specific context of each country.
 
 [\[1\]](#_ftnref1)     Calculations by the authors based on the location of the DHS survey clusters. The detailed calculation is provided as supplementary material to the study.
+
+# Research Design
+
+## Hypothesis
+
+Our first hypothesis concerns the overall impact of protected areas in the Malagasy context. In their meta-analysis of 30 studies, Kandel et al. -@kandel_protected_2022 report a slightly positive average impact, but highlight a large heterogeneity of results across context. Several parameters are likely to influence impact, as represented graphically in \autoref{fig:logic_diagram} in the form of directed acyclic graph [@imbens_causal_2024; @hunermund_causal_2023]
+
+\begin{figure}[H]
+    \centering %Centre l'image horizontalement sur la page
+    \includegraphics[width=0.8\linewidth]{C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Pre-analysis-plan/images/figure 1_WU_21.png} %contrôle de la taille
+    \caption{Logic diagram of the theory of change tested in the study }
+    \caption*{\textit{Source:Authors}} %légende
+    \label{fig:logic_diagram} %référencement dans le texte
+\end{figure}
+
+The factors likely to lead to a decline in well-being seem particularly significant in the Malagasy context, where the population is predominantly rural and living in extreme poverty (the last assessment was in 2012, with 80.7% of the population below the \$2.15 a day threshold at 2017 PPP). Six studies conducted in Madagascar between 1995 and 2006 estimated the opportunity cost of losing access to protected areas (slash-and-burn agriculture, hunting, gathering, timber, etc.) at between USD 39 and 177 per household per year [@neudert_global_2017]. Golden et al. -@golden_economic_2014 estimated that income from hunting accounted for 57 % of household cash income in areas adjacent to the Makira and Masoala protected areas. Another survey of people living near Makira estimated the value of pharmaceutical use at USD 30-44 per year per household, based on the subsidized price of equivalent treatments in the malagasy market [@golden_rainforest_2012].
+
+Several factors that could help improve livelihoods through conservation appear to be fragile in Madagascar, starting with tourism. Naidoo et al. -@naidoo_evaluating_2019 aggregate data from DHS surveys conducted between 2001 and 2011 in 34 developing countries. Their study is based on matching households near and far from protected areas, but with no pre-post conservation comparison. They highlight positive impacts, but only for a subset of protected areas ‘with documented tourism ’^[1](#sdfootnote1sym)^. According to their study, households living near the protected areas ‘with tourism’ are 17% wealthier and 16% less likely to be poor than similar households living far from these areas.
+
+[1](#sdfootnote1anc)The 	source used to consider that va PA has ‘documented tourism’ is 	not reported in Naidoo et al 2019.

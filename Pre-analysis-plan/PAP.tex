@@ -130,6 +130,12 @@
 \onehalfspacing % Interligne de 1.5
 \usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref} % Activation des liens cliquable
 
+%Packages pour les figures
+\usepackage{graphicx} %Inclusion d'images
+\usepackage{float} %Positionnement des figures
+\usepackage{caption} %Personnalisation des légendes
+\usepackage{subcaption} %Gestion des sous-figures
+
 \renewcommand{\maketitle}{
   \begin{center}
     \textbf{Journal of Development Economics} \\
@@ -261,8 +267,8 @@ surveys' \href{https://osf.io/bgu5n/}{https://osf.io/bgu5n/}
 \textbf{Proposed timeline}
 
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.6000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.4000}}@{}}
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Phases
@@ -326,7 +332,7 @@ analyzing the relationship between conservation and socioeconomic
 conditions. The country is the poorest in terms of the first target of
 the Sustainable Development Goals (SDG 1-1), with the highest proportion
 of the population living below the international poverty line in the
-world (Conceição (2024), p.~298-99{]}. In 2008, terrestrial protected
+world (Conceição (2024), p.~298-99). In 2008, terrestrial protected
 areas covered 3.6\% of Madagascar and 9\% of the population lived within
 10 km of a protected area. Today, they cover 10.8\% and 28\% of the
 population live within 10 km of protected
@@ -366,6 +372,56 @@ of each country.
 the location of the DHS survey clusters. The detailed calculation is
 provided as supplementary material to the study.
 
+\section{Research Design}\label{research-design}
+
+\subsection{Hypothesis}\label{hypothesis}
+
+Our first hypothesis concerns the overall impact of protected areas in
+the Malagasy context. In their meta-analysis of 30 studies, Kandel et
+al. (2022) report a slightly positive average impact, but highlight a
+large heterogeneity of results across context. Several parameters are
+likely to influence impact, as represented graphically in
+\autoref{fig:logic_diagram} in the form of directed acyclic graph
+(Hünermund \& Bareinboim, 2023; Imbens, 2024)
+
+\begin{figure}[H]
+    \centering %Centre l'image horizontalement sur la page
+    \includegraphics[width=0.8\linewidth]{C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Pre-analysis-plan/images/figure 1_WU_21.png} %contrôle de la taille
+    \caption{Logic diagram of the theory of change tested in the study }
+    \caption*{\textit{Source:Authors}} %légende
+    \label{fig:logic_diagram} %référencement dans le texte
+\end{figure}
+
+The factors likely to lead to a decline in well-being seem particularly
+significant in the Malagasy context, where the population is
+predominantly rural and living in extreme poverty (the last assessment
+was in 2012, with 80.7\% of the population below the \$2.15 a day
+threshold at 2017 PPP). Six studies conducted in Madagascar between 1995
+and 2006 estimated the opportunity cost of losing access to protected
+areas (slash-and-burn agriculture, hunting, gathering, timber, etc.) at
+between USD 39 and 177 per household per year (Neudert et al., 2017).
+Golden et al. (2014) estimated that income from hunting accounted for
+57~\% of household cash income in areas adjacent to the Makira and
+Masoala protected areas. Another survey of people living near Makira
+estimated the value of pharmaceutical use at USD 30-44 per year per
+household, based on the subsidized price of equivalent treatments in the
+malagasy market (Golden et al., 2012).
+
+Several factors that could help improve livelihoods through conservation
+appear to be fragile in Madagascar, starting with tourism. Naidoo et al.
+(2019) aggregate data from DHS surveys conducted between 2001 and 2011
+in 34 developing countries. Their study is based on matching households
+near and far from protected areas, but with no pre-post conservation
+comparison. They highlight positive impacts, but only for a subset of
+protected areas `with documented
+tourism'\textsuperscript{\hyperref[sdfootnote1sym]{1}}. According to
+their study, households living near the protected areas `with
+tourism'~are 17\% wealthier and 16\% less likely to be poor than similar
+households living far from these areas.
+
+\hyperref[sdfootnote1anc]{1}The source used to consider that va PA has
+`documented tourism' is not reported in Naidoo et al 2019.
+
 \phantomsection\label{refs}
 \begin{CSLReferences}{1}{0}
 \bibitem[\citeproctext]{ref-adams_biodiversity_2004}
@@ -379,11 +435,33 @@ J., Hutton, J., Roe, D., Vira, B., \& Wolmer, W. (2004). Biodiversity
 Conceição, P. (Ed.). (2024). \emph{Breaking the gridlock: {Reimagining}
 cooperation in a {Polarized} world}. UNDP.
 
+\bibitem[\citeproctext]{ref-golden_economic_2014}
+Golden, C. D., Bonds, M. H., Brashares, J. S., Rodolph Rasolofoniaina,
+B. J., \& Kremen, C. (2014). Economic valuation of subsistence harvest
+of wildlife in {Madagascar}. \emph{Conservation Biology}, \emph{28}(1),
+234--243. https://doi.org/\url{https://doi.org/10.1111/cobi.12174}
+
+\bibitem[\citeproctext]{ref-golden_rainforest_2012}
+Golden, C. D., Rasolofoniaina, B. R., Anjaranirina, E. G., Nicolas, L.,
+Ravaoliny, L., \& Kremen, C. (2012). \emph{Rainforest pharmacopeia in
+{Madagascar} provides high value for current local and prospective
+global uses}.
+
 \bibitem[\citeproctext]{ref-hanson_leviathans_2021}
 Hanson, J. K., \& Sigman, R. (2021). Leviathan's {Latent} {Dimensions}:
 {Measuring} {State} {Capacity} for {Comparative} {Political} {Research}.
 \emph{The Journal of Politics}, \emph{83}(4), 1495--1510.
 \url{https://doi.org/10.1086/715066}
+
+\bibitem[\citeproctext]{ref-hunermund_causal_2023}
+Hünermund, P., \& Bareinboim, E. (2023). Causal inference and data
+fusion in econometrics. \emph{The Econometrics Journal}, utad008.
+
+\bibitem[\citeproctext]{ref-imbens_causal_2024}
+Imbens, G. W. (2024). Causal {Inference} in the {Social} {Sciences}.
+\emph{Annual Review of Statistics and Its Application}, \emph{11}(Volume
+11, 2024), 123--152.
+\url{https://doi.org/10.1146/annurev-statistics-033121-114601}
 
 \bibitem[\citeproctext]{ref-kandel_protected_2022}
 Kandel, P., Pandit, R., White, B., \& Polyakov, M. (2022). Do protected
@@ -411,6 +489,19 @@ Woodhouse, E. (2016). What are the effects of nature conservation on
 human well-being? {A} systematic map of empirical evidence from
 developing countries. \emph{Environ Evid}, \emph{5}(1), 8.
 \url{https://doi.org/10.1186/s13750-016-0058-7}
+
+\bibitem[\citeproctext]{ref-naidoo_evaluating_2019}
+Naidoo, R., Gerkey, D., Hole, D., Pfaff, A., Ellis, A. M., Golden, C.
+D., Herrera, D., Johnson, K., Mulligan, M., Ricketts, T. H., \& Fisher,
+B. (2019). Evaluating the impacts of protected areas on human well-being
+across the developing world. \emph{Science Advances}, \emph{5}(4),
+eaav3006. \url{https://doi.org/10.1126/sciadv.aav3006}
+
+\bibitem[\citeproctext]{ref-neudert_global_2017}
+Neudert, R., Ganzhorn, J. U., \& Waetzold, F. (2017). Global benefits
+and local costs--{The} dilemma of tropical forest conservation: {A}
+review of the situation in {Madagascar}. \emph{Environmental
+Conservation}, \emph{44}(1), 82--96.
 
 \end{CSLReferences}
 
