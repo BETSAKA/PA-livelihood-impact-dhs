@@ -38,6 +38,13 @@
   \KOMAoptions{parskip=half}}
 \makeatother
 \usepackage{xcolor}
+\ifLuaTeX
+  \usepackage{luacolor}
+  \usepackage[soul]{lua-ul}
+\else
+  \usepackage{soul}
+  
+\fi
 \setlength{\emergencystretch}{3em} % prevent overfull lines
 \setcounter{secnumdepth}{5}
 % Make \paragraph and \subparagraph free-standing
@@ -135,6 +142,13 @@
 \usepackage{float} %Positionnement des figures
 \usepackage{caption} %Personnalisation des légendes
 \usepackage{subcaption} %Gestion des sous-figures
+
+%Insertion des tableaux
+\usepackage{multirow} % Ajout du package pour multirow
+\usepackage{booktabs} % Amélioration du rendu des tableaux
+\usepackage{siunitx}     % Pour formater les nombres (espaces entre milliers)
+\usepackage{lmodern}     % Pour des polices plus nettes
+
 
 %Personnalisation des notes de bas de page
 \usepackage{footmisc} %Options avancées pour les notes de bas de page
@@ -274,8 +288,8 @@ surveys' \href{https://osf.io/bgu5n/}{https://osf.io/bgu5n/}
 \textbf{Proposed timeline}
 
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.6000}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.4000}}@{}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5972}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.4028}}@{}}
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Phases
@@ -557,7 +571,7 @@ areas, we isolate the specific effect of the creation of these protected
 areas. Matching and difference-in-difference methods are often used
 together to reduce selection bias. Several studies have used this
 combination of methods to evaluate the impact of conservation on land
-use and livelihoods (Ma et al., 2020; Schleicher et al., 2020).
+use and livelihoods (Ma et al., 2020; Schleicher et al., 2020a).
 
 \subsection{Intervention}\label{intervention}
 
@@ -571,7 +585,7 @@ expansion of protected areas in the country, as shown in
     \centering %Centre l'image horizontalement sur la page
     \includegraphics[width=0.8\linewidth]{C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Pre-analysis-plan/images/Figure 2_WU_21.png}  %contrôle de la taille
     \caption{Evolution of protected areas in Madagascar and study period}
-    \caption*{\textit{Source:Calculations by authors based on data from the Service de la Gouvernance des Aires Protégées (SGAP) of the Ministère de l’environnement et Développement Durable (MEDD)}} %légende
+    \caption*{\textit{Source: Calculations by authors based on data from the Service de la Gouvernance des Aires Protégées (SGAP) of the Ministère de l’environnement et Développement Durable (MEDD)}} %Source de la figure
     \label{fig:evol_diagram} %référencement dans le texte
 \end{figure}
 
@@ -594,14 +608,807 @@ early transfers, and the fact that our study period covers a wider
 interval (2008-2021) compensates for this inaccuracy in the start date
 of treatment, i.e actual conservation.
 
-\hyperref[Marque-pageux5cux25203]{Table 1} presents the distribution of
-protected areas ( in number and area) according to their period of
-designation by decree, taking 2008 as the reference year. In the
-treatment period (2008 to 2021), 71 protected areas were created
-covering 47,282 km².
+\ref{tab:protected_areas} presents the distribution of protected areas (
+in number and area) according to their period of designation by decree,
+taking 2008 as the reference year. In the treatment period (2008 to
+2021), 71 protected areas were created covering 47,282 km².
 
-\section*{Bibliography}\label{bibliography}
-\addcontentsline{toc}{section}{Bibliography}
+\begin{table}[h]
+    \centering
+    \captionsetup{font=small, labelfont=bf} % Amélioration de la légende
+    \sisetup{group-separator = {\,}} % Séparateur des milliers
+    
+    %Réinitialisation du compteur des tableaux 
+    \setcounter{table}{0} \renewcommand{\thetable}{\arabic{table}}
+    
+    \begin{tabular}{lccc|ccc}
+        \toprule
+        \multirow{2}{*}{\textbf{Enactment period by decree}} & \multicolumn{3}{c|}{\textbf{Protected Areas (Number)}} & \multicolumn{3}{c}{\textbf{Area (km²)}} \\
+        & Terrestrial & Non-terrestrial & Total & Terrestrial & Non-terrestrial & Total \\
+        \midrule
+        Starting in 2008 & 71 & 9 & 80 & 47,482 & 6,815 & 54,298 \\
+        Before 2008 & 43 & 0 & 43 & 21,801 & 0 & 21,801 \\
+        \midrule
+        Total & 114 & 9 & 123 & 69,283 & 6,815 & 76,099 \\
+        \bottomrule
+    \end{tabular}
+    
+    
+    \caption{Number and area of protected areas by enactment period}
+    
+    
+     \caption*{\textit{Source: Calculations by authors based on data from the Service de la Gouvernance des Aires Protégées (SGAP) of the Ministère de l’environnement et Développement Durable (MEDD)}}
+     
+     
+\end{table}
+
+\newpage
+
+In the context of our study, the population considered as treated
+encompasses households living in rural areas within 10 km of a protected
+area created between 2008 and 2021, according to the GPS coordinates
+provided in the Demographic Health Surveys (DHS) data. These GPS
+coordinates correspond to the centroids of the enumeration areas
+surveyed. To protect respondent confidentiality, these coordinates are
+first randomly shifted using the following procedure: An offset angle
+between 0 and 360 is randomly drawn, then an offser distance is randomly
+drawn, between 0 and 2 km in urban areas and between 0 and 5 km in rural
+areas. For 1\% of rural clusters, the distance drawn is between 0 and 10
+km (Skiles et al., 2013). The 10 km threshold used in our analysis
+corresponds to the distance most commonly used in similar impact
+evaluations (see references in Appendix A). Households in the control
+group are those living in a rural area more than 10 km away from a
+protected area created between 2008 and 2021, and they exhibit very
+similar characteristics or share significant traits with households in
+the treatment group. To check the robustness of the analysis, we also
+test other distances (5 km and 15 km).
+
+We decided to exclude rural populations living within 10 km of protected
+areas created before 2008, as they are considered treated before the
+study period. Urban areas were also excluded from the study because the
+mechanisms by which protected areas could affect the living conditions
+of urban populations are likely very different from those rural
+populations, which are mainly farmers. Due to the marked differences in
+living standards between rural and urban areas, including urban
+households would also risk unnecessarily increasing the variance of our
+estimates. Furthermore, according to the 2018 census, urban population
+accounts for 24\% of the Malagasy population (INSTAT, 2020a), and this
+proportion is likely even lower among population living near protected
+areas.
+
+In some cases, the 10 km zone around a newly created protected area may
+overlap with the 10 km zone around an existing older protected areas. In
+such a case, the treatment date taken into account is the date of the
+first creation in chronological order. If the older protected area was
+created before 2008, the overlapping zone will be excluded from the
+analysis.
+
+\subsection{Sample and statistical
+power}\label{sample-and-statistical-power}
+
+\subsubsection{sample}\label{sample}
+
+The unit of analysis in our study is the household. This is indeed a
+level at which a significant portion of individual resources are pooled,
+and it is at this level that data on living standards -- the outcome
+variable of our study -- are available in national surveys (Deaton,
+1997).
+
+The data on household living conditions used for this study comes from
+surveys conducted by the `\emph{Institut National de la Statistique de
+Madagascar'} (INSTAT) as part of the Demographic Health Surveys (DHS)
+programs. The DHS surveys rely on two-stage stratified sampling. The
+population of interest was divided into 23 study areas corresponding to
+the 22 regions of Madagascar, the capital Antananarivo (considered
+separately) and the Analamanga region without the capital (to isolate
+the effect of the capital on the regional results). Except for capital,
+two strata were created in each study area: The urban stratum and the
+rural stratum. A total of 45 sampling strata were created. At the first
+stage, enumeration areas (referred to as `clusters' hereafter) were
+randomly selected within each area with a probability proportional to
+the population of the cluster according to the most recent census. A
+complete enumeration of households was conducted in each selected
+cluster, with 657 clusters in 2021, 600 in 2008 and 270 in 1997. At the
+second stage, a sample of households was randomly drawn from within
+these clusters to be invited to participate in the survey. This method
+helps to reduce survey costs while ensuring the representativeness of
+the results.
+
+Our study will be based on samples from the DHS surveys, which
+constitute repeated cross-sections over what we will call a `treatment'
+period of 13 years (2008-2021). To validate the comparability hypothesis
+between our treatment and control groups during the treatment period, we
+will analyze their trends over a `pre-treatment' period corresponding to
+the preceding 11 years (1997-2008).
+
+\subsubsection{Statistical power}\label{statistical-power}
+
+The calculation of statistical power aims to estimate the probability
+that the study detect an effect when it exists. The expected power
+threshold is commonly set at 0.8, which means that the study has an
+80~\% chance of rejecting the null hypothesis when an effect is present.
+Furthermore, the significance threshold is set at 0.05, indicating a
+5~\% risk of incorrectly rejecting the null hypothesis when it is true.
+
+The minimal detectable effect represents the smallest difference that
+the study can detect between the treatment and control groups, taking
+into account the parameters chosen for power and the specification
+threshold. To measure this effect, we use the standardized effect size,
+also known as Cohen's , defined as follows:
+
+\[
+d = \frac{\bar{X}_1 - \bar{X}_2}{s}\]
+
+where \(X_1\) et \(X_2\) are the average of the treatment and control
+groups, and is the combined standard deviation of the two groups .
+
+We use the average and standard deviation values from the treatment
+group for both groups as the matching process has not yet been
+performed. We assume that the control group, once matched, will be
+similar to the treatment group in terms of variability and sample size.
+
+Prior the power calculation, we segmented the wealth index into
+percentiles rather than quintiles to better capture the continuity of
+the variable and maximize the sensitivity of the econometric analysis.
+The approach, already used by some researchers (Staveteig \& Mallick,
+2014), preserves greater granularity in the variable while improving the
+precision of the estimates. By increasing the number of classes, we will
+reduce the risk of bias associated with artificial discontinuities and
+improve the ability of our models to capture the marginal effects of
+conservation policies on living standards.
+
+With these characteristics, we calculate that the minimal detectable
+effect is 7.5, indicating that the study is able to detect a minimum
+change of 7.5 percentiles in the wealth index between the groups.
+
+\begin{table}[h]
+    \centering
+    \captionsetup{font=small, labelfont=bf} % Amélioration de la légende
+    \sisetup{group-separator = {\,}} % Séparateur des milliers
+
+    \begin{tabular}{lc}
+        \toprule
+        \textbf{Metric} & \textbf{Value} \\
+        \midrule
+        Intra-Cluster Correlation & 0.4783 \\
+        Adjusted Standard Deviation & 28.8680 \\
+        Cohen’s d & 0.2582 \\
+        Minimal Detectable State in Outcome Variable Unit & 7.4548 \\
+        \bottomrule
+    \end{tabular}
+
+    \caption{Statistical power of rural household percentile wealth index study}
+    
+    
+    \caption*{\textit{Source: Authors’ calculations from DHS 2021 data}}
+    
+\end{table}
+
+\section{Data}\label{data}
+
+\subsection{Data collection and
+processing}\label{data-collection-and-processing}
+
+Given the nature of the intervention to be evaluated (long-term
+perspective, large scale, complex and politically sensitive) and the
+availability of the necessary information at the national level,
+experimentation does not seem relevant or possible, and our study is
+observational in nature. It uses secondary data on the socioeconomic
+conditions of households, their geographical environment and their
+location in relation to protected areas.
+
+\subsubsection{Data on household socioeconomic
+conditions}\label{data-on-household-socioeconomic-conditions}
+
+The DHS data used covers a wide range of topics, including demographic
+characteristics, living conditions, health, education, sanitation, and
+hygiene. DHS surveys were performed in Madagascar in 1997, 2008 and
+2021. The DHS program also accompanied INSTAT surveys in 2011, 2013 and
+2016, entitled Malaria Indicator Surveys (MIS). These surveys, which
+focus specifically on malaria related issues, do not include certain
+health or demographic questions that are included in the DHS surveys.
+However, all the variables relating to household living conditions that
+we will use in our study from the DHS surveys are also present in the
+MIS surveys.
+
+The MIS data can therefore be mobilized for this study. However, adding
+comparison periods beyond a single ``before'' and ``after'' period has
+the drawback of making the analysis more complex and requiring methods
+that have a fragile methodological consensus. Since 2020, the state of
+the art in difference-in-difference methods has indeed been disrupted by
+the realization that classical two-way fixed effects methods can produce
+spurious results when the effects of an intervention are heterogeneous
+and evaluated over multiple periods. Since then, a dozen alternative
+approaches have been developed, but econometricians continue to debate
+their reliability (Roth et al., 2023). To avoid undermining the
+credibility of our results, we will initially limit ourselves to two
+study periods (DHS 2008 and 2021). Only if this approach proves to lack
+sufficient statistical power will we mobilize additional data.
+
+\subsubsection{Data on the household geophysical
+environment}\label{data-on-the-household-geophysical-environment}
+
+Household geophysical environment data will be obtained using the R
+package mapme.biodiversity (Görgen \& Bhandari, 2022). This package
+automates the retrieval of large raster-format data and their processing
+to produce a series of indicators applied to user-defined polygons for
+specified periods. It has the advantage of providing a list of the most
+recognized sources in the literature, retrieving them automatically and
+applying the state of the art to calculate spatio-temporal indicators
+from these sources. It can handle large datasets using efficient
+routines and parallel computing.
+
+\subsubsection{Data on protected areas}\label{data-on-protected-areas}
+
+Most studies of protected areas in the literature use the World Database
+on Protected Areas (WDPA), which is generally considered to be the most
+comprehensive register of marine and terrestrial protected areas
+(Bingham et al., 2019). However, in Madagascar, where we triangulated
+data with other sources (data from the official Malagasy body overseeing
+protected areas, official decrees, and documentation from protected area
+managers), we find that WDPA data are inaccurate for about one-third of
+protected areas. This includes inaccurate classifications of IUCN
+status, incorrect creation dates, and delineations that include buffer
+zones extending beyond the boundaries of protected areas. Such lack of
+reliability could undermine the credibility of the results if we use
+WDPA data. Thus, a study of the degradation of the effectiveness of
+protected areas during COVID-19 pandemic ((Eklund et al., 2022)), which
+used WDPA data, was heavily criticized by (Andrianambinina et al., 2023)
+as relying on sources with errors that compromised the study's
+conclusions.
+
+The authoritative Malagasy body that administers data on the boundaries
+of Madagascar's protected areas is a department of the Ministry of the
+Environment and Sustainable Development called the \emph{Service de la
+Gouvernance des Aires Protégées} (SGAP). These are the data we want to
+prioritize for our study, and we obtained the perm permission for this
+use.
+
+\section{Analysis}\label{analysis}
+
+\subsection{Variables used in the
+analysis}\label{variables-used-in-the-analysis}
+
+The data on the socioeconomic conditions of households and their
+geophysical environment described above are used to construct the
+variables in the impact evaluation model.
+
+\subsubsection{Outcome variables}\label{outcome-variables}
+
+The outcome variable measures the impact of the intervention. In this
+analysis, two outcome variables are considered: household living
+standards (primary variable) and inequalities in living standards at the
+level of the surveyed localities (secondary variable).
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Main outcome variable: Household living standards}
+\end{itemize}
+
+The first outcome variable, household living standard, is estimated from
+the wealth index, calculated specifically for rural areas (variable
+coded hv270a in the DHS data). The wealth index is defined in the DHS
+data catalogue as : 'A \emph{composite measure of a household's
+cumulative living standard. The wealth index is calculated using
+easy-to-collect data on a household's ownership of selected assets, such
+as televisions and bicycles; materials used for housing construction;
+and types of water access and sanitation facilities. Generated with a
+statistical procedure known as principal components analysis, the wealth
+index places individual households on a continuous scale of relative
+wealth. DHS separates all interviewed households into five wealth
+quintiles to compare the influence of wealth on various population,
+health and nutrition indicators. As a response to criticism that a
+single wealth index is too urban in its construction and not able to
+distinguish the poorest of the poor from other poor households, this
+variable provides an urban- and rural-specific wealth index''}
+(Program/ICF, 2018)\emph{. As described above, we will translate this
+wealth index into an integer between 1 and 100, corresponding to the
+household's wealth percentile relative to the distribution of the whole
+sample.}
+
+According to the DHS variable catalog by survey generation, the variable
+hv270a is available for the 2021 DHS survey, but not for previous years.
+However, the procedure for calculating the wealth index is
+well-documented (Rustein \& Kiersten, 2004), and the DHS program
+provides the SPSS codes for overall calculations encompassing both rural
+and urban areas (variable hv270), as well as the weights associated with
+each asset category for the variable hv270\footnotemark[10]. These
+elements will allow us to reproduce in R and validate the calculation of
+the variable hv270 (wealth index) in 2008 and 1997, and then extrapolate
+the method to obtain the variable hv270a (rural wealth index) for these
+years.
+
+\footnotetext[10]{Available     at  \href{https://www.dhsprogram.com/topics/wealth-index/Wealth-Index-Construction.cfm/}{https://www.dhsprogram.com/topics/wealth-index/Wealth-Index-Construction.cfm/}, consulted on 30/08/2024}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Secondary outcome variable: inequality of household living
+  standards}
+\end{itemize}
+
+In addition to the evaluation impact of protected areas on household
+living standards, we will seek to understand their influence on
+socioeconomic inequalities within the affected populations. To do this,
+we propose to use a standardized Z-Score of the wealth index, allowing
+for the comparison of the relative distribution of wealth around the
+mean within the study population, at the level of each survey cluster.
+
+The Z-Score \(Z_i\) for each household is calculated from the wealth
+index using the following formula:
+
+\[
+Z_i = \frac{W_i - \mu_W}{\sigma_W}
+\]
+
+where \(μ_W\) represents the average wealth index for all households
+surveyed in each rural cluster and \(σ_W\) is the standard deviation of
+households in the cluster.
+
+\subsubsection{Matching variables}\label{matching-variables}
+
+Matching covariates are used to select units not exposed to conservation
+(control groups) that are comparable to the exposed units (treatment
+group). Appropriate covariates for the matching process are variables
+likely to influence both the probability of treatment (whether a
+protected area has been created near the household) and the outcome
+(household living standard and inequalities among households). The
+literature shows that protected areas tend to be created in less dense,
+less accessible, higher and steeper regions (Joppa and Pfaff 2010).
+These variables may also affect living standards~: areas that are more
+dense, flat, low-lying and accessible (in terms of travel time and
+geography) tend to be wealthier (Gallup, Sachs, and Mellinger 1999). We
+will use the following list of matching variables~:
+
+\begin{itemize}
+\item
+  \ul{Forest cover rates in 2000} correspond to the percentage coverage
+  by vegetation with a height of 5 meters or more (Hansen et al., 2013).
+  This variable is provided by the Global Forest Change dataset, which
+  indicates for each pixel of one arc-second (approximately 30 meters at
+  the equator) an estimate of forest cover in 2000 (Hansen et al.,
+  2013). In Madagascar, as in other countries, protected areas have been
+  preferentially created by targeting forest zones(Carvalho et al.,
+  2020; Wilson et al., 2006). Globally, Naidoo et al. (2019) indicates
+  that forest cover in an area is negatively correlated with the living
+  standards of its inhabitants.
+\item
+  \ul{Slope and elevation} are calculated using a digital terrain model
+  from NASA-SRTM (Shuttle Radar Topography data), which provides an
+  elevation estimate for arc-second pixels (NASA JPL, 2020). Slope is
+  measured as a percentage for each plot, while elevation is measured in
+  meters. These topological variables influence the location of
+  protected areas (Joppa \& Pfaff, 2010), as well as the agricultural
+  potential of an area and therefore the living standards of rural
+  populations (Canavire-Bacarreza \& Hanauer, 2013).
+\item
+  \ul{Population density in 2000} corresponds to the estimated number of
+  inhabitants per km² based on Worldpop data. Worldpop data provide
+  estimates of population density for the year 2000 at a spatial
+  resolution of about 1 km. They use modeling techniques and combines
+  census data with various geospatial datasets (WorldPop \& CIESIN,
+  2018).
+\item
+  \ul{Accessibility in 2000} corresponds to the estimated travel time
+  for households to the nearest cities, measured in minutes~; These
+  accessibility data to cities are compiled by the Joint Research Center
+  (JRC), with 2000 as the reference year (Uchida \& Nelson, 2011).
+  Accessibility to cities determines the ability to benefit from the
+  services, products and opportunities they offer and is therefore a key
+  factor in determining living standards in rural areas (INSTAT, 2020b;
+  Weiss et al., 2018).
+\end{itemize}
+
+Each of these variables will be calculated for a circle of 10 km radius
+around the GPS coordinates of the survey cluster.
+
+\subsubsection{Control variables}\label{control-variables}
+
+Matching variables listed above will be integrated as control variables
+in the difference-in-difference regression stage to increase the
+robustness of the model by minimizing the bias that would arise from
+residual imbalances. Other variables, such as the age and sex of the
+head of the household or rainfall, do not introduce bias as they do not
+influence treatment assignment (the location of protected areas), but
+they increase the variance of the results. They are added as control
+variables to reduce the unexplained variability of the model and thus
+more accurately estimates the treatment effect.
+
+The variables on age and sex of the head of household are taken from the
+DHS surveys. These characteristics determine the economic opportunities
+and resource management capacity of households (Lo Bue et al., 2022).
+Sex of the head of household is recoded as v151 and v152 \emph{in the
+DHS survey.}
+
+We also integrate the Standardized Precipitation Evatranspiration Index
+(SPEI) (Vicente-Serrano et al., 2010) for the year preceding the survey.
+This index is calculated based on a long-term reference (1981-2010) to
+quantify excess or deficit of rainfall. We use the SPEI for the year
+prior to the survey. The SPEI is calculated from monthly precipitation
+and minimum and maximum temperature data from worldclim, using an
+improved version of the Hargreaves method defined by (Droogers \& Allen,
+2002), as imploemented in the SPEI R package (Vicente-Serrano et al.,
+2010). This variable will be calculated for a circle with a radius of 10
+km around the GPS coordinates of the cluster.
+
+We chose not to include migration among the controls, as this variable
+is likely to be influenced by the direct consequences of protected areas
+(reduction in land use, jobs related to conservation, etc.), but also by
+the evolution of living standards in areas surrounding the protected
+areas (see \autoref{fig:logic_diagram}). This position in the logical
+diagram presented in \autoref{fig:logic_diagram} makes migration a
+`collider', which would introduce an artificial bias if it were taken as
+a control variable (Hünermund \& Bareinboim, 2023; Imbens, 2020).
+
+\subsubsection{Weights}\label{weights}
+
+In the DHS data, each observation is associated with a sampling weight,
+reflecting the inverse of its probability of selection in the sample. We
+will take these weights into account to maintain the representativeness
+of our estimates relative to the national population. In addition, when
+we use the genetic matching algorithm (see below), observations are
+assigned an additional weight aimed at improving comparability between
+the treatment and control groups. To obtain a final weighting that
+accounts for both representativeness (sampling weight) and comparability
+(matching weight), we multiply these two types of weights. Thus, each
+observation is assigned a final weight that incorporates both
+dimensions.
+
+\subsection{Statistical methods and
+models}\label{statistical-methods-and-models}
+
+The statistical methods used in this analysis combine matching and
+difference-in-difference (DID) to estimate the causal effect of
+protected areas on household livelihoods.
+
+\subsubsection{Matching}\label{matching}
+
+Matching maximizes comparability between treatment and control groups in
+terms of observable characteristics (Ho et al., 2007). This method
+increases the similarity between households living in or within 10 km of
+protected areas (treatment group) and households not affected by
+protected areas (control group) (Desbureaux, 2021; Schleicher et al.,
+2020b).
+
+We will perform the matching using the genetic matching method proposed
+by the GenMtach() function in the R package MatchIt. This variant of
+nearest neighbor matching combines all variables into a single measure
+of distance known as Mahalanobis distance. This distance measures the
+difference between units in the matched groups to quantify the
+similarity between the two groups of observations, while accounting for
+correlations between the covariates and their covariances ((Diamond \&
+Sekhon, 2013), p.~935.
+
+Rosenbaum (1983) also suggests using a distance measure in combination
+with allowed maximum distances between matched units (called `calipers')
+to avoid creating pairs with excessively large differences. In practice,
+the caliper is commonly set at an interval of 0.25 standard deviations
+of the Mahalanobis distance, which corresponds to the most common
+recommendation in the literature.
+
+Matching models rely on the assumption that the distributions of the
+covariates are similar between the treatment and control groups, making
+the evaluation of the covariate balance crucial. The validity of the
+estimates depends directly on this balance, highlighting the importance
+of conducting tests to measure it.
+
+We will conduct a two-step balance test: before matching to determine
+the extent to which the raw data are initially unbalanced and to check
+whether balance has been achieved between the covariates after matching.
+This balance is checked using the Standardized Mean Difference (SMD),
+which measures the difference between the means of the covariates in the
+treatment and control groups in order to compare the relative balance of
+variables measured in different units. The difference is then divided by
+a standardization factor to put the difference on a common scale for all
+covariates. The closer the SMD is to 0, the better the balance between
+the groups for the covariate in question, and although there is no
+consensus in the literature, an SMD greater than 0.1 can be considered
+indicative of a significant imbalance (Austin, 2009). If the SMD exceeds
+0.1, we will increase the caliper interval to achieve an SMD ≤ 0.1.
+
+After matching, a visual test of the quality of the matching can be
+performed using the quantile-quantile plot (Q-Q plot) for each matching
+covariate. The graphical method provides an overview of the distribution
+of the covariates. The plot facilitates the identification of imbalances
+at different levels of the distribution. When the Q-Q plot points are
+close to the diagonal, the quantiles of the two distributions are
+similar, indicating good balance between the groups.
+
+Matching is the only stage of the analysis where observations are
+excluded. Descriptive statistics will be performed on this excluded
+population to fully understand the analysis universe.
+
+The result of genetic matching is a selection of matched observations
+and associated weights. These weights will be combined with the survey
+weights.
+
+\subsubsection{Difference-in-difference}\label{difference-in-difference}
+
+The difference-in-difference principle is to compare the wealth index of
+control and treatment households before and after the establishment of
+protected areas. Our treatment began in 2011, (the area is officially
+protected and operationally managed), so we use 2008 DHS data for the
+pre-treatment and 2021 DHS data for the post-treatment. This method
+relies on the parallel trends assumption, meaning that, in the absence
+of treatment, treatment and control groups would have experienced
+similar changes over time. To verify this assumption, we include two
+pre-treatment, points(DHS 1997 and DHS 2008 data) and assess trends
+between these years.
+
+The simplified equation for the difference-in-difference (Daw \&
+Hatfield, 2018) is as follows~:
+
+\[
+Y_{it} = \alpha_0 + \beta_1 \text{Treatment}_i + \beta_2 \text{Post}_t + \delta D_{it} + \varepsilon_{it}
+\]
+
+With the parameters defined as:
+
+\(Y_{i t}\): wealth index for household \(i\) in year \(t\) (1997, 2008
+or 2021)
+
+\(α_0\): Intercept, representing the baseline wealth index
+
+\(β_1\): coefficient associated with the variable \(Post_t\)
+
+\(Post_t\): Binary variable that takes the value of 1 for the
+post-treatment year 2021 and 0 for the pre-treatment year 2008
+
+\(δ\): coefficient of interest representing the effect of protected area
+on household living standards in 2008 and 2021
+
+\(D_{i t}\): interaction term between treatment and period that is equal
+to 1 for treatment households after the treatment year and 0 for the
+other households.
+
+\(ε_{i t}\): error term
+
+The difference-in-difference method relies on the assumption of parallel
+trends. To validate this assumption, we will use as a reference, among
+the rural households surveyed in 1997, those living in an area located
+in or within of a protected area created between 2008 and 2021 (placebo
+treatment group) and those matched to them using the method described
+above (placebo control group). We will graphically represent the
+evolution of the treatment and control groups in 1997, 2008 and 2021 for
+visual confirmation. To confirm the validity of the parallel trends
+assumption, we conduct a placebo test 1997-2008 outcomes, as well as
+matching and control variables, while defining the treatment variable
+for post-2008 protected areas. If the estimated effect between 1997 and
+2008 is null or statistically insignificant, this supports the parallel
+trends assumption.
+
+Furthermore, if we incorporate data from MIS 1997, MIS 2011, and MIS
+2013, we will apply an estimator suitable for staggered adoption and
+multiple study periods accounting for potential heterogeneous treatment
+effects (Borusyak et al., 2024). This only be performed if power is
+insufficient with two periods of data.
+
+Robust standard errors will be clustered at the enumeration area level,
+addressing intra-cluster correlations to ensure accurate inference.
+Observations with missing values for regression variables will be
+excluded. If exclusions exceed 2\% of the sample, we will analyze their
+characteristics of excluded observations and discuss potential
+corrective measures to address bias associated with exclusion.
+
+\subsection{Robustness and sensitivity
+tests}\label{robustness-and-sensitivity-tests}
+
+\subsubsection{Alternative distance
+thresholds}\label{alternative-distance-thresholds}
+
+We set a threshold of 10 km to define the treatment group, as is common
+practice in the literature (Appendix A). To verify the robustness of our
+conclusions, we also conduct additional analyses using distances of 5 km
+and 15 km. At 5km, smaller sample sizes may lead to wider confidence
+intervals, limiting statistical power. However, we will assess whether
+the direction and magnitude of the estimated impacts remain consistent
+across these thresholds. This comparison will help determine how
+proximity to protected areas affects treatment effect.
+
+\subsubsection{Multiple outcome and multiple hypothesis
+testing}\label{multiple-outcome-and-multiple-hypothesis-testing}
+
+This study evaluates three hypotheses: H1 (overall impact on living
+standards), H2 (impact on inequalities) and H3 (heterogeneous impact
+based on governance). H1 is our primary hypothesis. To reduce the risk
+of Type I errors in secondary hypothesis H2 and H3, we will apply
+Benjamini-Hochberg's (1995) false discovery rate. This correction
+ensures that conclusions frawn from H2 and H3 are robust to multiple
+testing concerns.
+
+\subsubsection{Pseudo panel approach}\label{pseudo-panel-approach}
+
+To account for unobserved factors or household-level shocks potentially
+correlated with the outcome variable, we will use a pseudo-panel
+approach to estimate fixed effects models at the level of household
+cohorts (Deaton, 1985). This method estimates fixed effects models by
+grouping individuals into exogenous, time-invariant cohorts (e.g., by
+household head's year of birth, sex, and region). These grouping
+variables ensure within-cohort variation does not bias results.
+Following Jung et al. (2019), we will construct these cohorts as
+follows: ``« \emph{In order to get consistent estimates from the
+pseudo-panel approach, grouping variables need to be exogenous,
+time-invariant, and available for all household in the data
+(Verbeek,2008). We use household head's sex, birth year, and the region
+as grouping variables, with birth year divided by quartile, variables
+commonly used in the literature (e.g., Bernard, et al.~2011~; Pless and
+Fell, 2017). Owing to the variation in cohort size between years, which
+leads to heteroscedasticity, we weigh the observations using the inverse
+of the square root of cohort size (Dargay, 2007~; Pless and Fell,
+2017)~''.}
+
+The model equation is as follows:
+
+\[
+\overline{Y}_{ct} = \theta_c + D_{ct} + \sum_{k=2015}^{2021} \beta \overline{Dist}_{ct} \mathbb{1}(t = k) + \delta \overline{X}_{ct} + \epsilon_i
+\]
+
+\({{Y}_{c t}}\): Average value of the household \(i\) wealth index
+within the cohort \(c\) at the period \(t\)
+
+\({θ}_{c}\): Fixed effect controlling for the time-invariant
+cohort-specific characteristics
+
+\({D}_{c t}\) :Time-fixed effects at cohort level
+
+\({{Dist}_{ct}}\): Average distance between the location of households
+and the boundaries of protected areas ( where\({{Dist}_{ct}} ∢ 10 km\)
+within the cohort).
+
+\({{X}_{c t}}\) : Average of the control variables (rainfall, drought)
+
+\({ϵ}_{i}\) : Error terms
+
+\subsubsection{Rosenbaum sensitivity
+analysis}\label{rosenbaum-sensitivity-analysis}
+
+To evaluate the robustness of the results against potential biases
+arising from unobserved confounding variables, we will perform a
+sensitivity analysis using Rosenbaum's ((Rosenbaum, 2002), 105‑70)
+method. This analysis tests the extent to which potential unobserved
+biases could alter the results ((Keele, 2010), 7). A sensitivity
+parameter \(Γ\) measures the degree of deviation from random treatment
+assignment. We will test a range of \(Γ\) values to assess how robust
+our conclusions are to unobserved confounding. If results remain
+significant for plausible values of \(Γ\), we can conclude that
+unobserved bias is unlikely to explain our findings.
+
+\subsubsection{Heterogeneous effects}\label{heterogeneous-effects}
+
+To investigate heterogeneous effects of protected areas, we adopt the
+following approaches. First, we introduce differentiating variables (sex
+and age of the head of household, rainfall) to test whether the impact
+of protected areas varies according to these characteristics
+(e.g.~during wet periods vs dry periods). We also analyze the potential
+influence of governance by distinguishing between so-called ``strict''
+protected areas (IUCN categories I-IV) and ``multi-use'' areas (IUCN
+categories V-VI). Furthermore, the use of a pseudo-panel (grouping
+individuals into exogenous cohorts, for example by age or region) will
+allow us to examine whether specific cohorts exhibit a more pronounced
+impact while better controlling for unobserved factors. Next, we study
+intra-community inequalities using Z index (z-score) of the wealth
+index; this allows us to see if the effect of protected areas is more
+concentrated on certain households rather than uniformly affecting the
+entire local population. Finally, we test different distances (5 km, 10
+km, and 15 km) to evaluate whether proximity to protected areas
+determines the magnitude of the impact. All of these analyses contribute
+to a better understanding of the factors and populations for which
+conservation generates differentiated effects
+
+\section{Interpreting results}\label{interpreting-results}
+
+This study evaluates how the creation of protected areas affects the
+living standards and socioeconomic inequalities of rural households in
+Madagascar. The results aim to provide actionable guidelines for
+conservation policies that balance biodiversity protection with the
+needs and rights of local communities.
+
+Hypothesis 1 assumes that, on average, protected areas reduce the living
+standards of riparian households. If our matching and
+difference-in-differences estimates show a decline in the wealth index
+for these households, this would indicate that restricted access to
+natural resources, coupled with insufficient compensation or
+benefit-sharing mechanisms, has adversely affected their living
+standards. This conclusion would then invite public authorities and
+conservation stakeholders to put in place more inclusive mechanisms,
+such as better sharing of tourism revenues, targeted cash transfers or
+maintaining regulated access to certain resources, to prevent increased
+vulnerability.
+
+If the z-score results show that conservation exacerbates inequalities
+(H2), this would suggest that `local elites' disproportionately benefit
+from financial opportunities linked to tourism or protected area
+management. In such cases, corrective measures would be necessary to
+prevent benefits from being concentrated among a small group. Examples
+include enforcing local employment quotas or ensuring transparent
+participatory governance.
+
+Cif the analysis does not show a decline in livelihoods, this would
+indicate that some households have successfully diversified their
+incomes or benefited from ecosystem services such as water access,
+erosion control, soil fertility, or pollination. Such an observation
+would strengthen the thesis that, in certain favorable institutional or
+market contexts, investment in biodiversity can coexist with dynamic
+local development. This observation would then encourage the expansion
+of conservation while replicating the approaches that are most effective
+in stimulating or maintaining household livelihoods. If, in addition,
+the analysis demonstrates the absence of negative effects on
+inequalities, or even an effect that promotes their alleviation, this
+would strengthen the social and political acceptability of a rapid
+expansion of protected areas.
+
+Finally, hypothesis 3 concerns the heterogeneity of effects based on the
+type of governance of protected areas. If the study finds that certain
+management approaches---such as those involving local communities-- lead
+to more favorable and equitable outcomes, these results would support
+scaling up participatory models that have been promoted over the past
+fifteen years. Conversely, if participatory governance does not appear
+to play a decisive role, this would suggest prioritizing other
+explanatory factors, such as donor support or local context, before
+drawing broader conclusions about the social effectiveness of
+conservation.
+
+These results will contribute to the debate on the compatibility of
+conservation and poverty reduction by identifying how institutional
+configurations or governance models influence the vulnerability of rural
+households. They will provide new insights for analyzing biodiversity
+protection policies in low-income countries.
+
+\section{Appendix}\label{appendix}
+
+\textbf{Appendix A}
+
+\section{Administrative information}\label{administrative-information}
+
+\subsection{Funding}\label{funding}
+
+The study is performed in the framework of the BETSAKA project. The
+BETSAKA project is cofunded by the Development Impact Lab of the German
+KfW Development Bank; the \emph{Agence Française de Développement} (AFD)
+and the French Research Institute for Sustainable Development (IRD).
+
+\subsection{Institutional Review Board (Ethical
+approval)}\label{institutional-review-board-ethical-approval}
+
+The project includes the analysis of personal data collected through
+surveys. In order to manage these data effectively and ethically, a data
+management plan will be implemented. This plan will comply with the good
+practices defined by authoritative bodies such as the French Ministry of
+Research in its National Plan for Open Science and the European
+Commission in the guidelines of the European Research Council (ERC).
+These good practices aim to ensure that the collection, storage,
+processing and sharing of data are conducted in a manner that respects
+privacy, ensures confidentiality and maintains data integrity. The main
+aspects of these guidelines include obtaining informed consent from
+participants, the anonymity of personal data when necessary, and
+establishing clear protocols for data access and sharing. All
+participants in the research project will therefore be informed and
+trained to respect these rules and best practices.
+
+The implementation of the data management plan is based on the
+DMP-Opidor system developed by INIST-CNRS, recommended by the
+'\emph{Agence Nationale de la Recherche et l'Institut de Recherche et de
+Développement' (IRD).} DMP-Opidor is a tool designed to help researchers
+create, manage and share their data management plan. It provides a
+structured framework that guides researchers through the various stages
+of data management, ensuring compliance with legal and ethical
+requirements.
+
+\subsection{Declaration of interest}\label{declaration-of-interest}
+
+Iriana Razafimahenina, Florent Bédécarrats, Ingrid Dallmann et
+Holimalala Randriamanampisoa have declared that they have no conflicts
+of interest.
+
+\section{Acknowledgements}\label{acknowledgements}
+
+We greatly appreciate the contribution of the researchers and
+conservation officers in Madagascar through the discussions and
+exchanges we were able to have.
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
 
 \phantomsection\label{refs}
 \begin{CSLReferences}{1}{0}
@@ -618,6 +1425,19 @@ Tourism-income inequality {Nexus} in {Africa}: Evidence from {SADC}
 countries. \emph{Current Issues in Tourism}, \emph{27}(18), 2899--2917.
 \url{https://doi.org/10.1080/13683500.2023.2227377}
 
+\bibitem[\citeproctext]{ref-andrianambinina_decrease_2023}
+Andrianambinina, O. D., Rafanoharana, S. C., Rasamuel, H. A. T., Waeber,
+P. O., Ganzhorn, J. U., \& Wilmé, L. (2023). Decrease of deforestation
+in {Protected} {Areas} of {Madagascar} during the {Covid}-19 years.
+\emph{Madagascar Conservation \& Development}, \emph{18}(1), 15--21.
+\url{https://www.ajol.info/index.php/mcd/article/view/262765}
+
+\bibitem[\citeproctext]{ref-austin_balance_2009}
+Austin, P. C. (2009). Balance diagnostics for comparing the distribution
+of baseline covariates between treatment groups in propensity-score
+matched samples. \emph{Statistics in Medicine}, \emph{28}(25),
+3083--3107. \url{https://doi.org/10.1002/sim.3697}
+
 \bibitem[\citeproctext]{ref-bertrand_contre_2012}
 Bertrand, A., Serpantié, G., Randrianarivelo, G., Montagne, P.,
 Toillier, A., Karpe, P., Andriambolanoro, D., \& Derycke, M. (2012).
@@ -625,6 +1445,33 @@ Contre un retour aux barrières~: Quelle place pour la gestion
 communautaire dans les nouvelles aires protégées malgaches~? \emph{Les
 Cahiers d'Outre-Mer}, \emph{257}(1), 85--123.
 \url{https://doi.org/10.4000/com.6493}
+
+\bibitem[\citeproctext]{ref-bingham_sixty_2019}
+Bingham, H. C., Juffe Bignoli, D., Lewis, E., MacSharry, B., Burgess, N.
+D., Visconti, P., Deguignet, M., Misrachi, M., Walpole, M., \& Stewart,
+J. L. (2019). Sixty years of tracking conservation progress using the
+{World} {Database} on {Protected} {Areas}. \emph{Nature Ecology \&
+Evolution}, \emph{3}(5), 737--743.
+\url{https://idp.nature.com/authorize/casa?redirect_uri=https://www.nature.com/articles/s41559-019-0869-3&casa_token=Zmluq7JmhxUAAAAA:Id6cAJrCDpmtydpiga8LlmkB5wb9a1O_bwCGwCeA1gz314-F6VT5ekCOeVMJo_Zrpbh_uuoXf0fwD3Txjg}
+
+\bibitem[\citeproctext]{ref-borusyak_revisiting_2024}
+Borusyak, K., Jaravel, X., \& Spiess, J. (2024). Revisiting
+{Event}-{Study} {Designs}: {Robust} and {Efficient} {Estimation}.
+\emph{The Review of Economic Studies}, rdae007.
+\url{https://doi.org/10.1093/restud/rdae007}
+
+\bibitem[\citeproctext]{ref-canavire-bacarreza_estimating_2013}
+Canavire-Bacarreza, G., \& Hanauer, M. M. (2013). Estimating the impacts
+of {Bolivia}'s protected areas on poverty. \emph{World Development},
+\emph{41}, 265--285.
+\url{https://www.sciencedirect.com/science/article/pii/S0305750X12001702}
+
+\bibitem[\citeproctext]{ref-carvalho_methods_2020}
+Carvalho, F., Brown, K. A., Gordon, A. D., Yesuf, G. U., Raherilalao, M.
+J., Raselimanana, A. P., Soarimalala, V., \& Goodman, S. M. (2020).
+Methods for prioritizing protected areas using individual and aggregate
+rankings. \emph{Environmental Conservation}, \emph{47}(2), 113--122.
+\url{https://doi.org/10.1017/S0376892920000090}
 
 \bibitem[\citeproctext]{ref-chung_global_2018}
 Chung, M. G., Dietz, T., \& Liu, J. (2018). Global relationships between
@@ -635,6 +1482,40 @@ biodiversity and nature-based tourism in protected areas.
 \bibitem[\citeproctext]{ref-conceicao_breaking_2024}
 Conceição, P. (Ed.). (2024). \emph{Breaking the gridlock: {Reimagining}
 cooperation in a {Polarized} world}. UNDP.
+
+\bibitem[\citeproctext]{ref-daw_matching_2018}
+Daw, J. R., \& Hatfield, L. A. (2018). Matching and {Regression} to the
+{Mean} in {Difference}-in-{Differences} {Analysis}. \emph{Health
+Services Research}, \emph{53}(6), 4138--4156.
+\url{https://doi.org/10.1111/1475-6773.12993}
+
+\bibitem[\citeproctext]{ref-deaton_panel_1985}
+Deaton, A. (1985). Panel data from time series of cross-sections.
+\emph{Journal of Econometrics}, \emph{30}(1-2), 109--126.
+\url{https://doi.org/10.1016/0304-4076(85)90134-4}
+
+\bibitem[\citeproctext]{ref-deaton_analysis_1997}
+Deaton, A. (1997). \emph{The {Analysis} of {Household} {Surveys}: {A}
+{Microeconometric} {Approach} to {Development} {Policy}}. World Bank
+Publications.
+
+\bibitem[\citeproctext]{ref-desbureaux2021}
+Desbureaux, S. (2021). Subjective modeling choices and the robustness of
+impact evaluations in conservation science. \emph{Conservation Biology},
+\emph{35}(5), 16151626. \url{https://doi.org/10.1111/cobi.13728}
+
+\bibitem[\citeproctext]{ref-diamond_genetic_2013}
+Diamond, A., \& Sekhon, J. S. (2013). Genetic {Matching} for
+{Estimating} {Causal} {Effects}: {A} {General} {Multivariate} {Matching}
+{Method} for {Achieving} {Balance} in {Observational} {Studies}.
+\emph{Review of Economics and Statistics}, \emph{95}(3), 932--945.
+\url{https://doi.org/10.1162/REST_a_00318}
+
+\bibitem[\citeproctext]{ref-droogers_estimating_2002}
+Droogers, P., \& Allen, R. G. (2002). Estimating {Reference}
+{Evapotranspiration} {Under} {Inaccurate} {Data} {Conditions}.
+\emph{Irrigation and Drainage Systems}, \emph{16}(1), 33--45.
+\url{https://doi.org/10.1023/A:1015508322413}
 
 \bibitem[\citeproctext]{ref-eklund_quality_2017}
 Eklund, J., \& Cabeza, M. (2017). Quality of governance and
@@ -648,6 +1529,13 @@ constitutes a useful measure of protected area effectiveness? {A} case
 study of management inputs and protected area impacts in {Madagascar}.
 \emph{Conservat Sci and Prac}, \emph{1}(10), e107.
 \url{https://doi.org/10.1111/csp2.107}
+
+\bibitem[\citeproctext]{ref-eklund_elevated_2022}
+Eklund, J., Jones, J. P., Räsänen, M., Geldmann, J., Jokinen, A.-P.,
+Pellegrini, A., Rakotobe, D., Rakotonarivo, O. S., Toivonen, T., \&
+Balmford, A. (2022). Elevated fires during {COVID}-19 lockdown and the
+vulnerability of protected areas. \emph{Nature Sustainability},
+\emph{5}(7), 603--609.
 
 \bibitem[\citeproctext]{ref-froger_temps_2009}
 Froger, G., \& Méral, P. (2009). Les temps de la politique
@@ -674,15 +1562,38 @@ Ravaoliny, L., \& Kremen, C. (2012). \emph{Rainforest pharmacopeia in
 {Madagascar} provides high value for current local and prospective
 global uses}.
 
+\bibitem[\citeproctext]{ref-gorgen_efficient_2022}
+Görgen, D. A., \& Bhandari, O. P. (2022). \emph{Efficient {Monitoring}
+of {Global} {Biodiversity} {Portfolios}}.
+\url{https://doi.org/10.32614/CRAN.package.mapme.biodiversity}
+
+\bibitem[\citeproctext]{ref-hansen2013}
+Hansen, M. C., Potapov, P. V., Moore, R., Hancher, M., Turubanova, S.
+A., Tyukavina, A., Thau, D., Stehman, S. V., Goetz, S. J., Loveland, T.
+R., \& others. (2013). High-resolution global maps of 21st-century
+forest cover change. \emph{Science}, \emph{342}(6160), 850853.
+\url{http://www.sciencemag.org/content/342/6160/850.short}
+
 \bibitem[\citeproctext]{ref-hanson_leviathans_2021}
 Hanson, J. K., \& Sigman, R. (2021). Leviathan's {Latent} {Dimensions}:
 {Measuring} {State} {Capacity} for {Comparative} {Political} {Research}.
 \emph{The Journal of Politics}, \emph{83}(4), 1495--1510.
 \url{https://doi.org/10.1086/715066}
 
+\bibitem[\citeproctext]{ref-ho2007}
+Ho, D. E., Imai, K., King, G., \& Stuart, E. A. (2007). Matching as
+Nonparametric Preprocessing for Reducing Model Dependence in Parametric
+Causal Inference. \emph{Political Analysis}, \emph{15}(3), 199236.
+\url{https://doi.org/10.1093/pan/mpl013}
+
 \bibitem[\citeproctext]{ref-hunermund_causal_2023}
 Hünermund, P., \& Bareinboim, E. (2023). Causal inference and data
 fusion in econometrics. \emph{The Econometrics Journal}, utad008.
+
+\bibitem[\citeproctext]{ref-imbens2020}
+Imbens, G. W. (2020). Potential outcome and directed acyclic graph
+approaches to causality: Relevance for empirical practice in economics.
+\emph{Journal of Economic Literature}, \emph{58}(4), 11291179.
 
 \bibitem[\citeproctext]{ref-imbens_causal_2024}
 Imbens, G. W. (2024). Causal {Inference} in the {Social} {Sciences}.
@@ -690,11 +1601,44 @@ Imbens, G. W. (2024). Causal {Inference} in the {Social} {Sciences}.
 11, 2024), 123--152.
 \url{https://doi.org/10.1146/annurev-statistics-033121-114601}
 
+\bibitem[\citeproctext]{ref-instat_resultats_2020}
+INSTAT. (2020a). \emph{Résultats globaux du troisième recensement
+général de la population et de l'habitation de 2018 à {Madagascar}
+({RGPH}-3)}. Institut national de la statistique.
+
+\bibitem[\citeproctext]{ref-instat2020}
+INSTAT. (2020b). \emph{Résultats globaux du troisième recensement
+général de la population et de l'habitation de 2018 à madagascar
+(RGPH-3)}. Institut national de la statistique.
+
+\bibitem[\citeproctext]{ref-joppa2010}
+Joppa, L., \& Pfaff, A. (2010). Reassessing the forest impacts of
+protection: The challenge of nonrandom location and a corrective method.
+\emph{Annals of the New York Academy of Sciences}, \emph{1185}(1),
+135149. \url{https://doi.org/10.1111/j.1749-6632.2009.05162.x}
+
+\bibitem[\citeproctext]{ref-jung_evidence_2019}
+Jung, S., Liao, C., Agrawal, A., \& Brown, D. G. (2019). Evidence on
+{Wealth}-{Improving} {Effects} of {Forest} {Concessions} in {Liberia}.
+\emph{Journal of the Association of Environmental and Resource
+Economists}, \emph{6}(5), 961--1000.
+\url{https://doi.org/10.1086/704614}
+
 \bibitem[\citeproctext]{ref-kandel_protected_2022}
 Kandel, P., Pandit, R., White, B., \& Polyakov, M. (2022). Do protected
 areas increase household income? {Evidence} from a {Meta}-{Analysis}.
 \emph{World Development}, \emph{159}, 106024.
 \url{https://doi.org/10.1016/j.worlddev.2022.106024}
+
+\bibitem[\citeproctext]{ref-keele_overview_2010}
+Keele, L. (2010). \emph{An overview of rbounds: {An} {R} package for
+{Rosenbaum} bounds sensitivity analysis with matched data.}
+
+\bibitem[\citeproctext]{ref-lo_bue_gender_2022}
+Lo Bue, M. C., Le, T. T. N., Santos Silva, M., \& Sen, K. (2022). Gender
+and vulnerable employment in the developing world: {Evidence} from
+global microdata. \emph{World Development}, \emph{159}, 106010.
+\url{https://doi.org/10.1016/j.worlddev.2022.106010}
 
 \bibitem[\citeproctext]{ref-ma_protected_2020}
 Ma, B., Zhang, Y., Hou, Y., \& Wen, Y. (2020). Do {Protected} {Areas}
@@ -730,6 +1674,11 @@ B. (2019). Evaluating the impacts of protected areas on human well-being
 across the developing world. \emph{Science Advances}, \emph{5}(4),
 eaav3006. \url{https://doi.org/10.1126/sciadv.aav3006}
 
+\bibitem[\citeproctext]{ref-nasa_jpl_nasadem_2020}
+NASA JPL. (2020). \emph{{NASADEM} {Merged} {DEM} {Global} 1 arc second
+{V001}}. NASA EOSDIS Land Processes Distributed Active Archive Center.
+\url{https://doi.org/10.5067/MEASURES/NASADEM/NASADEM_HGT.001}
+
 \bibitem[\citeproctext]{ref-neudert_global_2017}
 Neudert, R., Ganzhorn, J. U., \& Waetzold, F. (2017). Global benefits
 and local costs--{The} dilemma of tropical forest conservation: {A}
@@ -751,11 +1700,28 @@ from {Madagascar}. \emph{Global Environmental Change}, \emph{37},
 31--42.
 \url{https://www.sciencedirect.com/science/article/pii/S095937801630005X}
 
+\bibitem[\citeproctext]{ref-the_dhs_programicf_standard_2018}
+Program/ICF, T. D. (2018). \emph{Standard recode manual for {DHS}-7}.
+USAID.
+
 \bibitem[\citeproctext]{ref-riviuxe8re2017}
 Rivière, M. (2017). \emph{Les (dé)connexions du développement :
 ethno-géographie systémique de l'aide au développement et à la
 conservation forestière à Amindrabe, Madagascar} {[}PhD thesis{]}.
 \url{https://theses.hal.science/tel-01720849}
+
+\bibitem[\citeproctext]{ref-rosenbaum_central_1983}
+Rosenbaum, P. (1983). \emph{The central role of the propensity score in
+observational studies for causal effects}.
+
+\bibitem[\citeproctext]{ref-rosenbaum2002}
+Rosenbaum, P. (2002). \emph{Observational studies}.
+
+\bibitem[\citeproctext]{ref-roth_whats_2023}
+Roth, J., Sant'Anna, P. H. C., Bilinski, A., \& Poe, J. (2023). What's
+trending in difference-in-differences? {A} synthesis of the recent
+econometrics literature. \emph{Journal of Econometrics}, \emph{235}(2),
+2218--2244. \url{https://doi.org/10.1016/j.jeconom.2023.03.008}
 
 \bibitem[\citeproctext]{ref-rubin_estimating_1974}
 Rubin, D. B. (1974). Estimating causal effects of treatments in
@@ -763,10 +1729,60 @@ randomized and nonrandomized studies. \emph{Journal of Educational
 Psychology}, \emph{66}(5), 688--701.
 \url{https://doi.org/10.1037/h0037350}
 
+\bibitem[\citeproctext]{ref-rustein_dhs_2004}
+Rustein, S., \& Kiersten, J. (2004). \emph{The {DHS} {Wealth} {Index}}.
+ICF International.
+
+\bibitem[\citeproctext]{ref-schleicher_statistical_2020}
+Schleicher, J., Eklund, J., D. Barnes, M., Geldmann, J., Oldekop, J. A.,
+\& Jones, J. P. (2020b). Statistical matching for conservation science.
+\emph{Conservation Biology}, \emph{34}(3), 538--549.
+
 \bibitem[\citeproctext]{ref-schleicher_statistical_2020-1}
 Schleicher, J., Eklund, J., D. Barnes, M., Geldmann, J., Oldekop, J. A.,
-\& Jones, J. P. (2020). Statistical matching for conservation science.
+\& Jones, J. P. (2020a). Statistical matching for conservation science.
 \emph{Conservation Biology}, \emph{34}(3), 538--549.
+
+\bibitem[\citeproctext]{ref-skiles_geographically_2013}
+Skiles, M. P., Burgert, C. R., Curtis, S. L., \& Spencer, J. (2013).
+Geographically linking population and facility surveys: Methodological
+considerations. \emph{Population Health Metrics}, \emph{11}(1), 14.
+\url{http://www.biomedcentral.com/content/pdf/1478-7954-11-14.pdf}
+
+\bibitem[\citeproctext]{ref-staveteig_intertemporal_2014}
+Staveteig, S., \& Mallick, L. (2014). \emph{Intertemporal comparisons of
+poverty and wealth with {DHS} data: {A} harmonized asset index
+approach}. ICF International.
+
+\bibitem[\citeproctext]{ref-uchida_agglomeration_2011}
+Uchida, H., \& Nelson, A. (2011). Agglomeration {Index}: {Towards} a
+{New} {Measure} of {Urban} {Concentration}. \emph{Urbanization and
+Development: Multidisciplinary Perspectives}.
+\url{https://doi.org/10.1093/acprof:oso/9780199590148.003.0003}
+
+\bibitem[\citeproctext]{ref-vicente-serrano_multiscalar_2010}
+Vicente-Serrano, S. M., Beguería, S., \& López-Moreno, J. I. (2010). A
+{Multiscalar} {Drought} {Index} {Sensitive} to {Global} {Warming}: {The}
+{Standardized} {Precipitation} {Evapotranspiration} {Index}.
+\emph{Journal of Climate}, \emph{23}(7), 1696--1718.
+\url{https://doi.org/10.1175/2009JCLI2909.1}
+
+\bibitem[\citeproctext]{ref-weiss_global_2018}
+Weiss, D. J., Nelson, A., Gibson, H. S., Temperley, W., Peedell, S.,
+Lieber, A., Hancher, M., Poyart, E., Belchior, S., \& Fullman, N.
+(2018). A global map of travel time to cities to assess inequalities in
+accessibility in 2015. \emph{Nature}, \emph{553}(7688), 333--336.
+
+\bibitem[\citeproctext]{ref-wilson2006}
+Wilson, K. A., McBride, M. F., Bode, M., \& Possingham, H. P. (2006).
+Prioritizing global conservation efforts. \emph{Nature},
+\emph{440}(7082), 337340.
+\url{https://www.nature.com/articles/nature04366}
+
+\bibitem[\citeproctext]{ref-worldpop_global_2018}
+WorldPop, \& CIESIN. (2018). \emph{Global 1km {Population}}. Global High
+Resolution Population Denominators Project.
+\url{https://doi.org/10.5258/SOTON/WP00647}
 
 \bibitem[\citeproctext]{ref-xuanming_impact_2024}
 Xuanming, P., Dossou, T. A. M., Dossou, K. P., \& Alinsato, A. S.
