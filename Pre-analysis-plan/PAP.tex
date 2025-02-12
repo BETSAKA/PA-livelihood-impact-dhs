@@ -136,12 +136,19 @@
 \usepackage{caption} %Personnalisation des légendes
 \usepackage{subcaption} %Gestion des sous-figures
 
+%Personnalisation des notes de bas de page
+\usepackage{footmisc} %Options avancées pour les notes de bas de page
+\renewcommand{\footnoterule}{\noindent\rule{0.3\linewidth}{0.4pt}\vspace{0.2cm}} %Ligne de séparation plus courte
+\renewcommand{\thefootnote}{\textsuperscript{\arabic{footnote}}} % Exposant pour les numéros de notes
+\interfootnotelinepenalty=1000 %Empêcher le découpage des notes sur plusieurs pages
+
+
 \renewcommand{\maketitle}{
   \begin{center}
     \textbf{Journal of Development Economics} \\
     \textbf{Registered Report Stage 1 : Proposal} \\[1em]
     {\Huge \textbf{Conservation and development: Socioeconomic Impact evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys}} \\[1em]
-    \Large Iriana Razafimahenina\footnotemark[1]\footnotemark[2]\footnotemark[3]\footnotemark[4],
+    \Large Iriana Razafimahenina\footnotemark[1]\footnotemark[2]\footnotemark[3]\footnotemark[4]\footnotemark[5]\footnotemark[6],
     Florent Bédécarrats\footnotemark[5]\footnotemark[6],
     Ingrid Dallmann\footnotemark[7],
     Holimalala Randriamanampisoa\footnotemark[1]\footnotemark[3]\footnotemark[6] \\
@@ -223,7 +230,7 @@
 Terrestrial Protected Areas in Madagascar based on large national
 surveys}
 \author{Iriana
-Razafimahenina\footnotemark[1]\footnotemark[2]\footnotemark[3]\footnotemark[4] \and Florent
+Razafimahenina\footnotemark[1]\footnotemark[2]\footnotemark[3]\footnotemark[4]\footnotemark[5]\footnotemark[6] \and Florent
 Bédécarrats\footnotemark[5]\footnotemark[6] \and Ingrid
 Dallmann\footnotemark[7] \and Holimalala
 Randriamanampisoa\footnotemark[1]\footnotemark[3]\footnotemark[6]}
@@ -335,14 +342,14 @@ of the population living below the international poverty line in the
 world (Conceição (2024), p.~298-99). In 2008, terrestrial protected
 areas covered 3.6\% of Madagascar and 9\% of the population lived within
 10 km of a protected area. Today, they cover 10.8\% and 28\% of the
-population live within 10 km of protected
-areas\textsuperscript{\hyperref[_ftn1]{{[}1{]}}}. Madagascar is also
-characterized by a low state capacity (Hanson \& Sigman, 2021), which
-makes it difficult to implement conservation and sustainable development
-policies and the social measures that should accompany them. These
-factors, combined with the high dependence of the rural population on
-natural resources, mean that the impacts of protected areas are
-potentially different from those observed in less precarious contexts.
+population live within 10 km of protected areas\footnotemark[8].
+Madagascar is also characterized by a low state capacity (Hanson \&
+Sigman, 2021), which makes it difficult to implement conservation and
+sustainable development policies and the social measures that should
+accompany them. These factors, combined with the high dependence of the
+rural population on natural resources, mean that the impacts of
+protected areas are potentially different from those observed in less
+precarious contexts.
 
 However, empirical studies at the national scale are almost non-existent
 for Madagascar. None of the quantitative impact evaluations identified
@@ -366,11 +373,9 @@ procedure we propose here could be replicated in other countries,
 starting with the 39 countries that have at least three geolocated DHS
 surveys. This approach paves the way for a more systematic evaluation of
 the impact of protected areas, taking into account the specific context
-of each country.
+of each country.y.
 
-\hyperref[_ftnref1]{{[}1{]}}~~~~ Calculations by the authors based on
-the location of the DHS survey clusters. The detailed calculation is
-provided as supplementary material to the study.
+\footnotetext[8]{ Calculations by the authors based on the location of the DHS survey clusters. The detailed calculation is provided as supplementary material to the study.}
 
 \section{Research Design}\label{research-design}
 
@@ -408,19 +413,195 @@ household, based on the subsidized price of equivalent treatments in the
 malagasy market (Golden et al., 2012).
 
 Several factors that could help improve livelihoods through conservation
-appear to be fragile in Madagascar, starting with tourism. Naidoo et al.
-(2019) aggregate data from DHS surveys conducted between 2001 and 2011
-in 34 developing countries. Their study is based on matching households
-near and far from protected areas, but with no pre-post conservation
-comparison. They highlight positive impacts, but only for a subset of
-protected areas `with documented
-tourism'\textsuperscript{\hyperref[sdfootnote1sym]{1}}. According to
-their study, households living near the protected areas `with
-tourism'~are 17\% wealthier and 16\% less likely to be poor than similar
-households living far from these areas.
+appear to be fragile in Madagascar, starting with tourism. Naidoo et
+al.~(2019) aggregate data from DHS surveys conducted between 2001 and
+2011 in 34 developing countries. Their study is based on matching
+households near and far from protected areas, but with no pre-post
+conservation comparison. They highlight positive impacts, but only for a
+subset of protected areas `with documented tourism'\footnotemark[9].
+According to their study, households living near the protected areas
+`with tourism'~are 17\% wealthier and 16\% less likely to be poor than
+similar households living far from these areas.
 
-\hyperref[sdfootnote1anc]{1}The source used to consider that va PA has
-`documented tourism' is not reported in Naidoo et al 2019.
+\footnotetext[9]{The source used to consider that va PA has ‘documented tourism’ is not reported in Naidoo et al 2019.}
+
+However, tourism in Madagascar's protected areas remains low. According
+to data from Madagascar National Parks (MNP), only 7 protected areas
+recorded more than 10,000 visitors in 2023 (with a maximum of 30,744 in
+Isalo), which is low compared to the average of 356,405 visitors per
+year and per PA recorded in 929 PAs worldwide in the global study by
+Chung et al. (2018). When new protected areas are created in Madagascar,
+compensation mechanisms for local populations remain rare, ineffective
+and insufficient (Bertrand et al., 2012; Rivière, 2017). The most
+in-depth study on this subject, conducted by Poudyal et al. (2018) with
+support from the World Bank, focuses on the Ankeniheny Zahamena Corridor
+(CAZ), created in 2015 to connect several existing protected areas. Five
+study sites were selected: Two adjacent to the new CAZ protected areas
+(one eligible for compensation, the other not), two adjacent to
+long-established protected areas, and one far from the forest boundary.
+The median cost of the conservation restriction is estimated at USD
+2,375 per household per year, representing 27\% to 84\% of the average
+annual income. The amounts set aside to compensate beneficiary
+households were assessed to be insufficient relative to the losses
+incurred, and 50\% of households eligible for compensation received
+nothing (Poudyal et al., 2016, 2018).
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Hypothesis 1:} Protected areas in Madagascar, by limiting
+  access to natural resources, have negative impacts on the well-being
+  of nearby households that often exceed the benefits of compensation
+  and ecosystem services, with more adverse impacts than in other
+  countries.
+\end{itemize}
+
+The impact mechanisms represented in \autoref{fig:logic_diagram} are
+likely to affect households differently depending on their prior
+characteristics. Compensation measures are generally implemented in the
+form of projects to promote income-generating activities (agriculture,
+livestock, handicrafts) in surrounding communities (Poudyal et al.,
+2018). In the context of such development projects, individuals known as
+`development brokers' frequently emerge as intermediaries between local
+communities and implementing organizations. By mobilizing their social
+networks and specific skills, these brokers manage to capture a
+disproportionate share of the benefits of interventions, whether in form
+of income or access to exclusive opportunities. This dynamic can
+reinforce pre-existing inequalities within communities, limiting the
+access of the most vulnerable households to the expected benefits of
+compensation programs.
+
+Although tourism development is often presented as an opportunity for
+economic growth, it also tends to exacerbate socioeconomic inequalities,
+particularly in developing countries. Adeniyi et al. (2024) show that in
+Southern Africa, tourism can initially exacerbate inequalities by
+concentrating benefits in the most attractive regions, while leaving
+marginalized communities out of the economic benefits. According to
+Ghosh and Mitra (2021) the relationship between tourism and inequality
+follows an inverted Kuznets curve dynamic in developing countries, when
+tourism remains moderate, its growth reduces binequalities, but when
+tourism becomes massive, further expansion worsens inequalities.
+Finally, Xuanming et al. (2024) point out that while tourism helps to
+improve certain socioeconomic indicators, it can also generate
+inflationary pressures and strain local resources, particularly
+affecting the most vulnerable households.
+
+\textbf{Hypothesis 2}: Protected areas exacerbate economic inequalities
+among neighboring communities by creating opportunities that mainly
+benefit individuals with a higher educational level or a dominant
+position in the community, allowing them access to rents and jobs
+related to tourism and associated activities.
+
+Protected areas IUCN status is frequently used to explain differences in
+effectiveness between them. For example, Naidoo et al. (2019) show that
+multiple-use protected areas (statuses V and VI) tend to have more
+beneficial effects than strict areas (statuses I to IV), partly due to
+greater flexibility in integrating local needs. Beyond status alone,
+governance plays a central role. Eklund et al. (2017) highlight the
+importance of transparent and inclusive structures to maximize the
+positive effects of protected areas on conservation and social justice.
+Similarly, Eklund et al. (2019) call for management approaches to be
+adapted to local contexts, with greater involvement of communities in
+decision-making processes, to better reconcile conservation and
+development objectives.
+
+This diversity is particularly evident in Madagascar. Although governed
+by similar formal statutes, protected areas follow different paths
+depending on the local context and the way in which they are
+implemented. Froger and Méral (2009) show that the early initiatives of
+shared governance, gradually introduced with in-depth mediation efforts,
+achieved encouraging results by strengthening local community support.
+However, from the 2000s onward, the accelerated deployment of management
+transfers, driven by quantitative targets, often led to hasty and less
+contextually adapted implementations, undermining the effectiveness of
+these mechanisms. These experiences demonstrate that, beyond the
+protected area status, their establishment period, management approach,
+and level of community participation significantly influence their
+socio-economic impacts.
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Hypothesis 3}: The impacts of protected areas on well-being
+  and inequalities are heterogeneous, and some protected areas with good
+  levels of local community participation manage to generate greater
+  benefits and distribute them more equitably.
+\end{itemize}
+
+\subsection{Basic methodological framework / identification
+strategy}\label{basic-methodological-framework-identification-strategy}
+
+Our evaluative approach is based on a counterfactual measure that
+estimates the causal effect of the treatment, in this case the presence
+of protected areas. The counterfactual measure corresponds to a
+hypothetical scenario describing what would have happened if the
+intervention under study had not taken place. This approach is based on
+a comparison between a treatment group (a protected areas) and a control
+group (unprotected areas with characteristics very similar to those of
+the protected areas). The study thus fits within the framework of
+Rubin's causal model Rubin (1974), according to which there are several
+hypothetical outcomes depending on exposure to the treatment. To ensure
+comparability between groups, matching techniques are used to assign
+each unit in the treatment group to a unit with the same observable
+characteristics in the control group. Using matching increases the
+credibility of research results and reduces endogeneity problems (Ma et
+al., 2020).
+
+We subsequently use the difference-in-difference method to estimate the
+causal effect attributable to the creation of protected areas. This
+method allows us to compare the observed changes in the treatment group
+and control group, while compensating for pre-existing differences
+between these two groups. By comparing the differences in local
+households livelihood before and after the creation of the protected
+areas, we isolate the specific effect of the creation of these protected
+areas. Matching and difference-in-difference methods are often used
+together to reduce selection bias. Several studies have used this
+combination of methods to evaluate the impact of conservation on land
+use and livelihoods (Ma et al., 2020; Schleicher et al., 2020).
+
+\subsection{Intervention}\label{intervention}
+
+This study evaluates the impact of terrestrial protected areas creation
+on rural household well-being between 2008 and 2021. These time frames
+were chosen on the basis of the availability of geolocalised data on
+household living conditions and coincide with a period of strong
+expansion of protected areas in the country, as shown in
+
+\begin{figure}[H]
+    \centering %Centre l'image horizontalement sur la page
+    \includegraphics[width=0.8\linewidth]{C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Pre-analysis-plan/images/Figure 2_WU_21.png}  %contrôle de la taille
+    \caption{Evolution of protected areas in Madagascar and study period}
+    \caption*{\textit{Source:Calculations by authors based on data from the Service de la Gouvernance des Aires Protégées (SGAP) of the Ministère de l’environnement et Développement Durable (MEDD)}} %légende
+    \label{fig:evol_diagram} %référencement dans le texte
+\end{figure}
+
+Protected areas in Madagascar were first created in 1927 under the
+French colonial administration and, until the early 2000s, were mainly
+characterized by strict conservation (IUCN statuses I, II, and IV). At
+the fifth IUCN Parks Summit in Durban in 2003, the Malagasy government
+committed to a tripling of protected areas. The declaration led to a
+wave of protected area creation, with 28 provisional creation decrees
+published between April 2006 and December 2007, and a global decree
+bringing the number of new protected areas to 97 in 2008. These decrees
+did not designate a manager, leaving it to the Ministry of the
+Environment to appoint one. This seems to have been the general
+practice, and managers were in place in the majority of the newly
+protected areas in the following years. However, it was not until 2015
+that a final decree ratified these creations. Some of these protected
+areas were the subject of early management transfer decrees, between
+2011 and 2015. Some uncertainty remains about the exact date of these
+early transfers, and the fact that our study period covers a wider
+interval (2008-2021) compensates for this inaccuracy in the start date
+of treatment, i.e actual conservation.
+
+\hyperref[Marque-pageux5cux25203]{Table 1} presents the distribution of
+protected areas ( in number and area) according to their period of
+designation by decree, taking 2008 as the reference year. In the
+treatment period (2008 to 2021), 71 protected areas were created
+covering 47,282 km².
+
+\section*{Bibliography}\label{bibliography}
+\addcontentsline{toc}{section}{Bibliography}
 
 \phantomsection\label{refs}
 \begin{CSLReferences}{1}{0}
@@ -431,9 +612,55 @@ J., Hutton, J., Roe, D., Vira, B., \& Wolmer, W. (2004). Biodiversity
 \emph{306}(5699), 1146--1149.
 \url{https://doi.org/10.1126/science.1097920}
 
+\bibitem[\citeproctext]{ref-adeniyi_tourism-income_2024}
+Adeniyi, O., Adekunle, W., Afolabi, J., \& Kumeka, T. T. (2024).
+Tourism-income inequality {Nexus} in {Africa}: Evidence from {SADC}
+countries. \emph{Current Issues in Tourism}, \emph{27}(18), 2899--2917.
+\url{https://doi.org/10.1080/13683500.2023.2227377}
+
+\bibitem[\citeproctext]{ref-bertrand_contre_2012}
+Bertrand, A., Serpantié, G., Randrianarivelo, G., Montagne, P.,
+Toillier, A., Karpe, P., Andriambolanoro, D., \& Derycke, M. (2012).
+Contre un retour aux barrières~: Quelle place pour la gestion
+communautaire dans les nouvelles aires protégées malgaches~? \emph{Les
+Cahiers d'Outre-Mer}, \emph{257}(1), 85--123.
+\url{https://doi.org/10.4000/com.6493}
+
+\bibitem[\citeproctext]{ref-chung_global_2018}
+Chung, M. G., Dietz, T., \& Liu, J. (2018). Global relationships between
+biodiversity and nature-based tourism in protected areas.
+\emph{Ecosystem Services}, \emph{34}, 11--23.
+\url{https://doi.org/10.1016/j.ecoser.2018.09.004}
+
 \bibitem[\citeproctext]{ref-conceicao_breaking_2024}
 Conceição, P. (Ed.). (2024). \emph{Breaking the gridlock: {Reimagining}
 cooperation in a {Polarized} world}. UNDP.
+
+\bibitem[\citeproctext]{ref-eklund_quality_2017}
+Eklund, J., \& Cabeza, M. (2017). Quality of governance and
+effectiveness of protected areas: Crucial concepts for conservation
+planning. \emph{Annals of the New York Academy of Sciences},
+\emph{1399}(1), 27--41. \url{https://doi.org/10.1111/nyas.13284}
+
+\bibitem[\citeproctext]{ref-eklund_what_2019}
+Eklund, J., Coad, L., Geldmann, J., \& Cabeza, M. (2019). What
+constitutes a useful measure of protected area effectiveness? {A} case
+study of management inputs and protected area impacts in {Madagascar}.
+\emph{Conservat Sci and Prac}, \emph{1}(10), e107.
+\url{https://doi.org/10.1111/csp2.107}
+
+\bibitem[\citeproctext]{ref-froger_temps_2009}
+Froger, G., \& Méral, P. (2009). Les temps de la politique
+environnementale à {Madagascar} : Entre continuité et bifurcations. In
+\emph{Diversité des politiques de développement durable : Temporalités
+et durabilités en conflit à {Madagascar}, au {Mali} et au {Mexique}}
+(pp. 45--67). Karthala ; GEMDEV.
+\url{https://www.documentation.ird.fr/hor/fdi:010048701}
+
+\bibitem[\citeproctext]{ref-ghosh_tourism_2021}
+Ghosh, S., \& Mitra, S. K. (2021). Tourism and inequality: {A} relook on
+the {Kuznets} curve. \emph{Tourism Management}, \emph{83}, 104255.
+\url{https://doi.org/10.1016/j.tourman.2020.104255}
 
 \bibitem[\citeproctext]{ref-golden_economic_2014}
 Golden, C. D., Bonds, M. H., Brashares, J. S., Rodolph Rasolofoniaina,
@@ -469,6 +696,12 @@ areas increase household income? {Evidence} from a {Meta}-{Analysis}.
 \emph{World Development}, \emph{159}, 106024.
 \url{https://doi.org/10.1016/j.worlddev.2022.106024}
 
+\bibitem[\citeproctext]{ref-ma_protected_2020}
+Ma, B., Zhang, Y., Hou, Y., \& Wen, Y. (2020). Do {Protected} {Areas}
+{Matter}? {A} {Systematic} {Review} of the {Social} and {Ecological}
+{Impacts} of the {Establishment} of {Protected} {Areas}. \emph{IJERPH},
+\emph{17}(19), 7259. \url{https://doi.org/10.3390/ijerph17197259}
+
 \bibitem[\citeproctext]{ref-mammides_evidence_2020}
 Mammides, C. (2020). Evidence from eleven countries in four continents
 suggests that protected areas are not associated with higher poverty
@@ -502,6 +735,45 @@ Neudert, R., Ganzhorn, J. U., \& Waetzold, F. (2017). Global benefits
 and local costs--{The} dilemma of tropical forest conservation: {A}
 review of the situation in {Madagascar}. \emph{Environmental
 Conservation}, \emph{44}(1), 82--96.
+
+\bibitem[\citeproctext]{ref-poudyal_household_2018}
+Poudyal, M., Rakotonarivo, O. S., Razafimanahaka, J. H., Hockley, N., \&
+Jones, J. P. G. (2018). Household economy, forest dependency \&
+opportunity costs of conservation in eastern rainforests of
+{Madagascar}. \emph{Sci Data}, \emph{5}(1), 180225.
+\url{https://doi.org/10.1038/sdata.2018.225}
+
+\bibitem[\citeproctext]{ref-poudyal_can_2016}
+Poudyal, M., Ramamonjisoa, B. S., Hockley, N., Rakotonarivo, O. S.,
+Gibbons, J. M., Mandimbiniaina, R., Rasoamanana, A., \& Jones, J. P.
+(2016). Can {REDD}+ social safeguards reach the `right'people? {Lessons}
+from {Madagascar}. \emph{Global Environmental Change}, \emph{37},
+31--42.
+\url{https://www.sciencedirect.com/science/article/pii/S095937801630005X}
+
+\bibitem[\citeproctext]{ref-riviuxe8re2017}
+Rivière, M. (2017). \emph{Les (dé)connexions du développement :
+ethno-géographie systémique de l'aide au développement et à la
+conservation forestière à Amindrabe, Madagascar} {[}PhD thesis{]}.
+\url{https://theses.hal.science/tel-01720849}
+
+\bibitem[\citeproctext]{ref-rubin_estimating_1974}
+Rubin, D. B. (1974). Estimating causal effects of treatments in
+randomized and nonrandomized studies. \emph{Journal of Educational
+Psychology}, \emph{66}(5), 688--701.
+\url{https://doi.org/10.1037/h0037350}
+
+\bibitem[\citeproctext]{ref-schleicher_statistical_2020-1}
+Schleicher, J., Eklund, J., D. Barnes, M., Geldmann, J., Oldekop, J. A.,
+\& Jones, J. P. (2020). Statistical matching for conservation science.
+\emph{Conservation Biology}, \emph{34}(3), 538--549.
+
+\bibitem[\citeproctext]{ref-xuanming_impact_2024}
+Xuanming, P., Dossou, T. A. M., Dossou, K. P., \& Alinsato, A. S.
+(2024). The impact of tourism development on social welfare in {Africa}:
+Quantile regression analysis. \emph{Current Issues in Tourism},
+\emph{27}(7), 1159--1172.
+\url{https://doi.org/10.1080/13683500.2023.2214351}
 
 \end{CSLReferences}
 
