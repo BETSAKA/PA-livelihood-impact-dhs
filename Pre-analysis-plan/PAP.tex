@@ -146,8 +146,8 @@
 %Insertion des tableaux
 \usepackage{multirow} % Ajout du package pour multirow
 \usepackage{booktabs} % Amélioration du rendu des tableaux
-\usepackage{siunitx}     % Pour formater les nombres (espaces entre milliers)
-\usepackage{lmodern}     % Pour des polices plus nettes
+\usepackage{siunitx}  % Pour formater les nombres (espaces entre milliers)
+\usepackage{lmodern}  % Pour des polices plus nettes
 
 
 %Personnalisation des notes de bas de page
@@ -285,7 +285,7 @@ surveys' \href{https://osf.io/bgu5n/}{https://osf.io/bgu5n/}
 
 \newpage
 
-\textbf{Proposed timeline}
+\bf{Proposed timeline}
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5972}}
@@ -608,12 +608,18 @@ early transfers, and the fact that our study period covers a wider
 interval (2008-2021) compensates for this inaccuracy in the start date
 of treatment, i.e actual conservation.
 
-\ref{tab:protected_areas} presents the distribution of protected areas (
-in number and area) according to their period of designation by decree,
-taking 2008 as the reference year. In the treatment period (2008 to
-2021), 71 protected areas were created covering 47,282 km².
+\autoref{tbl-tab:protected_areas} presents the distribution of protected
+areas ( in number and area) according to their period of designation by
+decree, taking 2008 as the reference year. In the treatment period (2008
+to 2021), 71 protected areas were created covering 47,282 km².
 
-\begin{table}[h]
+\begin{table}
+
+\caption{\label{tbl-tab:protected_areas}Number and area of protected areas by enactment period}
+
+\centering{
+
+[H]
     \centering
     \captionsetup{font=small, labelfont=bf} % Amélioration de la légende
     \sisetup{group-separator = {\,}} % Séparateur des milliers
@@ -634,13 +640,16 @@ taking 2008 as the reference year. In the treatment period (2008 to
     \end{tabular}
     
     
-    \caption{Number and area of protected areas by enactment period}
+    
     
     
      \caption*{\textit{Source: Calculations by authors based on data from the Service de la Gouvernance des Aires Protégées (SGAP) of the Ministère de l’environnement et Développement Durable (MEDD)}}
      
      
-\end{table}
+
+}
+
+\end{table}%
 
 \newpage
 

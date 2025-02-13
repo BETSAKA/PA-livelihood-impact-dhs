@@ -50,8 +50,8 @@ header-includes: |
   %Insertion des tableaux
   \usepackage{multirow} % Ajout du package pour multirow
   \usepackage{booktabs} % Amélioration du rendu des tableaux 
-  \usepackage{siunitx}     % Pour formater les nombres (espaces entre milliers)
-  \usepackage{lmodern}     % Pour des polices plus nettes
+  \usepackage{siunitx}  % Pour formater les nombres (espaces entre milliers)
+  \usepackage{lmodern}  % Pour des polices plus nettes
 
 
   %Personnalisation des notes de bas de page
@@ -107,7 +107,7 @@ JEL codes : Q57, I31, C31, Q56, O55
 
 \newpage
 
-**Proposed timeline**
+\bf{Proposed timeline}
 
 | Phases | Dates |
 |-------------------------------------------|-----------------------------|
@@ -191,9 +191,9 @@ This study evaluates the impact of terrestrial protected areas creation on rural
 
 Protected areas in Madagascar were first created in 1927 under the French colonial administration and, until the early 2000s, were mainly characterized by strict conservation (IUCN statuses I, II, and IV). At the fifth IUCN Parks Summit in Durban in 2003, the Malagasy government committed to a tripling of protected areas. The declaration led to a wave of protected area creation, with 28 provisional creation decrees published between April 2006 and December 2007, and a global decree bringing the number of new protected areas to 97 in 2008. These decrees did not designate a manager, leaving it to the Ministry of the Environment to appoint one. This seems to have been the general practice, and managers were in place in the majority of the newly protected areas in the following years. However, it was not until 2015 that a final decree ratified these creations. Some of these protected areas were the subject of early management transfer decrees, between 2011 and 2015. Some uncertainty remains about the exact date of these early transfers, and the fact that our study period covers a wider interval (2008-2021) compensates for this inaccuracy in the start date of treatment, i.e actual conservation.
 
-\ref{tab:protected_areas} presents the distribution of protected areas ( in number and area) according to their period of designation by decree, taking 2008 as the reference year. In the treatment period (2008 to 2021), 71 protected areas were created covering 47,282 km².
+\autoref{tbl-tab:protected_areas} presents the distribution of protected areas ( in number and area) according to their period of designation by decree, taking 2008 as the reference year. In the treatment period (2008 to 2021), 71 protected areas were created covering 47,282 km².
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \captionsetup{font=small, labelfont=bf} % Amélioration de la légende
     \sisetup{group-separator = {\,}} % Séparateur des milliers
@@ -215,7 +215,7 @@ Protected areas in Madagascar were first created in 1927 under the French coloni
     
     
     \caption{Number and area of protected areas by enactment period}
-    \label{tab:protected_areas}
+    \label{tbl-tab:protected_areas}
     
      \caption*{\textit{Source: Calculations by authors based on data from the Service de la Gouvernance des Aires Protégées (SGAP) of the Ministère de l’environnement et Développement Durable (MEDD)}}
      
@@ -308,7 +308,7 @@ The authoritative Malagasy body that administers data on the boundaries of Madag
 
 The data on the socioeconomic conditions of households and their geophysical environment described above are used to construct the variables in the impact evaluation model.
 
-### Outcome variables 
+### Outcome variables
 
 The outcome variable measures the impact of the intervention. In this analysis, two outcome variables are considered: household living standards (primary variable) and inequalities in living standards at the level of the surveyed localities (secondary variable).
 
@@ -318,7 +318,7 @@ The first outcome variable, household living standard, is estimated from the wea
 
 According to the DHS variable catalog by survey generation, the variable hv270a is available for the 2021 DHS survey, but not for previous years. However, the procedure for calculating the wealth index is well-documented [@rustein_dhs_2004], and the DHS program provides the SPSS codes for overall calculations encompassing both rural and urban areas (variable hv270), as well as the weights associated with each asset category for the variable hv270\footnotemark[10]. These elements will allow us to reproduce in R and validate the calculation of the variable hv270 (wealth index) in 2008 and 1997, and then extrapolate the method to obtain the variable hv270a (rural wealth index) for these years.
 
-\footnotetext[10]{Available 	at 	\href{https://www.dhsprogram.com/topics/wealth-index/Wealth-Index-Construction.cfm/}{https://www.dhsprogram.com/topics/wealth-index/Wealth-Index-Construction.cfm/}, consulted on 30/08/2024}
+\footnotetext[10]{Available     at  \href{https://www.dhsprogram.com/topics/wealth-index/Wealth-Index-Construction.cfm/}{https://www.dhsprogram.com/topics/wealth-index/Wealth-Index-Construction.cfm/}, consulted on 30/08/2024}
 
 -   **Secondary outcome variable: inequality of household living standards**
 
@@ -336,13 +336,13 @@ where $μ_W$ represents the average wealth index for all households surveyed in 
 
 Matching covariates are used to select units not exposed to conservation (control groups) that are comparable to the exposed units (treatment group). Appropriate covariates for the matching process are variables likely to influence both the probability of treatment (whether a protected area has been created near the household) and the outcome (household living standard and inequalities among households). The literature shows that protected areas tend to be created in less dense, less accessible, higher and steeper regions (Joppa and Pfaff 2010). These variables may also affect living standards : areas that are more dense, flat, low-lying and accessible (in terms of travel time and geography) tend to be wealthier (Gallup, Sachs, and Mellinger 1999). We will use the following list of matching variables :
 
--   [Forest cover rates in 2000]{.underline} correspond to the percentage coverage by vegetation with a height of 5 meters or more [@hansen2013]. This variable is provided by the Global Forest Change dataset, which indicates for each pixel of one arc-second (approximately 30 meters at the equator) an estimate of forest cover in 2000 [@hansen2013]. In Madagascar, as in other countries, protected areas have been preferentially created by targeting forest zones[@wilson2006; @carvalho_methods_2020]. Globally, Naidoo et al. -@naidoo_evaluating_2019 indicates that forest cover in an area is negatively correlated with the living standards of its inhabitants. 	
+-   [Forest cover rates in 2000]{.underline} correspond to the percentage coverage by vegetation with a height of 5 meters or more [@hansen2013]. This variable is provided by the Global Forest Change dataset, which indicates for each pixel of one arc-second (approximately 30 meters at the equator) an estimate of forest cover in 2000 [@hansen2013]. In Madagascar, as in other countries, protected areas have been preferentially created by targeting forest zones[@wilson2006; @carvalho_methods_2020]. Globally, Naidoo et al. -@naidoo_evaluating_2019 indicates that forest cover in an area is negatively correlated with the living standards of its inhabitants.
 
--   [Slope and elevation]{.underline} are calculated using a digital terrain model from NASA-SRTM (Shuttle Radar Topography data), 	which provides an elevation estimate for arc-second pixels [@nasa_jpl_nasadem_2020]. Slope is measured as a percentage for each plot, while elevation is measured in meters. These topological variables 	influence the location of protected areas [@joppa2010], as 	well as the agricultural potential of an area and therefore the living standards of rural populations [@canavire-bacarreza_estimating_2013]. 	
+-   [Slope and elevation]{.underline} are calculated using a digital terrain model from NASA-SRTM (Shuttle Radar Topography data), which provides an elevation estimate for arc-second pixels [@nasa_jpl_nasadem_2020]. Slope is measured as a percentage for each plot, while elevation is measured in meters. These topological variables influence the location of protected areas [@joppa2010], as well as the agricultural potential of an area and therefore the living standards of rural populations [@canavire-bacarreza_estimating_2013].
 
--   [Population density in 2000]{.underline} corresponds to the estimated number of inhabitants per km² based on Worldpop data. Worldpop data provide estimates of population density for the year 2000 at a spatial resolution of about 1 km. They use modeling 	techniques and combines census data with various geospatial datasets [@worldpop_global_2018]. 	
+-   [Population density in 2000]{.underline} corresponds to the estimated number of inhabitants per km² based on Worldpop data. Worldpop data provide estimates of population density for the year 2000 at a spatial resolution of about 1 km. They use modeling techniques and combines census data with various geospatial datasets [@worldpop_global_2018].
 
--   [Accessibility in 2000]{.underline} corresponds to the estimated travel time for households to the nearest cities, 	measured in minutes ; These accessibility data to cities are 	compiled by the Joint Research Center (JRC), with 2000 as the 	reference year [@uchida_agglomeration_2011]. Accessibility to cities 	determines the ability to benefit from the services, products and opportunities they offer and is therefore a key factor in 	determining living standards in rural areas [@weiss_global_2018; @instat2020]. 	
+-   [Accessibility in 2000]{.underline} corresponds to the estimated travel time for households to the nearest cities, measured in minutes ; These accessibility data to cities are compiled by the Joint Research Center (JRC), with 2000 as the reference year [@uchida_agglomeration_2011]. Accessibility to cities determines the ability to benefit from the services, products and opportunities they offer and is therefore a key factor in determining living standards in rural areas [@weiss_global_2018; @instat2020].
 
 Each of these variables will be calculated for a circle of 10 km radius around the GPS coordinates of the survey cluster.
 
