@@ -132,57 +132,63 @@
 \newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
 \newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
 
-\usepackage{times} % Police Times New Roman
-\usepackage{setspace} % Pour interligne
-\onehalfspacing % Interligne de 1.5
-\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref} % Activation des liens cliquable
+% Éviter les conflits de définition de commandes
+ \let\arrowvert\undefined
+ \let\Arrowvert\undefined
 
-%Packages pour les figures
-\usepackage{graphicx} %Inclusion d'images
-\usepackage{float} %Positionnement des figures
-\usepackage{caption} %Personnalisation des légendes
-\usepackage{subcaption} %Gestion des sous-figures
+ % Encodage et police
+ \usepackage[T1]{fontenc}
+ \usepackage{newtxtext,newtxmath} % Police Times New Roman
+ \usepackage{setspace} % Pour interligne
+ \onehalfspacing % Interligne de 1.5
+ \usepackage[colorlinks=true,linkcolor=blue, citecolor=blue,urlcolor=blue]{hyperref} % Activation des liens cliquable
 
-%Insertion des tableaux
-\usepackage{multirow} % Ajout du package pour multirow
-\usepackage{booktabs} % Amélioration du rendu des tableaux
-\usepackage{siunitx}  % Pour formater les nombres (espaces entre milliers)
-\usepackage{lmodern}  % Pour des polices plus nettes
+ %Packages pour les figures
+ \usepackage{graphicx} %Inclusion d'images
+ \usepackage{float} %Positionnement des figures
+ \usepackage{caption} %Personnalisation des légendes
+ \usepackage{subcaption} %Gestion des sous-figures
+
+ %Insertion des tableaux
+ \usepackage{multirow} % Ajout du package pour multirow
+ \usepackage{booktabs} % Amélioration du rendu des tableaux
+ \usepackage{siunitx}  % Pour formater les nombres (espaces entre milliers)
+ \usepackage{lmodern}  % Pour des polices plus nettes
 
 
-%Personnalisation des notes de bas de page
-\usepackage{footmisc} %Options avancées pour les notes de bas de page
-\renewcommand{\footnoterule}{\noindent\rule{0.3\linewidth}{0.4pt}\vspace{0.2cm}} %Ligne de séparation plus courte
-\renewcommand{\thefootnote}{\textsuperscript{\arabic{footnote}}} % Exposant pour les numéros de notes
-\interfootnotelinepenalty=1000 %Empêcher le découpage des notes sur plusieurs pages
+ %Personnalisation des notes de bas de page
+ \usepackage{footmisc} %Options avancées pour les notes de bas de page
+ \renewcommand{\footnoterule}{\noindent\rule{0.3\linewidth}{0.4pt}\vspace{0.2cm}} %Ligne de séparation plus courte
+ \renewcommand{\thefootnote}{\textsuperscript{\arabic{footnote}}} % Exposant pour les numéros de notes
+ \interfootnotelinepenalty=1000 %Empêcher le découpage des notes sur plusieurs pages
 
 
-\renewcommand{\maketitle}{
-  \begin{center}
-    \textbf{Journal of Development Economics} \\
-    \textbf{Registered Report Stage 1 : Proposal} \\[1em]
-    {\Huge \textbf{Conservation and development: Socioeconomic Impact evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys}} \\[1em]
-    \Large Iriana Razafimahenina\footnotemark[1]\footnotemark[2]\footnotemark[3]\footnotemark[4]\footnotemark[5]\footnotemark[6],
-    Florent Bédécarrats\footnotemark[5]\footnotemark[6],
-    Ingrid Dallmann\footnotemark[7],
-    Holimalala Randriamanampisoa\footnotemark[1]\footnotemark[3]\footnotemark[6] \\
-  \end{center}
-  \footnotetext[1]{\href{https://www.univ-antananarivo.mg}{University of Antananarivo}, Madagascar}
-  \footnotetext[2]{\href{https://www.universite-paris-saclay.fr}{University of Paris Saclay}, France}
-  \footnotetext[3]{Development Centre for Economic Studies and Research (CERED), Madagascar}
-  \footnotetext[4]{\href{https://www.ird.fr}{French National Research Institute for Sustainable Development (IRD)}, Madagascar}
-  \footnotetext[5]{\href{https://www.uvsq.fr}{University of Saint Quentin en Yvelines}, France}
-  \footnotetext[6]{\href{https://www.umi-source.uvsq.fr/}{UMI - Sustainability and Resilience (SOURCE)}, IRD, France}
-  \footnotetext[7]{\href{https://www.afd.fr}{Agence Française de Développement (AFD)}, France}
-}
-\usepackage{sectsty}
-\usepackage{titlesec}
-\newcommand{\mycenteredsection}[1]{\section*{\centering #1}}
-\usepackage{geometry}
-\geometry{margin=1.2in}
-\usepackage{ragged2e}
-\justifying
-\interfootnotelinepenalty=10000
+ \renewcommand{\maketitle}{
+   \begin{center}
+     \textbf{Journal of Development Economics} \\
+     \textbf{Registered Report Stage 1 : Proposal} \\[1em]
+     {\Huge \textbf{Conservation and development: Socioeconomic Impact evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys}} \\[1em]
+     \Large Iriana Razafimahenina\footnotemark[1]\footnotemark[2]\footnotemark[3]\footnotemark[4]\footnotemark[5]\footnotemark[6],
+     Florent Bédécarrats\footnotemark[5]\footnotemark[6],
+     Ingrid Dallmann\footnotemark[7],
+     Holimalala Randriamanampisoa\footnotemark[1]\footnotemark[3]\footnotemark[6] \\
+   \end{center}
+   \footnotetext[1]{\href{https://www.univ-antananarivo.mg}{University of Antananarivo}, Madagascar}
+   \footnotetext[2]{\href{https://www.universite-paris-saclay.fr}{University of Paris Saclay}, France}
+   \footnotetext[3]{Development Centre for Economic Studies and Research (CERED), Madagascar}
+   \footnotetext[4]{\href{https://www.ird.fr}{French National Research Institute for Sustainable Development (IRD)}, Madagascar}
+   \footnotetext[5]{\href{https://www.uvsq.fr}{University of Saint Quentin en Yvelines}, France}
+   \footnotetext[6]{\href{https://www.umi-source.uvsq.fr/}{UMI - Sustainability and Resilience (SOURCE)}, IRD, France}
+   \footnotetext[7]{\href{https://www.afd.fr}{Agence Française de Développement (AFD)}, France}
+ }
+ \usepackage{sectsty}
+ \usepackage{titlesec}
+ \newcommand{\mycenteredsection}[1]{\section*{\centering #1}}
+ \usepackage{geometry}
+ \geometry{margin=1.2in}
+ \usepackage{ragged2e}
+ \justifying
+ \interfootnotelinepenalty=10000
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
@@ -285,11 +291,11 @@ surveys' \href{https://osf.io/bgu5n/}{https://osf.io/bgu5n/}
 
 \newpage
 
-\bf{Proposed timeline}
+\textbf{Proposed timeline}
 
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5972}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.4028}}@{}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Phases
@@ -310,15 +316,16 @@ Submission to the journal & April 2025 \\
 
 \newpage
 
-\section{Introduction}\label{introduction}
+\section{\texorpdfstring{\textbf{Introduction}}{Introduction}}\label{introduction}
 
 The reconciliation between conservation and development has been a
-long-discussed issue within the scientific community (Adams et al.,
-2004) , but its importance has grown considerably over the past decade
-with the rapid expansion of protected areas (PAs). This issue is
-particularly relevant for all 195 COP15 signatory states, which have
-committed to increasing protected areas coverage to 30\% of terrestrial
-land by 2030.
+long-discussed issue within the scientific community The reconciliation
+between conservation and development has been a long-discussed issue
+within the scientific community (Adams et al., 2004), but its importance
+has grown considerably over the past decade with the rapid expansion of
+protected areas (PAs). This issue is particularly relevant for all 195
+COP15 signatory states, which have committed to increasing protected
+areas coverage to 30\% of terrestrial land by 2030.
 
 In theory, protected areas can have significant impacts on local
 livelihoods, both positive and negative. They are recognized as an
@@ -695,7 +702,7 @@ analysis.
 \subsection{Sample and statistical
 power}\label{sample-and-statistical-power}
 
-\subsubsection{sample}\label{sample}
+\subsubsection{Sample}\label{sample}
 
 The unit of analysis in our study is the household. This is indeed a
 level at which a significant portion of individual resources are pooled,
