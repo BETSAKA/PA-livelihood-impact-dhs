@@ -31,10 +31,12 @@ affiliations:
 format: 
   pdf:
     number-sections: true
+    
 documentclass: article
 longauthor: true
 keep-tex: true
 editor: visual
+tbl-cap-location: top
 header-includes: |
  % Éviter les conflits de définition de commandes
   \let\arrowvert\undefined
@@ -47,20 +49,28 @@ header-includes: |
   \onehalfspacing % Interligne de 1.5
   \usepackage[colorlinks=true,linkcolor=blue, citecolor=blue,urlcolor=blue]{hyperref} % Activation des liens cliquable
   
-  %Packages pour les figures
+  % Packages pour les figures
   \usepackage{graphicx} %Inclusion d'images
   \usepackage{float} %Positionnement des figures
   \usepackage{caption} %Personnalisation des légendes
   \usepackage{subcaption} %Gestion des sous-figures
   
-  %Insertion des tableaux
+  % Affichage en mode paysage d'une page de la section Appendix
+  \usepackage{pdflscape}  % Pour afficher en paysage
+  \usepackage{longtable}  % Permet les tableaux longs et multi-pages
+  \usepackage{booktabs}   % Pour des tableaux propres
+  \usepackage{array}      % Amélioration des tableaux
+  \usepackage{lscape}     % Mode paysage
+  \usepackage{tabularx}   % Colonnes auto-ajustées
+  
+  % Insertion des tableaux
   \usepackage{multirow} % Ajout du package pour multirow
   \usepackage{booktabs} % Amélioration du rendu des tableaux 
   \usepackage{siunitx}  % Pour formater les nombres (espaces entre milliers)
   \usepackage{lmodern}  % Pour des polices plus nettes
 
 
-  %Personnalisation des notes de bas de page
+  % Personnalisation des notes de bas de page
   \usepackage{footmisc} %Options avancées pour les notes de bas de page
   \renewcommand{\footnoterule}{\noindent\rule{0.3\linewidth}{0.4pt}\vspace{0.2cm}} %Ligne de séparation plus courte
   \renewcommand{\thefootnote}{\textsuperscript{\arabic{footnote}}} % Exposant pour les numéros de notes
@@ -149,8 +159,8 @@ Our first hypothesis concerns the overall impact of protected areas in the Malag
 
 \begin{figure}[H]
     \centering %Centre l'image horizontalement sur la page
-    \includegraphics[width=0.8\linewidth]{C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Pre-analysis-plan/images/figure 1_WU_21.png} %contrôle de la taille
     \caption{Logic diagram of the theory of change tested in the study }
+    \includegraphics[width=0.8\linewidth]{C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Pre-analysis-plan/images/figure 1_WU_21.png} %contrôle de la taille
     \caption*{\textit{Source:Authors}} %légende
     \label{fig:logic_diagram} %référencement dans le texte
 \end{figure}
@@ -189,9 +199,9 @@ This study evaluates the impact of terrestrial protected areas creation on rural
 
 \begin{figure}[H]
     \centering %Centre l'image horizontalement sur la page
-    \includegraphics[width=0.8\linewidth]{C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Pre-analysis-plan/images/Figure 2_WU_21.png}  %contrôle de la taille
     \caption{Evolution of protected areas in Madagascar and study period}
-    \caption*{\textit{Source: Calculations by authors based on data from the Service de la Gouvernance des Aires Protégées (SGAP) of the Ministère de l’environnement et Développement Durable (MEDD)}} %Source de la figure
+    \includegraphics[width=0.8\linewidth]{C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Pre-analysis-plan/images/Figure 2_WU_21.png}  %contrôle de la taille
+     \caption*{\textit{Source: Calculations by authors based on data from the Service de la Gouvernance des Aires Protégées (SGAP) of the Ministère de l’environnement et Développement Durable (MEDD)}} %Source de la figure
     \label{fig:evol_diagram} %référencement dans le texte
 \end{figure}
 
@@ -477,6 +487,58 @@ These results will contribute to the debate on the compatibility of conservation
 # Appendix
 
 **Appendix A**
+
+\begin{landscape} % Mode paysage
+\begin{table}[ht]
+    \centering
+    \footnotesize % Texte compact mais lisible
+    \renewcommand{\arraystretch}{1.1} % Espacement vertical réduit
+    \setlength{\tabcolsep}{2pt} % Réduction de l'espace horizontal entre colonnes
+    \renewcommand{\arrayrulewidth}{0.5mm} % Épaisseur des bordures
+
+    \caption{Comparable study parameters of the impact of spatialized policies on household livelihoods}
+    \label{tab:exemple}
+
+    \resizebox{\textwidth}{!}{ % Ajuste le tableau pour qu'il tienne sur la page
+    \begin{tabular}{|p{2.5cm}|p{4cm}|p{2.5cm}|p{3cm}|p{3cm}|p{3cm}|p{2.8cm}|p{2.8cm}|p{3cm}|p{3cm}|} 
+        \hline
+        \textbf{References} & \textbf{Title} & \textbf{Study coverage} & \textbf{Treatment variable} & \textbf{Outcome variable} & \textbf{Matching method} & \textbf{Matching variables} & \textbf{Control variables} & \textbf{Estimation methods} & \textbf{Comments} \\ 
+        \hline
+        
+        Naidoo et al. (2019) & Evaluating the impacts of protected areas on human well-being & 84 developing countries & Households near protected areas & Children height-for-age, stunting, Wealth index, Probability of being poor ($<$100) & Genetic matching & Tree cover, Distance to nearest road, Year of DHS survey Elevation, Annual precipitation, Population density, Education, level male-headed household, Anthropogenic pressure index, Urban household, Child breastfed time to nearest, water source & Tree cover, Distance to nearest road, Year of DHS survey Elevation, Annual precipitation, Population density, Education, level male-headed household, Anthropogenic pressure index, Urban household, Child breastfed time to nearest, water source & Bayesian hierarchical regression & Hypothesis: Households living within 10 km of a PA close enough to be affected by PA presence, No comparison before and after treatment \\ 
+        \hline
+        
+        Jung et al., 2019(Journal of the Association of Environmental and Resource Economists) & Evidence on Wealth-Improving Effects of Forest Concessions in Liberia & Liberia (2007-2013) & Households within 5 km of concession boundaries & Wealth score quartile (DHS) & Mahalanobis distance matching + caliper method after matching & under five, Household head sex, Household head age, livestock, Bank, Road, forest town, Other concessions & Religion, Education & Difference-in-difference(event study specification) & Mention quartiles but wealth index are normally available in quintiles  \\ 
+        \hline
+        
+        Nowakowski et al., 2023 (nature sustainability) & Co-benefits of marine protected areas for nature and people & MesoAmerican region (2005-2018) & Proximity to marine protected areas & Fish abundance (biomass, diet), Wealth index, Stunting of children (height for age) & Mahalanobis distance matching + caliper method after matching & Fish abundance, Coral cover, Reef, Habitat, Depth human Footprint Chlorophyll-a
+climate change, MPA fishing restrictions, MPA enforcement, MPA age, MPA area, Distance to coat, Natural land cover, travel time to cities, Population density, elevation, Education level, Country (HN), Distance to coast, MPA fishing restrictions & Fish abundance, Coral cover, Reef, Habitat, Depth human Footprint Chlorophyll-a climate change, MPA fishing restrictions, MPA enforcement, MPA age, MPA area, Distance to coat, Natural land cover, travel time to cities, Population density, elevation, Education level, Country (HN), Distance to coast, MPA fishing restrictions & Bayesian GLMMs & ~ \\ 
+         \hline
+        
+        Miranda et al, 2014(Inter-American Bank) & Effects of Protected Areas on Forest Cover Change and Local Communities & Peru (2000-2005) & Protected areas & Deforestation disturbance, Capita income, capita expenditure, poverty rate
+extreme poverty & Mahalanobis distance matching & Elevation, Slope, Aspect, Average precipitation, Average maximum temperature, Average mean temperature, Distance to nearest, Population center $> 10 000 hab$, Distance to nearest population center, Proportion land suitable for forestry, Water source in house, Electric lighting literacy, Primary school, Education, Employment in agriculture or forestry, Population density & Elevation, Slope, Aspect, Average precipitation, Average maximum temperature, Average mean temperature, Distance to nearest, Population center $> 10 000 hab$, Distance to nearest population center, Proportion land suitable for forestry, Water source in house, Electric lighting literacy, Primary school, Education, Employment in agriculture or forestry, Population density & ~ & ~ \\ 
+        \hline
+        
+        Canavire-Bacarrezaet al 2019 & Estimating the Impacts of Bolivia’s Protected Areas on Poverty & Bolivia (1992-2001) & Protected areas & poverty index & Genetic matching + caliper & Distance to major city, Roadless volume, Elevation, Slope, Forest cover & Distance to major city, Roadless volume, Elevation, Slope, Forest cover & Doubly Robust Matching & ~  \\ 
+        \hline
+        
+        Duan et al, 2017 (Elsevier) & Impacts 	of protected areas on local livelihoods: Evidence of giant panda biosphere reserves in Sichuan Province, China & China (2015) & Households near PAs & Household wealth index & Matching & annual income per capita, Participatory wealth ranking, crop production, Timber forest, NTFPs gathering, Animal husbandry, Non-farm work, Age of household head (yrs), Education of household head(yrs), Adult-equivalent units, Labor quantity, Resource variables, Total cropland area, Cropland area per plot, Total forestland area, Forestland area per plot, Slope of forestland, Distance 	of village center to nearest town, Number of clinics Number of roads & annual income per capita, Participatory wealth ranking, crop production, Timber forest, NTFPs gathering, Animal husbandry, Non-farm work, Age of household head (yrs), Education of household head(yrs), Adult-equivalent units, Labor quantity, Resource variables, Total cropland area, Cropland area per plot, Total forestland area, Forestland area per plot, Slope of forestland, Distance 	of village center to nearest town & Ordinary 	regression model & ~  \\
+        \hline
+        
+        Clements et al, 2014(Elsevier) & Impacts 	of Protected Areas on Local Livelihoods in Cambodia & Cambodia (2008) & Households near PA & BNS Score household rice harvest & Matching (with the package « nlme ») + 0,5 caliper +mixed effects models & Number families in the village in 2005, Distance to nearest all-weather road in 2005, Distance to nearest full-day market in 2005, Percentage of forest cover within 5 km of the village & Number families in the village in 2005, Distance to nearest all-weather road in 2005, Distance to nearest full-day market in 2005, Percentage of forest cover within 5 km of the village & ~ & ~ \\ 
+        \hline
+        
+        Den Braber et al, 2018
+(Conservation letters) & Impact of protected areas on poverty, extreme poverty, and inequality in Nepal & Népal (2001-2011) & Village development committees (VDCs) covering 32AP & poverty & genetic matching & levels of our poverty measures, Slope, Elevation, precipitation, VDC area, Forest cover travel time to the nearest PA Entrance, Major and minor trekking routes, Proportion of the VDC under Community, forest Management and the age of community, forestry arrangement, Population density, agricultural effort, International migration, District & levels of our poverty measures, Slope, Elevation, precipitation, VDC area, Forest cover travel time to the nearest PA Entrance, Major and minor trekking routes, Proportion of the VDC under Community, forest Management and the age of community, forestry arrangement, Population density, agricultural effort, International migration, District & OLS regression  matched binomial regression & ~ \\
+        \hline
+    \end{tabular}
+    } % Fin du resizebox
+    \caption*{\textit{Source: Authors}}
+\end{table}
+\end{landscape}
+
+
+\newpage
 
 # Administrative information
 
