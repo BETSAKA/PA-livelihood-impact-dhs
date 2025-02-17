@@ -55,17 +55,15 @@ header-includes: |
   \usepackage{caption} %Personnalisation des légendes
   \usepackage{subcaption} %Gestion des sous-figures
   
-  % Affichage en mode paysage d'une page de la section Appendix
-  \usepackage{pdflscape}  % Pour afficher en paysage
+  % Insertion des tableaux
+  \usepackage{multirow} % Ajout du package pour multirow
+  \usepackage{booktabs} % Amélioration du rendu des tableaux
   \usepackage{longtable}  % Permet les tableaux longs et multi-pages
   \usepackage{booktabs}   % Pour des tableaux propres
   \usepackage{array}      % Amélioration des tableaux
-  \usepackage{lscape}     % Mode paysage
   \usepackage{tabularx}   % Colonnes auto-ajustées
   
-  % Insertion des tableaux
-  \usepackage{multirow} % Ajout du package pour multirow
-  \usepackage{booktabs} % Amélioration du rendu des tableaux 
+  
   \usepackage{siunitx}  % Pour formater les nombres (espaces entre milliers)
   \usepackage{lmodern}  % Pour des polices plus nettes
 
@@ -107,6 +105,7 @@ header-includes: |
 
 bibliography: C://Users//irian//Documents//Statistiques//PA-livelihood-impact-dhs2//Pre-analysis-plan//references//references.bib
 csl: C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Pre-analysis-plan/apa.csl
+link-citations: true
 ---
 
 \mycenteredsection{Date of latest draft: 04/12/2024}
@@ -209,13 +208,14 @@ Protected areas in Madagascar were first created in 1927 under the French coloni
 
 \autoref{tbl-tab:protected_areas} presents the distribution of protected areas ( in number and area) according to their period of designation by decree, taking 2008 as the reference year. In the treatment period (2008 to 2021), 71 protected areas were created covering 47,282 km².
 
+%Réinitialisation du compteur des tableaux 
+\setcounter{table}{0} 
+
 \begin{table}[H]
     \centering
     \captionsetup{font=small, labelfont=bf} % Amélioration de la légende
     \sisetup{group-separator = {\,}} % Séparateur des milliers
     
-    %Réinitialisation du compteur des tableaux 
-    \setcounter{table}{0} \renewcommand{\thetable}{\arabic{table}}
     
     \begin{tabular}{lccc|ccc}
         \toprule
@@ -233,12 +233,12 @@ Protected areas in Madagascar were first created in 1927 under the French coloni
     \caption{Number and area of protected areas by enactment period}
     \label{tbl-tab:protected_areas}
     
+    \vspace{5pt} % Espacement entre la légende et la source
+    
      \caption*{\textit{Source: Calculations by authors based on data from the Service de la Gouvernance des Aires Protégées (SGAP) of the Ministère de l’environnement et Développement Durable (MEDD)}}
      
      
 \end{table}
-
-\newpage
 
 In the context of our study, the population considered as treated encompasses households living in rural areas within 10 km of a protected area created between 2008 and 2021, according to the GPS coordinates provided in the Demographic Health Surveys (DHS) data. These GPS coordinates correspond to the centroids of the enumeration areas surveyed. To protect respondent confidentiality, these coordinates are first randomly shifted using the following procedure: An offset angle between 0 and 360 is randomly drawn, then an offser distance is randomly drawn, between 0 and 2 km in urban areas and between 0 and 5 km in rural areas. For 1% of rural clusters, the distance drawn is between 0 and 10 km [@skiles_geographically_2013]. The 10 km threshold used in our analysis corresponds to the distance most commonly used in similar impact evaluations (see references in Appendix A). Households in the control group are those living in a rural area more than 10 km away from a protected area created between 2008 and 2021, and they exhibit very similar characteristics or share significant traits with households in the treatment group. To check the robustness of the analysis, we also test other distances (5 km and 15 km).
 
@@ -273,10 +273,13 @@ Prior the power calculation, we segmented the wealth index into percentiles rath
 
 With these characteristics, we calculate that the minimal detectable effect is 7.5, indicating that the study is able to detect a minimum change of 7.5 percentiles in the wealth index between the groups.
 
-\begin{table}[h]
+ \begin{table}[h]
     \centering
     \captionsetup{font=small, labelfont=bf} % Amélioration de la légende
     \sisetup{group-separator = {\,}} % Séparateur des milliers
+    
+    \caption{Statistical power of rural household percentile wealth index study}
+    \label{tab:statistical_power}
 
     \begin{tabular}{lc}
         \toprule
@@ -289,8 +292,6 @@ With these characteristics, we calculate that the minimal detectable effect is 7
         \bottomrule
     \end{tabular}
 
-    \caption{Statistical power of rural household percentile wealth index study}
-    \label{tab:statistical_power}
     
     \caption*{\textit{Source: Authors’ calculations from DHS 2021 data}}
     
@@ -488,21 +489,20 @@ These results will contribute to the debate on the compatibility of conservation
 
 **Appendix A**
 
-\begin{landscape} % Mode paysage
 \begin{table}[ht]
     \centering
-    \footnotesize % Texte compact mais lisible
-    \renewcommand{\arraystretch}{1.1} % Espacement vertical réduit
-    \setlength{\tabcolsep}{2pt} % Réduction de l'espace horizontal entre colonnes
-    \renewcommand{\arrayrulewidth}{0.5mm} % Épaisseur des bordures
+    \scriptsize % Texte plus compact que footnotesize
+    \renewcommand{\arraystretch}{1} % Espacement vertical légèrement réduit
+    \setlength{\tabcolsep}{1.5pt} % Réduction de l'espace horizontal entre colonnes
+    \renewcommand{\arrayrulewidth}{0.4mm} % Épaisseur des bordures légèrement réduite
 
     \caption{Comparable study parameters of the impact of spatialized policies on household livelihoods}
     \label{tab:exemple}
 
-    \resizebox{\textwidth}{!}{ % Ajuste le tableau pour qu'il tienne sur la page
-    \begin{tabular}{|p{2.5cm}|p{4cm}|p{2.5cm}|p{3cm}|p{3cm}|p{3cm}|p{2.8cm}|p{2.8cm}|p{3cm}|p{3cm}|} 
+    \resizebox{0.9\textwidth}{!}{ % Ajuste la largeur à 90% de la page
+    \begin{tabular}{|p{2cm}|p{3.5cm}|p{2cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|p{2.5cm}|} 
         \hline
-        \textbf{References} & \textbf{Title} & \textbf{Study coverage} & \textbf{Treatment variable} & \textbf{Outcome variable} & \textbf{Matching method} & \textbf{Matching variables} & \textbf{Control variables} & \textbf{Estimation methods} & \textbf{Comments} \\ 
+        \textbf{References} & \textbf{Title} & \textbf{Study coverage} & \textbf{Treatment variable} & \textbf{Outcome variable} & \textbf{Matching method} & \textbf{Matching variables} & \textbf{Control variables} & \textbf{Estimation methods} & \textbf{Comments} \\  
         \hline
         
         Naidoo et al. (2019) & Evaluating the impacts of protected areas on human well-being & 84 developing countries & Households near protected areas & Children height-for-age, stunting, Wealth index, Probability of being poor ($<$100) & Genetic matching & Tree cover, Distance to nearest road, Year of DHS survey Elevation, Annual precipitation, Population density, Education, level male-headed household, Anthropogenic pressure index, Urban household, Child breastfed time to nearest, water source & Tree cover, Distance to nearest road, Year of DHS survey Elevation, Annual precipitation, Population density, Education, level male-headed household, Anthropogenic pressure index, Urban household, Child breastfed time to nearest, water source & Bayesian hierarchical regression & Hypothesis: Households living within 10 km of a PA close enough to be affected by PA presence, No comparison before and after treatment \\ 
@@ -522,10 +522,10 @@ extreme poverty & Mahalanobis distance matching & Elevation, Slope, Aspect, Aver
         Canavire-Bacarrezaet al 2019 & Estimating the Impacts of Bolivia’s Protected Areas on Poverty & Bolivia (1992-2001) & Protected areas & poverty index & Genetic matching + caliper & Distance to major city, Roadless volume, Elevation, Slope, Forest cover & Distance to major city, Roadless volume, Elevation, Slope, Forest cover & Doubly Robust Matching & ~  \\ 
         \hline
         
-        Duan et al, 2017 (Elsevier) & Impacts 	of protected areas on local livelihoods: Evidence of giant panda biosphere reserves in Sichuan Province, China & China (2015) & Households near PAs & Household wealth index & Matching & annual income per capita, Participatory wealth ranking, crop production, Timber forest, NTFPs gathering, Animal husbandry, Non-farm work, Age of household head (yrs), Education of household head(yrs), Adult-equivalent units, Labor quantity, Resource variables, Total cropland area, Cropland area per plot, Total forestland area, Forestland area per plot, Slope of forestland, Distance 	of village center to nearest town, Number of clinics Number of roads & annual income per capita, Participatory wealth ranking, crop production, Timber forest, NTFPs gathering, Animal husbandry, Non-farm work, Age of household head (yrs), Education of household head(yrs), Adult-equivalent units, Labor quantity, Resource variables, Total cropland area, Cropland area per plot, Total forestland area, Forestland area per plot, Slope of forestland, Distance 	of village center to nearest town & Ordinary 	regression model & ~  \\
+        Duan et al, 2017 (Elsevier) & Impacts   of protected areas on local livelihoods: Evidence of giant panda biosphere reserves in Sichuan Province, China & China (2015) & Households near PAs & Household wealth index & Matching & annual income per capita, Participatory wealth ranking, crop production, Timber forest, NTFPs gathering, Animal husbandry, Non-farm work, Age of household head (yrs), Education of household head(yrs), Adult-equivalent units, Labor quantity, Resource variables, Total cropland area, Cropland area per plot, Total forestland area, Forestland area per plot, Slope of forestland, Distance  of village center to nearest town, Number of clinics Number of roads & annual income per capita, Participatory wealth ranking, crop production, Timber forest, NTFPs gathering, Animal husbandry, Non-farm work, Age of household head (yrs), Education of household head(yrs), Adult-equivalent units, Labor quantity, Resource variables, Total cropland area, Cropland area per plot, Total forestland area, Forestland area per plot, Slope of forestland, Distance     of village center to nearest town & Ordinary    regression model & ~  \\
         \hline
         
-        Clements et al, 2014(Elsevier) & Impacts 	of Protected Areas on Local Livelihoods in Cambodia & Cambodia (2008) & Households near PA & BNS Score household rice harvest & Matching (with the package « nlme ») + 0,5 caliper +mixed effects models & Number families in the village in 2005, Distance to nearest all-weather road in 2005, Distance to nearest full-day market in 2005, Percentage of forest cover within 5 km of the village & Number families in the village in 2005, Distance to nearest all-weather road in 2005, Distance to nearest full-day market in 2005, Percentage of forest cover within 5 km of the village & ~ & ~ \\ 
+        Clements et al, 2014(Elsevier) & Impacts    of Protected Areas on Local Livelihoods in Cambodia & Cambodia (2008) & Households near PA & BNS Score household rice harvest & Matching (with the package « nlme ») + 0,5 caliper +mixed effects models & Number families in the village in 2005, Distance to nearest all-weather road in 2005, Distance to nearest full-day market in 2005, Percentage of forest cover within 5 km of the village & Number families in the village in 2005, Distance to nearest all-weather road in 2005, Distance to nearest full-day market in 2005, Percentage of forest cover within 5 km of the village & ~ & ~ \\ 
         \hline
         
         Den Braber et al, 2018
@@ -535,8 +535,6 @@ extreme poverty & Mahalanobis distance matching & Elevation, Slope, Aspect, Aver
     } % Fin du resizebox
     \caption*{\textit{Source: Authors}}
 \end{table}
-\end{landscape}
-
 
 \newpage
 
