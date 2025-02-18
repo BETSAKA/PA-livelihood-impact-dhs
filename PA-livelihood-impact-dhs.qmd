@@ -1,0 +1,80 @@
+---
+title: "PA-livelihood-impact-dhs"
+author: "Iriana Razafimahenina"
+format: html
+editor: visual
+---
+
+## Environnement
+
+```{r}
+library(tidyverse) #Manipulation et visualisation des données
+library(haven) #Importation des données
+library(sf) #Analyse spatiale
+library(tmap) #Analyse cartographique
+library(codebook) #Documentation et mise en forme des données
+library(wdpar) #données de WDPA
+library(gt) #Mise en forme des tableaux
+library(writexl) #exportation de données 
+```
+
+# Data
+
+#Définition du chemin où se trouvent les données
+
+```{r}
+# Household data ---------------------------------------------------
+
+# Définition du chemin du dossier principal
+main_folder <- "../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data/"
+
+#Années d'étude : 1997, 2008 et 2021
+years <- c(1997, 2008, 2021)
+
+#Initialisation d'une liste pour stocker les données des ménages et les gps
+dhs_data <- list()
+gps_data <- list()
+
+#Chargement des données DHS et GPS pour chaque année
+
+ for (year in years) {
+   
+   #Définition des chemins d'accès des fichiers
+   data_path <- paste0(main_folder, "DHS_", year, "/")
+  gps_path <- paste0(data_path, "GPS/") 
+  #Vérification de l'existence du dossier
+  
+  if(dir.exists(data_path)){
+    
+    #Définition du fichier DHS des ménages 
+    dhs_file <- list.files(data_path, pattern = "*.DTA", full.names = TRUE )
+    
+    #Chargement des données des ménages si un fichier est trouvé
+  
+    if (length(dhs_file) > 0) {
+      dhs_data[[as.character(year)]] <- read_data(dhs_file[1])
+    } else {
+      warnings(paste("⚠️ Aucun fichier DHS trouvé pour", year))
+    }
+    
+    #Chargement des fichiers GPS (coordonnées des ménages)
+    gps_file <- list.files(gps_path, pattern = "*.shp$", full.names = TRUE)
+  if (length(gps_file) > 0)  {
+    gps_data[[as.character(year)]] <- st_read(gps_file[1], quiet = TRUE)
+  } else {
+    warning(paste("⚠️ Aucun fichier GPS trouvé pour", year))
+  }
+} else {
+   warning(paste("⚠️ Dossier non trouvé pour l'année", year))
+}
+ }
+
+#Vérification du chargement 
+print(dhs_data)
+print(gps_data)
+
+
+
+
+
+```
