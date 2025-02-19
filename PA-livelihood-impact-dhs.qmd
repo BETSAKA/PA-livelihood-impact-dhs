@@ -1,8 +1,19 @@
 ---
 title: "PA-livelihood-impact-dhs"
 author: "Iriana Razafimahenina"
-format: html
+format: 
+  html:
+  out-put-file: index.html
+  embed-ressources: true
+  standalone: true 
+  code-fold: true
+execute:
+  warning: false 
+  error: false
 editor: visual
+editor-options:
+  chunk_out_type: console
+bibliography: references.bib
 ---
 
 ## Environnement
