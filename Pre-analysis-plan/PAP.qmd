@@ -136,7 +136,7 @@ JEL codes : Q57, I31, C31, Q56, O55
 
 # **Introduction**
 
-The reconciliation between conservation and development has been a long-discussed issue within the scientific community The reconciliation between conservation and development has been a long-discussed issue within the scientific community [@adams_biodiversity_2004], but its importance has grown considerably over the past decade with the rapid expansion of protected areas (PAs). This issue is particularly relevant for all 195 COP15 signatory states, which have committed to increasing protected areas coverage to 30% of terrestrial land by 2030.
+The reconciliation between conservation and development has been a long-discussed issue within the scientific community [@adams_biodiversity_2004], but its importance has grown considerably over the past decade with the rapid expansion of protected areas (PAs). This issue is particularly relevant for all 195 COP15 signatory states, which have committed to increasing protected areas coverage to 30% of terrestrial land by 2030.
 
 In theory, protected areas can have significant impacts on local livelihoods, both positive and negative. They are recognized as an essential tool for biodiversity conservation [@maxwell_area-based_2020], but their creation can deprive nearby communities of access to natural resources (gathering, hunting, fishing, and medicinal plants), reduce the amount of land available and restrict economic activities (agriculture, livestock, construction) [@kandel_protected_2022]. Conversely, they can be accompanied by compensation measures (local development projects, cash transfers), generate economic benefits (jobs in protected areas, tourism), and enhance ecosystem services (increased water resources, erosion control, fire prevention) [@kandel_protected_2022].
 
@@ -208,8 +208,7 @@ Protected areas in Madagascar were first created in 1927 under the French coloni
 
 \autoref{tbl-tab:protected_areas} presents the distribution of protected areas ( in number and area) according to their period of designation by decree, taking 2008 as the reference year. In the treatment period (2008 to 2021), 71 protected areas were created covering 47,282 km².
 
-%Réinitialisation du compteur des tableaux 
-\setcounter{table}{0} 
+%Réinitialisation du compteur des tableaux \setcounter{table}{0}
 
 \begin{table}[H]
     \centering
@@ -273,7 +272,7 @@ Prior the power calculation, we segmented the wealth index into percentiles rath
 
 With these characteristics, we calculate that the minimal detectable effect is 7.5, indicating that the study is able to detect a minimum change of 7.5 percentiles in the wealth index between the groups.
 
- \begin{table}[h]
+\begin{table}[h]
     \centering
     \captionsetup{font=small, labelfont=bf} % Amélioration de la légende
     \sisetup{group-separator = {\,}} % Séparateur des milliers
