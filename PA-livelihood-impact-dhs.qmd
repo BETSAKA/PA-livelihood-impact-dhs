@@ -40,7 +40,7 @@ library(writexl) #exportation de données
 main_folder <- "../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data/"
 
 #Années d'étude : 1997, 2008 et 2021
-years <- c(1997, 2008, 2021)
+years <- c("1997", "2008", "2021")
 
 #Initialisation d'une liste pour stocker les données des ménages et les gps
 dhs_data <- list()
@@ -69,7 +69,7 @@ gps_data <- list()
     }
     
     #Chargement des fichiers GPS (coordonnées des ménages)
-    gps_file <- list.files(gps_path, pattern = "*.shp$", full.names = TRUE)
+    gps_file <- list.files(gps_path, pattern = "\\.shp$", full.names = TRUE)
   if (length(gps_file) > 0)  {
     gps_data[[as.character(year)]] <- st_read(gps_file[1], quiet = TRUE)
   } else {
