@@ -1,0 +1,124 @@
+---
+title: "PA-livelihood-impact-dhs (Step)"
+author: "Iriana Razafimahenina"
+format: html
+editor: visual
+---
+
+# Environnement
+
+Chargement des librairies nécessaires
+
+# Data
+
+Chargement des données:
+
+1.  données socioéconomiques des ménages (DHS),
+
+2.  données sur les aires protégées
+
+# Sample
+
+Définition du plan d'échantillonnage
+
+# Statistical power
+
+1.  Détermination de la probabilité à détecter un effet réel (fixée à 80 % avec un seuil de signification de 5%)
+
+2.  Estimation de la puissance statistique pour détecter un effet d'au moins 7.5 centiles dans l'indice de richesse
+
+# Buffer
+
+Création d'un buffer de 10 km autour des aires protégées
+
+dist = 1000
+
+# Treatment and Control groups assignment
+
+1.  Définition des groupes de traitement et des groupes de contrôle
+
+    Groupe de traitement: ménage dans ou au moins à 10 km des aires protégées
+
+    Groupe de contrôle: ménage à plus de 10 km des aires protégées
+
+2.  Vérification de l'appartenance des clusters et des ménages avec la zone tampon
+
+Comparaison des coordonnées des ménages avec la limite de 10 km pour identifier correctement ceux qui sont à l'intérieur ou à l'extérieur du buffer
+
+# Variables
+
+1.  Construction de la variable de résultat principale: wealth index
+
+    Transformation de wealth index en centiles
+
+    Référence: hv270a, disponible pour DHS 2021. DHS fournit également les codes SPSS pour pouvoir effectuer un calcul pour 1997 et 2008
+
+2.  Construction de la variable de résultat secondaire: Z score du wealth index
+
+# Matching
+
+Utilisation de la fonction de GenMatch() du package R MatchIt pour effectuer l'appariement
+
+[Exclusion]{.underline}:
+
+-   Ménages proches des aires protégées avant 2008
+
+-   ménages dans les zones urbaines
+
+1.  Construction des variables d'appariement
+
+    -   Chargement des données raster et extraction de la couverture forestière autour de chaque ménage
+
+    -   Chargement des données et extraction de elevation et slope
+
+    -   Chargement des données et extraction des données de densité de population
+
+    -   Chargement des données et extraction des données d'accessibilité
+
+2.  Construction des variables de contrôle
+
+    -   Vérification des valeurs manquantes
+
+    -   Chargement des données sur les précipitations et calcul de l'indice SPEI
+
+3.  Calcul de Mahalanobis Distance Matching + Caliper de 0.25 écart-type de la distance de Mahalanobis
+
+4.  Vérification de l'équilibre des covariables :
+
+    -   Avant matching
+
+        Evaluation du déséquilibre initial
+
+    -   Après matching:
+
+        -   Test de Standardized Mean Difference (SMD, cible **≤** 0.1)
+
+        -   Comparaison à partir du Q-Q Plot pour chaque covariable (dans le cas où le QQ plot se situe en diagonale, le quantile des 2 distributions sont similaires)
+
+# Difference-in-difference
+
+1.  Définition des périodes de traitement:
+
+    -   Pré-traitement: Aires protégées crées entre 1997 et 2008
+
+    -   Traitement: Aires protégées crées entre 2008 et 2021
+
+2.  Vérification de l'hypothèse de tendances parallèles
+
+    Visualisation des tendances avant 2008
+
+# Test de Robustesse
+
+1.  Comparaison des coefficients: test de \[0-5km\] et \[0-15\]
+
+2.  Test des 3 hypothèses à partir de la méthode "False Directory Rate" de Benjamini-Hochberg pour contrôler le risque découvertes dans les hypothèses secondaires
+
+3.  Approche de Pseudo Panel
+
+    -   Construction de cohorte de ménage
+
+    -   estimation d'un modèle à effet fixe pour corriger les biais liées aux variables non observés
+
+    -   Pondérer les observations en fonction de la taille des cohortes
+
+4.  Analyse de sensibilité de Rosenbaum
