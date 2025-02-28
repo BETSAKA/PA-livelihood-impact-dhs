@@ -1,8 +1,18 @@
 ---
 title: "PA-livelihood-impact-dhs (Step)"
 author: "Iriana Razafimahenina"
-format: html
+format: 
+  html:
+    code-summary: "voir le code" 
+    embed-resources: true 
+    code-fold: true
+  execute: 
+    warning: false
+    error: false
 editor: visual
+editor-options: 
+  chunk_output_type: console
+bibliography: references.bib
 ---
 
 # Environnement
