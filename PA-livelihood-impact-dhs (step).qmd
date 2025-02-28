@@ -18,6 +18,18 @@ bibliography: references.bib
 # Environnement
 
 Chargement des librairies nécessaires
+```{r}
+library(tidyverse) #Manipulation et visualisation des données
+library(haven) #Importation des données 
+library(writexl) #exportation de données
+library(sf) #Analyse des données spatiales
+library(tmap) #Analyse cartographique
+library(codebook) #Documentation et mise en forme des données
+library(gt) #Mise en forme des tableaux
+library(survey) #Analyse des données d'enquêtes 
+ 
+```
+
 
 # Data
 
