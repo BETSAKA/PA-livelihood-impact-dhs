@@ -3,17 +3,17 @@ title: "PA-livelihood-impact-dhs"
 author: "Iriana Razafimahenina"
 format: 
   html:
-  out-put-file: index.html
-  embed-ressources: true
-  standalone: true 
-  code-fold: true
-execute:
-  warning: false 
-  error: false
+   out-put-file: index.html
+   embed-resources: true
+   standalone: true
+   code-fold: true
+  execute: 
+   warning: false
+   error: false
 editor: visual
-editor-options:
-  chunk_out_type: console
-bibliography: references.bib
+editor-options: 
+   chunk_out_type: console
+Bibliography: references.bib
 ---
 
 ## Environnement
@@ -21,71 +21,54 @@ bibliography: references.bib
 ```{r}
 library(tidyverse) #Manipulation et visualisation des données
 library(haven) #Importation des données
-library(sf) #Analyse spatiale
+library(writexl) #Exportation des données
+library(sf) #Analyse des données spatiales
 library(tmap) #Analyse cartographique
-library(codebook) #Documentation et mise en forme des données
-library(wdpar) #données de WDPA
-library(gt) #Mise en forme des tableaux
-library(writexl) #exportation de données 
+library(codebook) #Documentation et mise en forme des données 
+library(gt) #Mise en forme des tableaux 
+library(survey) #Analyse des données d'enquêtes
+library(MatchIt) #Matching
+library(ggplot2) #Figure
+
 ```
 
-# Data
+## Data structuring
 
-#Définition du chemin où se trouvent les données
+Nous allons charger les données nécessaires à l'analyse.
+
+## Socioeconomic household data
 
 ```{r}
-# Household data ---------------------------------------------------
-
-# Définition du chemin du dossier principal
+#Définition du chemin du dossier principal
 main_folder <- "../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data/"
 
-#Années d'étude : 1997, 2008 et 2021
-years <- c("1997", "2008", "2021")
-
-#Initialisation d'une liste pour stocker les données des ménages et les gps
-dhs_data <- list()
-gps_data <- list()
-
-#Chargement des données DHS et GPS pour chaque année
-
- for (year in years) {
-   
-   #Définition des chemins d'accès des fichiers
-   data_path <- paste0(main_folder, "DHS_", year, "/")
-  gps_path <- paste0(data_path, "GPS/") 
-  #Vérification de l'existence du dossier
+#Load DHS data
+load_data <- function(year){
+  year_folder <- paste0(main_folder, "DHS_", year)
   
-  if(dir.exists(data_path)){
-    
-    #Définition du fichier DHS des ménages 
-    dhs_file <- list.files(data_path, pattern = "*.DTA", full.names = TRUE )
-    
-    #Chargement des données des ménages si un fichier est trouvé
+#Get the .shp (GPS) and .dta (household) file paths
   
-    if (length(dhs_file) > 0) {
-      dhs_data[[as.character(year)]] <- read_data(dhs_file[1])
-    } else {
-      warnings(paste("⚠️ Aucun fichier DHS trouvé pour", year))
-    }
-    
-    #Chargement des fichiers GPS (coordonnées des ménages)
-    gps_file <- list.files(gps_path, pattern = "\\.shp$", full.names = TRUE)
-  if (length(gps_file) > 0)  {
-    gps_data[[as.character(year)]] <- st_read(gps_file[1], quiet = TRUE)
-  } else {
-    warning(paste("⚠️ Aucun fichier GPS trouvé pour", year))
+  shp_path <- list.files(year_folder, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
+  
+  hr_path <- list.files(year_folder, pattern = ".*HR.*\\.dta$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
+  
+#Check that there is only one match per year
+  if(length(shp_path)!=1 | length(hr_path) != 1) {
+    stop(paste0("Erreur : ", length(shp_path), " fichier(s) .shp trouvés pour l'année", year, length(hr_path), " fichier(s) .dta trouvés pour l'année", year, " (attendu : 1 de chaque). Vérifiez le dossier."))
   }
-} else {
-   warning(paste("⚠️ Dossier non trouvé pour l'année", year))
+#Read the data
+  gps_data <- st_read(shp_path, quiet = TRUE) %>%
+    st_transform(4326) #Lecture du fichier .shp
+  
+  household_data <- read_dta(hr_path) #Lecture du fichier .dta
+
+#Retourner une liste contenant les deux jeux de données 
+  return(list(GPS = gps_data, Households = household_data))
 }
- }
-
-#Vérification du chargement 
-print(dhs_data)
-print(gps_data)
-
-
-
-
+  
+#Exécuter la fonction pour une année spécifique
+  dhs_1997 <- load_data(1997)
+  dhs_2008 <- load_data(2008)
+  dhs_2021 <- load_data(2021)
 
 ```
