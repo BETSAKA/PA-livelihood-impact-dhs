@@ -32,105 +32,99 @@ library(MatchIt) #Matching
 library(ggplot2) #Figure 
 ```
 
-# Data
+# Structuration des données 
 
-Chargement des données sur:
+## Données *socioéconomiques des ménages*
 
--   Conditions socioéconomiques des ménages (DHS): DHS 1997, DHS 2008, DHS 2021
+Données utilisées: *DHS 1997, DHS 2008, DHS 2021*
 
--   Environnement géophysique des ménages (mapme.biodiversity)
+Variables de résultat: niveau de vie des ménages et inégalité du niveau de vie
 
--   données sur les aires protégées: données de SGAP (SAPM)
+1.  *Récupération de la variable hv270a (wealth index de la zone rurale) pour l'année 2021*
 
-# Calcul initial
+2.  *Recalculer le wealth index hv270a pour 1997 et 2008*
 
-Filtrer les ménages ruraux et les ménages proches des aires protégées créées à partir de 2008
+3.  *Segmentation de wealth index en centiles*
 
-## Buffer
+4.  Calcul du Z score standardisé du wealth index
+
+5.  *Ajout des variables âges et sexes du chef de ménage dans l'analyse*
+
+## **Données sur l'environnement géophysique des ménages**
+
+Utilisation du Package R mapme.biodiversity
+
+1.  Chargement des données et extraction des données:
+
+    -   Couvert forestier en 2000 (Hansen et al.2013)
+
+    -   Pente et altitude (NASA SRTM)
+
+    -   Densité de population en 2000 (Worldpop)
+
+    -   Accessibilité en 2000 (JRC, Uchida et Nelson 2011)
+
+2.  Chargement des données sur les précipitations
+
+3.  Calcul de l'indice SPEI
+
+## Données sur les aires protégées 
+
+Utilisation des données de SGAP (SAPM)
+
+# Treatment and Control groups assignment
+
+-   [Groupe de traitement]{.underline}: ménage vivant dans ou à moins à 10 km des aires protégées entre 2008 et 2021
+
+-   [Groupe de contrôle]{.underline}: ménage vivant à plus de 10 km des aires protégées entre 2008 et 2021
+
+## Création du Buffer zone 
 
 -   Création d'un buffer de 10 km autour des aires protégées (dist = 1000)
 
-## Treatment and Control groups assignment
+## Sélection des ménages étudiées
 
--   [Groupe de traitement]{.underline}: ménage dans ou au moins à 10 km des aires protégées entre 2008 et 2021
+-   Ménages proches des aires protégées créées à partir de 2008
 
--   [Groupe de contrôle]{.underline}: ménage à plus de 10 km des aires protégées entre 2008 et 2021
+-   Ménages ruraux
 
-## Outcome variable
+# Estimation des effets par Matching
 
--   Variable de résultat principal: niveau de vie des ménages
+## Matching et optimisation de l'équilibre des groupes 
 
-    -   Récupération de la variable hv270a (wealth index de la zone rurale) pour l'année 2021
+1.  Utilisation du Genetic matching et du Mahalanobis Distance Matching avec la fonction de GenMatch() du package R MatchIt
 
-    -   Recalculer le wealth index hv270a pour 1997 et 2008
+2.  Application du caliper à un intervalle de 0.25 écart-type de la distance de Mahalanobis
 
-    -   Segmentation de wealth index en centiles
+## Vérification de l'équilibre des covariables :
 
--   Variable de résultat secondaire: inégalité du niveau de vie
-
-Calcul du Z score standardisé du wealth index
-
-## Matching variable
-
-Chargement des données et extraction des données:
-
--   Couvert forestier en 2000 (Hansen et al.2013)
-
--   Pente et altitude (NASA SRTM)
-
--   Densité de population en 2000 (Worldpop)
-
--   Accessibilité en 2000 (JRC, Uchida et Nelson 2011)
-
-## Control variable
-
--   Ajout des variables âges et sexes dans l'analyse
-
--   Chargement des données sur les précipitations et calcul de l'indice SPEI
-
-# Matching
-
-## Genetic matching 
-
--   Réalisation du matching avec la fonction de GenMatch() du package R MatchIt
-
--   Application de Mahalanobis Distance Matching
-
--   Utilisation du caliper à un intervalle de 0.25 écart-type de la distance de Mahalanobis
-
-## Analyse de l'équilibre des covariables :
-
--   Avant matching pour déterminer les déséquilibres initiaux à partir du test de Standardized Mean Difference (SMD)
+1.  Avant matching pour déterminer les déséquilibres initiaux à partir du test de Standardized Mean Difference (SMD)
 
     -   Si SMD proche de 0, il existe un bon équilibre entre les groupes pour la covariable
 
     -   Si SMD \> 0.1, le déséquilibre est significatif donc on augmentera l'intervalle des calipers afin d'obtenir un SMD **≤** 0.1)
 
--   Après matching: Test visuel sur la qualité du matching
+2.  Après matching: Test visuel sur la qualité du matching
 
-    Comparaison à partir du Q-Q Plot pour chaque covariable (dans le cas où le QQ plot se situe en diagonale, le quantile des 2 distributions sont similaires) \`\`\`
+    Comparaison à partir du Q-Q Plot pour chaque covariable (dans le cas où le QQ plot se situe en diagonale, le quantile des 2 distributions sont similaires)
 
-# Difference-in-difference
+# Estimation par la Difference-in-difference
 
-## Périodes de traitement
-
-Définition des périodes de traitement:
+## Définition des périodes de traitement
 
 -   Période de pré-traitement: Aires protégées crées entre 1997 et 2008
 
--   Période de post-traitement: Aires protégées crées entre 2008 et 2021 (71 AP crées sur 47 282 km²)
+-   Période de post-traitement: Aires protégées crées entre 2008 et 2021 (71 AP créées sur 47 282 km²)
 
-## Tendances parallèles
+## Vérification de l'hypothèse des tendances parallèles
 
-Vérification de l'hypothèse des tendances parallèles:
+1.  Création d'un groupe de traitement placebo basé sur les ménages de 1997 (traitement= ménages situés à **≤** 10 km des aires protégées créées entre 2008 et 2021)
 
--   Création d'un groupe de traitement placebo basé sur les ménages de 1997 (traitement= ménages situés à **≤** 10 km des aires protégées créées entre 2008 et 2021)
+2.  Appariement du groupe de traitement placebo avec un groupe de contrôle placebo
 
--   Apparier le groupe de traitement placebo avec un groupe de contrôle placebo
+3.  Représentation graphique de l'évolution des groupes en 1997, 2008 et 2021 pour une confirmation visuelle
 
--   Représentation graphique de l'évolution des groupes en 1997, 2008 et 2021 pour une confirmation visuelle
-
--   Effectuer un test placebo en faisant une estimation en double différence sur la période de pré-traitement (1997-2008): un effet non significatif confirmerait l'absence de tendances divergentes avant l'intervention
+4.  Effectuer un test placebo en faisant une estimation en double différence sur la période de pré-traitement (1997-2008): un effet non significatif confirmerait l'absence de tendances divergentes avant l'intervention
 
 ## Estimation du modèle DID
 
@@ -140,203 +134,151 @@ Estimation du modèle DID en utilisant des erreurs standards robustes aux corré
 
 -   Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
 
-# Tests de Robustesse
+# Tests de robustesse
 
-## Variation des tailles de buffer
+## Test de sensibilité aux tailles de buffer
 
-### Test pour une distance de 5 km 
+### Test pour une distance de 5 km
 
 #### Treatment and Control groups assignment
 
--   [Groupe de traitement]{.underline}: ménage dans ou au moins à 5 km des aires protégées entre 2008 et 2021
+-   [Groupe de traitement]{.underline}: ménage vivant dans ou à moins à 5 km des aires protégées entre 2008 et 2021
 
--   [Groupe de contrôle]{.underline}: ménage à plus de 5 km des aires protégées entre 2008 et 2021
+-   [Groupe de contrôle]{.underline}: ménage vivant à plus de 5 km des aires protégées entre 2008 et 2021
 
-#### Outcome variable
+#### Création du Buffer zone
 
--   Variable de résultat principal: niveau de vie des ménages
+-   Création d'un buffer de 5 km autour des aires protégées
 
-    -   Récupération de la variable hv270a (wealth index de la zone rurale) pour l'année 2021
+#### Sélection des ménages étudiées
 
-    -   Recalculer le wealth index hv270a pour 1997 et 2008
+Les ménages prises en compte dans l'analyse sont:
 
-    -   Segmentation de wealth index en centiles
+-   Les ménages proches des aires protégées créées à partir de 2008
 
--   Variable de résultat secondaire: inégalité du niveau de vie
+-   Les ménages ruraux
 
-Calcul du Z score standardisé du wealth index
+#### Estimation des effets par Matching
 
-#### Matching variable
+##### Matching et optimisation de l'équilibre des groupes
 
-Chargement des données et extraction des données:
+1.  Utilisation du Genetic matching et du Mahalanobis Distance Matching avec la fonction de GenMatch() du package R MatchIt
 
--   Couvert forestier en 2000 (Hansen et al.2013)
+2.  Application du caliper à un intervalle de 0.25 écart-type de la distance de Mahalanobis
 
--   Pente et altitude (NASA SRTM)
+##### Vérification de l'équilibre des covariables 
 
--   Densité de population en 2000 (Worldpop)
-
--   Accessibilité en 2000 (JRC, Uchida et Nelson 2011)
-
-#### Control variable
-
--   Ajout des variables âges et sexes dans l'analyse
-
--   Chargement des données sur les précipitations et calcul de l'indice SPEI
-
-#### Matching
-
-##### Genetic matching 
-
--   Réalisation du matching avec la fonction de GenMatch() du package R MatchIt
-
--   Application de Mahalanobis Distance Matching
-
--   Utilisation du caliper à un intervalle de 0.25 écart-type de la distance de Mahalanobis
-
-##### Analyse de l'équilibre des covariables :
-
--   Avant matching pour déterminer les déséquilibres initiaux à partir du test de Standardized Mean Difference (SMD)
+1.  Avant matching pour déterminer les déséquilibres initiaux à partir du test de Standardized Mean Difference (SMD)
 
     -   Si SMD proche de 0, il existe un bon équilibre entre les groupes pour la covariable
 
     -   Si SMD \> 0.1, le déséquilibre est significatif donc on augmentera l'intervalle des calipers afin d'obtenir un SMD **≤** 0.1)
 
--   Après matching: Test visuel sur la qualité du matching
+2.  Après matching: Test visuel sur la qualité du matching
 
     Comparaison à partir du Q-Q Plot pour chaque covariable (dans le cas où le QQ plot se situe en diagonale, le quantile des 2 distributions sont similaires) \`\`\`
 
-#### Difference-in-difference
+#### Estimation par la Difference-in-difference
 
-##### Périodes de traitement
-
-Définition des périodes de traitement:
+##### Définition des périodes de traitement
 
 -   Période de pré-traitement: Aires protégées crées entre 1997 et 2008
 
--   Période de post-traitement: Aires protégées crées entre 2008 et 2021 (71 AP crées sur 47 282 km²)
+-   Période de post-traitement: Aires protégées crées entre 2008 et 2021 (71 AP créées sur 47 282 km²)
 
-##### Tendances parallèles
+##### Vérification de l'hypothèse des tendances parallèles
 
-Vérification de l'hypothèse des tendances parallèles:
+1.  Création d'un groupe de traitement placebo basé sur les ménages de 1997 (traitement= ménages situés à **≤** 5 km des aires protégées créées entre 2008 et 2021)
 
--   Création d'un groupe de traitement placebo basé sur les ménages de 1997 (traitement= ménages situés à **≤** 5 km des aires protégées créées entre 2008 et 2021)
+2.  Appariement du groupe de traitement placebo avec un groupe de contrôle placebo
 
--   Apparier le groupe de traitement placebo avec un groupe de contrôle placebo
+3.  Représentation graphique de l'évolution des groupes en 1997, 2008 et 2021 pour une confirmation visuelle
 
--   Représentation graphique de l'évolution des groupes en 1997, 2008 et 2021 pour une confirmation visuelle
+4.  Effectuer un test placebo en faisant une estimation en double différence sur la période de pré-traitement (1997-2008): un effet non significatif confirmerait l'absence de tendances divergentes avant l'intervention
 
--   Effectuer un test placebo en faisant une estimation en double différence sur la période de pré-traitement (1997-2008): un effet non significatif confirmerait l'absence de tendances divergentes avant l'intervention
-
-##### Estimation du modèle DID
+##### Modélisation du modèle DID
 
 Estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes pour gérer la dépendance des observations au sein des grappes:
 
--   calcul des résidus à partir du modèle de régression
+1.  calcul des résidus à partir du modèle de régression
 
--   Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
+2.  Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
 
 ### Test pour une distance de 15km
 
 #### Treatment and Control groups assignment
 
--   [Groupe de traitement]{.underline}: ménage dans ou au moins à 15 km des aires protégées entre 2008 et 2021
+-   [Groupe de traitement]{.underline}: ménage vivant dans ou à moins à 15 km des aires protégées entre 2008 et 2021
 
--   [Groupe de contrôle]{.underline}: ménage à plus de 15 km des aires protégées entre 2008 et 2021
+-   [Groupe de contrôle]{.underline}: ménage vivant à plus de 15 km des aires protégées entre 2008 et 2021
 
-#### Outcome variable
+#### Création du Buffer zone
 
--   Variable de résultat principal: niveau de vie des ménages
+-   Création d'un buffer de 15 km autour des aires protégées
 
-    -   Récupération de la variable hv270a (wealth index de la zone rurale) pour l'année 2021
+#### Sélection des ménages étudiées
 
-    -   Recalculer le wealth index hv270a pour 1997 et 2008
+Les ménages prises en compte dans l'analyse sont:
 
-    -   Segmentation de wealth index en centiles
+-   Les ménages proches des aires protégées créées à partir de 2008
 
--   Variable de résultat secondaire: inégalité du niveau de vie
+-   Les ménages ruraux
 
-Calcul du Z score standardisé du wealth index
+#### Estimation des effets par Matching
 
-#### Matching variable
+##### Matching et optimisation de l'équilibre des groupes
 
-Chargement des données et extraction des données:
+1.  Utilisation du Genetic matching et du Mahalanobis Distance Matching avec la fonction de GenMatch() du package R MatchIt
 
--   Couvert forestier en 2000 (Hansen et al.2013)
+2.  Application du caliper à un intervalle de 0.25 écart-type de la distance de Mahalanobis
 
--   Pente et altitude (NASA SRTM)
+##### Vérification de l'équilibre des covariables 
 
--   Densité de population en 2000 (Worldpop)
-
--   Accessibilité en 2000 (JRC, Uchida et Nelson 2011)
-
-#### Control variable
-
--   Ajout des variables âges et sexes dans l'analyse
-
--   Chargement des données sur les précipitations et calcul de l'indice SPEI
-
-#### Matching
-
-##### Genetic matching 
-
--   Réalisation du matching avec la fonction de GenMatch() du package R MatchIt
-
--   Application de Mahalanobis Distance Matching
-
--   Utilisation du caliper à un intervalle de 0.25 écart-type de la distance de Mahalanobis
-
-##### Analyse de l'équilibre des covariables :
-
--   Avant matching pour déterminer les déséquilibres initiaux à partir du test de Standardized Mean Difference (SMD)
+1.  Avant matching pour déterminer les déséquilibres initiaux à partir du test de Standardized Mean Difference (SMD)
 
     -   Si SMD proche de 0, il existe un bon équilibre entre les groupes pour la covariable
 
     -   Si SMD \> 0.1, le déséquilibre est significatif donc on augmentera l'intervalle des calipers afin d'obtenir un SMD **≤** 0.1)
 
--   Après matching: Test visuel sur la qualité du matching
+2.  Après matching: Test visuel sur la qualité du matching
 
     Comparaison à partir du Q-Q Plot pour chaque covariable (dans le cas où le QQ plot se situe en diagonale, le quantile des 2 distributions sont similaires) \`\`\`
 
-#### Difference-in-difference
+#### Estimation par la Difference-in-difference
 
-##### Périodes de traitement
-
-Définition des périodes de traitement:
+##### Définition des périodes de traitement
 
 -   Période de pré-traitement: Aires protégées crées entre 1997 et 2008
 
--   Période de post-traitement: Aires protégées crées entre 2008 et 2021 (71 AP crées sur 47 282 km²)
+-   Période de post-traitement: Aires protégées crées entre 2008 et 2021 (71 AP créées sur 47 282 km²)
 
-##### Tendances parallèles
+##### Vérification de l'hypothèse des tendances parallèles
 
-Vérification de l'hypothèse des tendances parallèles:
+1.  Création d'un groupe de traitement placebo basé sur les ménages de 1997 (traitement= ménages situés à **≤** 15 km des aires protégées créées entre 2008 et 2021)
 
--   Création d'un groupe de traitement placebo basé sur les ménages de 1997 (traitement= ménages situés à **≤** 15 km des aires protégées créées entre 2008 et 2021)
+2.  Appariement du groupe de traitement placebo avec un groupe de contrôle placebo
 
--   Apparier le groupe de traitement placebo avec un groupe de contrôle placebo
+3.  Représentation graphique de l'évolution des groupes en 1997, 2008 et 2021 pour une confirmation visuelle
 
--   Représentation graphique de l'évolution des groupes en 1997, 2008 et 2021 pour une confirmation visuelle
+4.  Effectuer un test placebo en faisant une estimation en double différence sur la période de pré-traitement (1997-2008): un effet non significatif confirmerait l'absence de tendances divergentes avant l'intervention
 
--   Effectuer un test placebo en faisant une estimation en double différence sur la période de pré-traitement (1997-2008): un effet non significatif confirmerait l'absence de tendances divergentes avant l'intervention
-
-##### Estimation du modèle DRDID
+##### Modélisation du modèle DID
 
 Estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes pour gérer la dépendance des observations au sein des grappes:
 
--   calcul des résidus à partir du modèle de régression
+1.  calcul des résidus à partir du modèle de régression
 
--   Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
+2.  Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
 
-## FDR
+## Analyse des hypothèses 
 
-Test des 3 hypothèses à partir de la méthode "False Directory Rate" de Benjamini-Hochberg pour contrôler le risque découvertes dans les hypothèses secondaires
+La méthode "False Directory Rate" de Benjamini-Hochberg sera appliqué aux hypothèses H2 et H3 pour corriger le problème des tests multiples.
 
-## Sensibilité de Rosenbaum
+## Analyse de sensibilité de Rosenbaum
 
-Vérifier la robustesse des résultats issus du matching face à un éventuel biais non observé en testant différentes valeurs de Γ, afin d'évaluer dans quelle mesure la présence d'un biais caché pourraient influencer les conclusions de l'analyse
+Vérification de la robustesse des résultats issus du matching face à un éventuel biais non observé en testant différentes valeurs de Γ, afin d'évaluer dans quelle mesure la présence d'un biais caché pourraient influencer les conclusions de l'analyse
 
-## Effets hétérogènes 
+## Test des effets hétérogènes
 
 Estimation des effets hétérogènes en introduisant des interactions entre le traitement et les différentes variables différenciatrices dans un modèle de double DID pour explorer les effets différenciés des aires protégées sur les ménages en fonction des caractéristiques socio-démographiques et environnementales
 
@@ -364,8 +306,8 @@ Caractéristiques socio-démographiques et environnementales:
 
 ## Statistical power
 
--   EStimation de la probabilité de l'tudes à détecter un effet réel (le seuil de puissance attendu est communément fixée à 0.8 avec un seuil de signification fixée à 0.05)
-
 -   Estimation de la puissance statistique pour détecter un effet d'au moins 7.5 centiles dans l'indice de richesse entre les groupes
 
--   Mobilisation des données MIS 2011, MIS 2013 et MIS 2016 si la puissance statistique est insuffisante
+-   EStimation de la probabilité à un seuil de puissance fixée à 0.8 avec un seuil de signification fixée à 0.05
+
+-   **Mobilisation des données MIS 2011, MIS 2013 et MIS 2016 si la puissance statistique est insuffisante**
