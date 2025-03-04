@@ -54,7 +54,7 @@ load_data <- function(year){
   
 #Check that there is only one match per year
   if(length(shp_path)!=1 | length(hr_path) != 1) {
-    stop(paste0("Erreur : ", length(shp_path), " fichier(s) .shp trouvés pour l'année", year, length(hr_path), " fichier(s) .dta trouvés pour l'année", year, " (attendu : 1 de chaque). Vérifiez le dossier."))
+    stop(paste0("Erreur : ", length(shp_path), " fichier(s) .shp trouvés pour l'année", year, length(hr_path), " fichier(s) .dta trouvés pour l'année", year, " (attendu : 1 de chaque)"))
   }
 #Read the data
   gps_data <- st_read(shp_path, quiet = TRUE) %>%
@@ -62,13 +62,15 @@ load_data <- function(year){
   
   household_data <- read_dta(hr_path) #Lecture du fichier .dta
 
-#Retourner une liste contenant les deux jeux de données 
+#Return a list containing the two datasets 
   return(list(GPS = gps_data, Households = household_data))
 }
   
-#Exécuter la fonction pour une année spécifique
+#Execute the function for a specific year
   dhs_1997 <- load_data(1997)
   dhs_2008 <- load_data(2008)
   dhs_2021 <- load_data(2021)
+  
+
 
 ```
