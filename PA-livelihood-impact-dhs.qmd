@@ -43,34 +43,45 @@ Nous allons charger les données nécessaires à l'analyse.
 main_folder <- "../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data/"
 
 #Load DHS data
-load_data <- function(year){
+load_data <- function(year, type){
   year_folder <- paste0(main_folder, "DHS_", year)
   
 #Get the .shp (GPS) and .dta (household) file paths
-  
-  shp_path <- list.files(year_folder, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
-  
-  hr_path <- list.files(year_folder, pattern = ".*HR.*\\.dta$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-  
-#Check that there is only one match per year
-  if(length(shp_path)!=1 | length(hr_path) != 1) {
-    stop(paste0("Erreur : ", length(shp_path), " fichier(s) .shp trouvés pour l'année", year, length(hr_path), " fichier(s) .dta trouvés pour l'année", year, " (attendu : 1 de chaque)"))
+  if (type == "HR") {
+    hr_path <- list.files(year_folder, pattern = ".*HR.*\\.dta$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
+    out <- read_dta(hr_path) #Lecture du fichier .dta
+  } else if (type == "GPS") {
+    shp_path <- list.files(year_folder, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
+    out <- st_read(shp_path, quiet = TRUE) %>%
+      st_transform(4326) #Lecture du fichier .shp
+  } else {
+    print("data type unknown, must be HR or GPS")
   }
-#Read the data
-  gps_data <- st_read(shp_path, quiet = TRUE) %>%
-    st_transform(4326) #Lecture du fichier .shp
-  
-  household_data <- read_dta(hr_path) #Lecture du fichier .dta
-
-#Return a list containing the two datasets 
-  return(list(GPS = gps_data, Households = household_data))
+  return (out) 
 }
   
 #Execute the function for a specific year
-  dhs_1997 <- load_data(1997)
-  dhs_2008 <- load_data(2008)
-  dhs_2021 <- load_data(2021)
+  dhs_1997_hr <- load_data(1997, "HR")
+  dhs_1997_gps <- load_data(1997, "GPS")
   
-
+  dhs_2008 <- load_data(2008, "HR")
+  dhs_2008_gps <- load_data(2008, "GPS")
+  
+  dhs_2021 <- load_data(2021, "HR")
+  dhs_2021_gps <- load_data(2021, "GPS")
 
 ```
+
+Variables de résultat: niveau de vie des ménages et inégalité du niveau de vie
+
+1.  *Récupération de la variable hv270a (wealth index de la zone rurale) pour l'année 2021*
+
+2.  Reproduire le wealth index hv270 pour 1997, 2008 et 2021 puis s'assurer pour 2021 que hv270a correspond au hv270 uniquement pour le rural
+
+3.  *Recalculer le wealth index hv270a pour 1997 et 2008*
+
+4.  *Segmentation de wealth index en centiles*
+
+5.  Calcul du Z score standardisé du wealth index
+
+6.  *Ajout des variables âges et sexes du chef de ménage dans l'analyse*
