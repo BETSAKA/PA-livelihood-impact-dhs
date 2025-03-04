@@ -38,6 +38,20 @@ Nous allons charger les données nécessaires à l'analyse.
 
 ## Socioeconomic household data
 
+Variables de résultat: niveau de vie des ménages et inégalité du niveau de vie
+
+1.  Récupération de la variable hv270a (wealth index de la zone rurale) pour l'année 2021
+
+2.  Reproduire le wealth index hv270 pour 1997, 2008 et 2021 puis s'assurer pour 2021 que hv270a correspond au hv270 uniquement pour le rural
+
+3.  Recalculer le wealth index hv270a pour 1997 et 2008
+
+4.  Segmentation de wealth index en centiles
+
+5.  Calcul du Z score standardisé du wealth index
+
+6.  Ajout des variables âges et sexes du chef de ménage dans l'analyse
+
 ```{r}
 #Définition du chemin du dossier principal
 main_folder <- "../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data/"
@@ -64,24 +78,18 @@ load_data <- function(year, type){
   dhs_1997_hr <- load_data(1997, "HR")
   dhs_1997_gps <- load_data(1997, "GPS")
   
-  dhs_2008 <- load_data(2008, "HR")
+  dhs_2008_hr <- load_data(2008, "HR")
   dhs_2008_gps <- load_data(2008, "GPS")
   
-  dhs_2021 <- load_data(2021, "HR")
+  dhs_2021_hr <- load_data(2021, "HR")
   dhs_2021_gps <- load_data(2021, "GPS")
+  
+#Recover the variable hv270a (rural wealth index) for 2021
+dhs_2021_hr <- load_data(2021, "HR")
+
+hv270a_2021 <- dhs_2021_hr %>% 
+  filter(hv025 == 2) %>% #Filtrage des ménages ruraux 
+  select(hhid, hv270a) %>%
+  rename(wealth_index_rural = hv270a)
 
 ```
-
-Variables de résultat: niveau de vie des ménages et inégalité du niveau de vie
-
-1.  *Récupération de la variable hv270a (wealth index de la zone rurale) pour l'année 2021*
-
-2.  Reproduire le wealth index hv270 pour 1997, 2008 et 2021 puis s'assurer pour 2021 que hv270a correspond au hv270 uniquement pour le rural
-
-3.  *Recalculer le wealth index hv270a pour 1997 et 2008*
-
-4.  *Segmentation de wealth index en centiles*
-
-5.  Calcul du Z score standardisé du wealth index
-
-6.  *Ajout des variables âges et sexes du chef de ménage dans l'analyse*
