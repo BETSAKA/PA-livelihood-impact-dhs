@@ -92,7 +92,157 @@ Cette partie visera à produire les scores factoriels du wealth index de DHS 199
 ```{r}
 #Reproduce the wealth index hv270 for 2008 
 
+#Load necessary libraries
+library(labelled)
+library(janitor)
+library(psych)
 
+#Load DHS Data 
+hh_2008 <- read_dta("../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data/DHS_2008/MDHR51DT/MDHR51FL.DTA")
+
+#Step 1: Recode relevant variables from the DHS household dataset
+hh_2008 <- hh_2008 %>%
+  filter(hv015 == 1)
+
+hh_2008_rec <- hh_2008 %>%
+  mutate(
+     # water source
+    h2oires = if_else(hv201 == 11, 1, 0),
+    h2oyard = if_else(hv201 == 12, 1, 0),
+    h2opub = if_else(hv201 == 13, 1, 0),
+    h2owell = if_else(hv201 == 21, 1, 0),
+    h2opwell = if_else(hv201 == 31, 1, 0),
+    h2ouwell = if_else(hv201 == 32, 1, 0),
+    h2spring = if_else(hv201 %in% c(41, 42), 1, 0),
+    h2osurf = if_else(hv201 == 43, 1, 0),
+    h2ooth = if_else(hv201 > 50 & hv201 < 97, 1, 0),
+    # Toilet types
+    flushp = if_else((hv205 > 10 & hv205 < 15) & hv225 == 0, 1, 0),
+    flushs = if_else((hv205 > 10 & hv205 < 15) & hv225 == 1, 1, 0),
+    latvipp = if_else(hv205 == 21 & hv225 == 0, 1, 0),
+    latvips = if_else(hv205 == 21 & hv225 == 1, 1, 0),
+    latslbp = if_else(hv205 %in% c(22, 23) & hv225 == 0, 1, 0),
+    latslbs = if_else(hv205 %in% c(22, 23) & hv225 == 1, 1, 0),
+    latopp = if_else(hv205 == 24 & hv225 == 0, 1, 0),
+    latops = if_else(hv205 == 24 & hv225 == 1, 1, 0),
+    latbush = if_else(hv205 == 31, 1, 0),
+    latothp = if_else((hv205 > 40 & hv205 < 44) & hv225 == 0, 1, 0),
+    latoths = if_else((hv205 > 40 & hv205 < 44) & hv225 == 1, 1, 0),
+    # Amenities
+    electric = if_else(hv206 == 1, 1, 0),
+    radio = if_else(hv207 == 1, 1, 0),
+    tv = if_else(hv208 == 1, 1, 0),
+    fridge = if_else(hv209 == 1, 1, 0),
+    bicycle = if_else(hv210 == 1, 1, 0),
+    motobk = if_else(hv211 == 1, 1, 0),
+    car = if_else(hv212 == 1, 1, 0),
+    mphone = if_else(hv243a == 1, 1, 0),
+    watch = if_else(hv243b == 1, 1, 0),
+    bank = if_else(hv247 == 1, 1, 0),
+    # floor type variables
+    dirtfloo = if_else(hv213 %in% c(11, 12), 1, 0),
+    plnkfloo = if_else(hv213 == 21, 1, 0),
+    palmfloo = if_else(hv213 == 22, 1, 0),
+    matfloo = if_else(hv213 %in% c(23, 96), 1, 0),
+    parqfloo = if_else(hv213 == 31, 1, 0),
+    vinfloo = if_else(hv213 == 32, 1, 0),
+    tilefloo = if_else(hv213 == 33, 1, 0),
+    cemtfloo = if_else(hv213 == 34, 1, 0),
+    carpfloo = if_else(hv213 == 35, 1, 0),
+    # Cooking fuel
+    cookelec = if_else(hv226 == 1, 1, 0),
+    cooklpg = if_else(hv226 %in% c(2, 3, 4, 5), 1, 0),
+    cookcoal = if_else(hv226 %in% c(6, 7), 1, 0),
+    cookwood = if_else(hv226 == 8, 1, 0),
+    cookstrw = if_else(hv226 %in% c(9, 10, 11), 1, 0),
+    cooknone = if_else(hv226 %in% c(95, 96), 1, 0),
+    #wall materials
+    grnwall = if_else(hv214 == 12, 1, 0),
+    dirtwall = if_else(hv214 %in% c(11, 13), 1, 0),
+    bamwall = if_else(hv214 %in% c(21, 22), 1, 0),
+    rwdwall = if_else(hv214 %in% c(23, 24, 25, 26), 1, 0),
+    cmtwall = if_else(hv214 == 31, 1, 0),
+    stncwall = if_else(hv214 == 32, 1, 0),
+    brckwall = if_else(hv214 == 33, 1, 0),
+    blckwall = if_else(hv214 == 34, 1, 0),
+    woodwall = if_else(hv214 == 36, 1, 0),
+    othwall = if_else(hv214 == 96, 1, 0),
+    # roofing materials
+    natroof = if_else(hv215 %in% c(11, 12), 1, 0),
+    sodroof = if_else(hv215 == 13, 1, 0),
+    rudroof = if_else(hv215 %in% c(21, 22, 24), 1, 0),
+    plnkroof = if_else(hv215 == 23, 1, 0),
+    ironroof = if_else(hv215 %in% c(31, 95, 96), 1, 0),
+    woodroof = if_else(hv215 == 32, 1, 0),
+    cemtroof = if_else(hv215 %in% c(33, 35, 36), 1, 0),
+    tileroof = if_else(hv215 == 34, 1, 0),
+    # Handle missing values for hv216 and compute members per sleeping room
+    hv216 = if_else(is.na(hv216)|hv216 == 0, hv012, hv216),
+    memsleep = hv012 / hv216,
+    # pondération
+    hhmemwt = hv005 / 1000000 * hv012,
+    wt = hv005 / 1000000
+  )
+#Step 2 : Store variable names for reuse
+dich_vars_2008 <- c(
+  "h2oires", "h2oyard", "h2opub", "h2owell", "h2opwell", "h2ouwell",
+  "h2spring", "h2osurf", "h2ooth", "flushp", "flushs", "latvipp", "latvips",
+  "latslbp", "latslbs", "latopp", "latops", "latbush", "latothp", "latoths",
+  "electric", "radio", "tv", "fridge", "bicycle", "motobk", "car", "mphone",
+  "watch", "bank", "memsleep", "dirtfloo", "plnkfloo", "palmfloo", "matfloo",
+  "parqfloo", "vinfloo", "tilefloo", "cemtfloo", "carpfloo", "cookelec",
+  "cooklpg", "cookcoal", "cookwood", "cookstrw", "cooknone", "grnwall",
+  "dirtwall", "bamwall", "rwdwall", "cmtwall", "stncwall", "brckwall",
+  "blckwall", "woodwall", "othwall", "natroof", "sodroof", "rudroof",
+  "plnkroof", "ironroof", "woodroof", "cemtroof", "tileroof"
+)
+animal_husbandry_vars <- c(
+  "hv246a", "hv246b", "hv246c", "hv246d", "hv246e", "hv246f", "hv246g", "hv246h"
+)
+
+all_factor_vars_2008 <- c(dich_vars_2008 , animal_husbandry_vars)
+
+#Step 3 : Compute a correlation matrix for the selected variables
+
+# Perform PCA
+perform_pca <- function(data, vars) {
+  cor_matrix <- cor(data %>% select(all_of(vars)), use = "complete.obs")
+  principal(cor_matrix, nfactors = 1, rotate = "none", scores = TRUE, covar = FALSE)
+}
+
+pca_result <- perform_pca(hh_2008_rec, c(dich_vars_2008, animal_husbandry_vars))
+
+# Extract PCA loadings and compute factor scores
+hh_2008_rec <- hh_2008_rec %>%
+  mutate(
+    factor_score = as.vector(scale(hh_2008_rec %>% select(all_of(dich_vars_2008), all_of(animal_husbandry_vars))) %*% pca_result$loadings[, 1])
+  )
+
+# Comparison and Visualization
+comparison <- tibble(
+  variable = paste0("Var", seq_along(pca_result$loadings[, 1])), # Replace with actual names if needed
+  dhs_factor_score = c(0.051, 0.036, 0.044, 0.001, 0.006, -0.023, -0.027, -0.040, -0.004,
+                       0.049, 0.024, 0.005, 0.010, 0.012, 0.018, 0.011, 0.033, -0.070,
+                       0.004, 0.010, 0.096, 0.053, 0.094, 0.060, 0.035, 0.036, 0.047,
+                       0.090, 0.072, 0.067, -0.035, -0.022, 0.009, -0.022, -0.059,
+                       0.037, 0.004, 0.032, 0.066, 0.007, 0.016, 0.029, 0.084, -0.088,
+                       -0.002, 0.001, -0.035, -0.042, -0.017, 0.006, 0.047, 0.013,
+                       0.054, 0.014, 0.009, 0.008, -0.047, -0.043, -0.008, -0.007,
+                       0.085, -0.005, 0.009, 0.017, -0.017, -0.004, 0.000, -0.009,
+                       -0.009, -0.007, -0.003, 0.005), # SPSS values
+  r_pca_loading = pca_result$loadings[, 1]
+)
+
+# Plot: DHS Loadings vs PCA Loadings
+ggplot(comparison, aes(x = dhs_factor_score, y = r_pca_loading)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", se = FALSE, linewidth = 0.2) +
+  labs(
+    title = "DHS Loadings vs. PCA Loadings",
+    x = "DHS Factor Loadings",
+    y = "Reproduced PCA Loadings"
+  ) +
+  theme_minimal()
 ```
 
 3.  Recalculer le wealth index hv270a pour 1997 et 2008
