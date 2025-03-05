@@ -87,7 +87,7 @@ hv270a_2021 <- dhs_2021_hr %>%
 
 Les données DHS 1997 et 2008 ne comportent pas de désagrégation entre les zones urbaines et rurales. DHS 2008 comprend les indices HV270 et HV271, sans indicateurs spécifiques aux zones rurales. DHS 1997 ne comprend aucune variable de richesse précalculée.
 
-Cette partie visera à produire les scores factoriels du wealth index de DHS 1997 et DHS 2008.
+Cette partie visera à produire le wealth index de DHS 2008.
 
 ```{r}
 #Reproduce the wealth index hv270 for 2008 
@@ -218,7 +218,7 @@ hh_2008_rec <- hh_2008_rec %>%
     factor_score = as.vector(scale(hh_2008_rec %>% select(all_of(dich_vars_2008), all_of(animal_husbandry_vars))) %*% pca_result$loadings[, 1])
   )
 
-# Comparison and Visualization
+#Step 4:  Comparison and Visualization
 comparison <- tibble(
   variable = paste0("Var", seq_along(pca_result$loadings[, 1])), # Replace with actual names if needed
   dhs_factor_score = c(0.051, 0.036, 0.044, 0.001, 0.006, -0.023, -0.027, -0.040, -0.004,
@@ -243,12 +243,216 @@ ggplot(comparison, aes(x = dhs_factor_score, y = r_pca_loading)) +
     y = "Reproduced PCA Loadings"
   ) +
   theme_minimal()
+
+# Correlation and visualization
+corr_2008_loadings <- cor.test(comparison$dhs_factor_score, comparison$r_pca_loading)
+corr_2008_loadings
+
+# Plot: hv271 vs Factor Score
+ggplot(hh_2008_rec, aes(x = hv271, y = factor_score)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", color = "blue", se = FALSE, linewidth = 0.2) +
+  labs(
+    title = "hv271 vs Computed Factor Score",
+    x = "hv271 (Wealth Index Score)",
+    y = "Computed Factor Score"
+  ) +
+  theme_minimal()
+
+# Perform a correlation test between hv271 and factor_score
+corr_2008_obs <- cor.test(hh_2008_rec$hv271, hh_2008_rec$factor_score, use = "complete.obs")
+corr_2008_obs
+```
+
+Reproduction du wealth index DHS 1997
+
+```{r}
+#Reproduce the wealth index hv270 for 1997 
+
+#Load necessary libraries
+library(labelled)
+library(janitor)
+library(psych)
+
+#Load DHS Data 
+hh_1997 <- read_dta("../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data/DHS_1997/MDHR31DT/MDHR31FL.DTA")
+
+
+#Step 1: Recode relevant variables from the DHS household dataset
+hh_1997_rec <- hh_1997 %>% 
+  mutate(
+    # Specific to 1997 ---------------------
+    # Toilet types (latbush below)
+    fown = if_else((hv205 == 10 | hv205 == 11), 1, 0),
+    latpit  = if_else((hv205 == 20 | hv205 == 21), 1, 0),
+    latvip = if_else(hv205 == 22, 1, 0),
+    latother = if_else(hv205 == 96, 1, 0),
+    latbush = if_else(hv205 == 31, 1, 0),
+    # Phone
+    phone = if_else(hv221 == 1, 1, 0),
+    # Same as 2008 ------------------------
+    # water source
+    h2oires = if_else(hv201 == 11, 1, 0), # "If piped drinking water in residence"
+    h2oiwell = if_else(hv201 == 22, 1, 0), # "If has a well in residence"
+    h2osurf = if_else(hv201 %in% c(31, 32, 33, 34), 1, 0), # "If uses river, canal or surface water for drinking"
+    h2ooth = if_else(hv201 > 51, 1, 0), # "Other source of drinking water"
+    h2ocessi = if_else(hv201 == 23, 1, 0), # "If gets water from an open well/hole/cesspool in residence"
+    h2orain = if_else(hv201 == 41, 1, 0), # "If rain for drinking water"
+    h2opub = if_else(hv201 == 13, 1, 0), # "If uses a public faucet (piped)"
+    h2ocesso = if_else(hv201 == 26, 1, 0), # "If gets water from open well/hole/cesspool outside residence"
+    h2oores = if_else(hv201 == 12, 1, 0), # "If has piped water outside residence"
+    h2bores = if_else(hv201 == 21, 1, 0), # "If has borehole with pump in residence"
+    h2oboout = if_else(hv201 == 24, 1, 0), # "If has borehole with pump outside of residence"
+    h2oowell = if_else(hv201 == 25, 1, 0), # "If has well outside of residence"
+    h2otruck = if_else(hv201 == 51, 1, 0),# "If gets water from a tanker truck"
+    # Amenities
+    electric = if_else(hv206 == 1, 1, 0),
+    radio = if_else(hv207 == 1, 1, 0),
+    tv = if_else(hv208 == 1, 1, 0),
+    fridge = if_else(hv209 == 1, 1, 0),
+    bicycle = if_else(hv210 == 1, 1, 0),
+    motobk = if_else(hv211 == 1, 1, 0),
+    car = if_else(hv212 == 1, 1, 0),
+    # floor type variables
+    dirtfloo = if_else(hv213 %in% c(11, 12), 1, 0),
+    woodfloo = if_else(hv213 == 21, 1, 0),
+    palmfloo = if_else(hv213 == 22, 1, 0),
+    parqfloo = if_else(hv213 == 31, 1, 0),
+    vinfloo = if_else(hv213 == 32, 1, 0),
+    tilefloo = if_else(hv213 == 33, 1, 0),
+    cemtfloo = if_else(hv213 == 34, 1, 0),
+    carpfloo = if_else(hv213 == 35, 1, 0),
+    othfloor = if_else(hv213 == 96, 1, 0),
+    # Handle missing values for hv216 and compute members per sleeping room
+    hv216 = if_else(is.na(hv216)|hv216 == 0, hv012, hv216),
+    memsleep = hv012 / hv216,
+    # pondération
+    hhmemwt = hv005 / 1000000 * hv012,
+    wt = hv005 / 1000000
+  )
+# Compute ownland variable 
+ir_1997 <- read_dta("../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data/DHS_1997/MDIR31DT/MDIR31FL.DTA")
+
+# Compute ownland variable for households
+ownland_by_household <- ir_1997 %>%
+  select(v001, v002, own_land_partner = v707, own_land_respondent = v740) %>%
+  mutate(
+    # Convert to binary (1 if owns land personally or by family, 0 otherwise)
+    own_land_partner = if_else(own_land_partner %in% c(1, 2), 1, 0, missing = 0),
+    own_land_respondent = if_else(own_land_respondent %in% c(1, 2), 1, 0, missing = 0),
+    own_any_land = own_land_partner + own_land_respondent) %>%
+  group_by(v001, v002) %>%
+  summarise(ownland = sum(own_any_land, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(ownland = ifelse(ownland > 0, 1, 0))
+
+# Add ownland variable to hh_1997 by joining on hv001 and hv002
+hh_1997_rec <- hh_1997_rec %>%
+  left_join(ownland_by_household, by = c("hv001" = "v001", "hv002" = "v002"))
+# Check number of unmatched (we do not have data for all hh)
+sum(is.na(hh_1997_rec$ownland))
+# 1622
+
+# Replace NA in ownland with 0 (if household doesn't have any matching members)
+hh_1997_rec <- hh_1997_rec %>%
+  mutate(ownland = if_else(is.na(ownland), 0, ownland))
+
+# Define the equivalent variables for 1997 based on SPSS specification and recoded names
+pca_loading_dhs <- tibble::tribble(
+       ~code,                                            ~variable, ~dhs_factor,
+  "electric",                                    "Has electricity",  0.15080,
+     "radio",                                          "Has radio",  0.10360,
+        "tv",                                     "Has television",  0.13631,
+    "fridge",                                   "Has refrigerator",  0.08574,
+   "bicycle",                                        "Has bicycle",  0.04035,
+    "motobk",                                     "Has motorcycle",  0.04297,
+       "car",                                            "Has car",  0.07643,
+     "phone",                                      "Has telephone",  0.06839,
+   "ownland",     "If household works own or family's agric. land",  -0.09713,
+  "memsleep",                "Number of members per sleeping room",  -0.05370,
+   "h2oires",               "If piped drinking water in residence",  0.11394,
+  "h2oiwell",                         "If has a well in residence",  0.01202,
+   "h2osurf", "If uses river, canal or surface water for drinking",  -0.10437,
+    "h2ooth",                     "Other source of drinking water",  -0.00177,
+      "fown",                           "If uses own flush toilet",  0.09723,
+  "h2ocessi",    "Water from open well/hole/cesspool in residence",  0.00524,
+   "latbush",                      "If uses bush,field as latrine",  -0.12692,
+  "latother",                           "If other type of latrine",  0.00208,
+  "dirtfloo",      "If has dirt, sand, dung as  floor in dwelling",  -0.00042,
+  "woodfloo",     "If has wood, plank principal floor in dwelling",  0.03547,
+  "cemtfloo",                      "If has cement principal floor",  0.08999,
+  "othfloor",                      "If has other type of flooring",  -0.00141,
+   "h2orain",                         "If rain for drinking water",  -0.00163,
+    "h2opub",                    "If uses a public faucet (piped)",  0.08025,
+  "h2ocesso",         "Water from open well/hole/cesspool outside",  -0.02915,
+    "latpit",                   "If uses a traditional pit toilet",  0.08954,
+    "latvip",                              "If uses a VIP latrine",  0.00948,
+  "parqfloo",             "If has parquet or polished wood floors",  0.07280,
+  "tilefloo",            "If has tiles for main flooring material",  0.03367,
+  "palmfloo",          "If has palm or bamboo for floor materials",  -0.12683,
+  "carpfloo",                           "If has carpeted flooring",  0.01799,
+   "h2oores",               "If has piped water outside residence",  0.01861,
+   "h2bores",             "If has borehole with pump in residence",  0.01642,
+  "h2oboout",     "If has borehole with pump outside of residence",  -0.01110,
+  "h2oowell",                   "If has well outside of residence",  -0.00205,
+  "h2otruck",                  "If gets water from a tanker truck",  -0.00265
+  )
+
+all_factor_vars_1997 <- pca_loading_dhs$code
+
+#Step 2: Replace missing values
+hh_1997_rec <- hh_1997_rec %>%
+  mutate(across(all_of(all_factor_vars_1997),
+                ~ if_else(is.na(.), mean(., na.rm = TRUE), .)))
+
+#Step 3 : Compute a correlation matrix for the selected variables
+
+# Perform PCA
+pca_result_1997 <- perform_pca(hh_1997_rec, all_factor_vars_1997)
+
+
+# Add factor scores to the dataset
+hh_1997_rec <- hh_1997_rec %>%
+  mutate(
+    factor_score = as.vector(scale(hh_1997_rec %>% 
+                                     select(all_of(all_factor_vars_1997))) %*% 
+                               pca_result_1997$loadings[, 1]))
+
+# Create a tibble for DHS scores and R PCA loadings
+r_pca_loadings <- tibble(
+  code = rownames(pca_result_1997$loadings),
+  r_pca_loading = as.vector(pca_result_1997$loadings[, 1])
+)
+
+#Step 4:  Comparison and Visualization
+
+# Join the tibbles and calculate differences
+comparison <- left_join(pca_loading_dhs, r_pca_loadings, by = "code") %>%
+  mutate(difference = r_pca_loading - dhs_factor)
+
+# Plot 1: DHS Loadings vs PCA Loadings
+ggplot(comparison, aes(x = dhs_factor, y = r_pca_loading)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", se = FALSE, linewidth = 0.2) +
+  labs(
+    title = "DHS Loadings vs. PCA Loadings (1997)",
+    x = "DHS Factor Loadings",
+    y = "Reproduced PCA Loadings"
+  ) +
+  theme_minimal()
+# Calculate and print the correlation
+correlation <- cor.test(comparison$dhs_factor, comparison$r_pca_loading, use = "complete.obs")
+print(correlation)
 ```
 
 3.  Recalculer le wealth index hv270a pour 1997 et 2008
 
-4.  Segmentation de wealth index en centiles
+```{r}
 
-5.  Calcul du Z score standardisé du wealth index
+```
 
-6.  Ajout des variables âges et sexes du chef de ménage dans l'analyse
+3.  Segmentation de wealth index en centiles
+
+4.  Calcul du Z score standardisé du wealth index
+
+5.  Ajout des variables âges et sexes du chef de ménage dans l'analyse
