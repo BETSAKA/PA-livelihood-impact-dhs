@@ -447,7 +447,28 @@ print(correlation)
 
 3.  Recalculer le wealth index hv270a pour 1997 et 2008
 
+    Calcul du wealth index hv270a pour 2008
+
 ```{r}
+
+# Imputation et conversion des valeurs manquantes et des types
+hh_2008_rec_updated <- hh_2008_rec %>%
+  # Sélectionner les données urbaines et rurales
+  mutate(
+    hv270a_urban = ifelse(hv025 == 1, 
+                          scale(select(., all_of(c(dich_vars_2008, animal_husbandry_vars)))) %*% perform_pca(., c(dich_vars_2008, animal_husbandry_vars))$loadings[, 1], 
+                          NA),
+    hv270a_rural = ifelse(hv025 == 2, 
+                          scale(select(., all_of(c(dich_vars_2008, animal_husbandry_vars)))) %*% perform_pca(., c(dich_vars_2008, animal_husbandry_vars))$loadings[, 1], 
+                          NA)
+  ) %>%
+  # Imputer les valeurs manquantes
+  mutate_at(vars(dich_vars_2008), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)) %>%
+  mutate_at(vars(animal_husbandry_vars), ~ifelse(is.na(.), 0, .))
+
+# Vérifiez les résultats
+head(hh_2008_rec_updated %>% select(hv001, hv025, hv270a_urban, hv270a_rural))
+
 
 ```
 
