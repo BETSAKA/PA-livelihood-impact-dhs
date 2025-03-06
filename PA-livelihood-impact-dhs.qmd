@@ -34,11 +34,11 @@ library(ggplot2) #Figure
 
 ## Data structuring
 
-Nous allons charger les données nécessaires à l'analyse.
+Nous allons chargé les données nécessaires à l'analyse.
 
 ## Socioeconomic household data
 
-1.  Récupération de la variable hv270a (wealth index de la zone rurale) pour l'année 2021
+### Récupération de la variable hv270a (wealth index de la zone rurale) pour l'année 2021
 
 Le processus consiste à charger les données DHS 1997, 2008 et 2021. DHS 1997 et DHS 2008 ne comprend que les scores factoriels de l'indice de richesse utilisé dans l'enquête, on va dans un premier temps récupérer le wealth index des ménages ruraux de DHS 2021.
 
@@ -83,13 +83,16 @@ hv270a_2021 <- dhs_2021_hr %>%
   rename(wealth_index_rural = hv270a)
 ```
 
-2.  Reproduire le wealth index hv270 pour 1997, 2008 et 2021 puis s'assurer pour 2021 que hv270a correspond au hv270 uniquement pour le rural
+### Reproduction du wealth index hv270 pour 2008
 
-Les données DHS 1997 et 2008 ne comportent pas de désagrégation entre les zones urbaines et rurales. DHS 2008 comprend les indices HV270 et HV271, sans indicateurs spécifiques aux zones rurales. DHS 1997 ne comprend aucune variable de richesse précalculée.
+Cette section a pour objectif de reproduire le wealth index hv270 de DHS 2008. Dans un premier temps, nous reproduirons les scores factoriels du wealth index (hv271) à l'aide d'une analyse par composante principale, en nous basant sur le code SPSS utilisé par DHS pour construire cet indice. Le calcul des scores factoriels permet de créer un indicateur composite agrégant l'information des différentes variables de manière pondérée. Dans un second temps, nous reproduirons le wealth index hv270 de DHS 2008.
 
-Cette partie visera à produire le wealth index de DHS 2008.
+1.  Reproduction du wealth index hv271 de DHS 2008
+
+Dans un premier temps, nous procéderons au recodage des variables pertinentes issues de l'ensemble des données des ménages de DHS afin de constituer l'indice de richesse. Les valeurs manquantes seront imputées soit par la moyenne des variables pour les variables dichotomisées, soit par zéro pour les variables liées à l'élevage. A partir des données recodées, nous établirons une matrice de corrélation pour les variables sélectionnées et réaliserons une analyse en composante principale afin d'extraire la première composante principale, représentant le facteur d'indice de richesse. Nous calculerons ensuite les scores factoriels pour chaque ménage en utilisant les coefficients issues de l'analyse en composante principale. Enfin, nous effectuerons une comparaison des scores reconstruits pour chaque ménage avec les scores factoriels officiels de DHS (hv271), en utilisant à la fois une analyse graphique et un test de corrélation.
 
 ```{r}
+
 #Reproduce the wealth index hv270 for 2008 
 
 #Load necessary libraries
@@ -102,11 +105,11 @@ hh_2008 <- read_dta("../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ména
 
 #Step 1: Recode relevant variables from the DHS household dataset
 hh_2008 <- hh_2008 %>%
-  filter(hv015 == 1)
+filter(hv015 == 1)
 
 hh_2008_rec <- hh_2008 %>%
   mutate(
-     # water source
+    # water source
     h2oires = if_else(hv201 == 11, 1, 0),
     h2oyard = if_else(hv201 == 12, 1, 0),
     h2opub = if_else(hv201 == 13, 1, 0),
@@ -183,7 +186,8 @@ hh_2008_rec <- hh_2008 %>%
     hhmemwt = hv005 / 1000000 * hv012,
     wt = hv005 / 1000000
   )
-#Step 2 : Store variable names for reuse
+
+# Step 1: Store variable names for reuse
 dich_vars_2008 <- c(
   "h2oires", "h2oyard", "h2opub", "h2owell", "h2opwell", "h2ouwell",
   "h2spring", "h2osurf", "h2ooth", "flushp", "flushs", "latvipp", "latvips",
@@ -196,6 +200,7 @@ dich_vars_2008 <- c(
   "blckwall", "woodwall", "othwall", "natroof", "sodroof", "rudroof",
   "plnkroof", "ironroof", "woodroof", "cemtroof", "tileroof"
 )
+
 animal_husbandry_vars <- c(
   "hv246a", "hv246b", "hv246c", "hv246d", "hv246e", "hv246f", "hv246g", "hv246h"
 )
@@ -212,7 +217,7 @@ perform_pca <- function(data, vars) {
 
 pca_result <- perform_pca(hh_2008_rec, c(dich_vars_2008, animal_husbandry_vars))
 
-# Extract PCA loadings and compute factor scores
+#Extract PCA loadings and compute factor scores
 hh_2008_rec <- hh_2008_rec %>%
   mutate(
     factor_score = as.vector(scale(hh_2008_rec %>% select(all_of(dich_vars_2008), all_of(animal_husbandry_vars))) %*% pca_result$loadings[, 1])
@@ -233,7 +238,7 @@ comparison <- tibble(
   r_pca_loading = pca_result$loadings[, 1]
 )
 
-# Plot: DHS Loadings vs PCA Loadings
+#Plot: DHS Loadings vs PCA Loadings
 ggplot(comparison, aes(x = dhs_factor_score, y = r_pca_loading)) +
   geom_point() +
   geom_smooth(method = "lm", color = "blue", se = FALSE, linewidth = 0.2) +
@@ -243,12 +248,24 @@ ggplot(comparison, aes(x = dhs_factor_score, y = r_pca_loading)) +
     y = "Reproduced PCA Loadings"
   ) +
   theme_minimal()
+```
 
-# Correlation and visualization
+[Interprétation du graphique]{.underline}
+
+Le graphique compare les saturations officiels obtenues par DHS (axe des x) et les saturation reproduites par l'analyse en composantes principales (axe des y). Chaque point sur le graphique représente une variable incluse dans le calcul du wealth index. La ligne bleue, qui représente un ajustement linéaire des points, montre une forte corrélation entre les deux séries de saturations, confirmant ainsi que la reconstruction des scores reproduit fidèlement les calculs officiels de DHS.
+
+```{r}
+#Correlation and visualization
 corr_2008_loadings <- cor.test(comparison$dhs_factor_score, comparison$r_pca_loading)
 corr_2008_loadings
+```
 
-# Plot: hv271 vs Factor Score
+[Interprétation du test de corrélation]{.underline}
+
+Le test calcule la corrélation entre les wealth index factor score officiels du DHS et les saturations reproduites par l'analyse par composante principale. Les résultats démontrent que les scores factoriels du wealth index de DHS et les saturations reproduites par l'analyse par composante principale sont extrêmement corrélés avec un coefficient de 0.9999555, ou que les séries sont pratiquement identiques.
+
+```{r}
+#Plot: hv271 vs Factor Score
 ggplot(hh_2008_rec, aes(x = hv271, y = factor_score)) +
   geom_point(alpha = 0.6) +
   geom_smooth(method = "lm", color = "blue", se = FALSE, linewidth = 0.2) +
@@ -259,9 +276,19 @@ ggplot(hh_2008_rec, aes(x = hv271, y = factor_score)) +
   ) +
   theme_minimal()
 
-# Perform a correlation test between hv271 and factor_score
+#Perform a correlation test between hv271 and factor_score
 corr_2008_obs <- cor.test(hh_2008_rec$hv271, hh_2008_rec$factor_score, use = "complete.obs")
 corr_2008_obs
+```
+
+[Interprétation:]{.underline}
+
+Le graphique compare hv271 avec les scores factoriels du wealth index reproduites par l'analyse par composante principale. Les résultats stipulent qu'il y a une forte concentration des points autour de la droite de régression et que le coefficient de corrélation de Pearson indique une corrélation extrêmement forte et positive entre les deux variables (wealth index score hv271 et les scores factoriels calculés).
+
+2.  Reproduction du wealth index hv270 de DHS 2008
+
+```{r}
+
 ```
 
 Reproduction du wealth index DHS 1997
@@ -447,13 +474,15 @@ print(correlation)
 
 3.  Recalculer le wealth index hv270a pour 1997 et 2008
 
+    Les données DHS 1997 et 2008 ne comportent pas de désagrégation entre les zones urbaines et rurales. DHS 2008 comprend les indices HV270 et HV271, sans indicateurs spécifiques aux zones rurales. DHS 1997 ne comprend aucune variable de richesse précalculée
+
     Calcul du wealth index hv270a pour 2008
 
 ```{r}
 
 # Imputation et conversion des valeurs manquantes et des types
 hh_2008_rec_updated <- hh_2008_rec %>%
-  # Sélectionner les données urbaines et rurales
+  # Sélection des données urbaines et rurales
   mutate(
     hv270a_urban = ifelse(hv025 == 1, 
                           scale(select(., all_of(c(dich_vars_2008, animal_husbandry_vars)))) %*% perform_pca(., c(dich_vars_2008, animal_husbandry_vars))$loadings[, 1], 
@@ -462,11 +491,11 @@ hh_2008_rec_updated <- hh_2008_rec %>%
                           scale(select(., all_of(c(dich_vars_2008, animal_husbandry_vars)))) %*% perform_pca(., c(dich_vars_2008, animal_husbandry_vars))$loadings[, 1], 
                           NA)
   ) %>%
-  # Imputer les valeurs manquantes
+  # Imputation des valeurs manquantes
   mutate_at(vars(dich_vars_2008), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)) %>%
   mutate_at(vars(animal_husbandry_vars), ~ifelse(is.na(.), 0, .))
 
-# Vérifiez les résultats
+# Vérification des résultats
 head(hh_2008_rec_updated %>% select(hv001, hv025, hv270a_urban, hv270a_rural))
 
 
