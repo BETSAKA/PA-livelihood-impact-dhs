@@ -43,14 +43,14 @@ Nous allons chargé les données nécessaires à l'analyse.
 Le processus consiste à charger les données DHS 1997, 2008 et 2021. DHS 1997 et DHS 2008 ne comprend que les scores factoriels de l'indice de richesse utilisé dans l'enquête, on va dans un premier temps récupérer le wealth index des ménages ruraux de DHS 2021.
 
 ```{r}
-#Définition du chemin du dossier principal
+# Définition du chemin du dossier principal
 main_folder <- "../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data/"
 
-#Load DHS data
+# Load DHS data
 load_data <- function(year, type){
   year_folder <- paste0(main_folder, "DHS_", year)
   
-#Get the .shp (GPS) and .dta (household) file paths
+# Get the .shp (GPS) and .dta (household) file paths
   if (type == "HR") {
     hr_path <- list.files(year_folder, pattern = ".*HR.*\\.dta$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
     out <- read_dta(hr_path) #Lecture du fichier .dta
@@ -64,7 +64,7 @@ load_data <- function(year, type){
   return (out) 
 }
   
-#Execute the function for a specific year
+# Execute the function for a specific year
   dhs_1997_hr <- load_data(1997, "HR")
   dhs_1997_gps <- load_data(1997, "GPS")
   
@@ -74,40 +74,40 @@ load_data <- function(year, type){
   dhs_2021_hr <- load_data(2021, "HR")
   dhs_2021_gps <- load_data(2021, "GPS")
   
-#Recover the variable hv270a (rural wealth index) for 2021
+# Recover the variable hv270a (rural wealth index) for 2021
 dhs_2021_hr <- load_data(2021, "HR")
 
 hv270a_2021 <- dhs_2021_hr %>% 
-  filter(hv025 == 2) %>% #Filtrage des ménages ruraux 
+  filter(hv025 == 2) %>% # Filtrage des ménages ruraux 
   select(hhid, hv270a) %>%
   rename(wealth_index_rural = hv270a)
 ```
 
 ### Reproduction du wealth index hv270 pour 2008
 
-Cette section a pour objectif de reproduire le wealth index hv270 de DHS 2008. Dans un premier temps, nous reproduirons les scores factoriels du wealth index (hv271) à l'aide d'une analyse par composante principale, en nous basant sur le code SPSS utilisé par DHS pour construire cet indice. Le calcul des scores factoriels permet de créer un indicateur composite agrégant l'information des différentes variables de manière pondérée. Dans un second temps, nous reproduirons le wealth index hv270 de DHS 2008.
+Cette section a pour objectif de reproduire le wealth index hv270 de DHS 2008. Dans un premier temps, nous reproduirons les scores factoriels du wealth index (hv271) à l'aide d'une analyse par composante principale (ACP), en nous basant sur le code SPSS utilisé par DHS pour construire cet indice. Le calcul des scores factoriels permet de créer un indicateur composite agrégant l'information des différentes variables de manière pondérée. Dans un second temps, nous reproduirons le wealth index hv270 de DHS 2008.
 
 1.  Reproduction du wealth index hv271 de DHS 2008
 
-Dans un premier temps, nous procéderons au recodage des variables pertinentes issues de l'ensemble des données des ménages de DHS afin de constituer l'indice de richesse. Les valeurs manquantes seront imputées soit par la moyenne des variables pour les variables dichotomisées, soit par zéro pour les variables liées à l'élevage. A partir des données recodées, nous établirons une matrice de corrélation pour les variables sélectionnées et réaliserons une analyse en composante principale afin d'extraire la première composante principale, représentant le facteur d'indice de richesse. Nous calculerons ensuite les scores factoriels pour chaque ménage en utilisant les coefficients issues de l'analyse en composante principale. Enfin, nous effectuerons une comparaison des scores reconstruits pour chaque ménage avec les scores factoriels officiels de DHS (hv271), en utilisant à la fois une analyse graphique et un test de corrélation.
+Dans un premier temps, nous procéderons au recodage des variables pertinentes issues de l'ensemble des données des ménages de DHS afin de constituer l'indice de richesse. Les valeurs manquantes seront imputées soit par la moyenne des variables pour les variables dichotomisées, soit par zéro pour les variables liées à l'élevage. A partir des données recodées, nous établirons une matrice de corrélation pour les variables sélectionnées et réaliserons une analyse en composante principale afin d'extraire la première composante principale, représentant le facteur d'indice de richesse. Nous calculerons ensuite les scores factoriels pour chaque ménage en utilisant les coefficients issues de l'ACP. Enfin, nous effectuerons une comparaison des scores reconstruits pour chaque ménage avec les scores factoriels officiels de DHS (hv271), en utilisant à la fois une analyse graphique et un test de corrélation.
 
 ```{r}
 
-#Reproduce the wealth index hv270 for 2008 
+# Reproduce the wealth index factor score hv271 for 2008 
 
-#Load necessary libraries
+# Load necessary libraries
 library(labelled)
 library(janitor)
 library(psych)
 
-#Load DHS Data 
+# Load DHS Data 
 hh_2008 <- read_dta("../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data/DHS_2008/MDHR51DT/MDHR51FL.DTA")
 
-#Step 1: Recode relevant variables from the DHS household dataset
+# Step 1: Recode relevant variables from the DHS household dataset
 hh_2008 <- hh_2008 %>%
 filter(hv015 == 1)
 
-hh_2008_rec <- hh_2008 %>%
+hv271_2008 <- hh_2008 %>%
   mutate(
     # water source
     h2oires = if_else(hv201 == 11, 1, 0),
@@ -187,7 +187,7 @@ hh_2008_rec <- hh_2008 %>%
     wt = hv005 / 1000000
   )
 
-# Step 1: Store variable names for reuse
+# Step 2: Store variable names for reuse
 dich_vars_2008 <- c(
   "h2oires", "h2oyard", "h2opub", "h2owell", "h2opwell", "h2ouwell",
   "h2spring", "h2osurf", "h2ooth", "flushp", "flushs", "latvipp", "latvips",
@@ -207,7 +207,7 @@ animal_husbandry_vars <- c(
 
 all_factor_vars_2008 <- c(dich_vars_2008 , animal_husbandry_vars)
 
-#Step 3 : Compute a correlation matrix for the selected variables
+# Step 3 : Compute a correlation matrix for the selected variables
 
 # Perform PCA
 perform_pca <- function(data, vars) {
@@ -215,15 +215,15 @@ perform_pca <- function(data, vars) {
   principal(cor_matrix, nfactors = 1, rotate = "none", scores = TRUE, covar = FALSE)
 }
 
-pca_result <- perform_pca(hh_2008_rec, c(dich_vars_2008, animal_husbandry_vars))
+pca_result <- perform_pca(hv271_2008, c(dich_vars_2008, animal_husbandry_vars))
 
-#Extract PCA loadings and compute factor scores
-hh_2008_rec <- hh_2008_rec %>%
+# Extract PCA loadings and compute factor scores
+hv271_2008 <- hv271_2008 %>%
   mutate(
-    factor_score = as.vector(scale(hh_2008_rec %>% select(all_of(dich_vars_2008), all_of(animal_husbandry_vars))) %*% pca_result$loadings[, 1])
+    factor_score = as.vector(scale(hv271_2008 %>% select(all_of(dich_vars_2008), all_of(animal_husbandry_vars))) %*% pca_result$loadings[, 1])
   )
 
-#Step 4:  Comparison and Visualization
+# Step 4:  Comparison and Visualization
 comparison <- tibble(
   variable = paste0("Var", seq_along(pca_result$loadings[, 1])), # Replace with actual names if needed
   dhs_factor_score = c(0.051, 0.036, 0.044, 0.001, 0.006, -0.023, -0.027, -0.040, -0.004,
@@ -238,7 +238,7 @@ comparison <- tibble(
   r_pca_loading = pca_result$loadings[, 1]
 )
 
-#Plot: DHS Loadings vs PCA Loadings
+# Plot: DHS Loadings vs PCA Loadings
 ggplot(comparison, aes(x = dhs_factor_score, y = r_pca_loading)) +
   geom_point() +
   geom_smooth(method = "lm", color = "blue", se = FALSE, linewidth = 0.2) +
@@ -252,21 +252,21 @@ ggplot(comparison, aes(x = dhs_factor_score, y = r_pca_loading)) +
 
 [Interprétation du graphique]{.underline}
 
-Le graphique compare les saturations officiels obtenues par DHS (axe des x) et les saturation reproduites par l'analyse en composantes principales (axe des y). Chaque point sur le graphique représente une variable incluse dans le calcul du wealth index. La ligne bleue, qui représente un ajustement linéaire des points, montre une forte corrélation entre les deux séries de saturations, confirmant ainsi que la reconstruction des scores reproduit fidèlement les calculs officiels de DHS.
+Le graphique compare les saturations officiels obtenues par DHS (axe des x) et les saturation reproduites par l'ACP (axe des y). Chaque point sur le graphique représente une variable incluse dans le calcul du wealth index. La ligne bleue, qui représente un ajustement linéaire des points, montre une forte corrélation entre les deux séries de saturations, confirmant ainsi que la reconstruction des scores reproduit fidèlement les calculs officiels de DHS.
 
 ```{r}
-#Correlation and visualization
+# Correlation and visualization
 corr_2008_loadings <- cor.test(comparison$dhs_factor_score, comparison$r_pca_loading)
 corr_2008_loadings
 ```
 
 [Interprétation du test de corrélation]{.underline}
 
-Le test calcule la corrélation entre les wealth index factor score officiels du DHS et les saturations reproduites par l'analyse par composante principale. Les résultats démontrent que les scores factoriels du wealth index de DHS et les saturations reproduites par l'analyse par composante principale sont extrêmement corrélés avec un coefficient de 0.9999555, ou que les séries sont pratiquement identiques.
+Le test calcule la corrélation entre les wealth index factor score officiels du DHS et les saturations reproduites par l'ACP. Les résultats démontrent que les scores factoriels du wealth index de DHS et les saturations reproduites par l'ACP sont extrêmement corrélés avec un coefficient de 0.9999555, ou que les séries sont pratiquement identiques.
 
 ```{r}
-#Plot: hv271 vs Factor Score
-ggplot(hh_2008_rec, aes(x = hv271, y = factor_score)) +
+# Plot: hv271 vs Factor Score
+ggplot(hv271_2008, aes(x = hv271, y = factor_score)) +
   geom_point(alpha = 0.6) +
   geom_smooth(method = "lm", color = "blue", se = FALSE, linewidth = 0.2) +
   labs(
@@ -276,8 +276,8 @@ ggplot(hh_2008_rec, aes(x = hv271, y = factor_score)) +
   ) +
   theme_minimal()
 
-#Perform a correlation test between hv271 and factor_score
-corr_2008_obs <- cor.test(hh_2008_rec$hv271, hh_2008_rec$factor_score, use = "complete.obs")
+# Perform a correlation test between hv271 and factor_score
+corr_2008_obs <- cor.test(hv271_2008$hv271, hv271_2008$factor_score, use = "complete.obs")
 corr_2008_obs
 ```
 
@@ -287,25 +287,111 @@ Le graphique compare hv271 avec les scores factoriels du wealth index reproduite
 
 2.  Reproduction du wealth index hv270 de DHS 2008
 
+Nous calculons le wealth index hv270 de DHS 2008 à partir des scores factoriels reproduits à l'aide de l'ACP générés précédemment. Puis, on crée un classement de hv270 en divisant les scores factoriels en quintiles. Enfin, on attribue un rang (quintile) à chaque ménage en fonction du score du wealth index.
+
 ```{r}
+# Calcul des quintiles de l'indice de richesse (hv270)
+hv271_2008 <- hv271_2008 %>%
+  mutate(
+    hv270_2008 = ntile(factor_score, 5)  # Divise hv270 en 5 quintiles égaux
+  )
+
+# Vérification de la répartition des quintiles
+print(table(hv271_2008$hv270_2008))
+print(summary(hv271_2008$hv270_2008))
+
+# Vérification des valeurs manquantes
+#if (any(is.na(hv271_2008$hv270_2008))) {
+ # warning("Attention : Des valeurs manquantes sont présentes dans hv270_2008.")
+#}
+
+# Test de corrélation de Pearson et Spearman avec les scores de richesse DHS (hv271)
+hv270_2008_corr <- cor(hv271_2008$hv270_2008, hv271_2008$hv270, method = "pearson", use = "complete.obs")
+hv270bis_2008_corr <- cor(hv271_2008$hv270_2008, hv271_2008$hv270, method = "spearman", use = "complete.obs")
+```
+
+Les résultats des tests de corrélation se rapprochent et donc les quintiles de richesse reproduit bien la structure de de hv271.
+
+```{r}
+# Calcul des statistiques descriptives par quintile
+stats_quintiles_2008 <- hh_2008_rec %>%
+  group_by(hv270_2008) %>%
+  summarise(
+    mean_factor_score = mean(factor_score, na.rm = TRUE),
+    median_factor_score = median(factor_score, na.rm = TRUE),
+    sd_factor_score = sd(factor_score, na.rm = TRUE),
+    n = n()
+  )
+
+print(stats_quintiles_2008)
+
+# Visualisation des quintiles de l'indice de richesse
+ggplot(hh_2008_rec, aes(x = as.factor(hv270_2008), y = factor_score, fill = as.factor(hv270_2008))) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.7) +
+  geom_jitter(width = 0.2, alpha = 0.3) +
+  labs(
+    title = "Distribution de l'indice de richesse (hv270) par quintile",
+    x = "Quintile de richesse",
+    y = "Indice de richesse (factor_score)"
+  ) +
+  scale_fill_brewer(palette = "Blues") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Histogramme des quintiles
+ggplot(hh_2008_rec, aes(x = hv270_2008, fill = as.factor(hv270_2008))) +
+  geom_bar(alpha = 0.8) +
+  labs(
+    title = "Répartition des observations par quintile de richesse",
+    x = "Quintile de richesse",
+    y = "Nombre d'observations"
+  ) +
+  scale_fill_brewer(palette = "Blues") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Densité des quintiles
+ggplot(hh_2008_rec, aes(x = factor_score, fill = as.factor(hv270_2008), color = as.factor(hv270_2008))) +
+  geom_density(alpha = 0.3, size = 1) +
+  labs(
+    title = "Densité des quintiles de l'indice de richesse",
+    x = "Indice de richesse (factor_score)",
+    y = "Densité"
+  ) +
+  scale_fill_brewer(palette = "Blues") +
+  scale_color_brewer(palette = "Blues") +
+  theme_minimal() +
+  theme(legend.title = element_blank())
+
+# Statistiques descriptives par quintile 
+stats_quintiles_2008 <- hh_2008_rec %>%
+  group_by(hv270_2008) %>%
+  summarise(
+    mean_factor_score = mean(factor_score, na.rm = TRUE),
+    median_factor_score = median(factor_score, na.rm = TRUE),
+    sd_factor_score = sd(factor_score, na.rm = TRUE),
+    n = n()
+  )
+
+print(stats_quintiles_2008)
 
 ```
 
 Reproduction du wealth index DHS 1997
 
 ```{r}
-#Reproduce the wealth index hv270 for 1997 
+# Reproduce the wealth index hv271 for 1997 
 
-#Load necessary libraries
+# Load necessary libraries
 library(labelled)
 library(janitor)
 library(psych)
 
-#Load DHS Data 
+# Load DHS Data 
 hh_1997 <- read_dta("../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data/DHS_1997/MDHR31DT/MDHR31FL.DTA")
 
 
-#Step 1: Recode relevant variables from the DHS household dataset
+# Step 1: Recode relevant variables from the DHS household dataset
 hh_1997_rec <- hh_1997 %>% 
   mutate(
     # Specific to 1997 ---------------------
@@ -427,12 +513,12 @@ pca_loading_dhs <- tibble::tribble(
 
 all_factor_vars_1997 <- pca_loading_dhs$code
 
-#Step 2: Replace missing values
+# Step 2: Replace missing values
 hh_1997_rec <- hh_1997_rec %>%
   mutate(across(all_of(all_factor_vars_1997),
                 ~ if_else(is.na(.), mean(., na.rm = TRUE), .)))
-
-#Step 3 : Compute a correlation matrix for the selected variables
+ 
+# Step 3 : Compute a correlation matrix for the selected variables
 
 # Perform PCA
 pca_result_1997 <- perform_pca(hh_1997_rec, all_factor_vars_1997)
@@ -451,7 +537,7 @@ r_pca_loadings <- tibble(
   r_pca_loading = as.vector(pca_result_1997$loadings[, 1])
 )
 
-#Step 4:  Comparison and Visualization
+# Step 4:  Comparison and Visualization
 
 # Join the tibbles and calculate differences
 comparison <- left_join(pca_loading_dhs, r_pca_loadings, by = "code") %>%
