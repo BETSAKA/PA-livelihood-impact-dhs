@@ -300,21 +300,16 @@ hv271_2008 <- hv271_2008 %>%
 print(table(hv271_2008$hv270_2008))
 print(summary(hv271_2008$hv270_2008))
 
-# Vérification des valeurs manquantes
-#if (any(is.na(hv271_2008$hv270_2008))) {
- # warning("Attention : Des valeurs manquantes sont présentes dans hv270_2008.")
-#}
-
 # Test de corrélation de Pearson et Spearman avec les scores de richesse DHS (hv271)
 hv270_2008_corr <- cor(hv271_2008$hv270_2008, hv271_2008$hv270, method = "pearson", use = "complete.obs")
 hv270bis_2008_corr <- cor(hv271_2008$hv270_2008, hv271_2008$hv270, method = "spearman", use = "complete.obs")
 ```
 
-Les résultats des tests de corrélation se rapprochent et donc les quintiles de richesse reproduit bien la structure de de hv271.
+Les résultats des tests de corrélation se rapprochent et donc les quintiles de richesse reproduisent bien la structure de de hv271.
 
 ```{r}
 # Calcul des statistiques descriptives par quintile
-stats_quintiles_2008 <- hh_2008_rec %>%
+stats_quintiles_2008 <- hv271_2008 %>%
   group_by(hv270_2008) %>%
   summarise(
     mean_factor_score = mean(factor_score, na.rm = TRUE),
@@ -326,7 +321,7 @@ stats_quintiles_2008 <- hh_2008_rec %>%
 print(stats_quintiles_2008)
 
 # Visualisation des quintiles de l'indice de richesse
-ggplot(hh_2008_rec, aes(x = as.factor(hv270_2008), y = factor_score, fill = as.factor(hv270_2008))) +
+ggplot(hv271_2008, aes(x = as.factor(hv270_2008), y = factor_score, fill = as.factor(hv270_2008))) +
   geom_boxplot(outlier.shape = NA, alpha = 0.7) +
   geom_jitter(width = 0.2, alpha = 0.3) +
   labs(
@@ -338,44 +333,8 @@ ggplot(hh_2008_rec, aes(x = as.factor(hv270_2008), y = factor_score, fill = as.f
   theme_minimal() +
   theme(legend.position = "none")
 
-# Histogramme des quintiles
-ggplot(hh_2008_rec, aes(x = hv270_2008, fill = as.factor(hv270_2008))) +
-  geom_bar(alpha = 0.8) +
-  labs(
-    title = "Répartition des observations par quintile de richesse",
-    x = "Quintile de richesse",
-    y = "Nombre d'observations"
-  ) +
-  scale_fill_brewer(palette = "Blues") +
-  theme_minimal() +
-  theme(legend.position = "none")
-
-# Densité des quintiles
-ggplot(hh_2008_rec, aes(x = factor_score, fill = as.factor(hv270_2008), color = as.factor(hv270_2008))) +
-  geom_density(alpha = 0.3, size = 1) +
-  labs(
-    title = "Densité des quintiles de l'indice de richesse",
-    x = "Indice de richesse (factor_score)",
-    y = "Densité"
-  ) +
-  scale_fill_brewer(palette = "Blues") +
-  scale_color_brewer(palette = "Blues") +
-  theme_minimal() +
-  theme(legend.title = element_blank())
-
-# Statistiques descriptives par quintile 
-stats_quintiles_2008 <- hh_2008_rec %>%
-  group_by(hv270_2008) %>%
-  summarise(
-    mean_factor_score = mean(factor_score, na.rm = TRUE),
-    median_factor_score = median(factor_score, na.rm = TRUE),
-    sd_factor_score = sd(factor_score, na.rm = TRUE),
-    n = n()
-  )
-
-print(stats_quintiles_2008)
-
 ```
+Le boxplot montre la distribution de l'indice de richesse pour chaque quintile (1 correspond aux 20% des ménages les plus pauvres et 5 aux 20 % des ménages les plus riches). La ligne médiane représente la médiane du factor score pour le quintile et les points dispersés autour montrent la répartition des observations individuelles.Il se trouve que Chaque quintile couvre une plage différente des scores factoriels, confirmant que l'indice de richesse varie significativement entre les quintiles.
 
 Reproduction du wealth index DHS 1997
 
