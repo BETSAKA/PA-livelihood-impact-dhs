@@ -290,17 +290,17 @@ Le graphique compare hv271 avec les scores factoriels du wealth index reproduite
 Nous calculons le wealth index hv270 de DHS 2008 à partir des scores factoriels reproduits à l'aide de l'ACP générés précédemment. Puis, on crée un classement de hv270 en divisant les scores factoriels en quintiles. Enfin, on attribue un rang (quintile) à chaque ménage en fonction du score du wealth index.
 
 ```{r}
-# Calcul des quintiles de l'indice de richesse (hv270)
+# Calculate wealth index quintile (hv270)
 hv271_2008 <- hv271_2008 %>%
   mutate(
     hv270_2008 = ntile(factor_score, 5)  # Divise hv270 en 5 quintiles égaux
   )
 
-# Vérification de la répartition des quintiles
+# Check quintile distribution
 print(table(hv271_2008$hv270_2008))
 print(summary(hv271_2008$hv270_2008))
 
-# Test de corrélation de Pearson et Spearman avec les scores de richesse DHS (hv271)
+# Pearson and Spearman correlation test with DHS wealth scores(hv271)
 hv270_2008_corr <- cor(hv271_2008$hv270_2008, hv271_2008$hv270, method = "pearson", use = "complete.obs")
 hv270bis_2008_corr <- cor(hv271_2008$hv270_2008, hv271_2008$hv270, method = "spearman", use = "complete.obs")
 ```
@@ -308,7 +308,7 @@ hv270bis_2008_corr <- cor(hv271_2008$hv270_2008, hv271_2008$hv270, method = "spe
 Les résultats des tests de corrélation se rapprochent et donc les quintiles de richesse reproduisent bien la structure de de hv271.
 
 ```{r}
-# Calcul des statistiques descriptives par quintile
+# Calculate descriptive statistics by quintile
 stats_quintiles_2008 <- hv271_2008 %>%
   group_by(hv270_2008) %>%
   summarise(
@@ -320,7 +320,7 @@ stats_quintiles_2008 <- hv271_2008 %>%
 
 print(stats_quintiles_2008)
 
-# Visualisation des quintiles de l'indice de richesse
+# Visualization wealth index quintiles
 ggplot(hv271_2008, aes(x = as.factor(hv270_2008), y = factor_score, fill = as.factor(hv270_2008))) +
   geom_boxplot(outlier.shape = NA, alpha = 0.7) +
   geom_jitter(width = 0.2, alpha = 0.3) +
@@ -334,9 +334,14 @@ ggplot(hv271_2008, aes(x = as.factor(hv270_2008), y = factor_score, fill = as.fa
   theme(legend.position = "none")
 
 ```
+
 Le boxplot montre la distribution de l'indice de richesse pour chaque quintile (1 correspond aux 20% des ménages les plus pauvres et 5 aux 20 % des ménages les plus riches). La ligne médiane représente la médiane du factor score pour le quintile et les points dispersés autour montrent la répartition des observations individuelles.Il se trouve que Chaque quintile couvre une plage différente des scores factoriels, confirmant que l'indice de richesse varie significativement entre les quintiles.
 
-Reproduction du wealth index DHS 1997
+### Reproduction du wealth index DHS 1997
+
+1.  Reproduction du wealth index hv271 de DHS 1997
+
+Nous recodons les variables pertinentes issues de l'ensemble des données des ménages de DHS afin de constituer l'indice de richesse. Les procédures de recodage ne sont pas fournies et donc pour cette étape, nous allons analyser les étiquettes des variables recodées et le contenu du questionnaire de 1997.
 
 ```{r}
 # Reproduce the wealth index hv271 for 1997 
@@ -351,7 +356,7 @@ hh_1997 <- read_dta("../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ména
 
 
 # Step 1: Recode relevant variables from the DHS household dataset
-hh_1997_rec <- hh_1997 %>% 
+hv271_1997 <- hh_1997 %>% 
   mutate(
     # Specific to 1997 ---------------------
     # Toilet types (latbush below)
@@ -419,14 +424,13 @@ ownland_by_household <- ir_1997 %>%
   mutate(ownland = ifelse(ownland > 0, 1, 0))
 
 # Add ownland variable to hh_1997 by joining on hv001 and hv002
-hh_1997_rec <- hh_1997_rec %>%
+hv271_1997 <- hv271_1997 %>%
   left_join(ownland_by_household, by = c("hv001" = "v001", "hv002" = "v002"))
 # Check number of unmatched (we do not have data for all hh)
-sum(is.na(hh_1997_rec$ownland))
-# 1622
+sum(is.na(hv271_1997$ownland))
 
 # Replace NA in ownland with 0 (if household doesn't have any matching members)
-hh_1997_rec <- hh_1997_rec %>%
+hv271_1997 <- hv271_1997 %>%
   mutate(ownland = if_else(is.na(ownland), 0, ownland))
 
 # Define the equivalent variables for 1997 based on SPSS specification and recoded names
@@ -473,20 +477,21 @@ pca_loading_dhs <- tibble::tribble(
 all_factor_vars_1997 <- pca_loading_dhs$code
 
 # Step 2: Replace missing values
-hh_1997_rec <- hh_1997_rec %>%
+hv271_1997 <- hv271_1997 %>%
   mutate(across(all_of(all_factor_vars_1997),
                 ~ if_else(is.na(.), mean(., na.rm = TRUE), .)))
  
 # Step 3 : Compute a correlation matrix for the selected variables
 
 # Perform PCA
-pca_result_1997 <- perform_pca(hh_1997_rec, all_factor_vars_1997)
+#pca_result_1997 <- perform_pca(hv271_1997, all_factor_vars_1997)
+pca_result_1997 <- principal(hv271_1997 %>% select(all_of(all_factor_vars_1997)), nfactors = 1, rotate = "none")
 
 
 # Add factor scores to the dataset
-hh_1997_rec <- hh_1997_rec %>%
+hv271_1997 <- hv271_1997 %>%
   mutate(
-    factor_score = as.vector(scale(hh_1997_rec %>% 
+    factor_score = as.vector(scale(hv271_1997 %>% 
                                      select(all_of(all_factor_vars_1997))) %*% 
                                pca_result_1997$loadings[, 1]))
 
@@ -512,42 +517,175 @@ ggplot(comparison, aes(x = dhs_factor, y = r_pca_loading)) +
     y = "Reproduced PCA Loadings"
   ) +
   theme_minimal()
+
 # Calculate and print the correlation
 correlation <- cor.test(comparison$dhs_factor, comparison$r_pca_loading, use = "complete.obs")
 print(correlation)
 ```
 
-3.  Recalculer le wealth index hv270a pour 1997 et 2008
+[Interprétation]{.underline}: Le graphique compare les saturations officiels obtenues par DHS (axe des x) et les saturation reproduites par l'ACP (axe des y). Chaque point sur le graphique représente une variable incluse dans le calcul du wealth index. La ligne bleue, qui représente un ajustement linéaire des points, montre une forte corrélation entre les deux séries de saturations, confirmant ainsi que la reconstruction des scores reproduit les calculs officiels de DHS. Cependant, nous allons effectuer des tests de corrélations pour vérifier la qualité des reconstructions du fait qu'un point se décale à gauche de la ligne bleue.
 
-    Les données DHS 1997 et 2008 ne comportent pas de désagrégation entre les zones urbaines et rurales. DHS 2008 comprend les indices HV270 et HV271, sans indicateurs spécifiques aux zones rurales. DHS 1997 ne comprend aucune variable de richesse précalculée
+```{r}
+# Calculate and print the correlation
+correlation <- cor.test(comparison$dhs_factor, comparison$r_pca_loading, use = "complete.obs")
+print(correlation)
+```
 
-    Calcul du wealth index hv270a pour 2008
+Le test de corrélation indique que l'ACP produit bien les pondérations utilisées par le DHS avec un coefficient égale à 0.992924. Nous allons vérifier la qualité de l'ACP.
+
+```{r}
+#Vérification de la qualité de PCA
+print(pca_result_1997$values / sum(pca_result_1997$values))
+
+#Vérification de la structure des données 
+summary(hv271_1997 %>% select(all_of(all_factor_vars_1997)))
+#Evaluation du nombre optimal des facteurs 
+fa.parallel(hv271_1997 %>% select(all_of(all_factor_vars_1997)), fa = "pc")
+```
+
+[Interprétation]{.underline}: Le graphique montre que la matrice de corrélation contient des valeurs propres négatives ou nulles qui empêchent certains calculs d'être correctement effectués. Nous allons alors identifier les variables qui sont redondantes ou trop corrélées.
+
+```{r}
+cor_matrix <- cor(hv271_1997 %>% select(all_of(all_factor_vars_1997)), use = "pairwise.complete.obs")
+eigen(cor_matrix)$values
+
+```
+
+Les premières composantes ont des plus grandes valeurs que les suivantes. Les valeurs deviennent plus petites après les premières composantes indiquant que ces composantes contiennent de moins en moins d'informations utiles. On retrouve des valeurs très proches de zéro avec une valeur négative dans les dernières composantes.
+
+```{r}
+screeplot(prcomp(hv271_1997 %>% select(all_of(all_factor_vars_1997)), scale = TRUE), type = "lines")
+
+pca_result <- prcomp(hv271_1997 %>% select(all_of(all_factor_vars_1997)), scale = TRUE)
+cumsum(pca_result$sdev^2) / sum(pca_result$sdev^2)
+```
+
+2.  Reproduction du wealth index hv270 de DHS 1997
+
+### Recalcul du wealth index hv270a pour 1997 et 2008
+
+1.  Calcul du wealth index hv270a pour 2021
+
+```{r}
+# Extraction des variables
+wealth_data_2021 <- dhs_2021_hr %>%
+  select(hhid, hv025, hv271, hv270) %>%
+  rename(factor_score = hv271, wealth_quintile = hv270)
+
+# Recalcul des quintiles pour 2021
+wealth_data_2021 <- wealth_data_2021 %>%
+  mutate(
+    hv270a_2021 = ntile(factor_score, 5)  # Création de 5 groupes égaux
+  )
+
+
+# Séparer les quintiles pour urbain et rural
+
+# Quintiles pour les ménages urbains
+wealth_urban_2021 <- wealth_data_2021 %>%
+  filter(hv025 == 1) %>%
+  mutate(hv270a_urban_2021 = ntile(factor_score, 5))
+
+# Quintiles pour les ménages ruraux
+wealth_rural_2021 <- wealth_data_2021 %>%
+  filter(hv025 == 2) %>%
+  mutate(hv270a_rural_2021 = ntile(factor_score, 5))
+
+# Test de corrélation
+hv270a_2021_corr <- cor(wealth_data_2021$hv270a_2021, wealth_data_2021$wealth_quintile, method = "pearson", use = "complete.obs")
+hv270a_2021_corr_spearman <- cor(wealth_data_2021$hv270a_2021, wealth_data_2021$wealth_quintile, method = "spearman", use = "complete.obs")
+
+# Affichage des résultats
+print(paste("Corrélation Pearson :", round(hv270a_2021_corr, 3)))
+print(paste("Corrélation Spearman :", round(hv270a_2021_corr_spearman, 3)))
+
+```
+
+2.  Calcul du wealth index hv270a pour 2008
+
+    [**Urban**]{.underline}
+
+```{r}
+# Filter urban households
+hv271_urban_2008 <- hv271_2008 %>%
+  filter(hv025 == 1)
+
+# Calculate the quintile specific to urban households (hv270a)
+hv271_urban_2008 <- hv271_urban_2008 %>%
+  mutate(
+    hv270a_urban_2008 = ntile(factor_score, 5)  
+  )
+
+# Check the distribution of quintiles
+print(table(hv271_urban_2008$hv270a_urban_2008))
+print(summary(hv271_urban_2008$hv270a_urban_2008))
+
+# Test the correlation between hv270a_2008 and hv270 (DHS)
+hv270a_urban_2008_corr <- cor(hv271_urban_2008$hv270a_urban_2008, hv271_urban_2008$hv270, method = "pearson", use = "complete.obs")
+hv270abis_urban_2008_corr <- cor(hv271_urban_2008$hv270a_urban_2008, hv271_urban_2008$hv270, method = "spearman", use = "complete.obs")
+
+# Visualization
+print(hv270a_urban_2008_corr)
+print(hv270abis_urban_2008_corr)
+```
+
+[**RURAL**]{.underline}
+
+```{r}
+# Filter rural households
+hv271_rural_2008 <- hv271_2008 %>%
+  filter(hv025 == 2)
+
+# Calculate the quintile specific to rural households (hv270a)
+hv271_rural_2008 <- hv271_rural_2008 %>%
+  mutate(
+    hv270a_rural_2008 = ntile(factor_score, 5)  
+  )
+
+# Check the distribution of quintiles
+print(table(hv271_rural_2008$hv270a_rural_2008))
+print(summary(hv271_rural_2008$hv270a_rural_2008))
+
+# Test the correlation between hv270a_2008 and hv270 (DHS)
+hv270a_rural_2008_corr <- cor(hv271_rural_2008$hv270a_rural_2008, hv271_rural_2008$hv270, method = "pearson", use = "complete.obs")
+hv270abis_rural_2008_corr<- cor(hv271_rural_2008$hv270a_rural_2008, hv271_rural_2008$hv270, method = "spearman", use = "complete.obs")
+
+# Visualization
+print(hv270a_rural_2008_corr)
+print(hv270abis_rural_2008_corr)
+
+```
+
+[**Comparaison de rural et urbain par rapport à hv270 de DHS**]{.underline}
 
 ```{r}
 
-# Imputation et conversion des valeurs manquantes et des types
-hh_2008_rec_updated <- hh_2008_rec %>%
-  # Sélection des données urbaines et rurales
-  mutate(
-    hv270a_urban = ifelse(hv025 == 1, 
-                          scale(select(., all_of(c(dich_vars_2008, animal_husbandry_vars)))) %*% perform_pca(., c(dich_vars_2008, animal_husbandry_vars))$loadings[, 1], 
-                          NA),
-    hv270a_rural = ifelse(hv025 == 2, 
-                          scale(select(., all_of(c(dich_vars_2008, animal_husbandry_vars)))) %*% perform_pca(., c(dich_vars_2008, animal_husbandry_vars))$loadings[, 1], 
-                          NA)
-  ) %>%
-  # Imputation des valeurs manquantes
-  mutate_at(vars(dich_vars_2008), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)) %>%
-  mutate_at(vars(animal_husbandry_vars), ~ifelse(is.na(.), 0, .))
+# Scatterplot pour l'urbain
+ggplot(hv271_urban_2008, aes(x = hv270a_urban_2008, y = hv270)) +
+  geom_jitter(alpha = 0.5, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(title = "Corrélation entre Quintiles Urbains et Indice DHS",
+       x = "Quintile Recalculé (hv270a)",
+       y = "Indice DHS (hv270)") +
+  theme_minimal()
 
-# Vérification des résultats
-head(hh_2008_rec_updated %>% select(hv001, hv025, hv270a_urban, hv270a_rural))
+# Scatterplot pour le rural
+ggplot(hv271_rural_2008, aes(x = hv270a_rural_2008, y = hv270)) +
+  geom_jitter(alpha = 0.5, color = "blue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(title = "Corrélation entre Quintiles Ruraux et Indice DHS",
+       x = "Quintile Recalculé (hv270a)",
+       y = "Indice DHS (hv270)") +
+  theme_minimal()
+
 
 
 ```
 
-3.  Segmentation de wealth index en centiles
+[Interprétation:]{.underline} On peut voir sur le graphique que la tendance rouge est proche d'une droite diagonale donc la corrélation est forte entre hv270 et hv270a.
 
-4.  Calcul du Z score standardisé du wealth index
+2.  Segmentation de wealth index en centiles
 
-5.  Ajout des variables âges et sexes du chef de ménage dans l'analyse
+3.  Calcul du Z score standardisé du wealth index
+
+4.  Ajout des variables âges et sexes du chef de ménage dans l'analyse
