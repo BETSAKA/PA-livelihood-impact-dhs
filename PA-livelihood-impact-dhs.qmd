@@ -7,7 +7,7 @@ format:
    embed-resources: true
    standalone: true
    code-fold: true
-  execute: 
+  execute:
    warning: false
    error: false
 editor: visual
@@ -16,7 +16,7 @@ editor-options:
 Bibliography: references.bib
 ---
 
-## Environnement
+# Environnement
 
 ```{r}
 library(tidyverse) #Manipulation et visualisation des données
@@ -29,14 +29,490 @@ library(gt) #Mise en forme des tableaux
 library(survey) #Analyse des données d'enquêtes
 library(MatchIt) #Matching
 library(ggplot2) #Figure
+library(labelled) # Manipulation des labels
+library(janitor) #Nettoyage des données 
+library(psych) #Analyse psychométrique
+library(readxl) #Lecture des fichiers excels
 
 ```
 
-## Data structuring
+# Data structuring
 
 Nous allons chargé les données nécessaires à l'analyse.
 
 ## Socioeconomic household data
+
+### Reproduction of wealth index
+
+Cette section a pour objectif de reproduire le wealth index de DHS 2021, 2008 et 1997. Dans un premier temps, nous reproduirons les scores factoriels du wealth index (hv271) à l'aide d'une analyse par composante principale (ACP), en nous basant sur le code SPSS utilisé par DHS pour construire cet indice. Le calcul des scores factoriels permet de créer un indicateur composite agrégant l'information des différentes variables de manière pondérée. Dans un second temps, nous reproduirons le wealth index hv270 des années étudiées.
+
+#### Wealth index for 2021
+
+```{r}
+# Load DHS 2021 Data
+hh_2021 <- read_dta("../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data/DHS_2021/MDHR81DT/MDHR81FL.DTA")
+
+# Filter valid households
+hh_2021 <- hh_2021 %>%
+  filter(hv015 == 1)
+
+# Build a variable dictionnary
+codebook_2021 <- hh_2021 |> 
+  look_for() |> 
+  as_tibble()
+
+# Define function to dichotomize categorical variables
+dichotomize <- function(data, var, condition, new_var, new_var_label) {
+  data %>%
+    mutate({{ new_var }} := if_else({{ condition }}, 1, 0, missing = 0)) %>%
+    labelled::set_variable_labels(!!rlang::ensym(new_var) := new_var_label) %>%
+    labelled::set_value_labels(!!rlang::ensym(new_var) := c("No" = 0, "Yes" = 1))
+}
+
+# Define a function that will reclassify if the toilet are shared
+shared_fac <- function(data, var, new_var, new_var_label) {
+  data %>%
+    mutate(
+      {{ new_var }} := if_else(hv225 == 1 & {{ var }} == 1, 1, 0, missing = 0),
+      {{ var }} := if_else(hv225 == 1, 0, {{ var }}, missing = 0)
+    ) %>%
+    labelled::set_variable_labels(!!rlang::ensym(new_var) := new_var_label) %>%
+    labelled::set_value_labels(!!rlang::ensym(new_var) := c("No" = 0, "Yes" = 1))
+}
+
+# Function to categorize livestock counts
+categorize_livestock <- function(data, var, prefix, category_ranges, category_labels) {
+  
+  # Ensure missing values and conditions are applied first
+  data <- data %>%
+    mutate(
+      {{ var }} := if_else(is.na({{ var }}) | hv246 != 1, 0, {{ var }})
+    )
+  
+  # Create categorized dummy variables with the given prefix
+  for (i in seq_along(category_ranges)) {
+    new_var <- paste0(prefix, "_", i)  # Custom prefix for output variable names
+    label <- category_labels[i]
+    
+    data <- data %>%
+      mutate(
+        !!sym(new_var) := as.integer({{ var }} >= category_ranges[[i]][1] & {{ var }} <= category_ranges[[i]][2])
+      ) %>%
+      set_variable_labels(!!sym(new_var) := label)
+  }
+  
+  return(data)
+}
+
+# To mimic no2zero in DHS SPSS code (our values are already coded 0 and 1)
+
+no2zero <- function(data, new_var, old_var, replace_na = TRUE) {
+  data %>%
+    rename({{ new_var }} := {{ old_var }}) %>%
+    mutate({{ new_var }} := if_else(replace_na & is.na({{ new_var }}), 0, {{ new_var }}))
+}
+
+# Dichotomization as per SPSS original script
+# I rename the outputs to have the same as in: 
+# https://www.dhsprogram.com/programming/wealth%20index/Madagascar%20DHS%202021/Madagascar%20DHS%202021.sps.txt
+
+test <- hh_2021 %>%
+  
+  # Source of drinking water
+  dichotomize(hv201, hv201 == 11, QH101_11, "Source of drinking water: Eau du robinet dans le logement") %>%
+  dichotomize(hv201, hv201 == 12, QH101_12, "Source of drinking water: Eau du robinet dans la cour/Parcelle") %>%
+  dichotomize(hv201, hv201 == 13, QH101_13, "Source of drinking water: Eau du robinet du voisin") %>%
+  dichotomize(hv201, hv201 == 14, QH101_14, "Source of drinking water: Eau du robinet public/Borne fontaine") %>%
+  dichotomize(hv201, hv201 == 21, QH101_21, "Source of drinking water: Puits à pompe ou forage") %>%
+  dichotomize(hv201, hv201 == 31, QH101_31, "Source of drinking water: Puits creusés protégés") %>%
+  dichotomize(hv201, hv201 == 32, QH101_32, "Source of drinking water: Puits creusés non protégés") %>%
+  dichotomize(hv201, hv201 == 41, QH101_41, "Source of drinking water: Source protégée") %>%
+  dichotomize(hv201, hv201 == 42, QH101_42, "Source of drinking water: Source non protégée") %>%
+  dichotomize(hv201, hv201 == 51, QH101_51, "Source of drinking water: Eau de pluie") %>%
+  dichotomize(hv201, hv201 == 61, QH101_61, "Source of drinking water: Camion citerne") %>%
+  dichotomize(hv201, hv201 == 71, QH101_71, "Source of drinking water: Charette avec petite citerne/tonneau") %>%
+  dichotomize(hv201, hv201 == 81, QH101_81, "Source of drinking water: Eau de surface/Rivière/Barrage/Lac/Mare/Canal") %>%
+  dichotomize(hv201, hv201 == 91, QH101_91, "Source of drinking water: Eau en bouteille") %>%
+  dichotomize(hv201, hv201 == 96, QH101_96, "Source of drinking water: Autre") %>%
+  
+  # Qui va chercher l'eau?
+  dichotomize(hv236, hv236 == 1, QH104A_1, "Qui va chercher l'eau: Femme adulte (>=15 ans)") %>%
+  dichotomize(hv236, hv236 == 2, QH104A_2, "Qui va chercher l'eau: Homme adulte (>=15 ans)") %>%
+  dichotomize(hv236, hv236 == 3, QH104A_3, "Qui va chercher l'eau: Fille (<15 ans)") %>%
+  dichotomize(hv236, hv236 == 4, QH104A_4, "Qui va chercher l'eau: Garçons (<15 ans)") %>%
+  
+  # Type of toilet facility
+  dichotomize(hv205, hv205 == 11, QH109_11, "Type of toilet facility: Chasse d'eau - à un système d'égout") %>%
+  dichotomize(hv205, hv205 == 12, QH109_12, "Type of toilet facility: Chasse d'eau - à une fosse septique") %>%
+  dichotomize(hv205, hv205 == 13, QH109_13, "Type of toilet facility: Chasse d'eau - fosse d'aisance") %>%
+  dichotomize(hv205, hv205 == 14, QH109_14, "Type of toilet facility: Chasse d'eau - à quelque chose d'autre") %>%
+  dichotomize(hv205, hv205 == 15, QH109_15, "Type of toilet facility: Chasse d'eau - ne sait pas") %>%
+  dichotomize(hv205, hv205 == 21, QH109_21, "Type of toilet facility: Fosses/latrines - ventilées améliorées (VIP)") %>%
+  dichotomize(hv205, hv205 == 22, QH109_22, "Type of toilet facility: Fosses/latrines - avec dalles") %>%
+  dichotomize(hv205, hv205 == 23, QH109_23, "Type of toilet facility: Fosses/latrines - sans dalles/trou ouvert") %>%
+  dichotomize(hv205, hv205 == 31, QH109_31, "Type of toilet facility: Toilettes à compostage") %>%
+  dichotomize(hv205, hv205 == 41, QH109_41, "Type of toilet facility: Seau/tinette") %>%
+  dichotomize(hv205, hv205 == 51, QH109_51, "Type of toilet facility: Toilettes /latrines suspendues") %>%
+  dichotomize(hv205, hv205 == 61, QH109_61, "Type of toilet facility: Pas de toilette/nature") %>%
+  dichotomize(hv205, hv205 == 96, QH109_96, "Type of toilet facility: Autre") %>%
+  
+  # Create shared toilet facility indicators
+  shared_fac(QH109_11, QH109_11_sh, "Type of toilet facility: Chasse d'eau - à un système d'égout - shared") %>%
+  shared_fac(QH109_12, QH109_12_sh, "Type of toilet facility: Chasse d'eau - à une fosse septique - shared") %>%
+  shared_fac(QH109_13, QH109_13_sh, "Type of toilet facility: Chasse d'eau - fosse d'aisance - shared") %>%
+  shared_fac(QH109_14, QH109_14_sh, "Type of toilet facility: Chasse d'eau - à quelque chose d'autre - shared") %>%
+  shared_fac(QH109_15, QH109_15_sh, "Type of toilet facility: Chasse d'eau - ne sait pas - shared") %>%
+  shared_fac(QH109_21, QH109_21_sh, "Type of toilet facility: Fosses/latrines - ventilées ameliorées (VIP) - shared") %>%
+  shared_fac(QH109_22, QH109_22_sh, "Type of toilet facility: Fosses/latrines - avec dalles - shared") %>%
+  shared_fac(QH109_23, QH109_23_sh, "Type of toilet facility: Fosses/latrines - sans dalles/trou ouvert - shared") %>%
+  shared_fac(QH109_31, QH109_31_sh, "Type of toilet facility: Toilettes à compostage - shared") %>%
+  shared_fac(QH109_41, QH109_41_sh, "Type of toilet facility: Seau/tinette - shared") %>%
+  shared_fac(QH109_51, QH109_51_sh, "Type of toilet facility: Toilettes /latrines suspendues - shared") %>%
+  shared_fac(QH109_96, QH109_96_sh, "Type of toilet facility: Autre - shared") %>%
+  
+  # Type of cooking fuel 
+  dichotomize(hv226, hv226 == 1, QH113_1, "Type of cooking fuel: Electricité") %>%
+  dichotomize(hv226, hv226 == 2, QH113_2, "Type of cooking fuel: Gaz propane liquifié (GPL)") %>%
+  dichotomize(hv226, hv226 == 3, QH113_3, "Type of cooking fuel: Gaz naturel") %>%
+  dichotomize(hv226, hv226 == 4, QH113_4, "Type of cooking fuel: Biogaz") %>%
+  dichotomize(hv226, hv226 == 5, QH113_5, "Type of cooking fuel: Kérosène/Petrole") %>%
+  dichotomize(hv226, hv226 == 6, QH113_6, "Type of cooking fuel: Charbon, lignite") %>%
+  dichotomize(hv226, hv226 == 7, QH113_7, "Type of cooking fuel: Charbon de bois") %>%
+  dichotomize(hv226, hv226 == 8, QH113_8, "Type of cooking fuel: Bois") %>%
+  dichotomize(hv226, hv226 == 9, QH113_9, "Type of cooking fuel: Paille/Branche/Herbes") %>%
+  dichotomize(hv226, hv226 == 10, QH113_10, "Type of cooking fuel: Résidus agricoles") %>%
+  # The commented-out SPSS variable (hv226=11) is skipped
+  dichotomize(hv226, hv226 == 95, QH113_95, "Type of cooking fuel: Pas de repas préparé dans le ménage") %>%
+  dichotomize(hv226, hv226 == 11 | hv226 == 96, QH113_96, "Type of cooking fuel: Autre/Bouse") %>%
+  
+  # Cows/bulls
+  categorize_livestock(hv246b, "QH118A",
+                       list(c(1,4), c(5,9), c(10,98)), 
+                       c("Cows/bulls: 1-4", "Cows/bulls: 5-9", "Cows/bulls: 10+")) %>%
+  
+  # Zébus
+  categorize_livestock(hv246g, "QH118B",
+                       list(c(1,4), c(5,9), c(10,98)), 
+                       c("Zébus: 1-4", "Zébus: 5-9", "Zébus: 10+")) %>%
+  
+  # Horses/donkeys/mules
+  categorize_livestock(hv246c, "QH118C", 
+                       list(c(1,4), c(5,9), c(10,98)), 
+                       c("Horses/donkeys/mules: 1-4", "Horses/donkeys/mules: 5-9", "Horses/donkeys/mules: 10+")) %>%
+  
+  # Goats
+  categorize_livestock(hv246d, "QH118D",
+                       list(c(1,4), c(5,9), c(10,98)), 
+                       c("Goats: 1-4", "Goats: 5-9", "Goats: 10+")) %>%
+  
+  # Sheep
+  categorize_livestock(hv246e, "QH118E",
+                       list(c(1,4), c(5,9), c(10,98)), 
+                       c("Sheep: 1-4", "Sheep: 5-9", "Sheep: 10+")) %>%
+  
+  # Chickens/poultry (different range)
+  categorize_livestock(hv246f, "QH118F", 
+                       list(c(1,9), c(10,29), c(30,98)), 
+                       c("Chickens or other poultry: 1-9", "Chickens or other poultry: 10-29", "Chickens or other poultry: 30+")) %>%
+  
+  # Ducks/geese/turkeys
+  categorize_livestock(hv246h, "QH118G", 
+                       list(c(1,4), c(5,9), c(10,98)), 
+                       c("Canards/Oies/Dindes: 1-4", "Canards/Oies/Dindes: 5-9", "Canards/Oies/Dindes: 10+")) %>%
+  
+  # Pigs
+  categorize_livestock(hv246i, "QH118H", 
+                       list(c(1,4), c(5,9), c(10,98)), 
+                       c("Cochons: 1-4", "Cochons: 5-9", "Cochons: 10+")) %>%
+  
+  # Define land area
+  mutate(
+    landarea = hv245,  # Assign hv245 to landarea
+    landarea = if_else(is.na(hv245) | hv245 >= 99.8, 99.9, landarea),  # Set to 99.9 if missing or >= 99.8
+    landarea = if_else(is.na(hv244) | hv244 != 1, 0, landarea)  # Set to 0 if QH119 is missing or not 1
+  ) %>%
+  
+  # Household assets
+  no2zero(QH121A, hv206) %>%   # Electricity
+  no2zero(QH121B, hv207) %>%   # Radio
+  no2zero(QH121C, hv208) %>%   # Television
+  no2zero(QH121D, hv221) %>%   # Telephone (non-mobile)
+  no2zero(QH121E, hv243e) %>%  # Computer
+  no2zero(QH121F, hv209) %>%   # Refrigerator
+  no2zero(QH121G, sh121g) %>%  # Bed
+  no2zero(QH121H, sh121h) %>%  # Table
+  no2zero(QH121I, sh121i) %>%  # Chair
+  no2zero(QH121J, sh121j) %>%  # Sofa
+  no2zero(QH121K, sh121k) %>%  # Sewing machine
+  no2zero(QH121L, sh121l) %>%  # Fan
+  no2zero(QH121M, sh121m) %>%  # DVD player
+  no2zero(QH121N, sh121n) %>%  # Water heater
+  
+  # Personal assets
+  no2zero(QH122A, hv243b) %>% # Watch
+  no2zero(QH122B, hv243a) %>% # Mobile phone
+  no2zero(QH122C, hv210) %>%  # Bicycle
+  no2zero(QH122D, hv211) %>%  # Motorcycle or scooter
+  no2zero(QH122E, hv243c) %>% # Animal drawn cart
+  no2zero(QH122F, hv212) %>%  # Car or truck
+  no2zero(QH122G, hv243d) %>% # Boat with motor
+  
+  # Financial acces
+  no2zero(QH123, hv247) %>%   # Has a bank account
+  
+  # Main floor material
+  dichotomize(hv213, hv213 == 11, QH142_11, "Main floor material: Terre/sable") %>%
+  dichotomize(hv213, hv213 == 12, QH142_12, "Main floor material: Bouse") %>%
+  dichotomize(hv213, hv213 == 21, QH142_21, "Main floor material: Planches en bois") %>%
+  dichotomize(hv213, hv213 == 22, QH142_22, "Main floor material: Palmes/bambou") %>%
+  dichotomize(hv213, hv213 == 23, QH142_23, "Main floor material: Nattes") %>%
+  dichotomize(hv213, hv213 == 31, QH142_31, "Main floor material: Parquet ou bois ciré") %>%
+  dichotomize(hv213, hv213 == 32, QH142_32, "Main floor material: Bandes de vinyles/asphalte") %>%
+  dichotomize(hv213, hv213 == 33, QH142_33, "Main floor material: Carrelage") %>%
+  dichotomize(hv213, hv213 == 34, QH142_34, "Main floor material: Ciment") %>%
+  dichotomize(hv213, hv213 == 35, QH142_35, "Main floor material: Moquette") %>%
+  dichotomize(hv213, hv213 == 96, QH142_96, "Main floor material: Autre") %>%
+  
+  # Main roof material
+  dichotomize(hv215, hv215 == 11, QH143_11, "Main roof material: Pas de toit") %>%
+  dichotomize(hv215, hv215 == 12, QH143_12, "Main roof material: Chaume/feuilles/herbes") %>%
+  dichotomize(hv215, hv215 == 13, QH143_13, "Main roof material: Mottes de terre") %>%
+  dichotomize(hv215, hv215 == 21, QH143_21, "Main roof material: Natte") %>%
+  dichotomize(hv215, hv215 == 22, QH143_22, "Main roof material: Palme/bambou") %>%
+  dichotomize(hv215, hv215 == 23, QH143_23, "Main roof material: Planches en bois") %>%
+  dichotomize(hv215, hv215 == 24, QH143_24, "Main roof material: Carton") %>%
+  dichotomize(hv215, hv215 == 31, QH143_31, "Main roof material: Tôle") %>%
+  dichotomize(hv215, hv215 == 32, QH143_32, "Main roof material: Bois") %>%
+  dichotomize(hv215, hv215 == 33, QH143_33, "Main roof material: Zinc/fibre de ciment") %>%
+  dichotomize(hv215, hv215 == 34, QH143_34, "Main roof material: Tuiles") %>%
+  dichotomize(hv215, hv215 == 35, QH143_35, "Main roof material: Ciment") %>%
+  dichotomize(hv215, hv215 == 36, QH143_36, "Main roof material: Shingles") %>%
+  dichotomize(hv215, hv215 == 96, QH143_96, "Main roof material: Autre") %>%
+  
+  # Main wall material
+  dichotomize(hv214, hv214 == 11, QH144_11, "Main wall material: Pas de mur") %>%
+  dichotomize(hv214, hv214 == 12, QH144_12, "Main wall material: Bambou/Cane/Palme/Tronc") %>%
+  dichotomize(hv214, hv214 == 13, QH144_13, "Main wall material: Terre") %>%
+  dichotomize(hv214, hv214 == 21, QH144_21, "Main wall material: Bambou avec boue") %>%
+  dichotomize(hv214, hv214 == 22, QH144_22, "Main wall material: Pierres avec boue") %>%
+  dichotomize(hv214, hv214 == 23, QH144_23, "Main wall material: Adobe non recouvert") %>%
+  dichotomize(hv214, hv214 == 24, QH144_24, "Main wall material: Contre-Plaque") %>%
+  dichotomize(hv214, hv214 == 25, QH144_25, "Main wall material: Carton") %>%
+  dichotomize(hv214, hv214 == 26, QH144_26, "Main wall material: Bois de récupération") %>%
+  dichotomize(hv214, hv214 == 31, QH144_31, "Main wall material: Ciment") %>%
+  dichotomize(hv214, hv214 == 32, QH144_32, "Main wall material: Pierres avec chaux/ciment") %>%
+  dichotomize(hv214, hv214 == 33, QH144_33, "Main wall material: Briques") %>%
+  dichotomize(hv214, hv214 == 34, QH144_34, "Main wall material: Blocs de ciment") %>%
+  dichotomize(hv214, hv214 == 35, QH144_35, "Main wall material: Adobe recouvert") %>%
+  dichotomize(hv214, hv214 == 36, QH144_36, "Main wall material: Planches en bois/Shingles") %>%
+  dichotomize(hv214, hv214 == 37, QH144_37, "Main wall material: Tôle") %>%
+  dichotomize(hv214, hv214 == 96, QH144_96, "Main wall material: Autres") %>%
+  
+  # Members sleeping
+  mutate(
+    hv216 = if_else(is.na(hv216) | hv216 == 0, hv012, hv216),  # Replace hv216 if 0 or NA with hv012
+    memsleep = trunc(hv012 / hv216),  # Ensure integer values
+    memsleep = if_else(is.na(hv216) | hv216 >= 99 | memsleep >= 98, NA_real_, memsleep)  # Assign NA instead of 99
+  ) %>%
+  set_variable_labels(memsleep = "Number of members per sleeping room") %>%
+  
+  # Set rural / urban
+  mutate(
+    urban = as.integer(hv025 == 1),  # Urban is 1 if hv025 == 1, else 0
+    rural = as.integer(hv025 == 2)   # Rural is 1 if hv025 == 2, else 0
+  ) %>%
+  
+  # Recoding of 3 variables is not documented in DHS SPSS example, although they are used in the PCA
+  no2zero(LAND, hv244) # Owns land
+# MISSING VARIABLES : HOUSE + DOMESTIC
+
+factor_vars_2021 <- c(
+  "QH101_11", "QH101_12", "QH101_13", "QH101_14", "QH101_21", "QH101_31", "QH101_32", "QH101_41", "QH101_42", "QH101_51", 
+  "QH101_61", "QH101_71", "QH101_81", "QH101_91", "QH101_96",
+  "QH109_11", "QH109_12", "QH109_13", "QH109_14", "QH109_15", "QH109_21", "QH109_22", "QH109_23", "QH109_31", "QH109_41", 
+  "QH109_51", "QH109_61", "QH109_96",
+  "QH109_11_sh", "QH109_12_sh", "QH109_13_sh", "QH109_14_sh", "QH109_15_sh", "QH109_21_sh", "QH109_22_sh", "QH109_23_sh", 
+  "QH109_31_sh", "QH109_41_sh", "QH109_51_sh", "QH109_96_sh",
+  "QH113_1", "QH113_2", "QH113_3", "QH113_4", "QH113_5", "QH113_6", "QH113_7", "QH113_8", "QH113_9", "QH113_10", 
+  "QH113_95", "QH113_96",
+  "QH121A", "QH121B", "QH121C", "QH121D", "QH121E", "QH121F", "QH121G", "QH121H", "QH121I", "QH121J", "QH121K", 
+  "QH121L", "QH121M", "QH121N", "QH122A", "QH122B", "QH122C", "QH122D", "QH122E", "QH122F", "QH122G", "QH123",
+  "QH142_11", "QH142_12", "QH142_21", "QH142_22", "QH142_23", "QH142_31", "QH142_32", "QH142_33", "QH142_34", "QH142_35", "QH142_96",
+  "QH143_11", "QH143_12", "QH143_13", "QH143_21", "QH143_22", "QH143_23", "QH143_24", "QH143_31", "QH143_32", "QH143_33", 
+  "QH143_34", "QH143_35", "QH143_36", "QH143_96",
+  "QH144_11", "QH144_12", "QH144_13", "QH144_21", "QH144_22", "QH144_23", "QH144_24", "QH144_25", "QH144_26", "QH144_31", 
+  "QH144_32", "QH144_33", "QH144_34", "QH144_35", "QH144_36", "QH144_37", "QH144_96",
+  "LAND", "memsleep" # Variables manquantes : "DOMESTIC", "HOUSE"
+)
+
+hh_2021_rec <- test %>%
+  mutate(across(all_of(factor_vars_2021), ~ as.numeric(replace_na(., 0))))
+
+# Remove zero-variance variables
+zero_var_cols <- hh_2021_rec %>%
+  select(all_of(factor_vars_2021)) %>%
+  summarise(across(everything(), ~ var(., na.rm = TRUE))) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "variance") %>%
+  filter(variance == 0) %>%
+  pull(variable)
+
+factor_vars_2021 <- setdiff(factor_vars_2021, zero_var_cols)  # Exclude those variables
+
+# Run PCA only on valid variables
+pca_result_2021 <- principal(
+  cor(hh_2021_rec %>% select(all_of(factor_vars_2021)), use = "pairwise.complete.obs"), 
+  nfactors = 1, rotate = "none", scores = TRUE, covar = FALSE
+)
+
+
+file_path <- "../../IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_wealth_index/Madagascar DHS 2021_simplified.xlsx"
+
+# Read the sheets
+common_pca <- read_excel(file_path, sheet = "Common")
+
+# Extract variable names and labels
+common_pca_clean <- common_pca %>%
+  mutate(
+    variable = str_extract(`Component Score Coefficient Matrix`, "^[^ ]+"), # Extract first word (variable name)
+    description = str_remove(`Component Score Coefficient Matrix`, "^[^ ]+ ") # Remove variable name from description
+  )
+
+# Extract PCA loadings from R
+r_pca_loadings <- tibble(
+  variable = rownames(pca_result_2021$loadings),
+  r_pca_loading = pca_result_2021$loadings[, 1]
+)
+
+# Merge with DHS PCA results
+comparison <- common_pca_clean %>%
+  left_join(r_pca_loadings, by = "variable") %>%
+  select(variable, description, `DHS Factor Score` = `Component`, r_pca_loading)
+
+# ¨Plot PCA loadings
+ggplot(comparison, aes(x = as.numeric(`DHS Factor Score`), y = r_pca_loading)) +
+  geom_point() +
+  geom_smooth(method = "lm", color = "blue", se = FALSE, linewidth = 0.2) +
+  labs(
+    title = "DHS Loadings vs. PCA Loadings",
+    x = "DHS Factor Loadings",
+    y = "Reproduced PCA Loadings"
+  ) +
+  theme_minimal()
+
+# Compute correlation between DHS factor scores and R PCA loadings
+corr_2021_loadings <- cor.test(as.numeric(comparison$`DHS Factor Score`), comparison$r_pca_loading)
+print(corr_2021_loadings)
+
+hh_2021_rec <- hh_2021_rec %>%
+  mutate(
+    factor_score = as.vector(scale(hh_2021_rec %>% select(all_of(factor_vars_2021))) %*% pca_result_2021$loadings[, 1])
+  )
+
+# Scatter plot: hv271 vs Computed Factor Score
+ggplot(hh_2021_rec, aes(x = hv271, y = factor_score)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", color = "blue", se = FALSE, linewidth = 0.2) +
+  labs(
+    title = "hv271 vs Computed Factor Score",
+    x = "hv271 (Wealth Index Score)",
+    y = "Computed Factor Score"
+  ) +
+  theme_minimal()
+
+```
+
+Les points sont alignés le long de la ligne bleue indiquant qu'il existe une corrélation positive entre le hv271 (wealth index score) et le factor score. La reproduction du wealth index par l'ACP est conforme aux codes SPSS de DHS. Nous allons maintenant réaliser une analyse factorielle spécifiquement pour les ménages urbaines.
+
+```{r}
+# Filter urban households
+hh_urban_2021 <- hh_2021_rec %>% filter(urban == 1)
+
+# Selection variable
+factor_vars_urban_2021 <- c(
+  "QH101_11", "QH101_12", "QH101_13", "QH101_14", "QH101_21",
+  "QH101_31", "QH101_32", "QH101_41", "QH101_42", "QH101_51", 
+  "QH101_61", "QH101_71", "QH101_81", "QH101_91", 
+  "QH109_11", "QH109_12", "QH109_13", "QH109_14", "QH109_15", 
+  "QH109_21", "QH109_22", "QH109_23", "QH109_31", "QH109_41", 
+  "QH109_51", "QH109_61", "QH109_96", 
+  "QH109_11_sh", "QH109_12_sh", "QH109_13_sh", "QH109_14_sh", "QH109_15_sh", 
+  "QH109_21_sh", "QH109_22_sh", "QH109_23_sh", "QH109_31_sh", "QH109_41_sh", 
+  "QH109_51_sh", "QH109_96_sh", 
+  "QH113_1", "QH113_2", "QH113_3", "QH113_4", "QH113_5", 
+  "QH113_6", "QH113_7", "QH113_8", "QH113_9", "QH113_10", 
+  "QH113_95", "QH113_96", 
+  "QH121A", "QH121B", "QH121C", "QH121D", "QH121E", "QH121F", 
+  "QH121G", "QH121H", "QH121I", "QH121J", "QH121K", "QH121L", 
+  "QH121M", "QH121N", 
+  "QH122A", "QH122B", "QH122C", "QH122D", "QH122E", "QH122F", "QH122G", 
+  "QH123", 
+  "QH142_11", "QH142_12", "QH142_21", "QH142_22", "QH142_23", 
+  "QH142_31", "QH142_32", "QH142_33", "QH142_34", "QH142_35", 
+  "QH142_96", 
+  "QH143_11", "QH143_12", "QH143_13", "QH143_21", "QH143_22", 
+  "QH143_23", "QH143_24", "QH143_31", "QH143_32", "QH143_33", 
+  "QH143_34", "QH143_35", "QH143_36", "QH143_96", 
+  "QH144_11", "QH144_12", "QH144_13", "QH144_21", "QH144_22", 
+  "QH144_23", "QH144_24", "QH144_25", "QH144_26", "QH144_31", 
+  "QH144_32", "QH144_33", "QH144_34", "QH144_35", "QH144_36", 
+  "QH144_37", "QH144_96",
+  "LAND", "memsleep",
+  "QH118A_1", "QH118A_2", "QH118A_3", "QH118B_1", "QH118B_2", "QH118B_3", 
+  "QH118C_1", "QH118C_2", "QH118C_3", "QH118D_1", "QH118D_2", "QH118D_3", 
+  "QH118E_1", "QH118E_2", "QH118E_3", "QH118F_1", "QH118F_2", "QH118F_3", 
+  "QH118G_1", "QH118G_2", "QH118G_3", "QH118H_1", "QH118H_2", "QH118H_3", 
+  "landarea"
+)
+
+factor_vars_urban_2021 <- intersect(factor_vars_urban_2021, names(hh_urban_2021))
+
+hh_urban_2021_rec <- hh_urban_2021 %>% select(all_of(factor_vars_urban_2021))
+
+# Replace NA by the mean
+hh_urban_2021_rec <- hh_urban_2021_rec %>%
+  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+
+# Remove zero variance variables
+zero_var_cols <- hh_urban_2021_rec %>%
+  summarise(across(everything(), ~ var(., na.rm = TRUE))) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "variance") %>%
+  filter(variance == 0 | is.na(variance)) %>%
+  pull(variable)
+
+hh_urban_2021_rec <- hh_urban_2021_rec %>%
+  select(-all_of(zero_var_cols))
+
+# Remove zero standard deviation variables
+std_dev <- sapply(hh_urban_2021_rec, sd, na.rm = TRUE)
+
+valid_cols <- names(std_dev[std_dev > 0 & !is.na(std_dev)])
+
+hh_urban_2021_rec <- hh_urban_2021_rec %>%
+  select(all_of(valid_cols))
+
+# Calculate remain standard deviation 
+std_dev <- sapply(hh_2021_rec, sd, na.rm = TRUE)
+
+# Filter columns with a strictly positive standard deviation
+valid_cols <- names(std_dev[std_dev > 0 & !is.na(std_dev)])
+
+# Select only these variables 
+hh_2021_rec <- hh_2021_rec %>%
+  select(all_of(valid_cols))
+
+# PCA
+pca_urban_2021 <- principal(hh_urban_2021_rec, ncp = 1, scale.unit = TRUE, graph = FALSE)
+
+# Extracting factor score
+hh_urban_2021 <- hh_urban_2021 %>%
+  mutate(factor_score = pca_urban_2021$ind$coord[,1])
+
+# Checking results 
+summary(hh_urban_2021$factor_score)
+
+
+
+```
 
 ### Récupération de la variable hv270a (wealth index de la zone rurale) pour l'année 2021
 
@@ -83,11 +559,11 @@ hv270a_2021 <- dhs_2021_hr %>%
   rename(wealth_index_rural = hv270a)
 ```
 
+> **Pas de production des codes ?**
+
 ### Reproduction du wealth index hv270 pour 2008
 
-Cette section a pour objectif de reproduire le wealth index hv270 de DHS 2008. Dans un premier temps, nous reproduirons les scores factoriels du wealth index (hv271) à l'aide d'une analyse par composante principale (ACP), en nous basant sur le code SPSS utilisé par DHS pour construire cet indice. Le calcul des scores factoriels permet de créer un indicateur composite agrégant l'information des différentes variables de manière pondérée. Dans un second temps, nous reproduirons le wealth index hv270 de DHS 2008.
-
-1.  Reproduction du wealth index hv271 de DHS 2008
+Reproduction du wealth index hv271 de DHS 2008
 
 Dans un premier temps, nous procéderons au recodage des variables pertinentes issues de l'ensemble des données des ménages de DHS afin de constituer l'indice de richesse. Les valeurs manquantes seront imputées soit par la moyenne des variables pour les variables dichotomisées, soit par zéro pour les variables liées à l'élevage. A partir des données recodées, nous établirons une matrice de corrélation pour les variables sélectionnées et réaliserons une analyse en composante principale afin d'extraire la première composante principale, représentant le facteur d'indice de richesse. Nous calculerons ensuite les scores factoriels pour chaque ménage en utilisant les coefficients issues de l'ACP. Enfin, nous effectuerons une comparaison des scores reconstruits pour chaque ménage avec les scores factoriels officiels de DHS (hv271), en utilisant à la fois une analyse graphique et un test de corrélation.
 
@@ -554,10 +1030,57 @@ eigen(cor_matrix)$values
 Les premières composantes ont des plus grandes valeurs que les suivantes. Les valeurs deviennent plus petites après les premières composantes indiquant que ces composantes contiennent de moins en moins d'informations utiles. On retrouve des valeurs très proches de zéro avec une valeur négative dans les dernières composantes.
 
 ```{r}
+
+highly_correlated <- findCorrelation(cor_matrix, cutoff = 0.9)  # Seuil à ajuster
+print(highly_correlated)
+
+
+highly_correlated <- findCorrelation(cor_matrix, cutoff = 0.75)
+print(highly_correlated)
+
+```
+
+interprétation: Il a été détecté que 17 variable de la matrice de corrélation est fortement corrélée avec au moins une autre variable selon le seuil de 0.75
+
+```{r}
+
+
+
+
+
+```
+
+```{r}
 screeplot(prcomp(hv271_1997 %>% select(all_of(all_factor_vars_1997)), scale = TRUE), type = "lines")
 
 pca_result <- prcomp(hv271_1997 %>% select(all_of(all_factor_vars_1997)), scale = TRUE)
 cumsum(pca_result$sdev^2) / sum(pca_result$sdev^2)
+```
+
+```{r}
+# Component extraction
+hv271_1997$wealth_index <- pca_result$x[, 1]
+
+# Check wealth index distribution
+summary(hv271_1997$wealth_index)
+hist(hv271_1997$wealth_index, breaks = 30, main = "Distribution de l'indice de richesse", col = "lightblue")
+
+
+```
+
+Interprétation: la distribution de l'indice de richesse est asymétrique et donc nous devons normaliser les données.
+
+```{r}
+# Calculer l'asymétrie
+library ("e1071") 
+skewness(hv271_1997$wealth_index) #Asymétrie à gauche
+
+
+
+
+
+
+
 ```
 
 2.  Reproduction du wealth index hv270 de DHS 1997
@@ -567,35 +1090,34 @@ cumsum(pca_result$sdev^2) / sum(pca_result$sdev^2)
 1.  Calcul du wealth index hv270a pour 2021
 
 ```{r}
-# Extraction des variables
+# Extracting variables
 wealth_data_2021 <- dhs_2021_hr %>%
   select(hhid, hv025, hv271, hv270) %>%
   rename(factor_score = hv271, wealth_quintile = hv270)
 
-# Recalcul des quintiles pour 2021
+# Recalculation of quintiles for 2021
 wealth_data_2021 <- wealth_data_2021 %>%
   mutate(
-    hv270a_2021 = ntile(factor_score, 5)  # Création de 5 groupes égaux
+    hv270a_2021 = ntile(factor_score, 5)  
   )
 
+# Séparate quintiles for urban and rural areas
 
-# Séparer les quintiles pour urbain et rural
-
-# Quintiles pour les ménages urbains
+# Quintiles for urban households
 wealth_urban_2021 <- wealth_data_2021 %>%
   filter(hv025 == 1) %>%
   mutate(hv270a_urban_2021 = ntile(factor_score, 5))
 
-# Quintiles pour les ménages ruraux
+# Quintiles for rural households
 wealth_rural_2021 <- wealth_data_2021 %>%
   filter(hv025 == 2) %>%
   mutate(hv270a_rural_2021 = ntile(factor_score, 5))
 
-# Test de corrélation
+# Correlation Test
 hv270a_2021_corr <- cor(wealth_data_2021$hv270a_2021, wealth_data_2021$wealth_quintile, method = "pearson", use = "complete.obs")
 hv270a_2021_corr_spearman <- cor(wealth_data_2021$hv270a_2021, wealth_data_2021$wealth_quintile, method = "spearman", use = "complete.obs")
 
-# Affichage des résultats
+# Displaying results
 print(paste("Corrélation Pearson :", round(hv270a_2021_corr, 3)))
 print(paste("Corrélation Spearman :", round(hv270a_2021_corr_spearman, 3)))
 
