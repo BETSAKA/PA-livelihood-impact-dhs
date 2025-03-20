@@ -136,10 +136,10 @@ test <- hh_2021 %>%
   dichotomize(hv201, hv201 == 96, QH101_96, "Source of drinking water: Autre") %>%
   
   # Qui va chercher l'eau?
-  dichotomize(hv236, hv236 == 1, QH104A_1, "Qui va chercher l'eau: Femme adulte (>=15 ans)") %>%
-  dichotomize(hv236, hv236 == 2, QH104A_2, "Qui va chercher l'eau: Homme adulte (>=15 ans)") %>%
-  dichotomize(hv236, hv236 == 3, QH104A_3, "Qui va chercher l'eau: Fille (<15 ans)") %>%
-  dichotomize(hv236, hv236 == 4, QH104A_4, "Qui va chercher l'eau: Garçons (<15 ans)") %>%
+  # dichotomize(hv236, hv236 == 1, QH104A_1, "Qui va chercher l'eau: Femme adulte (>=15 ans)") %>%
+  # dichotomize(hv236, hv236 == 2, QH104A_2, "Qui va chercher l'eau: Homme adulte (>=15 ans)") %>%
+  # dichotomize(hv236, hv236 == 3, QH104A_3, "Qui va chercher l'eau: Fille (<15 ans)") %>%
+  # dichotomize(hv236, hv236 == 4, QH104A_4, "Qui va chercher l'eau: Garçons (<15 ans)") %>%
   
   # Type of toilet facility
   dichotomize(hv205, hv205 == 11, QH109_11, "Type of toilet facility: Chasse d'eau - à un système d'égout") %>%
@@ -461,54 +461,27 @@ factor_vars_urban_2021 <- c(
   "QH118C_1", "QH118C_2", "QH118C_3", "QH118D_1", "QH118D_2", "QH118D_3", 
   "QH118E_1", "QH118E_2", "QH118E_3", "QH118F_1", "QH118F_2", "QH118F_3", 
   "QH118G_1", "QH118G_2", "QH118G_3", "QH118H_1", "QH118H_2", "QH118H_3", 
-  "landarea"
+  "landarea" # Variables manquantes : "DOMESTIC", "HOUSE"
 )
-
-factor_vars_urban_2021 <- intersect(factor_vars_urban_2021, names(hh_urban_2021))
-
-hh_urban_2021_rec <- hh_urban_2021 %>% select(all_of(factor_vars_urban_2021))
 
 # Replace NA by the mean
 hh_urban_2021_rec <- hh_urban_2021_rec %>%
-  mutate(across(everything(), ~ifelse(is.na(.), mean(., na.rm = TRUE), .)))
+  mutate(across(all_of(factor_vars_urban_2021), ~ ~ ifelse(is.na(.), mean(., na.rm = TRUE), .)))
 
-# Remove zero variance variables
+
+# Remove zero-variance variables
 zero_var_cols <- hh_urban_2021_rec %>%
+  select(all_of(factor_vars_urban_2021)) %>%
   summarise(across(everything(), ~ var(., na.rm = TRUE))) %>%
   pivot_longer(everything(), names_to = "variable", values_to = "variance") %>%
-  filter(variance == 0 | is.na(variance)) %>%
+  filter(variance == 0) %>%
   pull(variable)
 
-hh_urban_2021_rec <- hh_urban_2021_rec %>%
-  select(-all_of(zero_var_cols))
+factor_vars_urban_2021 <- setdiff(factor_vars_urban_2021, zero_var_cols)  # Exclude those variables
 
-# Remove zero standard deviation variables
-std_dev <- sapply(hh_urban_2021_rec, sd, na.rm = TRUE)
-
-valid_cols <- names(std_dev[std_dev > 0 & !is.na(std_dev)])
-
-hh_urban_2021_rec <- hh_urban_2021_rec %>%
-  select(all_of(valid_cols))
-
-# Calculate remain standard deviation 
-std_dev <- sapply(hh_2021_rec, sd, na.rm = TRUE)
-
-# Filter columns with a strictly positive standard deviation
-valid_cols <- names(std_dev[std_dev > 0 & !is.na(std_dev)])
-
-# Select only these variables 
-hh_2021_rec <- hh_2021_rec %>%
-  select(all_of(valid_cols))
-
-# PCA
-pca_urban_2021 <- principal(hh_urban_2021_rec, ncp = 1, scale.unit = TRUE, graph = FALSE)
-
-# Extracting factor score
-hh_urban_2021 <- hh_urban_2021 %>%
-  mutate(factor_score = pca_urban_2021$ind$coord[,1])
-
-# Checking results 
-summary(hh_urban_2021$factor_score)
+# Run PCA
+pca_urban_2021 <- fa(hh_urban_2021_rec %>% select(all_of(factor_vars_urban_2021)), 
+                nfactors = 1, fm = "pc", rotate = "none", scores = "regression")
 
 
 
@@ -1043,14 +1016,6 @@ print(highly_correlated)
 interprétation: Il a été détecté que 17 variable de la matrice de corrélation est fortement corrélée avec au moins une autre variable selon le seuil de 0.75
 
 ```{r}
-
-
-
-
-
-```
-
-```{r}
 screeplot(prcomp(hv271_1997 %>% select(all_of(all_factor_vars_1997)), scale = TRUE), type = "lines")
 
 pca_result <- prcomp(hv271_1997 %>% select(all_of(all_factor_vars_1997)), scale = TRUE)
@@ -1069,19 +1034,6 @@ hist(hv271_1997$wealth_index, breaks = 30, main = "Distribution de l'indice de r
 ```
 
 Interprétation: la distribution de l'indice de richesse est asymétrique et donc nous devons normaliser les données.
-
-```{r}
-# Calculer l'asymétrie
-library ("e1071") 
-skewness(hv271_1997$wealth_index) #Asymétrie à gauche
-
-
-
-
-
-
-
-```
 
 2.  Reproduction du wealth index hv270 de DHS 1997
 
@@ -1211,3 +1163,187 @@ ggplot(hv271_rural_2008, aes(x = hv270a_rural_2008, y = hv270)) +
 3.  Calcul du Z score standardisé du wealth index
 
 4.  Ajout des variables âges et sexes du chef de ménage dans l'analyse
+
+## Data on the household geophysical environment
+
+Nous allons utiliser le package R mapme.biodiversity (<https://mapme-initiative.github.io/mapme.biodiversity/index.html>) pour charger et extraire les données sur la couverture forestière, la pente et l'altitude, la densité de population, l'accessibilité en 2000.
+
+```{r}
+# Library
+library(sf) # Pour les données spatiales 
+library(progressr) # Pour avoir des barres de progression
+library(tictoc) # Pour minuter le temps d'exécution
+library(future) # Pour permettre du calcul parallèle
+library(lubridate) # Gestion des dates
+library(codebook)
+library(gt)
+library(terra) # Manipulation des données raster 
+library(geodata)
+
+# Définir le chemin absolu pour ton répertoire local
+outdir <- "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data"
+
+# Créer le répertoire si il n'existe pas déjà
+dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+
+# Vérifier si le répertoire a bien été créé
+if (dir.exists(outdir)) {
+  cat("Répertoire créé ou déjà existant : ", outdir)
+} else {
+  cat("Le répertoire n'a pas pu être créé.")
+}
+mapme_options(
+  outdir = outdir,
+  verbose = TRUE
+              )
+
+```
+
+### Définition des unités d'analyse
+
+L'unité d'analyse de cette études est le ménage.
+
+```{r clusters}
+library(dplyr)
+library(sf)
+library(stringr)
+library(purrr)
+library(haven)
+library(tmap)
+library(readr)
+
+# Function to read DHS data for the specified year and identifier 
+load_dhs_data <- function(dhs_folder, year, identifier){
+  folder_pattern <- paste0(".*", year, ".*", identifier)
+  
+  matching_folder <- list.dirs(dhs_folder, full.names = TRUE, recursive = TRUE) %>%
+    keep(~ str_detect(.x, folder_pattern))
+  
+  if (length(matching_folder) == 0) {
+    stop("No folder found for the specified year and identifier.")
+  }
+  
+  if (identifier == "GE") {
+    file_pattern <- "\\.shp$"
+    data_loader <- function(file) st_read(file, quiet = TRUE)
+  } else {
+    file_pattern <- "\\.[Dd][Tt][Aa]$"
+    data_loader <- read_dta
+  }
+  
+  target_file <- list.files(matching_folder, pattern = file_pattern, 
+                            full.names = TRUE)
+  
+  if (length(target_file) == 0) {
+    stop("No valid file found in the folder.")
+  }
+  
+  data <- data_loader(target_file)
+  return(data)
+}
+
+# Localisation des données 
+dhs_folder <- "C:/Users/irian/Documents/IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data"
+  
+# Load DHS data
+  load_data <- function(year, type, dhs_folder) {
+  year_folder <- file.path(dhs_folder, paste0("DHS_", year))
+  
+  # Get the .shp (GPS) and .dta (household) file paths
+  if (type == "HR") {
+    hr_path <- list.files(year_folder, pattern = ".*HR.*\\.dta$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
+    if (length(hr_path) == 0) stop("No HR file found for the specified year.")
+    out <- read_dta(hr_path) # Lecture du fichier .dta
+  } else if (type == "GPS") {
+    shp_path <- list.files(year_folder, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
+    if (length(shp_path) == 0) stop("No GPS file found for the specified year.")
+    out <- st_read(shp_path, quiet = TRUE) %>%
+      st_transform(4326) # Lecture du fichier .shp
+  } else {
+    stop("Data type unknown, must be HR or GPS")
+  }
+  return(out) 
+}
+  
+# Execute the function for a specific year
+  hr_2008 <- load_data(2008, "HR", dhs_folder)
+  gps_2008 <- load_data(2008, "GPS", dhs_folder)
+  
+  hr_2021 <- load_data(2021, "HR", dhs_folder)
+  gps_2021 <- load_data(2021, "GPS", dhs_folder)
+  
+# Vérification des données GPS
+  print(gps_2008)
+  print(gps_2021)
+  
+  st_geometry(gps_2008)
+  st_geometry(gps_2021)
+  
+# Create clusters
+  if (!"DHSCLUST" %in% colnames(gps_2008)) {
+  stop("La colonne 'DHSCLUST' n'existe pas dans les données GPS.")
+} else {
+  message("Les clusters sont bien identifiés.")
+}
+  
+  if (!"DHSCLUST" %in% colnames(gps_2021)) {
+  stop("La colonne 'DHSCLUST' n'existe pas dans les données GPS.")
+} else {
+  message("Les clusters sont bien identifiés.")
+}
+  
+# Création des buffers de 10 km autour des points GPS
+  buffer_10km_2008 <- gps_2008 %>%
+    st_buffer(dist = 10000)
+  
+  buffer_10km_2021 <- gps_2021 %>%
+    st_buffer(dist = 10000)
+
+# Charger les contours de Madagascar
+  if (file.exists("data/grille_mada_laborde.rds")) {
+  grille_mada_laborde <- read_rds("data/grille_mada_laborde.rds") 
+} else {
+  contour_mada_laborde <- gadm(country = "Madagascar", resolution = 1, level = 4, path = "data") %>%
+    st_as_sf() %>%
+    st_transform(29702)
+  saveRDS(contour_mada_laborde, "data/grille_mada_laborde.rds")
+}
+   
+# Visualiser les buffers et les points GPS 
+tmap_mode("view")
+
+# Visualisation des données pour 2008
+tm_shape(contour_mada_laborde) +
+  tm_borders(col = "black") +
+  tm_shape(buffer_10km_2008) +
+  tm_polygons(col = "lightblue", border.col = "darkblue", fill_alpha = 0.5) +
+  tm_shape(gps_2008) +
+  tm_dots(col = "red", size = 0.5) +
+  tm_layout() +  # Utiliser tm_layout() pour la mise en page générale
+  tm_title("Clusters 2008 avec Buffers 10km et Contours de Madagascar")  
+
+# Visualisation des données pour 2021
+tm_shape(contour_mada_laborde) +
+  tm_borders(col = "black") +
+  tm_shape(buffer_10km_2021) +
+  tm_polygons(col = "lightgreen", border.col = "darkgreen", fill_alpha = 0.5) +
+  tm_shape(gps_2021) +
+  tm_dots(col = "blue", size = 0.5) +
+  tm_layout() +  # Utiliser tm_layout() pour la mise en page générale
+  tm_title("Clusters 2021 avec Buffers 10km et Contours de Madagascar")  
+
+
+# Créer un sauvegarde des clusters
+output_folder <- file.path(dhs_folder, "household_cluster_RDS")
+if (!dir.exists(output_folder)) {
+  dir.create(output_folder, recursive = TRUE)
+}
+
+# Sauvegarder les clusters avec le nom "household_cluster"
+saveRDS(buffer_10km_2008, file = file.path(output_folder, "household_cluster_2008.rds"))
+saveRDS(buffer_10km_2021, file = file.path(output_folder, "household_cluster_2021.rds"))
+
+# Message de confirmation
+cat("Les fichiers household_cluster_2008.rds et household_cluster_2021.rds ont été sauvegardés avec succès.\n")
+
+```
