@@ -1,0 +1,267 @@
+---
+title: "Data on the household geophysical environment"
+author: "Iriana Razafimahenina"
+format: 
+  html:
+   out-put-file: index.html
+   embed-resources: true
+   standalone: true
+   code-fold: true
+  execute:
+   warning: false
+   error: false
+editor: visual
+editor-options: 
+   chunk_out_type: console
+Bibliography: references.bib
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+## Data on the household geophysical environment
+
+Nous allons utiliser le package R mapme.biodiversity (<https://mapme-initiative.github.io/mapme.biodiversity/index.html>) pour charger et extraire les données sur la couverture forestière, la pente et l'altitude, la densité de population, l'accessibilité en 2000.
+
+```{r}
+# Library
+library(mapme.biodiversity)
+library(sf) # Pour les données spatiales 
+library(progressr) # Pour avoir des barres de progression
+library(tictoc) # Pour minuter le temps d'exécution
+library(future) # Pour permettre du calcul parallèle
+library(lubridate) # Gestion des dates
+library(codebook)
+library(gt)
+library(terra) # Manipulation des données raster 
+library(geodata)
+
+# Définir le chemin absolu pour ton répertoire local
+outdir <- "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data"
+
+# Créer le répertoire si il n'existe pas déjà
+dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+
+# Vérifier si le répertoire a bien été créé
+if (dir.exists(outdir)) {
+  cat("Répertoire créé ou déjà existant : ", outdir)
+} else {
+  cat("Le répertoire n'a pas pu être créé.")
+}
+mapme_options(
+  outdir = outdir,
+  verbose = TRUE
+              )
+```
+
+### Définition des unités d'analyse
+
+L'unité d'analyse de cette études est le ménage. Nous allons charger nos clusters de 2008 et 2021.
+
+```{r clusters}
+library(dplyr)
+library(sf)
+library(stringr)
+library(purrr)
+library(haven)
+library(tmap)
+library(readr)
+library(ggplot2)
+library(jsonify)
+
+# Load boundary
+  if (file.exists("Data/contour_mada.rds")) {
+  contour_mada <- read_rds("Data/contour_mada.rds") 
+} else {
+  contour_mada <- gadm(country = "Madagascar", level = 0, path = "Data") %>%
+    st_as_sf() %>%
+    st_transform(29702)
+  saveRDS(mada, "Data/contour_mada.rds")
+}
+  
+# Load DHS data 
+dhs_folder <- "C:/Users/irian/Documents/IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data"
+
+  load_data <- function(year, type, dhs_folder) {
+  year_folder <- file.path(dhs_folder, paste0("DHS_", year))
+  
+  # Get the .shp (GPS) and .dta (household) file paths
+  if (type == "HR") {
+    hr_path <- list.files(year_folder, pattern = ".*HR.*\\.dta$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
+    if (length(hr_path) == 0) stop("No HR file found for the specified year.")
+    out <- read_dta(hr_path) # Lecture du fichier .dta
+  } else if (type == "GPS") {
+    shp_path <- list.files(year_folder, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
+    if (length(shp_path) == 0) stop("No GPS file found for the specified year.")
+    out <- st_read(shp_path, quiet = TRUE) %>%
+      st_transform(29702) # Lecture du fichier .shp
+  } else {
+    stop("Data type unknown, must be HR or GPS")
+  }
+  return(out) 
+}
+  
+# Execute the function for a specific year
+  hr_2008 <- load_data(2008, "HR", dhs_folder)
+  gps_2008 <- load_data(2008, "GPS", dhs_folder)
+  
+  hr_2021 <- load_data(2021, "HR", dhs_folder)
+  gps_2021 <- load_data(2021, "GPS", dhs_folder)
+  
+# Vérification des données GPS
+  print(gps_2008)
+  print(gps_2021)
+  
+  st_geometry(gps_2008)
+  st_geometry(gps_2021)
+
+# Vérification des données GPS
+  if (!"DHSCLUST" %in% colnames(gps_2008)) {
+  stop("La colonne 'DHSCLUST' n'existe pas dans les données GPS.")
+} else {
+  message("Les clusters sont bien identifiés.")
+}
+  
+  if (!"DHSCLUST" %in% colnames(gps_2021)) {
+  stop("La colonne 'DHSCLUST' n'existe pas dans les données GPS.")
+} else {
+  message("Les clusters sont bien identifiés.")
+}
+  
+# Création des buffers de 10 km autour des points GPS
+  create_buffer <- function(gps_data) {
+    gps_data %>% st_transform(29702) %>% st_buffer(dist = 10000)
+  }
+  
+  buffer_10km_2008 <- create_buffer(gps_2008)
+  
+  buffer_10km_2021 <- create_buffer(gps_2021)
+
+# Créer un sauvegarde des clusters
+save_clusters <- function(buffer, output_folder, year) {
+  if (!dir.exists(output_folder)) {
+    dir.create(output_folder, recursive = TRUE)
+    message(paste("Répertoire créé pour l'année", year))
+  }
+  saveRDS(buffer, file = file.path(output_folder, paste0("household_cluster_", year, ".rds")))
+  message(paste("Buffer de 10 km sauvegardé pour l'année", year))
+
+  # Afficher un aperçu des clusters
+  message(paste("Aperçu du buffer pour l'année", year, ":"))
+  print(buffer)
+}
+
+
+# Chemins de sauvegarde
+output_folder_base <- "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data"
+output_folder_2008 <- file.path(output_folder_base, "household_cluster_2008")
+output_folder_2021 <- file.path(output_folder_base, "household_cluster_2021")
+
+
+save_clusters(buffer_10km_2008, output_folder_2008, 2008)
+save_clusters(buffer_10km_2021, output_folder_2021, 2021)
+
+household_cluster_2008 <- readRDS(file.path(output_folder_2008, "household_cluster_2008.rds"))
+household_cluster_2021 <- readRDS(file.path(output_folder_2021, "household_cluster_2021.rds"))
+
+# Message de confirmation
+cat("Les fichiers household_cluster_2008.rds et household_cluster_2021.rds ont été sauvegardés avec succès.\n")
+
+# Visualiser les buffers et les points GPS 
+tmap_mode("view")
+
+# Visualisation des données pour 2008
+create_cluster_map <- function(contour_mada, buffer, gps, year, fill, col, dot_color) {
+  tm_shape(contour_mada) +
+    tm_borders(col = "black") +
+    tm_shape(buffer) +
+    tm_polygons(fill = fill, col = col, fill_alpha = 0.5) +
+    tm_shape(gps) +
+    tm_dots(col = dot_color, size = 0.5) +
+    tm_title(paste("Clusters", year, "avec Buffers 10km et Contours de Madagascar"))
+}
+
+# Créer les cartes
+tm_2008 <- create_cluster_map(contour_mada, buffer_10km_2008, gps_2008, 2008, "lightblue", "darkblue", "red")
+tm_2021 <- create_cluster_map(contour_mada, buffer_10km_2021, gps_2021, 2021, "lightgreen", "darkgreen", "blue")
+
+# Afficher les cartes côte à côte
+
+tmap_mode("plot")
+tmap_arrange(tm_2008, tm_2021)
+
+
+```
+
+Nous allons maintenant charger les données géophysiques des ménages à partir de mapme.biodiversity
+
+```{r 2008}
+library(mapme.biodiversity)
+library(tidyverse)
+library(progressr) # Pour avoir des barres de progression
+library(tictoc)
+library(future)
+library(sf)
+library(rstac)
+
+# Activer la barre de progression
+handlers(global = TRUE)
+handlers("progress")
+
+
+# Vérifier et charger les données
+if (file.exists("Data/household_cluster_2008_05.rds")) {
+  household_cluster_2008_05 <- readRDS("Data/household_cluster_2008_05.rds")
+} else {
+ plan(sequential)
+      
+# Forest cover rate in 2000
+tic()
+with_progress({
+  household_cluster_2008_01 <- household_cluster_2008 %>%
+    get_resources(get_gfw_treecover())
+})
+toc()   
+
+# Slope and elevation
+tic()
+with_progress({
+  household_cluster_2008_02 <- household_cluster_2008 %>%
+    get_resources(get_nasa_srtm())
+})
+toc()
+
+# Population density
+tic()
+with_progress({
+  household_cluster_2008_03 <- household_cluster_2008 %>%
+    get_resources(get_worldpop(years = 2000))
+})
+toc()
+
+# Accessibility
+tic()
+with_progress({
+  household_cluster_2008_04 <- household_cluster_2008 %>%
+    get_resources(get_accessibility_2000())
+})
+toc()
+
+# Precipitation
+tic()
+with_progress({
+  household_cluster_2008_05 <- household_cluster_2008 %>%
+    get_resources(
+      get_worldclim_max_temperature(),
+      get_worldclim_min_temperature(),
+      get_worldclim_precipitation()
+      )
+})
+toc() 
+
+# Enregistrement des ressources
+cat("Enregistrement des données dans Data/household_cluster_2008_05.rds\n")
+  write_rds(x = household_cluster_2008_05, file = "Data/household_cluster_2008_05.rds")
+
+cat("Processus terminé avec succès !\n")
+```
