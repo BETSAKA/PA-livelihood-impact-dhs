@@ -51,7 +51,7 @@ if (dir.exists(outdir)) {
 mapme_options(
   outdir = outdir,
   verbose = TRUE
-              )
+)
 ```
 
 ### Définition des unités d'analyse
@@ -213,55 +213,124 @@ handlers("progress")
 if (file.exists("Data/household_cluster_2008_05.rds")) {
   household_cluster_2008_05 <- readRDS("Data/household_cluster_2008_05.rds")
 } else {
- plan(sequential)
-      
-# Forest cover rate in 2000
-tic()
-with_progress({
-  household_cluster_2008_01 <- household_cluster_2008 %>%
-    get_resources(get_gfw_treecover())
-})
-toc()   
-
-# Slope and elevation
-tic()
-with_progress({
-  household_cluster_2008_02 <- household_cluster_2008 %>%
-    get_resources(get_nasa_srtm())
-})
-toc()
-
-# Population density
-tic()
-with_progress({
-  household_cluster_2008_03 <- household_cluster_2008 %>%
-    get_resources(get_worldpop(years = 2000))
-})
-toc()
-
-# Accessibility
-tic()
-with_progress({
-  household_cluster_2008_04 <- household_cluster_2008 %>%
-    get_resources(get_accessibility_2000())
-})
-toc()
-
-# Precipitation
-tic()
-with_progress({
-  household_cluster_2008_05 <- household_cluster_2008 %>%
-    get_resources(
-      get_worldclim_max_temperature(),
-      get_worldclim_min_temperature(),
-      get_worldclim_precipitation()
+  plan(sequential)
+  
+  # Forest cover rate in 2000
+  tic()
+  with_progress({
+    household_cluster_2008_01 <- household_cluster_2008 %>%
+      get_resources(get_gfw_treecover())
+  })
+  toc()   
+  
+  # Slope and elevation
+  tic()
+  with_progress({
+    household_cluster_2008_02 <- household_cluster_2008 %>%
+      get_resources(get_nasa_srtm())
+  })
+  toc()
+  
+  # Population density
+  tic()
+  with_progress({
+    household_cluster_2008_03 <- household_cluster_2008 %>%
+      get_resources(get_worldpop(years = 2000))
+  })
+  toc()
+  
+  # Accessibility
+  tic()
+  with_progress({
+    household_cluster_2008_04 <- household_cluster_2008 %>%
+      get_resources(get_accessibility_2000())
+  })
+  toc()
+  
+  # Precipitation
+  tic()
+  with_progress({
+    household_cluster_2008_05 <- household_cluster_2008 %>%
+      get_resources(
+        get_worldclim_max_temperature(),
+        get_worldclim_min_temperature(),
+        get_worldclim_precipitation()
       )
-})
-toc() 
-
-# Enregistrement des ressources
-cat("Enregistrement des données dans Data/household_cluster_2008_05.rds\n")
+  })
+  toc() 
+  
+  # Enregistrement des ressources
+  cat("Enregistrement des données dans Data/household_cluster_2008_05.rds\n")
   write_rds(x = household_cluster_2008_05, file = "Data/household_cluster_2008_05.rds")
+  
+  cat("Processus terminé avec succès !\n")
+}
 
-cat("Processus terminé avec succès !\n")
+```
+
+```{r 2021}
+# Activer la barre de progression
+handlers(global = TRUE)
+handlers("progress")
+
+
+# Vérifier et charger les données
+if (file.exists("Data/household_cluster_2021/household_cluster_2021_05.rds")) {
+  household_cluster_2021_05 <- readRDS("Data/household_cluster_2021/household_cluster_2021_05.rds")
+} else {
+  plan(sequential)
+  
+  # Forest cover rate in 2000
+  tic()
+  with_progress({
+    household_cluster_2021_01 <- household_cluster_2021 %>%
+      get_resources(get_gfw_treecover())
+  })
+  toc()   
+  
+  # Slope and elevation
+  tic()
+  with_progress({
+    household_cluster_2021_02 <- household_cluster_2021 %>%
+      get_resources(get_nasa_srtm())
+  })
+  toc()
+  
+  # Population density
+  tic()
+  with_progress({
+    household_cluster_2021_03 <- household_cluster_2021 %>%
+      get_resources(get_worldpop(years = 2000))
+  })
+  toc()
+  
+  # Accessibility
+  tic()
+  with_progress({
+    household_cluster_2021_04 <- household_cluster_2021 %>%
+      get_resources(get_accessibility_2000())
+  })
+  toc()
+  
+  # Precipitation
+  tic()
+  with_progress({
+    household_cluster_2021_05 <- household_cluster_2021 %>%
+      get_resources(
+        get_worldclim_max_temperature(),
+        get_worldclim_min_temperature(),
+        get_worldclim_precipitation()
+      )
+  })
+  toc() 
+  
+  # Enregistrement des ressources
+  cat("Enregistrement des données dans Data/household_cluster_2021_05.rds\n")
+  write_rds(x = household_cluster_2021_05, file = "Data/household_cluster_2021/household_cluster_2021_05.rds")
+  
+  cat("Processus terminé avec succès !\n")
+}
+
+
+
 ```
