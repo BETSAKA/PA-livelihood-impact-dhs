@@ -37,7 +37,7 @@ library(terra) # Manipulation des données raster
 library(geodata)
 
 # Définir le chemin absolu pour ton répertoire local
-outdir <- "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data"
+outdir <- "Data"
 
 # Créer le répertoire si il n'existe pas déjà
 dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
@@ -170,6 +170,12 @@ cat("Les fichiers household_cluster_2008.rds et household_cluster_2021.rds ont �
 # Visualiser les buffers et les points GPS 
 tmap_mode("view")
 
+
+contour_mada %>% 
+  st_transform(4326) %>% 
+  tm_shape() +
+    tm_borders(col = "black")
+
 # Visualisation des données pour 2008
 create_cluster_map <- function(contour_mada, buffer, gps, year, fill, col, dot_color) {
   tm_shape(contour_mada) +
@@ -178,18 +184,16 @@ create_cluster_map <- function(contour_mada, buffer, gps, year, fill, col, dot_c
     tm_polygons(fill = fill, col = col, fill_alpha = 0.5) +
     tm_shape(gps) +
     tm_dots(col = dot_color, size = 0.5) +
-    tm_title(paste("Clusters", year, "avec Buffers 10km et Contours de Madagascar"))
+    tm_title(paste("Clusters", year, "avec Buffers 10km et Contours de Madagascar")) +
+    tm_scalebar()
 }
 
 # Créer les cartes
 tm_2008 <- create_cluster_map(contour_mada, buffer_10km_2008, gps_2008, 2008, "lightblue", "darkblue", "red")
 tm_2021 <- create_cluster_map(contour_mada, buffer_10km_2021, gps_2021, 2021, "lightgreen", "darkgreen", "blue")
 
-# Afficher les cartes côte à côte
-
-tmap_mode("plot")
-tmap_arrange(tm_2008, tm_2021)
-
+tm_2008
+tm_2021
 
 ```
 
@@ -362,78 +366,81 @@ library(terra)
 library(exactextractr)
 library(landscapemetrics)
 
-# Forest cover rate in 2000
+# Vérifier et charger les données
+if (file.exists("Data/household_cluster_2008/household_cluster_2008_05.rds")) {
+  household_cluster_2008_05 <- readRDS("Data/household_cluster_2008/household_cluster_2008_05.rds")
+} else {
+  plan(sequential)
+  
+  
+  # Forest cover rate in 2000
   tic()
   with_progress({
-    household_cluster_2008_01 <- calc_indicators(x = household_cluster_2008,
-                                                 calc_treecover_area(years = 2000, min_size = 100, min_cover = 35))
+    household_cluster_2008_01 <- calc_indicators(
+      x = household_cluster_2008, calc_treecover_area(years = 2000, min_size = 10, min_cover = 35))
   })
   toc()   
-  write_rds(x = household_cluster_2008, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2008/household_cluster_2008_01.rds")
   
-# slope
+  # slope
   tic()
   with_progress({
-    household_cluster_2008_02 <- calc_indicators(x = household_cluster_2008,
-                                                 calc_slope())
+    household_cluster_2008_02 <- calc_indicators(
+      x = household_cluster_2008, calc_slope(engine = "extract", stats = "mean"))
   })
   toc()   
-  write_rds(x = household_cluster_2008, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2008/household_cluster_2008_02.rds")
   
-# Elevation
+  # Elevation
   tic()
   with_progress({
-    household_cluster_2008_02 <- calc_indicators(x = household_cluster_2008,
-                                                 calc_elevation())
+    household_cluster_2008_03 <- calc_indicators(
+      x = household_cluster_2008, calc_elevation(engine = "extract", stats = "mean"))
   })
   toc()   
-  write_rds(x = household_cluster_2008, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2008/household_cluster_2008_02.rds")
   
-# Population density
+  # Population density
   tic()
   with_progress({
-    household_cluster_2008_03 <- calc_indicators(x = household_cluster_2008,
-                                                 calc_population_count())
+    household_cluster_2008_04 <- calc_indicators(
+      x = household_cluster_2008, calc_population_count(engine = "extract", stats = "mean"))
   })
   toc()   
-  write_rds(x = household_cluster_2008, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2008/household_cluster_2008_03.rds")
   
-# Accessibility
+  # Accessibility
   tic()
   with_progress({
-    household_cluster_2008_04 <- calc_indicators(x = household_cluster_2008,
-                                                 calc_traveltime_2000())
+    household_cluster_2008_05 <- calc_indicators(
+      x = household_cluster_2008, calc_traveltime_2000(engine = "extract", stats = "mean"))
   })
   toc()   
-  write_rds(x = household_cluster_2008, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2008/household_cluster_2008_04.rds")
   
-# Precipitation
+  # Precipitation
   tic()
   with_progress({
-    household_cluster_2008_05 <- calc_indicators(x = household_cluster_2008,
-                                                 calc_precipitation_wc())
+    household_cluster_2008 <- calc_indicators(
+      x = household_cluster_2008, calc_precipitation_wc(engine = "extract", stats = "mean"))
   })
   toc()   
-  write_rds(x = household_cluster_2008, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2008/household_cluster_2008_05.rds")
   
-# Temperature maximal
+  # Temperature maximal
   tic()
   with_progress({
-    household_cluster_2008_05 <- calc_indicators(x = household_cluster_2008,
-                                                 calc_temperature_max_wc())
+    household_cluster_2008 <- calc_indicators(
+      x = household_cluster_2008, calc_temperature_max_wc(engine = "extract", stats = "mean"))
   })
   toc()   
-  write_rds(x = household_cluster_2008, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2008/household_cluster_2008_05.rds")
   
-# Temperature minimal
+  # Temperature minimal
   tic()
   with_progress({
-    household_cluster_2008_05 <- calc_indicators(x = household_cluster_2008,
-                                                 calc_temperature_min_wc())
+    household_cluster_2008 <- calc_indicators(
+      x = household_cluster_2008, calc_temperature_min_wc(engine = "extract", stats = "mean"))
   })
   toc()   
-  write_rds(x = household_cluster_2008, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2008/household_cluster_2008_05.rds")
   
+  write_rds(x = household_cluster_2008, file = "Data/indicators_2008/household_cluster_2008_05.rds")
+}
+
+warnings()
 ```
 
 ```{r 2021}
@@ -451,29 +458,27 @@ library(landscapemetrics)
 # Forest cover rate in 2000
   tic()
   with_progress({
-    household_cluster_2021_01 <- calc_indicators(x = household_cluster,
+    household_cluster_2021 <- calc_indicators(x = household_cluster,
                                                  calc_treecover_area(years = 2000))
   })
   toc()   
-  write_rds(x = household_cluster_2021, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2021/household_cluster_2021_01.rds")
+
   
 # slope
   tic()
   with_progress({
-    household_cluster_2021_02 <- calc_indicators(x = household_cluster_2021,
+    household_cluster_2021 <- calc_indicators(x = household_cluster_2021,
                                                  calc_slope())
   })
   toc()   
-  write_rds(x = household_cluster_2021, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2021/household_cluster_2021_02.rds")
   
 # Elevation
   tic()
   with_progress({
-    household_cluster_2021_02 <- calc_indicators(x = household_cluster_2021,
+    household_cluster_2021 <- calc_indicators(x = household_cluster_2021,
                                                  calc_elevation())
   })
   toc()   
-  write_rds(x = household_cluster_2021, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2021/household_cluster_2021_02.rds")
   
 # Population density
   tic()
@@ -527,13 +532,12 @@ L'indice SPEI est calculé à partir d'une référence à long terme (1981-2010)
 
 ```{r}
 library(SPEI)
-install.packages("gander")
 library(gander)
 library(ellmer)
-install.packages("devtools")
+library(devtools)
 
-Sys.setenv("GITHUB_PAT" = "")
-options(.gander_chat=ellmer::chat_github())
+#Sys.setenv("GITHUB_PAT" = "")
+#options(.gander_chat=ellmer::chat_github())
 
 
 # Activer la barre de progression
