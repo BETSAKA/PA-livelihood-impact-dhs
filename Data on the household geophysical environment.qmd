@@ -226,15 +226,15 @@ handlers(global = TRUE)
 handlers("progress")
 
 # Vérifier et charger les données
-if (file.exists("Data/household_cluster_2008/household_cluster_2008_05.rds")) {
-  household_cluster_2008_05 <- readRDS("Data/household_cluster_2008/household_cluster_2008_05.rds")
+if (file.exists("Data/household_cluster_2008/household_cluster_2008_res.rds")) {
+  household_cluster_2008_res <- readRDS("Data/household_cluster_2008/household_cluster_2008_res.rds")
 } else {
   plan(sequential)
   
   # Forest cover rate in 2000
   tic()
   with_progress({
-    household_cluster_2008_01 <- household_cluster_2008 %>%
+    household_cluster_2008 <- household_cluster_2008 %>%
       get_resources(get_gfw_treecover(),
                     get_gfw_lossyear()
       )
@@ -244,7 +244,7 @@ if (file.exists("Data/household_cluster_2008/household_cluster_2008_05.rds")) {
   # Slope and elevation
   tic()
   with_progress({
-    household_cluster_2008_02 <- household_cluster_2008 %>%
+    household_cluster_2008 <- household_cluster_2008 %>%
       get_resources(get_nasa_srtm())
   })
   toc()  
@@ -252,7 +252,7 @@ if (file.exists("Data/household_cluster_2008/household_cluster_2008_05.rds")) {
   # Population density
   tic()
   with_progress({
-    household_cluster_2008_03 <- household_cluster_2008 %>%
+    household_cluster_2008 <- household_cluster_2008 %>%
       get_resources(get_worldpop(years = 2000))
   })
   toc()  
@@ -260,30 +260,18 @@ if (file.exists("Data/household_cluster_2008/household_cluster_2008_05.rds")) {
   # Accessibility
   tic()
   with_progress({
-    household_cluster_2008_04 <- household_cluster_2008 %>%
+    household_cluster_2008 <- household_cluster_2008 %>%
       get_resources(get_accessibility_2000())
   })
   toc()  
-  
-  # Precipitation
-  tic()
-  with_progress({
-    household_cluster_2008_05 <- household_cluster_2008 %>%
-      get_resources(
-        get_worldclim_max_temperature(),
-        get_worldclim_min_temperature(),
-        get_worldclim_precipitation()
-      )
-  })
-  toc() 
+
   
   # Enregistrement des ressources
-  cat("Enregistrement des données dans C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/household_cluster_2008/household_cluster_2008_05.rds\n")
-  write_rds(x = household_cluster_2008_05, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/household_cluster_2008/household_cluster_2008_05.rds")
+  cat("Enregistrement des données dans Data/household_cluster_2008/household_cluster_2008_res.rds\n")
+  write_rds(x = household_cluster_2008, file = "Data/household_cluster_2008/household_cluster_2008_res.rds")
   
   cat("Processus terminé avec succès !\n")
 }
-
 ```
 
 ```{r 2021}
@@ -293,15 +281,15 @@ handlers("progress")
 
 
 # Vérifier et charger les données
-if (file.exists("Data/household_cluster_2021/household_cluster_2021_05.rds")) {
-  household_cluster_2021_05 <- readRDS("Data/household_cluster_2021/household_cluster_2021_05.rds")
+if (file.exists("Data/household_cluster_2021/household_cluster_2021_res.rds")) {
+  household_cluster_2021_res <- readRDS("Data/household_cluster_2021/household_cluster_2021_res.rds")
 } else {
   plan(sequential)
   
   # Forest cover rate in 2000
   tic()
   with_progress({
-    household_cluster_2021_01 <- household_cluster_2021 %>%
+    household_cluster_2021 <- household_cluster_2021 %>%
       get_resources(get_gfw_treecover(),
                     get_gfw_lossyear())
   })
@@ -310,7 +298,7 @@ if (file.exists("Data/household_cluster_2021/household_cluster_2021_05.rds")) {
   # Slope and elevation
   tic()
   with_progress({
-    household_cluster_2021_02 <- household_cluster_2021 %>%
+    household_cluster_2021 <- household_cluster_2021 %>%
       get_resources(get_nasa_srtm())
   })
   toc()
@@ -318,7 +306,7 @@ if (file.exists("Data/household_cluster_2021/household_cluster_2021_05.rds")) {
   # Population density
   tic()
   with_progress({
-    household_cluster_2021_03 <- household_cluster_2021 %>%
+    household_cluster_2021 <- household_cluster_2021 %>%
       get_resources(get_worldpop(years = 2000))
   })
   toc()
@@ -326,30 +314,17 @@ if (file.exists("Data/household_cluster_2021/household_cluster_2021_05.rds")) {
   # Accessibility
   tic()
   with_progress({
-    household_cluster_2021_04 <- household_cluster_2021 %>%
+    household_cluster_2021 <- household_cluster_2021 %>%
       get_resources(get_accessibility_2000())
   })
   toc()
   
-  # Precipitation
-  tic()
-  with_progress({
-    household_cluster_2021_05 <- household_cluster_2021 %>%
-      get_resources(
-        get_worldclim_max_temperature(),
-        get_worldclim_min_temperature(),
-        get_worldclim_precipitation()
-      )
-  })
-  toc() 
-  
   # Enregistrement des ressources
-  cat("Enregistrement des données dans C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/household_cluster_2021/household_cluster_2021_05.rds\n")
-  write_rds(x = household_cluster_2021_05, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/household_cluster_2021/household_cluster_2021_05.rds")
+  cat("Enregistrement des données dans Data/household_cluster_2021/household_cluster_2021_res.rds\n")
+  write_rds(x = household_cluster_2021, file = "Data/household_cluster_2021/household_cluster_2021_res.rds")
   
   cat("Processus terminé avec succès !\n")
 }
-
 ```
 
 ### Extraction des données de mapme.biodiversity
@@ -367,8 +342,8 @@ library(exactextractr)
 library(landscapemetrics)
 
 # Vérifier et charger les données
-if (file.exists("Data/household_cluster_2008/household_cluster_2008_05.rds")) {
-  household_cluster_2008_05 <- readRDS("Data/household_cluster_2008/household_cluster_2008_05.rds")
+if (file.exists("Data/household_cluster_2008/household_cluster_2008_res.rds")) {
+  household_cluster_2008 <- readRDS("household_cluster_2008/household_cluster_2008_res.rds")
 } else {
   plan(sequential)
   
@@ -376,15 +351,15 @@ if (file.exists("Data/household_cluster_2008/household_cluster_2008_05.rds")) {
   # Forest cover rate in 2000
   tic()
   with_progress({
-    household_cluster_2008_01 <- calc_indicators(
-      x = household_cluster_2008, calc_treecover_area(years = 2000, min_size = 10, min_cover = 35))
+    household_cluster_2008 <- calc_indicators(
+      x = household_cluster_2008, calc_treecover_area(years = 2000:2023, min_size = 10, min_cover = 35))
   })
   toc()   
   
   # slope
   tic()
   with_progress({
-    household_cluster_2008_02 <- calc_indicators(
+    household_cluster_2008 <- calc_indicators(
       x = household_cluster_2008, calc_slope(engine = "extract", stats = "mean"))
   })
   toc()   
@@ -392,7 +367,7 @@ if (file.exists("Data/household_cluster_2008/household_cluster_2008_05.rds")) {
   # Elevation
   tic()
   with_progress({
-    household_cluster_2008_03 <- calc_indicators(
+    household_cluster_2008 <- calc_indicators(
       x = household_cluster_2008, calc_elevation(engine = "extract", stats = "mean"))
   })
   toc()   
@@ -400,7 +375,7 @@ if (file.exists("Data/household_cluster_2008/household_cluster_2008_05.rds")) {
   # Population density
   tic()
   with_progress({
-    household_cluster_2008_04 <- calc_indicators(
+    household_cluster_2008 <- calc_indicators(
       x = household_cluster_2008, calc_population_count(engine = "extract", stats = "mean"))
   })
   toc()   
@@ -408,12 +383,108 @@ if (file.exists("Data/household_cluster_2008/household_cluster_2008_05.rds")) {
   # Accessibility
   tic()
   with_progress({
-    household_cluster_2008_05 <- calc_indicators(
+    household_cluster_2008 <- calc_indicators(
       x = household_cluster_2008, calc_traveltime_2000(engine = "extract", stats = "mean"))
   })
   toc()   
   
-  # Precipitation
+  write_rds(x = household_cluster_2008, file = "Data/household_cluster_2008/household_cluster_2008_res.rds")
+}
+warnings()
+
+```
+
+```{r 2021}
+library(mapme.biodiversity)
+library(tidyverse)
+library(progressr) # Pour avoir des barres de progression
+library(tictoc)
+library(future)
+library(sf)
+library(rstac)
+library(terra)
+library(exactextractr)
+library(landscapemetrics)
+
+# Vérifier et charger les données
+if (file.exists("Data/household_cluster_2021/household_cluster_2021_ind.rds")) {
+  household_cluster_2021 <- readRDS("Data/household_cluster_2021/household_cluster_2021_ind.rds")
+} else {
+  plan(sequential)
+  
+  
+  # Forest cover rate in 2000
+  tic()
+  with_progress({
+    household_cluster_2021 <- calc_indicators(
+      x = household_cluster_2021, calc_treecover_area(years = 2000:2023, min_size = 10, min_cover = 35))
+  })
+  toc()   
+  
+  # slope
+  tic()
+  with_progress({
+    household_cluster_2021 <- calc_indicators(
+      x = household_cluster_2021, calc_slope(engine = "extract", stats = "mean"))
+  })
+  toc()   
+  
+  # Elevation
+  tic()
+  with_progress({
+    household_cluster_2021 <- calc_indicators(
+      x = household_cluster_2021, calc_elevation(engine = "extract", stats = "mean"))
+  })
+  toc()   
+  
+  # Population density
+  tic()
+  with_progress({
+    household_cluster_2021 <- calc_indicators(
+      x = household_cluster_2021, calc_population_count(engine = "extract", stats = "mean"))
+  })
+  toc()   
+  
+  # Accessibility
+  tic()
+  with_progress({
+    household_cluster_2021 <- calc_indicators(
+      x = household_cluster_2021, calc_traveltime_2000(engine = "extract", stats = "mean"))
+  })
+  toc()   
+  
+  
+  write_rds(x = household_cluster_2021, file = "Data/household_cluster_2021/household_cluster_2021_ind.rds")
+}
+
+warnings()
+
+```
+
+### Chargement et extraction des données sur les précipitations
+
+```{r 2008}
+
+# Vérifier et charger les données
+if (file.exists("Data/household_cluster_2008/household_cluster_2008_wc.rds")) {
+  household_cluster_2008 <- readRDS("Data/household_cluster_2008/household_cluster_2008_wc.rds")
+} else {
+  plan(sequential)
+ 
+# Chargement des données de Precipitation
+  tic()
+  with_progress({
+    household_cluster_2008 <- household_cluster_2008 %>%
+      get_resources(
+        get_worldclim_max_temperature(years = 1981:2010, resolution = "10m"),
+        get_worldclim_min_temperature(years = 1981:2010, resolution = "10m"),
+        get_worldclim_precipitation(years = 1981:2010, resolution = "10m")
+      )
+  })
+  toc() 
+
+
+# Extraction des données de Precipitation
   tic()
   with_progress({
     household_cluster_2008 <- calc_indicators(
@@ -435,160 +506,121 @@ if (file.exists("Data/household_cluster_2008/household_cluster_2008_05.rds")) {
     household_cluster_2008 <- calc_indicators(
       x = household_cluster_2008, calc_temperature_min_wc(engine = "extract", stats = "mean"))
   })
-  toc()   
-  
-  write_rds(x = household_cluster_2008, file = "Data/indicators_2008/household_cluster_2008_05.rds")
+  toc()  
+
+ write_rds(x = household_cluster_2008, file = "Data/household_cluster_2008/household_cluster_2008_wc.rds")
 }
 
 warnings()
 ```
 
 ```{r 2021}
-library(mapme.biodiversity)
-library(tidyverse)
-library(progressr) # Pour avoir des barres de progression
-library(tictoc)
-library(future)
-library(sf)
-library(rstac)
-library(terra)
-library(exactextractr)
-library(landscapemetrics)
+# Chargement des données de Precipitation
+  tic()
+  with_progress({
+    household_cluster_2021 <- household_cluster_2021 %>%
+      get_resources(
+        get_worldclim_max_temperature(years = 1981:2010, resolution = "10m"),
+        get_worldclim_min_temperature(years = 1981:2010, resolution = "10m"),
+        get_worldclim_precipitation(years = 1981:2010, resolution = "10m")
+      )
+  })
+  toc() 
 
-# Forest cover rate in 2000
-  tic()
-  with_progress({
-    household_cluster_2021 <- calc_indicators(x = household_cluster,
-                                                 calc_treecover_area(years = 2000))
-  })
-  toc()   
 
-  
-# slope
+# Extraction des données de Precipitation
   tic()
   with_progress({
-    household_cluster_2021 <- calc_indicators(x = household_cluster_2021,
-                                                 calc_slope())
+    household_cluster_2021 <- calc_indicators(
+      x = household_cluster_2021, calc_precipitation_wc(engine = "extract", stats = "mean"))
   })
   toc()   
   
-# Elevation
+  # Temperature maximal
   tic()
   with_progress({
-    household_cluster_2021 <- calc_indicators(x = household_cluster_2021,
-                                                 calc_elevation())
+    household_cluster_2021 <- calc_indicators(
+      x = household_cluster_2021, calc_temperature_max_wc(engine = "extract", stats = "mean"))
   })
   toc()   
   
-# Population density
+  # Temperature minimal
   tic()
   with_progress({
-    household_cluster_2021_03 <- calc_indicators(x = household_cluster_2021,
-                                                 calc_population_count())
+    household_cluster_2021 <- calc_indicators(
+      x = household_cluster_2021, calc_temperature_min_wc(engine = "extract", stats = "mean"))
   })
-  toc()   
-  write_rds(x = household_cluster_2021, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2021/household_cluster_2021_03.rds")
-  
-# Accessibility
-  tic()
-  with_progress({
-    household_cluster_2021_04 <- calc_indicators(x = household_cluster_2021,
-                                                 calc_traveltime_2000())
-  })
-  toc()   
-  write_rds(x = household_cluster_2021, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2021/household_cluster_2021_04.rds")
-  
-# Precipitation
-  tic()
-  with_progress({
-    household_cluster_2021_05 <- calc_indicators(x = household_cluster_2021,
-                                                 calc_precipitation_wc())
-  })
-  toc()   
-  write_rds(x = household_cluster_2021, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2021/household_cluster_2021_05.rds")
-  
-# Temperature maximal
-  tic()
-  with_progress({
-    household_cluster_2021_05 <- calc_indicators(x = household_cluster_2021,
-                                                 calc_temperature_max_wc())
-  })
-  toc()   
-  write_rds(x = household_cluster_2021, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2021/household_cluster_2021_05.rds")
-  
-# Temperature minimal
-  tic()
-  with_progress({
-    household_cluster_2021_05 <- calc_indicators(x = household_cluster_2021,
-                                                 calc_temperature_min_wc())
-  })
-  toc()   
-  write_rds(x = household_cluster_2021, file = "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/indicators_2021/household_cluster_2021_05.rds")
+  toc()  
+
+ write_rds(x = household_cluster_2021, file = "Data/household_cluster_2021/household_cluster_2021_wc.rds")
+}
+
+warnings()
 ```
 
 ### Calcul de l'indice Standardized Precipitation Evapotranspiration Index (SPEI)
 
 L'indice SPEI est calculé à partir d'une référence à long terme (1981-2010) pour quantifier l'excès ou le manque de pluie. Son calcul se fait à partir des données mensuelles de précipitation et de température minimum et maximum provenant de Worlclim, en utilisant une version améliorée de la méthode Hargreaves ( Modified-Hargreaves methods) définie par Droogers et Allen (2002). La variable sera calculée pour un cercle de 10 km de rayon autour de la coordonnée GPS de la grappe.
 
-```{r}
+```{r 2008}
 library(SPEI)
 library(gander)
 library(ellmer)
 library(devtools)
+library (fastmap)
 
-#Sys.setenv("GITHUB_PAT" = "")
-#options(.gander_chat=ellmer::chat_github())
+# Latitude calculation
+household_cluster_2008_wc_spei <- household_cluster_2008 %>% 
+  mutate(
+    lat = st_coordinates (st_centroid(geometry))[,2]),
 
+# Extract the first cluster's climate time series
+row1 <- household_cluster_2008_wc_spei [1,]
 
-# Activer la barre de progression
-handlers(global = TRUE)
-handlers("progress")
+# Extract vectors 
+tmin <- row1$temperature_min_wc[[1]]$value
+tmax <- row1$temperature_max_wc[[1]]$value
+prec <- row1$precipitation_wc[[1]]$value
+dates <- row1$precipitation_wc[[1]]$datetime
+lat <- row1$LATNUM
 
-# Chargement des données 
-if (file.exists("Data/household_cluster_2008/household_cluster_2008_05.rds")) {
-  household_cluster_2008_05 <- readRDS("Data/household_cluster_2021/household_cluster_2021_05.rds")
-} else {
-  stop("Le fichier n'existe pas")
-}
+# Compute reference evapotranspiration (PET) using modified Hargreaves (Droogers & Allen)
+pet <- hargreaves(Tmin = tmin, Tmax = tmax, Pre = prec, lat = lat)
 
-# Fonction pour calculer l'évapotranspiration potentielle (Droogers and Allen, 2002)
-calculate_ET0_MH <- function(tmax, tmin, precipitation, RA) {
-  tavg <- (t_max + t_min)/2
-  TD <- tmax - tmin 
-  
-  ET0 <- 0.0013 * 0.408 * RA * (tavg + 17.0) * (TD - 0.0123 * precipitation)^0.76
-  return(ET0)
-}
-  
-  # Calcul de l'évapotranspiration potentielle pour 2008
-  with_progress({
-    household_cluster_2008_05 <- household_cluster_2008_05 %>%
-      mutate(
-      lat = st_coordinates (.)[, 2],
-      tmin = get_worldclim_min_temperature(years = 1981:2010, resolution = c("2.5m", "5m", "10m")),
-      tmax = get_worldclim_max_temperature(years = 1981:2010, resolution = c("2.5m", "5m", "10m")),
-      precipitation = get_worldclim_precipitation(years = 1981 : 2010, resolution = c("2.5m", "5m", "10m")),
-      Ra = 0.082 * (12 / pi) * (lat * pi / 180),
-      ET0 = calculate_ET0(tmin,tmax, Ra, precipitation), 
-      balance = precipitation - ET0
-  ) %>%
-    group_by(cluster_id) %>%
-    mutate(SPEI = spei(balance, scale = 12)$fitted) %>%
-    ungroup()
-})
+# Compute wtaer balance
+wb <- prec - pet
 
-  # Enregistrement des résultats 
-  output_file <- "Data/household_cluster_2008/household_cluster_2008_spei.rds" 
-  write_rds(x = household_cluster_2008_05, file = output_file)
-  cat("Processus terminé avec succès pour l'année", year, "!\n")
-}
+# Turn to time series
+wb_ts <- ts(wb, start = c(year(min(dates)), month(min(dates))), frequency = 12)
 
-# Graphique
-ggplot(household_cluster_2008_05, aes(x = date, y = SPEI)) +
-  geom_line(color = "blue") +
-  labs(title = "Standardized Precipitation Evatranspiration Index (SPEI) - 2008",
-       x = "Date",
-       y = "SPEI") +
-  theme_minimal()
+# Compute SPEI (e.g 3-month scale)
+spei_obj <- spei(wb_ts, scale = 3)
 
+# Turn into tibble
+spei_tbl <- tibble(
+  datetime = dates, 
+  spei = as.numeric(spei_obj$fitted)
+)
+
+# SPEI sous forme de map
+household_cluster_2008_wc_spei <- household_cluster_2008_wc_spei %>% 
+  mutate(
+    spei_wc = mpap(
+      list(tmin = temperature_min_wc,
+           tmax = temperature_max_wc,
+           prec = precipitation_wc,
+           lat = latitude),
+      function(tmin, tmax, prec, lat) {
+        pet <- hargreaves(
+          Tmin = tmin$value,
+          Tmax = tmax$value,
+          Pre = prec$value, 
+          lat = lat
+        )
+        wb <- prec$value - pet
+        wb_ts <- ts(wb, start = c(year(min(prec$datetime)), month(min(prec$datetime))), frequency = 12)
+        tibble(datetime = prec$datetime, spei = as.numeric(spei_obj$fitted))
+      }
+    )
+  )
 ```
