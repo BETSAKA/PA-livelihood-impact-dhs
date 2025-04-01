@@ -1,0 +1,6 @@
+
+- Charger les données de 1997
+- Harmoniser les CRS
+- Vérifier que les clusters de la zone urbaine est vraiment dans la zone urbaine,
+de même pour les clusters dans la zone rurale
+- Créer 2 variables pour les urbains et les ruraux, faire une jointure avec les ménages 
