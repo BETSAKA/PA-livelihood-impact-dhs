@@ -9,9 +9,7 @@ editor: visual
 
 Nous utilisons les données du Système des Aires Protégées à Madagascar (SAPM) obtenues auprès du Service de la Gouvernance des Aires Protégées (SGAP) du Ministère de l'Environnement et du Développement Durable.
 
-str(sapm_land)
-
-```{r}
+```{r }
 # Library 
 library(tidyverse)
 library(lubridate)
@@ -55,7 +53,7 @@ sapm_tb <- sapm %>%
   st_drop_geometry()
 
 
-write_xlsx(sapm_tb, "C:/Users/irian/Documents/IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_Madagascar_analysis/output/SAPM_2017.xlsx")
+write_xlsx(sapm_tb, "C:/Users/irian/Documents/IRD_Drive/BETSAKA_MADAGASCAR/Données/Aires protégées/SAPM_2017_corrected/SAPM_2017_corrected.xlsx")
 
 # Compute PA area
 sapm_area <- st_area(sapm) %>%
@@ -84,7 +82,7 @@ proportion_sapm_land_mada
 tmap_mode("view")
 tm_shape(contour_mada) +
   tm_borders() +
-tm_shape(sapm_land) +
+tm_shape(sapm) +
   tm_polygons(col = "green", id = "FULL_NAME", popup.vars = c("Superficie (ha)" = "HECTARES")) +
   tm_scalebar(position = c("left", "bottom")) + 
   tmap_options(check_and_fix = TRUE) +
