@@ -240,21 +240,14 @@ tm_shape(sapm) +
 
 ```{r}
 # Spécification des aires protégées avant 2008
-sapm_land_post2008 <- sapm_land %>%
-  filter(year(DATE_CREAT) >= 2008)
-
-# Spécification des aires protégées après 2008
 sapm_land_pre2008 <- sapm_land %>%
   filter(year(DATE_CREAT) < 2008)
 
-# Créer des buffers de 10 km autour des AP
-sapm_land_post2008_buffer <- sapm_land_post2008  %>%
-  st_buffer(dist = buffer_dist) %>% 
-  st_make_valid() %>%
-  st_union() %>%
-  st_as_sf() %>%
-  st_make_valid()
+# Spécification des aires protégées après 2008
+sapm_land_post2008 <- sapm_land %>%
+  filter(year(DATE_CREAT) >= 2008)
 
+# Créer des buffers de 10 km autour des AP
 sapm_land_pre2008_buffer <- sapm_land_pre2008 %>%
   st_buffer(dist = buffer_dist) %>%
   st_make_valid() %>%
@@ -262,16 +255,36 @@ sapm_land_pre2008_buffer <- sapm_land_pre2008 %>%
   st_as_sf() %>%
   st_make_valid()
 
+sapm_land_post2008_buffer <- sapm_land_post2008  %>%
+  st_buffer(dist = buffer_dist) %>% 
+  st_make_valid() %>%
+  st_union() %>%
+  st_as_sf() %>%
+  st_make_valid()
+
+tm_shape(sapm_land_pre2008) +
+tm_polygons(fill = "darkgreen", 
+            border.col = "black", 
+            fill_alpha = 0.5) +
 tm_shape(sapm_land_post2008_buffer) +
-  tm_borders(col = "green") +
-  tm_shape(sapm_land_pre2008_buffer) +
-  tm_borders(col = "darkgreen") +
-  tm_shape(sapm_land_post2008) +
-  tm_polygons(fill = "green") +
-  tm_shape(sapm_land_pre2008) +
-  tm_polygons(fill = "darkgreen") +
-  tm_add_legend("fill", col = c("green", "darkgreen"), labels = c("AP créées après 2008", "AP créées avant 2008")) +
-  tm_title("Aires protégées de Madagascar avec les buffers de 10 km")
+tm_borders(col = "green", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
+tm_shape(sapm_land_pre2008_buffer) +
+tm_borders(col = "darkgreen", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
+tm_shape(sapm_land_post2008) +
+tm_polygons(fill = "green", 
+            border.col = "black", 
+            fill_alpha = 0.5) +
+tm_add_legend(type = "polygons", fill = c("green", "darkgreen"), labels = c("avant 2008", "après 2008")) +
+  tm_title("Aires protégées du SAPM par période de création") +
+  tm_layout(
+    legend.outside = TRUE, 
+    legend.position = c("left", "top"),
+    frame = FALSE,
+    legend.title.size = 1.2,
+    legend.text.size = 0.8
+  ) +
+  tm_compass(type = "8star", position = c("left", "top")) +
+  tm_scalebar(position = c("right", "bottom"))
 ```
 
 ## Identification du groupe de traitement et du groupe de contrôle en 2008
