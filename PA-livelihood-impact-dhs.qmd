@@ -234,7 +234,7 @@ tm_shape(sapm) +
 
 -   [Groupe de contrôle]{.underline}: clusters à plus de 10 km des aires protégées
 
-Groupe à exclure: clusters à moins de 10 km des aire protégées créées avant 2008
+-   Groupe à exclure: clusters à moins de 10 km des aire protégées créées avant 2008
 
 ## Identification des aires protégées avant et après 2008
 
@@ -263,46 +263,61 @@ sapm_land_pre2008_buffer <- sapm_land_pre2008 %>%
   st_make_valid()
 
 tm_shape(sapm_land_post2008_buffer) +
-  tm_borders(col = "blue") +
+  tm_borders(col = "green") +
   tm_shape(sapm_land_pre2008_buffer) +
-  tm_borders(col = "red") +
+  tm_borders(col = "darkgreen") +
   tm_shape(sapm_land_post2008) +
-  tm_polygons(fill = "blue") +
+  tm_polygons(fill = "green") +
   tm_shape(sapm_land_pre2008) +
-  tm_polygons(fill = "red") +
-  tm_add_legend("fill", col = c("blue", "red"), labels = c("AP créées après 2008", "AP créées après 2008")) +
+  tm_polygons(fill = "darkgreen") +
+  tm_add_legend("fill", col = c("green", "darkgreen"), labels = c("AP créées après 2008", "AP créées avant 2008")) +
   tm_title("Aires protégées de Madagascar avec les buffers de 10 km")
 ```
 
-## Identification du groupe de traitement
+## Identification du groupe de traitement et du groupe de contrôle en 2008
 
 ```{r}
-# identifier le groupe de traitement: ménages proche d'AP créés après 2008
+# identifier le groupe de traitement: ménages proche d'AP créées après 2008
 gps_cluster_2008 <- gps_2008 %>%
   mutate(proche_AP_pre2008 = st_within(geometry, sapm_land_pre2008_buffer, sparse = FALSE)[, 1],
          proche_AP_post2008 = st_within(geometry, sapm_land_post2008_buffer, sparse = FALSE)[, 1],
          groupe = case_when(
-           proche_AP_post2008 & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Traitement",
+           proche_AP_post2008 & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Traitement", 
            proche_AP_pre2008 | URBAN_RURA == "U" ~ "Exclu",
            !(proche_AP_post2008) & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Controle"))
-# Insérer un tableau qui compte les clusters en fonction de leur groupe.
 
+# Insérer un tableau qui compte les clusters en fonction de leur groupe
 table(gps_cluster_2008$groupe, useNA = "always")
-```
-
-## Identification du groupe de contrôle
-
-```{r}
-# identifier le groupe de controle: ménages à plus de 10 km 
-gps_cluster_2008
-
-
-
-
-# Exclure les clusters à moins de 10 km d'une AP créés avant 2008 
 
 # Créer un plot pour visualiser la carte des AP avec les clusters
+tm_shape(sapm_land_post2008_buffer) +
+  tm_borders(col = "green", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +  tm_shape(sapm_land_pre2008_buffer) +
+  tm_borders(col = "darkgreen", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
+  tm_shape(sapm_land_post2008) +
+  tm_polygons(fill = "green", fill_alpha = 0.5, border.col = "black", fill.legend = tm_legend(title = "AP après 2008")) +
+  tm_shape(sapm_land_pre2008) +
+  tm_polygons(fill = "darkgreen", fill_alpha = 0.5, border.col = "black", fill.legend = tm_legend(title = "AP avant 2008")) +
+  tm_shape(gps_cluster_2008) +
+  tm_symbols(
+    col = "groupe", 
+    palette = c("Traitement" = "red", "Controle" = "blue", "Exclu" = "gray"),
+    fill.legend = tm_legend(title = "Groupes"),
+    shape = 21,
+    border.col = "black",
+    size = 0.5
+  ) +
+  tm_add_legend("fill", col = c("green", "darkgreen"), labels = c("AP créées après 2008", "AP créées avant 2008")) +
+  tm_title("Carte des aires protégées et des clusters (2008)") +
+  tm_layout(
+    legend.outside = TRUE, 
+    legend.position = c("left", "top"),
+    frame = FALSE
+  ) +
+  tm_compass(type = "8star", position = c("right", "top")) +
+  tm_scalebar(position = c("left", "bottom"))
 ```
+
+## 
 
 ## Sélection des ménages étudiées
 
