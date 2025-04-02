@@ -194,81 +194,39 @@ dhs_map(gps_2021, 2021)
 
 Nous allons maintenant charger les données géophysiques des ménages à partir de mapme.biodiversity
 
-```{r mapme_2008}
-
-library(mapme.biodiversity)
-library(tidyverse)
-library(progressr) # Pour avoir des barres de progression
-library(tictoc)
-library(future)
-library(sf)
-library(rstac)
-
-# Activer la barre de progression
-handlers(global = TRUE)
-handlers("progress")
-
-
-# Vérifier et charger les données
-if (file.exists("Data/household_cluster_2008_05.rds")) {
-  household_cluster_2008_05 <- readRDS("Data/household_cluster_2008_05.rds")
-} else {
- plan(sequential)
-      
-# Forest cover rate in 2000
-tic()
-with_progress({
-  household_cluster_2008_01 <- household_cluster_2008 %>%
-    get_resources(get_gfw_treecover())
-})
-toc()   
-
-# Slope and elevation
-tic()
-with_progress({
-  household_cluster_2008_02 <- household_cluster_2008 %>%
-    get_resources(get_nasa_srtm())
-})
-toc()
-
-# Population density
-tic()
-with_progress({
-  household_cluster_2008_03 <- household_cluster_2008 %>%
-    get_resources(get_worldpop(years = 2000))
-})
-toc()
-
-# Accessibility
-tic()
-with_progress({
-  household_cluster_2008_04 <- household_cluster_2008 %>%
-    get_resources(get_accessibility_2000())
-})
-toc()
-
-# Precipitation
-tic()
-with_progress({
-  household_cluster_2008_05 <- household_cluster_2008 %>%
-    get_resources(
-      get_worldclim_max_temperature(),
-      get_worldclim_min_temperature(),
-      get_worldclim_precipitation()
-      )
-})
-toc() 
-
-# Enregistrement des ressources
-cat("Enregistrement des données dans Data/household_cluster_2008_05.rds\n")
-  write_rds(x = household_cluster_2008_05, file = "Data/household_cluster_2008_05.rds")
-
-cat("Processus terminé avec succès !\n")
-```
-
 ## Données sur les aires protégées
 
 Utilisation des données de SGAP (SAPM)
+
+```{r}
+# library
+library(wdpar)
+library(pwr)
+library(lme4)
+library(units)
+library(sf)
+
+# Load SAPM data
+sapm <- st_read("Data/Aires protégées/SAPM_2017_corrected/SAPM_2017_corrected.shp", quiet = TRUE) %>%
+  st_transform(my_crs) %>%
+  st_make_valid()
+
+# Intersection des SAPM avec la limite de Madagascar
+sapm_land <- sapm %>% 
+  st_intersection(contour_mada)%>%
+  st_make_valid()
+
+# Visualisation
+tmap_mode("view")
+tm_shape(contour_mada) +
+  tm_borders() +
+tm_shape(sapm) +
+  tm_polygons(col = "green", id = "FULL_NAME", popup.vars = c("Superficie (ha)" = "HECTARES")) +
+  tm_scalebar(position = c("left", "bottom")) + 
+  tmap_options(check_and_fix = TRUE) +
+  tm_title("Aires protégées de Madagascar") +
+  tm_layout(legend.outside = TRUE)
+```
 
 # Treatment and Control groups assignment
 
