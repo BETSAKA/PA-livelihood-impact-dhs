@@ -230,9 +230,15 @@ tm_shape(sapm) +
 
 # Treatment and Control groups assignment
 
--   [Groupe de traitement]{.underline}: ménage vivant dans ou à moins de 10 km des aires protégées entre 2008 et 2021
+-   [Groupe de traitement]{.underline}: clusters à moins de 10 km des aires protégées créées après 2008
 
--   [Groupe de contrôle]{.underline}: ménage vivant à plus de 10 km des aires protégées entre 2008 et 2021
+-   [Groupe de contrôle]{.underline}: clusters à plus de 10 km des aires protégées
+
+-   Groupe à exclure: clusters à moins de 10 km des aire protégées créées avant 2008
+
+```{r}
+
+```
 
 ## Création du Buffer zone
 
