@@ -234,15 +234,75 @@ tm_shape(sapm) +
 
 -   [Groupe de contrôle]{.underline}: clusters à plus de 10 km des aires protégées
 
--   Groupe à exclure: clusters à moins de 10 km des aire protégées créées avant 2008
+Groupe à exclure: clusters à moins de 10 km des aire protégées créées avant 2008
+
+## Identification des aires protégées avant et après 2008
 
 ```{r}
+# Spécification des aires protégées avant 2008
+sapm_land_post2008 <- sapm_land %>%
+  filter(year(DATE_CREAT) >= 2008)
 
+# Spécification des aires protégées après 2008
+sapm_land_pre2008 <- sapm_land %>%
+  filter(year(DATE_CREAT) < 2008)
+
+# Créer des buffers de 10 km autour des AP
+sapm_land_post2008_buffer <- sapm_land_post2008  %>%
+  st_buffer(dist = buffer_dist) %>% 
+  st_make_valid() %>%
+  st_union() %>%
+  st_as_sf() %>%
+  st_make_valid()
+
+sapm_land_pre2008_buffer <- sapm_land_pre2008 %>%
+  st_buffer(dist = buffer_dist) %>%
+  st_make_valid() %>%
+  st_union() %>%
+  st_as_sf() %>%
+  st_make_valid()
+
+tm_shape(sapm_land_post2008_buffer) +
+  tm_borders(col = "blue") +
+  tm_shape(sapm_land_pre2008_buffer) +
+  tm_borders(col = "red") +
+  tm_shape(sapm_land_post2008) +
+  tm_polygons(fill = "blue") +
+  tm_shape(sapm_land_pre2008) +
+  tm_polygons(fill = "red") +
+  tm_add_legend("fill", col = c("blue", "red"), labels = c("AP créées après 2008", "AP créées après 2008")) +
+  tm_title("Aires protégées de Madagascar avec les buffers de 10 km")
 ```
 
-## Création du Buffer zone
+## Identification du groupe de traitement
 
--   Création d'un buffer de 10 km autour des aires protégées (dist = 1000)
+```{r}
+# identifier le groupe de traitement: ménages proche d'AP créés après 2008
+gps_cluster_2008 <- gps_2008 %>%
+  mutate(proche_AP_pre2008 = st_within(geometry, sapm_land_pre2008_buffer, sparse = FALSE)[, 1],
+         proche_AP_post2008 = st_within(geometry, sapm_land_post2008_buffer, sparse = FALSE)[, 1],
+         groupe = case_when(
+           proche_AP_post2008 & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Traitement",
+           proche_AP_pre2008 | URBAN_RURA == "U" ~ "Exclu",
+           !(proche_AP_post2008) & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Controle"))
+# Insérer un tableau qui compte les clusters en fonction de leur groupe.
+
+table(gps_cluster_2008$groupe, useNA = "always")
+```
+
+## Identification du groupe de contrôle
+
+```{r}
+# identifier le groupe de controle: ménages à plus de 10 km 
+gps_cluster_2008
+
+
+
+
+# Exclure les clusters à moins de 10 km d'une AP créés avant 2008 
+
+# Créer un plot pour visualiser la carte des AP avec les clusters
+```
 
 ## Sélection des ménages étudiées
 
