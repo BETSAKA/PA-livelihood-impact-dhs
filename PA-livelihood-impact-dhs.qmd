@@ -333,27 +333,22 @@ tm_shape(sapm_land_post2008_buffer) +
 ## Identification du groupe de traitement et du groupe de contrôle en 2021
 
 ```{r}
-# Load geographic data
-gps_2021 <- load_data(2021, "GPS", dhs_folder) %>%
-  st_transform(st_crs(sapm_land)) %>%
-  st_make_valid()
-
 # Création des buffers pour 2021
 sapm_land_2021_buffer <- sapm_land %>%
   st_buffer(buffer_dist) %>%
   st_make_valid() %>%
   st_union() %>%
-  st_make_valid() %>%
-  st_intersection(contour_mada)
+  st_as_sf() %>%
+  st_make_valid()
 
 # Identification des clusters 
 gps_cluster_2021 <- gps_2021 %>%
-  mutate(proche_AP_pre2008 = st_within(geometry, sapm_land_2021_buffer, sparse = FALSE)[, 1],
-         proche_AP_post2008 = st_within(geometry, sapm_land_post2008_buffer, sparse = FALSE)[, 1],
-         groupe = case_when(
-           proche_AP_post2008 & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Traitement", 
-           proche_AP_pre2008 | URBAN_RURA == "U" ~ "Exclu",
-           !(proche_AP_post2008) & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Controle"))
+  mutate(
+    proche_AP_post2008 = st_within(geometry, sapm_land_post2008_buffer, sparse = FALSE)[, 1],
+    groupe = case_when(
+      proche_AP_post2008 & URBAN_RURA == "R" ~ "Traitement", 
+      URBAN_RURA == "U" ~ "Exclu",
+      !(proche_AP_post2008) & URBAN_RURA == "R" ~ "Controle"))
 
 # Insérer un tableau qui compte les clusters en fonction de leur groupe
 table(gps_cluster_2021$groupe, useNA = "always")
@@ -386,11 +381,17 @@ tm_shape(sapm_land_post2008_buffer) +
   tm_scalebar(position = c("left", "bottom"))
 ```
 
-## Sélection des ménages étudiées
+# Sélection des ménages étudiées
 
 -   Ménages proches des aires protégées créées à partir de 2008
 
 -   Ménages ruraux
+
+## Vérification des zones urbaines et rurales des clusters existants 
+
+```{r}
+
+```
 
 # Estimation des effets par Matching
 
