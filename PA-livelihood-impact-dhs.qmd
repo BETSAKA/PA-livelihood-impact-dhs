@@ -387,10 +387,10 @@ tm_shape(sapm_land_post2008_buffer) +
 
 -   Ménages ruraux
 
-## Vérification des zones urbaines et rurales des clusters existants 
+## Vérification des zones urbaines et rurales des clusters existants
 
 ```{r}
-# Ajouter les colonnes "zone_urbaine" et "zone_rurale" dans gps_2008
+# Ajouter les colonnes "zone_urbaine" et "zone_rurale"
 gps_cluster_2008 <- gps_cluster_2008 %>%
   mutate(
     zone_urbaine = ifelse(URBAN_RURA == "U", 0, 1),
@@ -410,21 +410,116 @@ head(gps_cluster_2021)
 
 # Vérifier que les clusters urbains sont bien définis
 urban_clusters <- gps_2008 %>%
-  filter(URBAN_RURA == "U")
+  filter(URBAN_RURA == "U") %>%
+  st_join(gps_2008, join = st_within)
 
 urban_clusters <- gps_2021 %>%
-  filter(URBAN_RURA == "U")
+  filter(URBAN_RURA == "U") %>%
+  st_join(gps_2021, join = st_within)
 
 # Vérifier que les clusters ruraux sont bien définis
 rural_clusters <- gps_2008 %>%
-  filter(URBAN_RURA == "R")
+  filter(URBAN_RURA == "R") %>%
+st_join(gps_2021, join = st_within)
 
 rural_clusters <- gps_2021 %>%
-  filter(URBAN_RURA == "R")
+  filter(URBAN_RURA == "R") %>%
+st_join(gps_2021, join = st_within)
 
 # Afficher les résultats 
 table(gps_cluster_2008$URBAN_RURA, useNA = "always")
 table(gps_cluster_2021$URBAN_RURA, useNA = "always")
+
+# Définir les clusters de traitement et d'exclusion pour 2008 et 2021
+treatment_clusters_2008 <- gps_2008 %>%
+  mutate(groupe = case_when(
+    st_within(geometry, sapm_land_post2008_buffer, sparse = FALSE)[, 1] & URBAN_RURA == "R" ~ "Traitement", 
+    st_within(geometry, sapm_land_pre2008_buffer, sparse = FALSE)[, 1] | URBAN_RURA == "U" ~ "Exclu",
+    TRUE ~ "Controle"
+  ))
+
+exclusion_clusters_2008 <- treatment_clusters_2008 %>%
+  filter(groupe == "Exclu")
+
+treatment_clusters_2021 <- gps_2021 %>%
+  mutate(groupe = case_when(
+    st_within(geometry, sapm_land_post2008_buffer, sparse = FALSE)[, 1] & URBAN_RURA == "R" ~ "Traitement", 
+    st_within(geometry, sapm_land_pre2008_buffer, sparse = FALSE)[, 1] | URBAN_RURA == "U" ~ "Exclu",
+    TRUE ~ "Controle"
+  ))
+
+exclusion_clusters_2021 <- treatment_clusters_2021 %>%
+  filter(groupe == "Exclu")
+
+# Calcul des statistiques pour toutes les observations
+calculate_statistics <- function(gps_data, hr_data, treatment_clusters, exclusion_clusters, year) {
+  clusters_treatment <- treatment_clusters %>%
+    filter(groupe == "Traitement") %>%
+    pull(DHSCLUST)
+  
+  clusters_exclusion <- exclusion_clusters %>%
+    filter(groupe == "Exclu") %>%
+    pull(DHSCLUST)
+  
+  clusters_control <- gps_data %>%
+    filter(!DHSCLUST %in% c(clusters_treatment, clusters_exclusion)) %>%
+    pull(DHSCLUST)
+  
+  total_clusters <- nrow(gps_data)
+  total_households <- nrow(hr_data)
+  
+  households_treatment <- hr_data %>%
+    filter(hv001 %in% clusters_treatment) %>%
+    nrow()
+  
+  households_exclusion <- hr_data %>%
+    filter(hv001 %in% clusters_exclusion) %>%
+    nrow()
+  
+  households_control <- hr_data %>%
+    filter(hv001 %in% clusters_control) %>%
+    nrow()
+  
+  tibble(
+    année = year,
+    `Grappes traitement` = length(clusters_treatment),
+    `Ménages traitement` = households_treatment,
+    `Grappes exclusion` = length(clusters_exclusion),
+    `Ménages exclusion` = households_exclusion,
+    `Grappes contrôle` = length(clusters_control),
+    `Ménages contrôle` = households_control,
+    `Total des grappes` = total_clusters,
+    `Total des ménages` = total_households
+  )
+}
+
+results_all <- list(
+  calculate_statistics(gps_2008, hr_2008, treatment_clusters_2008, exclusion_clusters_2008, 2008),
+  calculate_statistics(gps_2021, hr_2021, treatment_clusters_2021, exclusion_clusters_2021, 2021)
+) %>%
+  bind_rows()
+
+# Calculer les statistiques pour les ménages ruraux uniquement
+statistics_rural_2008 <- calculate_statistics(
+  gps_data = gps_2008 %>% filter(URBAN_RURA == "R"),
+  hr_data = hr_2008 %>% filter(hv025 == 2),
+  treatment_clusters = treatment_clusters_2008 %>% filter(URBAN_RURA == "R"),
+  exclusion_clusters = exclusion_clusters_2008 %>% filter(URBAN_RURA == "R"),
+  year = 2008
+)
+
+statistics_rural_2021 <- calculate_statistics(
+  gps_data = gps_2021 %>% filter(URBAN_RURA == "R"),
+  hr_data = hr_2021 %>% filter(hv025 == 2),
+  treatment_clusters = treatment_clusters_2021 %>% filter(URBAN_RURA == "R"),
+  exclusion_clusters = exclusion_clusters_2021 %>% filter(URBAN_RURA == "R"),
+  year = 2021
+)
+
+# Afficher les résultats
+print(results_all)
+print(statistics_rural_2008)
+print(statistics_rural_2021)
 ```
 
 # Estimation des effets par Matching
