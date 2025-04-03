@@ -390,7 +390,41 @@ tm_shape(sapm_land_post2008_buffer) +
 ## Vérification des zones urbaines et rurales des clusters existants 
 
 ```{r}
+# Ajouter les colonnes "zone_urbaine" et "zone_rurale" dans gps_2008
+gps_cluster_2008 <- gps_cluster_2008 %>%
+  mutate(
+    zone_urbaine = ifelse(URBAN_RURA == "U", 0, 1),
+    zone_rurale = ifelse(URBAN_RURA == "R", 0,1)
+  )
 
+head(gps_cluster_2008)
+
+gps_cluster_2021 <- gps_cluster_2021 %>%
+  mutate(
+    zone_urbaine = ifelse(URBAN_RURA == "U", 0, 1),
+    zone_rurale = ifelse(URBAN_RURA == "R", 0,1)
+  )
+
+head(gps_cluster_2021)
+
+
+# Vérifier que les clusters urbains sont bien définis
+urban_clusters <- gps_2008 %>%
+  filter(URBAN_RURA == "U")
+
+urban_clusters <- gps_2021 %>%
+  filter(URBAN_RURA == "U")
+
+# Vérifier que les clusters ruraux sont bien définis
+rural_clusters <- gps_2008 %>%
+  filter(URBAN_RURA == "R")
+
+rural_clusters <- gps_2021 %>%
+  filter(URBAN_RURA == "R")
+
+# Afficher les résultats 
+table(gps_cluster_2008$URBAN_RURA, useNA = "always")
+table(gps_cluster_2021$URBAN_RURA, useNA = "always")
 ```
 
 # Estimation des effets par Matching
