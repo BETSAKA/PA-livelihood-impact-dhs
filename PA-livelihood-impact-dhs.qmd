@@ -283,14 +283,14 @@ tm_add_legend(type = "polygons", fill = c("green", "darkgreen"), labels = c("ava
     legend.title.size = 1.2,
     legend.text.size = 0.8
   ) +
-  tm_compass(type = "8star", position = c("left", "top")) +
+  tm_compass(type = "8star", position = c("right", "top")) +
   tm_scalebar(position = c("right", "bottom"))
 ```
 
 ## Identification du groupe de traitement et du groupe de contrôle en 2008
 
 ```{r}
-# identifier le groupe de traitement: ménages proche d'AP créées après 2008
+# Identifier le groupe de traitement: ménages proche d'AP créées après 2008
 gps_cluster_2008 <- gps_2008 %>%
   mutate(proche_AP_pre2008 = st_within(geometry, sapm_land_pre2008_buffer, sparse = FALSE)[, 1],
          proche_AP_post2008 = st_within(geometry, sapm_land_post2008_buffer, sparse = FALSE)[, 1],
@@ -307,9 +307,9 @@ tm_shape(sapm_land_post2008_buffer) +
   tm_borders(col = "green", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +  tm_shape(sapm_land_pre2008_buffer) +
   tm_borders(col = "darkgreen", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
   tm_shape(sapm_land_post2008) +
-  tm_polygons(fill = "green", fill_alpha = 0.5, border.col = "black", fill.legend = tm_legend(title = "AP après 2008")) +
+  tm_polygons(fill = "green", fill_alpha = 0.5, border.col = "black", fill.legend = tm_legend(title = "après 2008")) +
   tm_shape(sapm_land_pre2008) +
-  tm_polygons(fill = "darkgreen", fill_alpha = 0.5, border.col = "black", fill.legend = tm_legend(title = "AP avant 2008")) +
+  tm_polygons(fill = "darkgreen", fill_alpha = 0.5, border.col = "black", fill.legend = tm_legend(title = "avant 2008")) +
   tm_shape(gps_cluster_2008) +
   tm_symbols(
     col = "groupe", 
@@ -319,8 +319,8 @@ tm_shape(sapm_land_post2008_buffer) +
     border.col = "black",
     size = 0.5
   ) +
-  tm_add_legend("fill", col = c("green", "darkgreen"), labels = c("AP créées après 2008", "AP créées avant 2008")) +
-  tm_title("Carte des aires protégées et des clusters (2008)") +
+  tm_add_legend(type = "polygons", fill = c("green", "darkgreen"), labels = c("après 2008", "avant 2008")) +
+  tm_title("Grappes d'enquêtes DHS 2008 par rapport aux AP existantes en 2008") +
   tm_layout(
     legend.outside = TRUE, 
     legend.position = c("left", "top"),
@@ -330,7 +330,61 @@ tm_shape(sapm_land_post2008_buffer) +
   tm_scalebar(position = c("left", "bottom"))
 ```
 
-## 
+## Identification du groupe de traitement et du groupe de contrôle en 2021
+
+```{r}
+# Load geographic data
+gps_2021 <- load_data(2021, "GPS", dhs_folder) %>%
+  st_transform(st_crs(sapm_land)) %>%
+  st_make_valid()
+
+# Création des buffers pour 2021
+sapm_land_2021_buffer <- sapm_land %>%
+  st_buffer(buffer_dist) %>%
+  st_make_valid() %>%
+  st_union() %>%
+  st_make_valid() %>%
+  st_intersection(contour_mada)
+
+# Identification des clusters 
+gps_cluster_2021 <- gps_2021 %>%
+  mutate(proche_AP_pre2008 = st_within(geometry, sapm_land_2021_buffer, sparse = FALSE)[, 1],
+         proche_AP_post2008 = st_within(geometry, sapm_land_post2008_buffer, sparse = FALSE)[, 1],
+         groupe = case_when(
+           proche_AP_post2008 & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Traitement", 
+           proche_AP_pre2008 | URBAN_RURA == "U" ~ "Exclu",
+           !(proche_AP_post2008) & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Controle"))
+
+# Insérer un tableau qui compte les clusters en fonction de leur groupe
+table(gps_cluster_2021$groupe, useNA = "always")
+
+# Créer un plot pour visualiser la carte des AP avec les clusters
+tm_shape(sapm_land_post2008_buffer) +
+  tm_borders(col = "green", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +  tm_shape(sapm_land_pre2008_buffer) +
+  tm_borders(col = "darkgreen", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
+  tm_shape(sapm_land_post2008) +
+  tm_polygons(fill = "green", fill_alpha = 0.5, border.col = "black", fill.legend = tm_legend(title = "après 2008")) +
+  tm_shape(sapm_land_pre2008) +
+  tm_polygons(fill = "darkgreen", fill_alpha = 0.5, border.col = "black", fill.legend = tm_legend(title = "avant 2008")) +
+  tm_shape(gps_cluster_2008) +
+  tm_symbols(
+    col = "groupe", 
+    palette = c("Traitement" = "red", "Controle" = "blue", "Exclu" = "gray"),
+    fill.legend = tm_legend(title = "Groupes"),
+    shape = 21,
+    border.col = "black",
+    size = 0.5
+  ) +
+  tm_add_legend(type = "polygons", fill = c("green", "darkgreen"), labels = c("après 2008", "avant 2008")) +
+  tm_title("Grappes d'enquêtes DHS 2021 par rapport aux AP existantes en 2021") +
+  tm_layout(
+    legend.outside = TRUE, 
+    legend.position = c("left", "top"),
+    frame = FALSE
+  ) +
+  tm_compass(type = "8star", position = c("right", "top")) +
+  tm_scalebar(position = c("left", "bottom"))
+```
 
 ## Sélection des ménages étudiées
 
