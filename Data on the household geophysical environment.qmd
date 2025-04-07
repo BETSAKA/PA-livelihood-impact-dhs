@@ -25,14 +25,23 @@ Nous allons utiliser le package R mapme.biodiversity (<https://mapme-initiative.
 
 ```{r}
 # Library
-library(mapme.biodiversity)
-library(sf) # Pour les données spatiales 
+library(tidyverse) #Manipulation et visualisation des données
+library(haven) #Importation des données
+library(writexl) #Exportation des données
+library(sf) #Analyse des données spatiales
+library(tmap) #Analyse cartographique
+library(codebook) #Documentation et mise en forme des données 
+library(gt) #Mise en forme des tableaux 
+library(survey) #Analyse des données d'enquêtes
+library(MatchIt) #Matching
+library(ggplot2) #Figure
+library(labelled) # Manipulation des labels
+library(readxl) #Lecture des fichiers excels
 library(progressr) # Pour avoir des barres de progression
 library(tictoc) # Pour minuter le temps d'exécution
+library(mapme.biodiversity)
 library(future) # Pour permettre du calcul parallèle
 library(lubridate) # Gestion des dates
-library(codebook)
-library(gt)
 library(terra) # Manipulation des données raster 
 library(geodata)
 
@@ -59,30 +68,27 @@ mapme_options(
 L'unité d'analyse de cette études est le ménage. Nous allons charger nos clusters de 2008 et 2021.
 
 ```{r clusters}
-library(dplyr)
-library(sf)
-library(stringr)
-library(purrr)
-library(haven)
-library(tmap)
-library(readr)
-library(ggplot2)
-library(jsonify)
+# Définition du système de coordonnées et de la distance de buffer utilisé
+my_crs <- 29702
+buffer_dist <- 10000
 
 # Load boundary
-  if (file.exists("Data/contour_mada.rds")) {
-  contour_mada <- read_rds("Data/contour_mada.rds") 
-} else {
-  contour_mada <- gadm(country = "Madagascar", level = 0, path = "Data") %>%
-    st_as_sf() %>%
-    st_transform(29702)
-  saveRDS(contour_mada, "Data/contour_mada.rds")
-}
+contour_mada <- gadm(country = "Madagascar", level = 0, path = "Data") %>%
+  st_as_sf() %>%
+  st_transform(my_crs)
+
+# Visualisation de la carte avec les contours
+tmap_mode("view")
+
+contour_mada %>%
+  st_transform(my_crs) %>%
+  tm_shape() +
+  tm_borders(col = "black")
   
 # Load DHS data 
-dhs_folder <- "C:/Users/irian/Documents/IRD_Drive/BETSAKA_MADAGASCAR/Données/Enquêtes ménages/DHS Madagascar/DHS_data"
+dhs_folder <- "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/DHS_data"
 
-  load_data <- function(year, type, dhs_folder) {
+load_data <- function(year, type, dhs_folder) {
   year_folder <- file.path(dhs_folder, paste0("DHS_", year))
   
   # Get the .shp (GPS) and .dta (household) file paths
@@ -94,106 +100,73 @@ dhs_folder <- "C:/Users/irian/Documents/IRD_Drive/BETSAKA_MADAGASCAR/Données/En
     shp_path <- list.files(year_folder, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
     if (length(shp_path) == 0) stop("No GPS file found for the specified year.")
     out <- st_read(shp_path, quiet = TRUE) %>%
-      st_transform(29702) # Lecture du fichier .shp
+      st_transform(my_crs) # Lecture du fichier .shp
   } else {
     stop("Data type unknown, must be HR or GPS")
   }
   return(out) 
 }
-  
+
 # Execute the function for a specific year
-  hr_2008 <- load_data(2008, "HR", dhs_folder)
-  gps_2008 <- load_data(2008, "GPS", dhs_folder)
-  
-  hr_2021 <- load_data(2021, "HR", dhs_folder)
-  gps_2021 <- load_data(2021, "GPS", dhs_folder)
-  
-# Vérification des données GPS
-  print(gps_2008)
-  print(gps_2021)
-  
-  st_geometry(gps_2008)
-  st_geometry(gps_2021)
+hr_1997 <- load_data(1997, "HR", dhs_folder)
+gps_1997 <- load_data(1997, "GPS", dhs_folder)
+
+hr_2008 <- load_data(2008, "HR", dhs_folder)
+gps_2008 <- load_data(2008, "GPS", dhs_folder)
+
+hr_2021 <- load_data(2021, "HR", dhs_folder)
+gps_2021 <- load_data(2021, "GPS", dhs_folder)
 
 # Vérification des données GPS
-  if (!"DHSCLUST" %in% colnames(gps_2008)) {
+print(gps_1997) 
+print(gps_2008)
+print(gps_2021)
+
+st_geometry(gps_1997)
+st_geometry(gps_2008)
+st_geometry(gps_2021)
+
+# Vérification des données GPS
+if (!"DHSCLUST" %in% colnames(gps_1997)) {
   stop("La colonne 'DHSCLUST' n'existe pas dans les données GPS.")
 } else {
   message("Les clusters sont bien identifiés.")
 }
-  
-  if (!"DHSCLUST" %in% colnames(gps_2021)) {
+
+if (!"DHSCLUST" %in% colnames(gps_2008)) {
   stop("La colonne 'DHSCLUST' n'existe pas dans les données GPS.")
 } else {
   message("Les clusters sont bien identifiés.")
 }
-  
-# Création des buffers de 10 km autour des points GPS
-  create_buffer <- function(gps_data) {
-    gps_data %>% st_transform(29702) %>% st_buffer(dist = 10000)
-  }
-  
-  buffer_10km_2008 <- create_buffer(gps_2008)
-  
-  buffer_10km_2021 <- create_buffer(gps_2021)
 
-# Créer un sauvegarde des clusters
-save_clusters <- function(buffer, output_folder, year) {
-  if (!dir.exists(output_folder)) {
-    dir.create(output_folder, recursive = TRUE)
-    message(paste("Répertoire créé pour l'année", year))
-  }
-  saveRDS(buffer, file = file.path(output_folder, paste0("household_cluster_", year, ".rds")))
-  message(paste("Buffer de 10 km sauvegardé pour l'année", year))
-
-  # Afficher un aperçu des clusters
-  message(paste("Aperçu du buffer pour l'année", year, ":"))
-  print(buffer)
+if (!"DHSCLUST" %in% colnames(gps_2021)) {
+  stop("La colonne 'DHSCLUST' n'existe pas dans les données GPS.")
+} else {
+  message("Les clusters sont bien identifiés.")
 }
 
-
-# Chemins de sauvegarde
-output_folder_base <- "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data"
-output_folder_2008 <- file.path(output_folder_base, "household_cluster_2008")
-output_folder_2021 <- file.path(output_folder_base, "household_cluster_2021")
-
-
-save_clusters(buffer_10km_2008, output_folder_2008, 2008)
-save_clusters(buffer_10km_2021, output_folder_2021, 2021)
-
-household_cluster_2008 <- readRDS(file.path(output_folder_2008, "household_cluster_2008.rds"))
-household_cluster_2021 <- readRDS(file.path(output_folder_2021, "household_cluster_2021.rds"))
-
-# Message de confirmation
-cat("Les fichiers household_cluster_2008.rds et household_cluster_2021.rds ont été sauvegardés avec succès.\n")
-
-# Visualiser les buffers et les points GPS 
-tmap_mode("view")
-
-
-contour_mada %>% 
-  st_transform(4326) %>% 
-  tm_shape() +
-    tm_borders(col = "black")
-
-# Visualisation des données pour 2008
-create_cluster_map <- function(contour_mada, buffer, gps, year, fill, col, dot_color) {
+# Générer et afficher les cartes pour chaque année
+dhs_map <- function(gps_data, year) {
+  tmap_mode("view")
+  
   tm_shape(contour_mada) +
     tm_borders(col = "black") +
-    tm_shape(buffer) +
-    tm_polygons(fill = fill, col = col, fill_alpha = 0.5) +
-    tm_shape(gps) +
-    tm_dots(col = dot_color, size = 0.5) +
-    tm_title(paste("Clusters", year, "avec Buffers 10km et Contours de Madagascar")) +
-    tm_scalebar()
+    tm_shape(gps_data) +
+    tm_symbols(
+      col = "URBAN_RURA", 
+      palette = c("blue", "green"), 
+      title.col = "Zone",
+      size = 0.5,
+      shape = 21,
+      border.col = "black"
+    ) +
+    tm_layout(title = paste("DHS Clusters -", year))
 }
 
-# Créer les cartes
-tm_2008 <- create_cluster_map(contour_mada, buffer_10km_2008, gps_2008, 2008, "lightblue", "darkblue", "red")
-tm_2021 <- create_cluster_map(contour_mada, buffer_10km_2021, gps_2021, 2021, "lightgreen", "darkgreen", "blue")
-
-tm_2008
-tm_2021
+# Création des cartes
+dhs_map(gps_1997, 1997)
+dhs_map(gps_2008, 2008)
+dhs_map(gps_2021, 2021)
 
 ```
 
@@ -206,8 +179,6 @@ tm_2021
 -   Densité de population en 2000 (Worldpop)
 
 -   Accessibilité en 2000 (JRC, Uchida et Nelson 2011)
-
--   Précipitations
 
 Nous allons maintenant charger les données géophysiques des ménages à partir de mapme.biodiversity
 
@@ -226,103 +197,115 @@ handlers(global = TRUE)
 handlers("progress")
 
 # Vérifier et charger les données
-if (file.exists("Data/household_cluster_2008/household_cluster_2008_res.rds")) {
-  household_cluster_2008_res <- readRDS("Data/household_cluster_2008/household_cluster_2008_res.rds")
+if (file.exists("Data/donnees_geo_menages/2008/gps_2008.rds")) {
+  gps_2008 <- readRDS("Data/donnees_geo_menages/2008/gps_2008.rds")
 } else {
   plan(sequential)
   
-  # Forest cover rate in 2000
-  tic()
-  with_progress({
-    household_cluster_2008 <- household_cluster_2008 %>%
-      get_resources(get_gfw_treecover(),
-                    get_gfw_lossyear()
-      )
-  })
-  toc()  
+  resources <- list(
+    get_gfw_treecover(),
+    get_gfw_lossyear(),
+    get_nasa_srtm(),
+    get_worldpop(years = 2000),
+    get_accessibility_2000()
+  )
   
-  # Slope and elevation
-  tic()
-  with_progress({
-    household_cluster_2008 <- household_cluster_2008 %>%
-      get_resources(get_nasa_srtm())
-  })
-  toc()  
-  
-  # Population density
-  tic()
-  with_progress({
-    household_cluster_2008 <- household_cluster_2008 %>%
-      get_resources(get_worldpop(years = 2000))
-  })
-  toc()  
-  
-  # Accessibility
-  tic()
-  with_progress({
-    household_cluster_2008 <- household_cluster_2008 %>%
-      get_resources(get_accessibility_2000())
-  })
-  toc()  
+  progress_resource <- function(resource) {
+    with_progress({ 
+      gps_2008 <- gps_2008 %>% get_resources(resource) })
+  }
 
+# Transformer le CRS 
+  if (st_crs(gps_2008)$epsg != 4326) {
+        gps_2008 <- st_transform(gps_2008, crs = 4326)
+      }
+      
+# Vérifier les types de géométries
+  geom_types <- st_geometry_type(gps_2008)
+  if (all(geom_types == "POINT")) {
+    # Créer un buffer autour de chaque point pour former un polygone
+    gps_2008 <- st_buffer(gps_2008, dist = 10000) 
+    cat("Les géométries de type POINT ont été converties en POLYGONS.\n")
+  } else if (!all(geom_types %in% c("POLYGON", "MULTIPOLYGON"))) {
+    stop("Les géométries doivent être de type 'POLYGON' ou 'MULTIPOLYGON'.")
+      }
+
+# Transformer le CRS en EPSG: 29702 
+  gps_2008 <- st_transform(gps_2008, crs = 29702)
+      
   
-  # Enregistrement des ressources
-  cat("Enregistrement des données dans Data/household_cluster_2008/household_cluster_2008_res.rds\n")
-  write_rds(x = household_cluster_2008, file = "Data/household_cluster_2008/household_cluster_2008_res.rds")
+  tic()
+  for (resource in resources) {
+    progress_resource(resource)
+  }
+  toc()
   
+  cat("Enregistrement des données dans Data/donnees_geo_menages/2008/gps_2008.rds\n")
+  write_rds(gps_2008, "Data/donnees_geo_menages/2008/gps_2008.rds")
   cat("Processus terminé avec succès !\n")
 }
 ```
 
 ```{r 2021}
+library(mapme.biodiversity)
+library(tidyverse)
+library(progressr) # Pour avoir des barres de progression
+library(tictoc)
+library(future)
+library(sf)
+library(rstac)
+library(terra)
+
 # Activer la barre de progression
 handlers(global = TRUE)
 handlers("progress")
 
-
 # Vérifier et charger les données
-if (file.exists("Data/household_cluster_2021/household_cluster_2021_res.rds")) {
-  household_cluster_2021_res <- readRDS("Data/household_cluster_2021/household_cluster_2021_res.rds")
+if (file.exists("Data/donnees_geo_menages/2021/gps_2021.rds")) {
+  gps_2021 <- readRDS("Data/donnees_geo_menages/2021/gps_2021.rds")
 } else {
   plan(sequential)
   
-  # Forest cover rate in 2000
-  tic()
-  with_progress({
-    household_cluster_2021 <- household_cluster_2021 %>%
-      get_resources(get_gfw_treecover(),
-                    get_gfw_lossyear())
-  })
-  toc()   
+  resources <- list(
+    get_gfw_treecover(),
+    get_gfw_lossyear(),
+    get_nasa_srtm(),
+    get_worldpop(years = 2000),
+    get_accessibility_2000()
+  )
   
-  # Slope and elevation
+  progress_resource <- function(resource) {
+    with_progress({ 
+      gps_2021 <- gps_2021 %>% get_resources(resource) })
+  }
+
+# Transformer le CRS 
+  if (st_crs(gps_2021)$epsg != 4326) {
+        gps_2021 <- st_transform(gps_2021, crs = 4326)
+      }
+      
+# Vérifier les types de géométries
+  geom_types <- st_geometry_type(gps_2021)
+  if (all(geom_types == "POINT")) {
+    # Créer un buffer autour de chaque point pour former un polygone
+    gps_2021 <- st_buffer(gps_2021, dist = 10000) 
+    cat("Les géométries de type POINT ont été converties en POLYGONS.\n")
+  } else if (!all(geom_types %in% c("POLYGON", "MULTIPOLYGON"))) {
+    stop("Les géométries doivent être de type 'POLYGON' ou 'MULTIPOLYGON'.")
+      }
+
+# Transformer le CRS en EPSG: 29702 
+  gps_2021 <- st_transform(gps_2021, crs = 29702)
+      
+  
   tic()
-  with_progress({
-    household_cluster_2021 <- household_cluster_2021 %>%
-      get_resources(get_nasa_srtm())
-  })
+  for (resource in resources) {
+    progress_resource(resource)
+  }
   toc()
   
-  # Population density
-  tic()
-  with_progress({
-    household_cluster_2021 <- household_cluster_2021 %>%
-      get_resources(get_worldpop(years = 2000))
-  })
-  toc()
-  
-  # Accessibility
-  tic()
-  with_progress({
-    household_cluster_2021 <- household_cluster_2021 %>%
-      get_resources(get_accessibility_2000())
-  })
-  toc()
-  
-  # Enregistrement des ressources
-  cat("Enregistrement des données dans Data/household_cluster_2021/household_cluster_2021_res.rds\n")
-  write_rds(x = household_cluster_2021, file = "Data/household_cluster_2021/household_cluster_2021_res.rds")
-  
+  cat("Enregistrement des données dans Data/donnees_geo_menages/2021/gps_2008.rds\n")
+  write_rds(gps_2021, "Data/donnees_geo_menages/2021/gps_2021.rds")
   cat("Processus terminé avec succès !\n")
 }
 ```
@@ -342,53 +325,52 @@ library(exactextractr)
 library(landscapemetrics)
 
 # Vérifier et charger les données
-if (file.exists("Data/household_cluster_2008/household_cluster_2008_res.rds")) {
-  household_cluster_2008 <- readRDS("household_cluster_2008/household_cluster_2008_res.rds")
+if (file.exists("Data/donnees_geo_menages/2008/gps_2008.rds")) {
+  gps_2008 <- readRDS("Data/donnees_geo_menages/2008/gps_2008.rds")
 } else {
   plan(sequential)
-  
   
   # Forest cover rate in 2000
   tic()
   with_progress({
-    household_cluster_2008 <- calc_indicators(
-      x = household_cluster_2008, calc_treecover_area(years = 2000:2023, min_size = 10, min_cover = 35))
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_treecover_area(years = 2000:2023, min_size = 10, min_cover = 35))
   })
   toc()   
   
   # slope
   tic()
   with_progress({
-    household_cluster_2008 <- calc_indicators(
-      x = household_cluster_2008, calc_slope(engine = "extract", stats = "mean"))
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_slope(engine = "extract", stats = "mean"))
   })
   toc()   
   
   # Elevation
   tic()
   with_progress({
-    household_cluster_2008 <- calc_indicators(
-      x = household_cluster_2008, calc_elevation(engine = "extract", stats = "mean"))
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_elevation(engine = "extract", stats = "mean"))
   })
   toc()   
   
   # Population density
   tic()
   with_progress({
-    household_cluster_2008 <- calc_indicators(
-      x = household_cluster_2008, calc_population_count(engine = "extract", stats = "mean"))
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_population_count(engine = "extract", stats = "mean"))
   })
   toc()   
   
   # Accessibility
   tic()
   with_progress({
-    household_cluster_2008 <- calc_indicators(
-      x = household_cluster_2008, calc_traveltime_2000(engine = "extract", stats = "mean"))
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_traveltime_2000(engine = "extract", stats = "mean"))
   })
   toc()   
   
-  write_rds(x = household_cluster_2008, file = "Data/household_cluster_2008/household_cluster_2008_res.rds")
+  write_rds(x = gps_2008, file = "Data/donnees_geo_menages/2008/gps_2008.rds")
 }
 warnings()
 
@@ -407,8 +389,8 @@ library(exactextractr)
 library(landscapemetrics)
 
 # Vérifier et charger les données
-if (file.exists("Data/household_cluster_2021/household_cluster_2021_ind.rds")) {
-  household_cluster_2021 <- readRDS("Data/household_cluster_2021/household_cluster_2021_ind.rds")
+if (file.exists("Data/donnees_geo_menages/2021/gps_2021.rds")) {
+  gps_2021 <- readRDS("Data/donnees_geo_menages/2021/gps_2021.rds")
 } else {
   plan(sequential)
   
@@ -416,45 +398,45 @@ if (file.exists("Data/household_cluster_2021/household_cluster_2021_ind.rds")) {
   # Forest cover rate in 2000
   tic()
   with_progress({
-    household_cluster_2021 <- calc_indicators(
-      x = household_cluster_2021, calc_treecover_area(years = 2000:2023, min_size = 10, min_cover = 35))
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_treecover_area(years = 2000:2023, min_size = 10, min_cover = 35))
   })
   toc()   
   
   # slope
   tic()
   with_progress({
-    household_cluster_2021 <- calc_indicators(
-      x = household_cluster_2021, calc_slope(engine = "extract", stats = "mean"))
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_slope(engine = "extract", stats = "mean"))
   })
   toc()   
   
   # Elevation
   tic()
   with_progress({
-    household_cluster_2021 <- calc_indicators(
-      x = household_cluster_2021, calc_elevation(engine = "extract", stats = "mean"))
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_elevation(engine = "extract", stats = "mean"))
   })
   toc()   
   
   # Population density
   tic()
   with_progress({
-    household_cluster_2021 <- calc_indicators(
-      x = household_cluster_2021, calc_population_count(engine = "extract", stats = "mean"))
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_population_count(engine = "extract", stats = "mean"))
   })
   toc()   
   
   # Accessibility
   tic()
   with_progress({
-    household_cluster_2021 <- calc_indicators(
-      x = household_cluster_2021, calc_traveltime_2000(engine = "extract", stats = "mean"))
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_traveltime_2000(engine = "extract", stats = "mean"))
   })
   toc()   
   
   
-  write_rds(x = household_cluster_2021, file = "Data/household_cluster_2021/household_cluster_2021_ind.rds")
+  write_rds(x = gps_2021, file = "Data/donnees_geo_menages/2021/gps_2021.rds")
 }
 
 warnings()
@@ -466,15 +448,15 @@ warnings()
 ```{r 2008}
 
 # Vérifier et charger les données
-if (file.exists("Data/household_cluster_2008/household_cluster_2008_wc.rds")) {
-  household_cluster_2008 <- readRDS("Data/household_cluster_2008/household_cluster_2008_wc.rds")
+if (file.exists("Data/donnees_geo_menages/2008/gps_2008_wc.rds")) {
+  household_cluster_2008 <- readRDS("Data/donnees_geo_menages/2008/gps_2008_wc.rds")
 } else {
   plan(sequential)
  
 # Chargement des données de Precipitation
   tic()
   with_progress({
-    household_cluster_2008 <- household_cluster_2008 %>%
+    gps_2008 <- gps_2008 %>%
       get_resources(
         get_worldclim_max_temperature(years = 1981:2010, resolution = "10m"),
         get_worldclim_min_temperature(years = 1981:2010, resolution = "10m"),
@@ -487,28 +469,28 @@ if (file.exists("Data/household_cluster_2008/household_cluster_2008_wc.rds")) {
 # Extraction des données de Precipitation
   tic()
   with_progress({
-    household_cluster_2008 <- calc_indicators(
-      x = household_cluster_2008, calc_precipitation_wc(engine = "extract", stats = "mean"))
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_precipitation_wc(engine = "extract", stats = "mean"))
   })
   toc()   
   
   # Temperature maximal
   tic()
   with_progress({
-    household_cluster_2008 <- calc_indicators(
-      x = household_cluster_2008, calc_temperature_max_wc(engine = "extract", stats = "mean"))
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_temperature_max_wc(engine = "extract", stats = "mean"))
   })
   toc()   
   
   # Temperature minimal
   tic()
   with_progress({
-    household_cluster_2008 <- calc_indicators(
-      x = household_cluster_2008, calc_temperature_min_wc(engine = "extract", stats = "mean"))
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_temperature_min_wc(engine = "extract", stats = "mean"))
   })
   toc()  
 
- write_rds(x = household_cluster_2008, file = "Data/household_cluster_2008/household_cluster_2008_wc.rds")
+ write_rds(x = gps_2008, file = "Data/donnees_geo_menages/2008/gps_2008_wc.rds")
 }
 
 warnings()
@@ -518,7 +500,7 @@ warnings()
 # Chargement des données de Precipitation
   tic()
   with_progress({
-    household_cluster_2021 <- household_cluster_2021 %>%
+    gps_2021 <- gps_2021 %>%
       get_resources(
         get_worldclim_max_temperature(years = 1981:2010, resolution = "10m"),
         get_worldclim_min_temperature(years = 1981:2010, resolution = "10m"),
@@ -531,28 +513,28 @@ warnings()
 # Extraction des données de Precipitation
   tic()
   with_progress({
-    household_cluster_2021 <- calc_indicators(
-      x = household_cluster_2021, calc_precipitation_wc(engine = "extract", stats = "mean"))
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_precipitation_wc(engine = "extract", stats = "mean"))
   })
   toc()   
   
   # Temperature maximal
   tic()
   with_progress({
-    household_cluster_2021 <- calc_indicators(
-      x = household_cluster_2021, calc_temperature_max_wc(engine = "extract", stats = "mean"))
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_temperature_max_wc(engine = "extract", stats = "mean"))
   })
   toc()   
   
   # Temperature minimal
   tic()
   with_progress({
-    household_cluster_2021 <- calc_indicators(
-      x = household_cluster_2021, calc_temperature_min_wc(engine = "extract", stats = "mean"))
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_temperature_min_wc(engine = "extract", stats = "mean"))
   })
   toc()  
 
- write_rds(x = household_cluster_2021, file = "Data/household_cluster_2021/household_cluster_2021_wc.rds")
+ write_rds(x = gps_2021, file = "Data/gps_2021/household_cluster_2021_wc.rds")
 }
 
 warnings()
@@ -572,7 +554,7 @@ library (fastmap)
 # Latitude calculation
 household_cluster_2008_wc_spei <- household_cluster_2008 %>% 
   mutate(
-    lat = st_coordinates (st_centroid(geometry))[,2]),
+    lat = st_coordinates (st_centroid(geometry))[,2])
 
 # Extract the first cluster's climate time series
 row1 <- household_cluster_2008_wc_spei [1,]
@@ -581,46 +563,85 @@ row1 <- household_cluster_2008_wc_spei [1,]
 tmin <- row1$temperature_min_wc[[1]]$value
 tmax <- row1$temperature_max_wc[[1]]$value
 prec <- row1$precipitation_wc[[1]]$value
-dates <- row1$precipitation_wc[[1]]$datetime
+#dates <- row1$temperature_min_wc[[1]]$datetime
+dates_tmin <- row1$temperature_min_wc[[1]]$datetime
+dates_tmax <- row1$temperature_max_wc[[1]]$datetime
+dates_prec <- row1$precipitation_wc[[1]]$datetime
 lat <- row1$LATNUM
 
+# Synchronize vectors by date
+data_tmin <- data.frame(date = dates_tmin, tmin = tmin)
+data_tmax <- data.frame(date = dates_tmax, tmax = tmax)
+data_prec <- data.frame(date = dates_prec, prec = prec)
+data_merged <- reduce(list(data_tmin, data_tmax, data_prec), merge, by = "date")
+
+# Extract synchronized vectors
+tmin_synced <- data_merged$tmin
+tmax_synced <- data_merged$tmax
+prec_synced <- data_merged$prec
+dates_synced <- data_merged$date
+
+
 # Compute reference evapotranspiration (PET) using modified Hargreaves (Droogers & Allen)
-pet <- hargreaves(Tmin = tmin, Tmax = tmax, Pre = prec, lat = lat)
+pet <- hargreaves(Tmin = tmin_synced, Tmax = tmax_synced, Pre = prec_synced, lat = lat)
 
 # Compute wtaer balance
-wb <- prec - pet
+wb <- prec_synced - pet
+
 
 # Turn to time series
-wb_ts <- ts(wb, start = c(year(min(dates)), month(min(dates))), frequency = 12)
+wb_ts <- ts(wb, start = c(year(min(dates_synced)), month(min(dates_synced))), frequency = 12)
 
 # Compute SPEI (e.g 3-month scale)
 spei_obj <- spei(wb_ts, scale = 3)
 
 # Turn into tibble
 spei_tbl <- tibble(
-  datetime = dates, 
+  datetime = dates_synced, 
   spei = as.numeric(spei_obj$fitted)
 )
 
 # SPEI sous forme de map
 household_cluster_2008_wc_spei <- household_cluster_2008_wc_spei %>% 
   mutate(
-    spei_wc = mpap(
+    spei_wc = pmap(
       list(tmin = temperature_min_wc,
            tmax = temperature_max_wc,
            prec = precipitation_wc,
-           lat = latitude),
+           lat = lat),
       function(tmin, tmax, prec, lat) {
+        # Synchronize vectors by date within the function
+        data_tmin <- data.frame(date = tmin$datetime, tmin = tmin$value)
+        data_tmax <- data.frame(date = tmax$datetime, tmax = tmax$value)
+        data_prec <- data.frame(date = prec$datetime, prec = prec$value)
+        data_merged <- reduce(list(data_tmin, data_tmax, data_prec), merge, by = "date")
+        
+        tmin_synced <- data_merged$tmin
+        tmax_synced <- data_merged$tmax
+        prec_synced <- data_merged$prec
+        dates_synced <- data_merged$date
+        
         pet <- hargreaves(
-          Tmin = tmin$value,
-          Tmax = tmax$value,
-          Pre = prec$value, 
+          Tmin = tmin_synced,
+          Tmax = tmax_synced,
+          Pre = prec_synced, 
           lat = lat
         )
-        wb <- prec$value - pet
-        wb_ts <- ts(wb, start = c(year(min(prec$datetime)), month(min(prec$datetime))), frequency = 12)
-        tibble(datetime = prec$datetime, spei = as.numeric(spei_obj$fitted))
+        wb <- prec_synced - pet
+        wb_ts <- ts(wb, start = c(year(min(prec$dates_synced)), month(min(prec$date_synced))), frequency = 12)
+        tibble(datetime = date_synced, spei = as.numeric(spei_obj$fitted))
       }
     )
   )
+
+length(tmin)
+length(tmax)
+
+
+sum(is.na(tmin))
+sum(is.na(tmax))
+
+length(dates)
+length(spei_obj$fitted)
+
 ```
