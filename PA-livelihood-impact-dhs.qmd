@@ -209,12 +209,21 @@ library(sf)
 # Load SAPM data
 sapm <- st_read("Data/Aires protégées/SAPM_2017_corrected/SAPM_2017_corrected.shp", quiet = TRUE) %>%
   st_transform(my_crs) %>%
-  st_make_valid()
+  st_make_valid() %>%
+  mutate(YEAR_CREAT = year(ymd(DATE_CREAT)), .after = DATE_CREAT)
 
 # Intersection des SAPM avec la limite de Madagascar
 sapm_land <- sapm %>% 
   st_intersection(contour_mada)%>%
   st_make_valid()
+
+sapm_land_tb <- sapm_land %>%
+  st_drop_geometry()
+
+write_xlsx(sapm_land_tb, "Data/Aires protégées/output/SAPM_2017.xlsx")
+
+sapm %>%
+  DT::datatable()
 
 # Visualisation
 tmap_mode("view")
@@ -285,6 +294,97 @@ tm_add_legend(type = "polygons", fill = c("green", "darkgreen"), labels = c("ava
   ) +
   tm_compass(type = "8star", position = c("right", "top")) +
   tm_scalebar(position = c("right", "bottom"))
+
+
+# Define the function
+create_summary_table <- function(data, pivot_year) {
+  summary_table <- data %>%
+    st_drop_geometry() %>%
+    mutate(
+      Creation_Period = case_when(
+        YEAR_CREAT < pivot_year ~ paste("Avant", pivot_year),
+        YEAR_CREAT >= pivot_year ~ paste("Après", pivot_year)
+      ),
+      Type = ifelse(str_detect(TYPE_AP, "TERRESTRE"), "Terrestre", "Non terrestre")
+    ) %>%
+    group_by(Creation_Period, Type) %>%
+    summarise(
+      Count = n(),
+      Area = sum(HECTARES, na.rm = TRUE) / 100,  # Convert hectares to km²
+      .groups = 'drop'
+    ) %>%
+    pivot_wider(
+      names_from = Type,
+      values_from = c(Count, Area),
+      values_fill = list(Count = 0, Area = 0)
+    )
+
+  # Add row and column totals
+  summary_table <- summary_table %>%
+    mutate(
+      Total_Count = Count_Terrestre + `Count_Non terrestre`,
+      Total_Area = Area_Terrestre + `Area_Non terrestre`
+    )
+
+  # Compute the totals across all periods
+  total_row <- summary_table %>%
+    summarise(
+      Creation_Period = "Total",
+      Count_Terrestre = sum(Count_Terrestre, na.rm = TRUE),
+      `Count_Non terrestre` = sum(`Count_Non terrestre`, na.rm = TRUE),
+      Total_Count = sum(Total_Count, na.rm = TRUE),
+      Area_Terrestre = sum(Area_Terrestre, na.rm = TRUE),
+      `Area_Non terrestre` = sum(`Area_Non terrestre`, na.rm = TRUE),
+      Total_Area = sum(Total_Area, na.rm = TRUE)
+    )
+
+  # Append the total row to the summary table
+  summary_table <- bind_rows(summary_table, total_row)
+
+  # Format the table with gt
+  gt_table <- gt(summary_table) %>%
+    tab_header(
+      title = paste("Aires protégées par période de création (Année pivot = ", pivot_year, ")")
+    ) %>%
+    cols_label(
+      Creation_Period = "Période de Création",
+      Count_Terrestre = "Terrestres",
+      `Count_Non terrestre` = "Non terrestres",
+      Total_Count = "Total",
+      Area_Terrestre = "Terrestres",
+      `Area_Non terrestre` = "Non terrestres",
+      Total_Area = "Total"
+    ) %>%
+    fmt_number(
+      columns = c(Count_Terrestre, `Count_Non terrestre`, Total_Count),
+      decimals = 0
+    ) %>%
+    fmt_number(
+      columns = c(Area_Terrestre, `Area_Non terrestre`, Total_Area),
+      decimals = 0  # Round areas to whole numbers
+    ) %>%
+    tab_spanner(
+      label = "Nombre d'Aires Protégées",
+      columns = c(Count_Terrestre, `Count_Non terrestre`, Total_Count)
+    ) %>%
+    tab_spanner(
+      label = "Superficie (km²)",  # Change label to km²
+      columns = c(Area_Terrestre, `Area_Non terrestre`, Total_Area)
+    ) %>%
+    tab_style(
+      style = list(
+        cell_text(weight = "bold")
+      ),
+      locations = cells_body(
+        rows = Creation_Period == "Total"
+      )
+    )
+
+  return(gt_table)
+}
+
+# Table for 2008
+create_summary_table(sapm_land, 2008)
 ```
 
 ## Identification du groupe de traitement et du groupe de contrôle en 2008
@@ -301,6 +401,43 @@ gps_cluster_2008 <- gps_2008 %>%
 
 # Insérer un tableau qui compte les clusters en fonction de leur groupe
 table(gps_cluster_2008$groupe, useNA = "always")
+
+# identifier le groupe de controle: ménages à plus de 10 km 
+gps_cluster_2008 <- gps_cluster_2008 %>%
+  mutate(
+    distance_AP_post2008 = st_distance(geometry, sapm_land_post2008_buffer),
+    groupe = case_when(
+      as.numeric(distance_AP_post2008) > 10000 & 
+      !proche_AP_post2008 & 
+      URBAN_RURA == "R" ~ "Controle",
+      TRUE ~ groupe
+    )
+  )
+
+# Insérer un tableau qui compte les clusters en fonction de leur groupe
+table(gps_cluster_2008$groupe, useNA = "always")
+
+# Exclure les clusters à moins de 10 km d'une AP créés avant 2008
+gps_cluster_2008 <- gps_cluster_2008 %>%
+  mutate(
+    distance_AP_pre2008 = st_distance(geometry, sapm_land_pre2008_buffer),
+    distance_AP_post2008 = st_distance(geometry, sapm_land_post2008_buffer),
+    groupe = case_when(
+      as.numeric(distance_AP_post2008) > 10000 & 
+        !proche_AP_post2008 & 
+        URBAN_RURA == "R" ~ "Controle",
+      
+      as.numeric(distance_AP_pre2008) < 10000 & 
+        !proche_AP_post2008 & 
+        URBAN_RURA == "R" ~ "Exclu",
+      TRUE ~ groupe
+    )
+  )
+
+
+# Insérer un tableau qui compte les clusters en fonction de leur groupe
+table(gps_cluster_2008$groupe, useNA = "always")
+
 
 # Créer un plot pour visualiser la carte des AP avec les clusters
 tm_shape(sapm_land_post2008_buffer) +
@@ -393,16 +530,16 @@ tm_shape(sapm_land_post2008_buffer) +
 # Ajouter les colonnes "zone_urbaine" et "zone_rurale"
 gps_cluster_2008 <- gps_cluster_2008 %>%
   mutate(
-    zone_urbaine = ifelse(URBAN_RURA == "U", 0, 1),
-    zone_rurale = ifelse(URBAN_RURA == "R", 0,1)
+    zone_urbaine = ifelse(URBAN_RURA == "U", 1, 0),
+    zone_rurale = ifelse(URBAN_RURA == "R",  1, 0)
   )
 
 head(gps_cluster_2008)
 
 gps_cluster_2021 <- gps_cluster_2021 %>%
   mutate(
-    zone_urbaine = ifelse(URBAN_RURA == "U", 0, 1),
-    zone_rurale = ifelse(URBAN_RURA == "R", 0,1)
+    zone_urbaine = ifelse(URBAN_RURA == "U",  1, 0),
+    zone_rurale = ifelse(URBAN_RURA == "R", 1, 0)
   )
 
 head(gps_cluster_2021)
@@ -452,7 +589,7 @@ exclusion_clusters_2021 <- treatment_clusters_2021 %>%
   filter(groupe == "Exclu")
 
 # Calcul des statistiques pour toutes les observations
-calculate_statistics <- function(gps_data, hr_data, treatment_clusters, exclusion_clusters, year) {
+clusters_and_households <- function(gps_data, hr_data, treatment_clusters, exclusion_clusters, year) {
   clusters_treatment <- treatment_clusters %>%
     filter(groupe == "Traitement") %>%
     pull(DHSCLUST)
@@ -494,32 +631,109 @@ calculate_statistics <- function(gps_data, hr_data, treatment_clusters, exclusio
 }
 
 results_all <- list(
-  calculate_statistics(gps_2008, hr_2008, treatment_clusters_2008, exclusion_clusters_2008, 2008),
-  calculate_statistics(gps_2021, hr_2021, treatment_clusters_2021, exclusion_clusters_2021, 2021)
+  clusters_and_households(gps_2008, hr_2008, treatment_clusters_2008, exclusion_clusters_2008, 2008),
+  clusters_and_households(gps_2021, hr_2021, treatment_clusters_2021, exclusion_clusters_2021, 2021)
 ) %>%
   bind_rows()
 
 # Calculer les statistiques pour les ménages ruraux uniquement
-statistics_rural_2008 <- calculate_statistics(
-  gps_data = gps_2008 %>% filter(URBAN_RURA == "R"),
-  hr_data = hr_2008 %>% filter(hv025 == 2),
-  treatment_clusters = treatment_clusters_2008 %>% filter(URBAN_RURA == "R"),
-  exclusion_clusters = exclusion_clusters_2008 %>% filter(URBAN_RURA == "R"),
-  year = 2008
-)
+results_rural <- list(
+  statistics_rural_2008 <- clusters_and_households(
+    gps_data = gps_2008 %>% filter(URBAN_RURA == "R"),
+    hr_data = hr_2008 %>% filter(hv025 == 2),
+    treatment_clusters = treatment_clusters_2008 %>% filter(URBAN_RURA == "R"),
+    exclusion_clusters = exclusion_clusters_2008 %>% filter(URBAN_RURA == "R"),
+    year = 2008
+  ),
+  
+  statistics_rural_2021 <- clusters_and_households(
+    gps_data = gps_2021 %>% filter(URBAN_RURA == "R"),
+    hr_data = hr_2021 %>% filter(hv025 == 2),
+    treatment_clusters = treatment_clusters_2021 %>% filter(URBAN_RURA == "R"),
+    exclusion_clusters = exclusion_clusters_2021 %>% filter(URBAN_RURA == "R"),
+    year = 2021
+  )
+) %>%
+  bind_rows()
 
-statistics_rural_2021 <- calculate_statistics(
-  gps_data = gps_2021 %>% filter(URBAN_RURA == "R"),
-  hr_data = hr_2021 %>% filter(hv025 == 2),
-  treatment_clusters = treatment_clusters_2021 %>% filter(URBAN_RURA == "R"),
-  exclusion_clusters = exclusion_clusters_2021 %>% filter(URBAN_RURA == "R"),
-  year = 2021
-)
 
 # Afficher les résultats
 print(results_all)
 print(statistics_rural_2008)
 print(statistics_rural_2021)
+
+# Ajout de colonne pour catégoriser les zones 
+combined_results <- bind_rows(
+  results_all %>% mutate(Type = "Toutes observations"),
+  results_rural %>% mutate(Type = "Zones rurales") 
+  
+)
+
+# Display the results using gt with improved layout and row groups
+gt_table <- gt(combined_results) %>%
+  tab_header(
+    title = "Nombre de grappes et de ménages d'enquêtes DHS classés selon leur proximité avec des aires protégées"
+  ) %>%
+  cols_label(
+    année = "Année",
+    `Grappes traitement` = "Traitement",
+    `Grappes exclusion` = "Exclusion",
+    `Grappes contrôle` = "Contrôle",
+    `Total des grappes` = "Total",
+    `Ménages traitement` = "Traitement",
+    `Ménages exclusion` = "Exclusion",
+    `Ménages contrôle` = "Contrôle",
+    `Total des ménages` = "Total"
+  ) %>%
+  tab_spanner(
+    label = "Grappes",
+    columns = c(`Grappes traitement`, `Grappes exclusion`, `Grappes contrôle`, `Total des grappes`)
+  ) %>%
+  tab_spanner(
+    label = "Ménages",
+    columns = c(`Ménages traitement`, `Ménages exclusion`, `Ménages contrôle`, `Total des ménages`)
+  ) %>%
+  fmt_number(
+    columns = c(`Grappes traitement`, `Grappes exclusion`, `Grappes contrôle`, `Total des grappes`,
+                `Ménages traitement`, `Ménages exclusion`, `Ménages contrôle`, `Total des ménages`),
+    decimals = 0,
+    use_seps = TRUE,
+    sep_mark = " ",
+    dec_mark = ","
+  ) %>%
+  fmt_number(
+    columns = "année",
+    decimals = 0,
+    use_seps = FALSE
+  ) %>%
+  cols_align(
+    align = "center",
+    columns = everything()
+  ) %>%
+  cols_width(
+    `Total des ménages` ~ px(150)
+  ) %>%
+  tab_options(
+    table.width = pct(100)
+  ) %>%
+  tab_footnote(
+    footnote = md("**Traitement**: Observations situées à moins de 10 km des AP créées à partir de 2008. **Exclusion**: Observations situées à moins de 10 km des AP créées avant 2008. **Contrôle**: Autres observations."),
+    locations = cells_title(groups = "title")
+  ) %>%
+  tab_row_group(
+    label = "Toutes observations",
+    rows = Type == "Toutes observations"
+  ) %>%
+  tab_row_group(
+    label = "Zones rurales",
+    rows = Type == "Zones rurales"
+  ) %>%
+  cols_hide(
+    columns = "Type"  
+  )
+
+# Afficher le tableau
+gt_table
 ```
 
 # Estimation des effets par Matching
