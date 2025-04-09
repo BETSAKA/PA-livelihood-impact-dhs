@@ -1,6 +1,36 @@
 
-- Charger les données de 1997
-- Harmoniser les CRS
-- Vérifier que les clusters de la zone urbaine est vraiment dans la zone urbaine,
-de même pour les clusters dans la zone rurale
-- Créer 2 variables pour les urbains et les ruraux, faire une jointure avec les ménages 
+1) Installation des packages 
+- MatchIt
+- Matching
+- cobalt
+
+2)  Préparation des données 
+- Charger les données GPS pour 2008 et 2021
+- Définit les groupes de traitement, contrôles, et exclusion 
+- Créer un buffer de 10 km autour des AP créées avant et après 2008
+
+ Variable de traitement: treatment (1 = proche des AP, 0 = contrôle)
+- Covariables pour le matching: forest_2000, slope, elevation, pop_density_2000, accessibility_2000
+- Variables de contrôles supplémentaires: age_head, sex_head, SPEI
+- variable de résultat: wealth_index
+
+3) MATCHING:
+- Mahalanobis Distance + genetic matching eu utilisant le GenMatch via le wrapper matchit() 
+avec la méthode "genetic" + caliper 0.25 écart-type pour limiter les appariements mal alignés 
+
+
+4) Vérification de l'équilibre avant matching et après matching
+- Vérifier l'équilibre des covariables à l'aide de Standardized Mean Difference (SMD)
+- Ajustement du caliper si SMD > 0,1 puis répétez le matchIt en ajustant le caliper 
+
+5) Examiner l'équilibrage - Test visuel de la qualité du matching
+utilisation de love.plot (QQ plot pour chaque covariable afin de comparer 
+les distributions avant et après matching)
+
+6) Visualisation des distributions avant et après matching
+
+7) Estimation de l'effet du traitement
+- utilisation des outcomes 
+- Calculer les différences moyennes des variables d'intérêt entre les groupes appariés
+
+8) 
