@@ -449,7 +449,7 @@ warnings()
 
 # Vérifier et charger les données
 if (file.exists("Data/donnees_geo_menages/2008/gps_2008_wc.rds")) {
-  household_cluster_2008 <- readRDS("Data/donnees_geo_menages/2008/gps_2008_wc.rds")
+  gps_2008 <- readRDS("Data/donnees_geo_menages/2008/gps_2008_wc.rds")
 } else {
   plan(sequential)
  
@@ -497,6 +497,12 @@ warnings()
 ```
 
 ```{r 2021}
+# Vérifier et charger les données
+if (file.exists("Data/donnees_geo_menages/2021/gps_2021_wc.rds")) {
+  gps_2021 <- readRDS("Data/donnees_geo_menages/2021/gps_2021_wc.rds")
+} else {
+  plan(sequential)
+
 # Chargement des données de Precipitation
   tic()
   with_progress({
@@ -534,7 +540,7 @@ warnings()
   })
   toc()  
 
- write_rds(x = gps_2021, file = "Data/gps_2021/household_cluster_2021_wc.rds")
+ write_rds(x = gps_2021, file = "Data/donnees_geo_menages/2021/gps_2021_wc.rds")
 }
 
 warnings()
@@ -552,12 +558,12 @@ library(devtools)
 library (fastmap)
 
 # Latitude calculation
-household_cluster_2008_wc_spei <- household_cluster_2008 %>% 
+gps_2008_wc_spei <- gps_2008 %>% 
   mutate(
     lat = st_coordinates (st_centroid(geometry))[,2])
 
 # Extract the first cluster's climate time series
-row1 <- household_cluster_2008_wc_spei [1,]
+row1 <- gps_2008_wc_spei [1,]
 
 # Extract vectors 
 tmin <- row1$temperature_min_wc[[1]]$value
@@ -602,7 +608,7 @@ spei_tbl <- tibble(
 )
 
 # SPEI sous forme de map
-household_cluster_2008_wc_spei <- household_cluster_2008_wc_spei %>% 
+gps_2008_wc_spei <- gps_2008_wc_spei %>% 
   mutate(
     spei_wc = pmap(
       list(tmin = temperature_min_wc,
