@@ -194,6 +194,287 @@ dhs_map(gps_2021, 2021)
 
 Nous allons maintenant charger les données géophysiques des ménages à partir de mapme.biodiversity
 
+```{r}
+library(mapme.biodiversity)
+library(tidyverse)
+library(progressr)
+library(tictoc)
+library(future)
+library(sf)
+library(rstac)
+library(terra)
+
+# Activer la barre de progression
+handlers(global = TRUE)
+handlers("progress")
+
+
+if (file.exists("Data/donnees_geo_menages/2008/gps_2008.rds")) {
+  gps_2008 <- readRDS("Data/donnees_geo_menages/2008/gps_2008.rds")
+} else {
+  cat("Fichier introuvable, début du traitement...\n")
+  
+  # Créer un buffer autour de chaque point pour former des polygones
+  gps_2008 <- st_buffer(gps_2008, dist = 10000)
+  
+  # Définir les ressources à télécharger 
+  gps_2008 <- gps_2008 %>%
+    get_resources(get_gfw_treecover())
+  
+  gps_2008 <- gps_2008 %>%  
+    get_resources(get_gfw_lossyear())
+  
+  gps_2008 <- gps_2008 %>% 
+    get_resources(get_nasa_srtm())
+  
+  gps_2008 <- gps_2008 %>% 
+    get_resources(get_worldpop(years = 2000))
+  
+  gps_2008 <- gps_2008 %>%  
+    get_resources(get_accessibility_2000())
+  
+  # Extraire les ressources sans changer le type de géométrie
+  plan(sequential)
+  
+  # Forest cover rate in 2000
+  tic()
+  with_progress({
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_treecover_area(years = 2000:2023, min_size = 10, min_cover = 35))
+  })
+  toc()   # 362.75 sec
+  
+  # slope
+  tic()
+  with_progress({
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_slope(engine = "extract", stats = "mean"))
+  })
+  toc() # 316.09 sec
+  
+  # Elevation
+  tic()
+  with_progress({
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_elevation(engine = "extract", stats = "mean"))
+  })
+  toc() # 662.1 sec
+  
+  # Population density
+  tic()
+  with_progress({
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_population_count(engine = "extract", stats = "mean"))
+  })
+  toc() # 47.42 sec
+  
+  # Accessibility
+  tic()
+  with_progress({
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_traveltime_2000(engine = "extract", stats = "mean"))
+  })
+  toc() # 37.81 sec
+  
+  # Convertir les polygones en points en utilisant les centroids
+  gps_2008 <- st_centroid(gps_2008)
+  
+  # Enregistrement des données sous forme de points (dans le même dataframe gps_2008)
+  write_rds(gps_2008, "Data/donnees_geo_menages/2008/gps_2008.rds")
+  cat("✅ Données enregistrées dans gps_2008.rds avec géométries en POINT et indicateurs ajoutés.\n")
+  }
+```
+
+```{r 2021}
+# Activer la barre de progression
+handlers(global = TRUE)
+handlers("progress")
+
+if (file.exists("Data/donnees_geo_menages/2021/gps_2021.rds")) {
+  gps_2021 <- readRDS("Data/donnees_geo_menages/2021/gps_2021.rds")
+} else {
+  cat("Fichier introuvable, début du traitement...\n")
+
+  # Créer un buffer autour de chaque point pour former des polygones 
+  gps_2021 <- st_buffer(gps_2021, dist = 10000)
+  
+  # Définir les ressources à télécharger (corrigé)
+  gps_2021 <- gps_2021 %>%
+    get_resources(get_gfw_treecover())
+  
+  gps_2021 <- gps_2021 %>%  
+    get_resources(get_gfw_lossyear())
+  
+  gps_2021 <- gps_2021 %>% 
+    get_resources(get_nasa_srtm())
+  
+  gps_2021 <- gps_2021 %>% 
+    get_resources(get_worldpop(years = 2000))
+  
+  gps_2021 <- gps_2021 %>%  
+    get_resources(get_accessibility_2000())
+  
+  # Extraire les ressources sans changer le type de géométrie
+  plan(sequential)
+  
+  # Forest cover rate in 2000
+  tic()
+  with_progress({
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_treecover_area(years = 2000:2023, min_size = 10, min_cover = 35))
+  })
+  toc()   # 362.75 sec
+  
+  # slope
+  tic()
+  with_progress({
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_slope(engine = "extract", stats = "mean"))
+  })
+  toc() # 316.09 sec
+  
+  # Elevation
+  tic()
+  with_progress({
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_elevation(engine = "extract", stats = "mean"))
+  })
+  toc() # 662.1 sec
+  
+  # Population density
+  tic()
+  with_progress({
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_population_count(engine = "extract", stats = "mean"))
+  })
+  toc() # 47.42 sec
+  
+  # Accessibility
+  tic()
+  with_progress({
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_traveltime_2000(engine = "extract", stats = "mean"))
+  })
+  toc() # 37.81 sec
+  
+  # Convertir les polygones en points en utilisant les centroids
+  gps_2021 <- st_centroid(gps_2021)
+  # Enregistrement des données sous forme de points 
+  write_rds(gps_2021, "Data/donnees_geo_menages/2021/gps_2021.rds")
+  cat("✅ Données enregistrées dans gps_2021.rds avec géométries en POINT et indicateurs ajoutés.\n")
+  
+  }
+```
+
+### Chargement et extraction des données sur les précipitations
+
+```{r 2008}
+# Vérifier et charger les données
+if (file.exists("Data/donnees_geo_menages/2008/gps_2008_wc.rds")) {
+  gps_2008 <- readRDS("Data/donnees_geo_menages/2008/gps_2008_wc.rds")
+} else {
+  plan(sequential)
+ 
+# Chargement des données de Precipitation
+  tic()
+  with_progress({
+    gps_2008 <- gps_2008 %>%
+      get_resources(
+        get_worldclim_max_temperature(years = 1981:2010, resolution = "10m"),
+        get_worldclim_min_temperature(years = 1981:2010, resolution = "10m"),
+        get_worldclim_precipitation(years = 1981:2010, resolution = "10m")
+      )
+  })
+  toc() 
+
+
+# Extraction des données de Precipitation
+  tic()
+  with_progress({
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_precipitation_wc(engine = "extract", stats = "mean"))
+  })
+  toc()   
+  
+  # Temperature maximal
+  tic()
+  with_progress({
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_temperature_max_wc(engine = "extract", stats = "mean"))
+  })
+  toc()   
+  
+  # Temperature minimal
+  tic()
+  with_progress({
+    gps_2008 <- calc_indicators(
+      x = gps_2008, calc_temperature_min_wc(engine = "extract", stats = "mean"))
+  })
+  toc()  
+
+  
+  # Convertir les polygones en points en utilisant les centroids
+  gps_2008 <- st_centroid(gps_2008)
+  
+ write_rds(x = gps_2008, file = "Data/donnees_geo_menages/2008/gps_2008_wc.rds")
+}
+
+warnings()
+```
+
+```{r 2021}
+# Vérifier et charger les données
+if (file.exists("Data/donnees_geo_menages/2021/gps_2021_wc.rds")) {
+  gps_2021 <- readRDS("Data/donnees_geo_menages/2021/gps_2021_wc.rds")
+} else {
+  plan(sequential)
+# Chargement des données de Precipitation
+  tic()
+  with_progress({
+    gps_2021 <- gps_2021 %>%
+      get_resources(
+        get_worldclim_max_temperature(years = 1981:2010, resolution = "10m"),
+        get_worldclim_min_temperature(years = 1981:2010, resolution = "10m"),
+        get_worldclim_precipitation(years = 1981:2010, resolution = "10m")
+      )
+  })
+  toc() 
+
+
+# Extraction des données de Precipitation
+  tic()
+  with_progress({
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_precipitation_wc(engine = "extract", stats = "mean"))
+  })
+  toc()   
+  
+  # Temperature maximal
+  tic()
+  with_progress({
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_temperature_max_wc(engine = "extract", stats = "mean"))
+  })
+  toc()   
+  
+  # Temperature minimal
+  tic()
+  with_progress({
+    gps_2021 <- calc_indicators(
+      x = gps_2021, calc_temperature_min_wc(engine = "extract", stats = "mean"))
+  })
+  toc()  
+
+ write_rds(x = gps_2021, file = "Data/donnees_geo_menages/2021/gps_2021_wc.rds")
+}
+
+warnings()
+```
+
+### Calcul de l'indice Standardized Precipitation Evapotranspiration Index (SPEI)
+
+L'indice SPEI est calculé à partir d'une référence à long terme (1981-2010) pour quantifier l'excès ou le manque de pluie. Son calcul se fait à partir des données mensuelles de précipitation et de température minimum et maximum provenant de Worlclim, en utilisant une version améliorée de la méthode Hargreaves ( Modified-Hargreaves methods) définie par Droogers et Allen (2002). La variable sera calculée pour un cercle de 10 km de rayon autour de la coordonnée GPS de la grappe.
+
 ## Données sur les aires protégées
 
 Utilisation des données de SGAP (SAPM)
@@ -296,7 +577,7 @@ tm_add_legend(type = "polygons", fill = c("green", "darkgreen"), labels = c("ava
   tm_scalebar(position = c("right", "bottom"))
 
 
-# Define the function
+# Definition de la fonction
 create_summary_table <- function(data, pivot_year) {
   summary_table <- data %>%
     st_drop_geometry() %>%
@@ -385,32 +666,43 @@ create_summary_table <- function(data, pivot_year) {
 
 # Table for 2008
 create_summary_table(sapm_land, 2008)
+
 ```
 
 ## Identification du groupe de traitement et du groupe de contrôle en 2008
 
 ```{r}
+# Harmoniser les CRS des buffers avec les données GPS
+sapm_land_pre2008_buffer <- st_transform(sapm_land_pre2008_buffer, st_crs(gps_2008))
+sapm_land_post2008_buffer <- st_transform(sapm_land_post2008_buffer, st_crs(gps_2008))
+
+
 # Identifier le groupe de traitement: ménages proche d'AP créées après 2008
 gps_cluster_2008 <- gps_2008 %>%
-  mutate(proche_AP_pre2008 = st_within(geometry, sapm_land_pre2008_buffer, sparse = FALSE)[, 1],
-         proche_AP_post2008 = st_within(geometry, sapm_land_post2008_buffer, sparse = FALSE)[, 1],
-         groupe = case_when(
-           proche_AP_post2008 & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Traitement", 
-           proche_AP_pre2008 | URBAN_RURA == "U" ~ "Exclu",
-           !(proche_AP_post2008) & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Controle"))
+  mutate(
+    proche_AP_pre2008 = st_within(geometry, sapm_land_pre2008_buffer, sparse = FALSE)[, 1],
+    proche_AP_post2008 = st_within(geometry, sapm_land_post2008_buffer, sparse = FALSE)[, 1],
+    groupe = case_when(
+      proche_AP_post2008 & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Traitement", 
+      proche_AP_pre2008 | URBAN_RURA == "U" ~ "Exclu",
+      !(proche_AP_post2008) & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Controle"
+    )
+  )
 
 # Insérer un tableau qui compte les clusters en fonction de leur groupe
 table(gps_cluster_2008$groupe, useNA = "always")
 
 # identifier le groupe de controle: ménages à plus de 10 km 
-gps_cluster_2008 <- gps_cluster_2008 %>%
+gps_cluster_2008 <- gps_2008 %>%
   mutate(
-    distance_AP_post2008 = st_distance(geometry, sapm_land_post2008_buffer),
+    distance_pre2008 = st_distance(geometry, st_union(sapm_land_pre2008_buffer)),
+    distance_post2008 = st_distance(geometry, st_union(sapm_land_post2008_buffer)),
+    distance_pre2008_km = set_units(distance_pre2008, "km") %>% drop_units(),
+    distance_post2008_km = set_units(distance_post2008, "km") %>% drop_units(),
     groupe = case_when(
-      as.numeric(distance_AP_post2008) > 10000 & 
-      !proche_AP_post2008 & 
-      URBAN_RURA == "R" ~ "Controle",
-      TRUE ~ groupe
+      distance_post2008_km > 10 & distance_pre2008_km > 10 & URBAN_RURA == "R" ~ "Controle",
+      distance_post2008_km <= 10 & distance_pre2008_km > 10 & URBAN_RURA == "R" ~ "Traitement", 
+      distance_pre2008_km <= 10 | URBAN_RURA == "U" ~ "Exclu"
     )
   )
 
@@ -418,23 +710,19 @@ gps_cluster_2008 <- gps_cluster_2008 %>%
 table(gps_cluster_2008$groupe, useNA = "always")
 
 # Exclure les clusters à moins de 10 km d'une AP créés avant 2008
-gps_cluster_2008 <- gps_cluster_2008 %>%
+gps_cluster_2008 <- gps_2008 %>%
   mutate(
-    distance_AP_pre2008 = st_distance(geometry, sapm_land_pre2008_buffer),
-    distance_AP_post2008 = st_distance(geometry, sapm_land_post2008_buffer),
+    proche_AP_pre2008 = st_within(geometry, sapm_land_pre2008_buffer, sparse = FALSE)[, 1],
+    proche_AP_post2008 = st_within(geometry,sapm_land_pre2008_buffer, sparse = FALSE)[, 1]
+  ) %>%
+  filter(!proche_AP_pre2008 & URBAN_RURA == "R") %>%
+  mutate(
     groupe = case_when(
-      as.numeric(distance_AP_post2008) > 10000 & 
-        !proche_AP_post2008 & 
-        URBAN_RURA == "R" ~ "Controle",
-      
-      as.numeric(distance_AP_pre2008) < 10000 & 
-        !proche_AP_post2008 & 
-        URBAN_RURA == "R" ~ "Exclu",
-      TRUE ~ groupe
+      proche_AP_post2008 ~ "Traitement", 
+      TRUE ~ "Controle"
     )
   )
-
-
+    
 # Insérer un tableau qui compte les clusters en fonction de leur groupe
 table(gps_cluster_2008$groupe, useNA = "always")
 
@@ -476,7 +764,8 @@ sapm_land_2021_buffer <- sapm_land %>%
   st_make_valid() %>%
   st_union() %>%
   st_as_sf() %>%
-  st_make_valid()
+  st_make_valid()%>%
+  st_intersection(contour_mada)
 
 # Identification des clusters 
 gps_cluster_2021 <- gps_2021 %>%
@@ -527,6 +816,7 @@ tm_shape(sapm_land_post2008_buffer) +
 ## Vérification des zones urbaines et rurales des clusters existants
 
 ```{r}
+
 # Ajouter les colonnes "zone_urbaine" et "zone_rurale"
 gps_cluster_2008 <- gps_cluster_2008 %>%
   mutate(
@@ -547,55 +837,67 @@ head(gps_cluster_2021)
 
 # Vérifier que les clusters urbains sont bien définis
 urban_clusters <- gps_2008 %>%
-  filter(URBAN_RURA == "U") %>%
-  st_join(gps_2008, join = st_within)
+  filter(URBAN_RURA == "U")
+  
 
 urban_clusters <- gps_2021 %>%
-  filter(URBAN_RURA == "U") %>%
-  st_join(gps_2021, join = st_within)
+  filter(URBAN_RURA == "U") 
 
 # Vérifier que les clusters ruraux sont bien définis
 rural_clusters <- gps_2008 %>%
-  filter(URBAN_RURA == "R") %>%
-st_join(gps_2021, join = st_within)
+  filter(URBAN_RURA == "R")
+
 
 rural_clusters <- gps_2021 %>%
-  filter(URBAN_RURA == "R") %>%
-st_join(gps_2021, join = st_within)
+  filter(URBAN_RURA == "R") 
 
 # Afficher les résultats 
 table(gps_cluster_2008$URBAN_RURA, useNA = "always")
 table(gps_cluster_2021$URBAN_RURA, useNA = "always")
 
-# Définir les clusters de traitement et d'exclusion pour 2008 et 2021
-treatment_clusters_2008 <- gps_2008 %>%
-  mutate(groupe = case_when(
-    st_within(geometry, sapm_land_post2008_buffer, sparse = FALSE)[, 1] & URBAN_RURA == "R" ~ "Traitement", 
-    st_within(geometry, sapm_land_pre2008_buffer, sparse = FALSE)[, 1] | URBAN_RURA == "U" ~ "Exclu",
-    TRUE ~ "Controle"
-  ))
 
-exclusion_clusters_2008 <- treatment_clusters_2008 %>%
-  filter(groupe == "Exclu")
+# Function to find GPS locations near PAs created within a specific time frame
+find_nearby_gps <- function(gps_data, sapm_data, distance_km, creation_year, after = TRUE) {
+  if (after) {
+    selected_pas <- sapm_data %>%
+      filter(YEAR_CREAT >= creation_year)
+  } else {
+    selected_pas <- sapm_data %>%
+      filter(YEAR_CREAT < creation_year)
+  }
+  
+  selected_pas <- selected_pas %>%
+    st_make_valid()
+  
+  gps_data <- st_transform(gps_data, st_crs(selected_pas))
+  
+  buffered_pas <- st_buffer(selected_pas, dist = distance_km * 1000) %>%
+    st_make_valid()
+  
+  merged_buffer <- st_union(buffered_pas) %>%
+    st_make_valid()
+  
+  nearby_gps <- gps_data %>%
+    mutate(nearby_pa = st_within(geometry, merged_buffer, sparse = FALSE)[, 1])
+  
+  return(nearby_gps)
+}
 
-treatment_clusters_2021 <- gps_2021 %>%
-  mutate(groupe = case_when(
-    st_within(geometry, sapm_land_post2008_buffer, sparse = FALSE)[, 1] & URBAN_RURA == "R" ~ "Traitement", 
-    st_within(geometry, sapm_land_pre2008_buffer, sparse = FALSE)[, 1] | URBAN_RURA == "U" ~ "Exclu",
-    TRUE ~ "Controle"
-  ))
+# Identify clusters for treatment and exclusion groups
+treatment_clusters_2021 <- find_nearby_gps(gps_2021, sapm, 10, 2008, after = TRUE)
+exclusion_clusters_2021 <- find_nearby_gps(gps_2021, sapm, 10, 2008, after = FALSE)
 
-exclusion_clusters_2021 <- treatment_clusters_2021 %>%
-  filter(groupe == "Exclu")
+treatment_clusters_2008 <- find_nearby_gps(gps_2008, sapm, 10, 2008, after = TRUE)
+exclusion_clusters_2008 <- find_nearby_gps(gps_2008, sapm, 10, 2008, after = FALSE)
 
-# Calcul des statistiques pour toutes les observations
+# Function to calculate clusters and households for different categories
 clusters_and_households <- function(gps_data, hr_data, treatment_clusters, exclusion_clusters, year) {
   clusters_treatment <- treatment_clusters %>%
-    filter(groupe == "Traitement") %>%
+    filter(nearby_pa) %>%
     pull(DHSCLUST)
   
   clusters_exclusion <- exclusion_clusters %>%
-    filter(groupe == "Exclu") %>%
+    filter(nearby_pa) %>%
     pull(DHSCLUST)
   
   clusters_control <- gps_data %>%
@@ -630,43 +932,36 @@ clusters_and_households <- function(gps_data, hr_data, treatment_clusters, exclu
   )
 }
 
+# Calculate results for all observations
 results_all <- list(
-  clusters_and_households(gps_2008, hr_2008, treatment_clusters_2008, exclusion_clusters_2008, 2008),
-  clusters_and_households(gps_2021, hr_2021, treatment_clusters_2021, exclusion_clusters_2021, 2021)
+  clusters_and_households(gps_2021, hr_2021, treatment_clusters_2021, exclusion_clusters_2021, 2021),
+  clusters_and_households(gps_2008, hr_2008, treatment_clusters_2008, exclusion_clusters_2008, 2008)
 ) %>%
   bind_rows()
 
-# Calculer les statistiques pour les ménages ruraux uniquement
+# Calculate results for rural households only
 results_rural <- list(
-  statistics_rural_2008 <- clusters_and_households(
-    gps_data = gps_2008 %>% filter(URBAN_RURA == "R"),
-    hr_data = hr_2008 %>% filter(hv025 == 2),
-    treatment_clusters = treatment_clusters_2008 %>% filter(URBAN_RURA == "R"),
-    exclusion_clusters = exclusion_clusters_2008 %>% filter(URBAN_RURA == "R"),
-    year = 2008
+  clusters_and_households(
+    gps_2021 %>% filter(URBAN_RURA == "R"),
+    hr_2021 %>% filter(hv025 == 2),
+    treatment_clusters_2021 %>% filter(URBAN_RURA == "R"),
+    exclusion_clusters_2021 %>% filter(URBAN_RURA == "R"),
+    2021
   ),
-  
-  statistics_rural_2021 <- clusters_and_households(
-    gps_data = gps_2021 %>% filter(URBAN_RURA == "R"),
-    hr_data = hr_2021 %>% filter(hv025 == 2),
-    treatment_clusters = treatment_clusters_2021 %>% filter(URBAN_RURA == "R"),
-    exclusion_clusters = exclusion_clusters_2021 %>% filter(URBAN_RURA == "R"),
-    year = 2021
+  clusters_and_households(
+    gps_2008 %>% filter(URBAN_RURA == "R"),
+    hr_2008 %>% filter(hv025 == 2),
+    treatment_clusters_2008 %>% filter(URBAN_RURA == "R"),
+    exclusion_clusters_2008 %>% filter(URBAN_RURA == "R"),
+    2008
   )
 ) %>%
   bind_rows()
 
-
-# Afficher les résultats
-print(results_all)
-print(statistics_rural_2008)
-print(statistics_rural_2021)
-
-# Ajout de colonne pour catégoriser les zones 
+# Add a column for categorization before selecting the columns
 combined_results <- bind_rows(
   results_all %>% mutate(Type = "Toutes observations"),
-  results_rural %>% mutate(Type = "Zones rurales") 
-  
+  results_rural %>% mutate(Type = "Zones rurales")  # Change label to "Zones rurales"
 )
 
 # Display the results using gt with improved layout and row groups
@@ -726,13 +1021,13 @@ gt_table <- gt(combined_results) %>%
   ) %>%
   tab_row_group(
     label = "Zones rurales",
-    rows = Type == "Zones rurales"
+    rows = Type == "Zones rurales"  # Ensure consistency with the new label
   ) %>%
   cols_hide(
-    columns = "Type"  
+    columns = "Type"  # Hide the Type column after using it for row grouping
   )
 
-# Afficher le tableau
+# Display the formatted gt table
 gt_table
 ```
 
@@ -743,6 +1038,24 @@ gt_table
 1.  Utilisation du Genetic matching et du Mahalanobis Distance Matching avec la fonction de GenMatch() du package R MatchIt
 
 2.  Application du caliper à un intervalle de 0.25 écart-type de la distance de Mahalanobis
+
+```{r}
+library(MatchIt)
+library(cobalt)
+library(dplyr)
+
+# Matching avec MatchIt pour 2008
+set.seed(123) 
+matching_2008 <- matchit(
+  groupe == "Traitement" ~ treecover_area + slope + elevation + population_count + travel_time,
+  data = gps_cluster_2008 %>% 
+    filter(groupe != "Exclu"),
+  method = "genetic", 
+  distance = "mahalanobis",
+  caliper = 0.25
+)
+
+```
 
 ## Vérification de l'équilibre des covariables :
 
