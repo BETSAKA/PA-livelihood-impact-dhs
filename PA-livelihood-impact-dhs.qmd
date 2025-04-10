@@ -1055,6 +1055,16 @@ matching_2008 <- matchit(
   caliper = 0.25
 )
 
+# Matching avec MatchIt pour 2021
+mateching_2021 <-  matchit(
+  groupe == "Traitement" ~ treecover_area + slope + elevation + population_count + travel_time,
+  data = gps_cluster_2021 %>% 
+    filter(groupe != "Exclu"),
+  method = "genetic", 
+  distance = "mahalanobis",
+  caliper = 0.25
+)
+
 ```
 
 ## Vérification de l'équilibre des covariables :
