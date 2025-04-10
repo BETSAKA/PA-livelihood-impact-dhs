@@ -182,10 +182,10 @@ dhs_map(gps_2021, 2021)
 
 Nous allons maintenant charger les données géophysiques des ménages à partir de mapme.biodiversity
 
-```{r 2008}
+```{r}
 library(mapme.biodiversity)
 library(tidyverse)
-library(progressr) # Pour avoir des barres de progression
+library(progressr)
 library(tictoc)
 library(future)
 library(sf)
@@ -196,139 +196,37 @@ library(terra)
 handlers(global = TRUE)
 handlers("progress")
 
-# Vérifier et charger les données
+# S'assurer que le CRS est en WGS84 pour compatibilité
+#if (st_crs(gps_2008)$epsg != 4326) {
+# gps_2008 <- st_transform(gps_2008, crs = 4326)
+#}
+
+# Créer un buffer autour de chaque point pour former des polygones (10 km ici)
+gps_2008 <- st_buffer(gps_2008, dist = 10000)
+
+# Définir les ressources à télécharger (corrigé)
+gps_2008 <- gps_2008 %>%
+  get_resources(get_gfw_treecover())
+
+gps_2008 <- gps_2008 %>%  
+  get_resources(get_gfw_lossyear())
+
+gps_2008 <- gps_2008 %>% 
+  get_resources(get_nasa_srtm())
+
+gps_2008 <- gps_2008 %>% 
+  get_resources(get_worldpop(years = 2000))
+
+gps_2008 <- gps_2008 %>%  
+  get_resources(get_accessibility_2000())
+
+# Extraire les ressources sans changer le type de géométrie
+plan(sequential)
+
 if (file.exists("Data/donnees_geo_menages/2008/gps_2008.rds")) {
   gps_2008 <- readRDS("Data/donnees_geo_menages/2008/gps_2008.rds")
 } else {
-  plan(sequential)
   
-  resources <- list(
-    get_gfw_treecover(),
-    get_gfw_lossyear(),
-    get_nasa_srtm(),
-    get_worldpop(years = 2000),
-    get_accessibility_2000()
-  )
-  
-  progress_resource <- function(resource) {
-    with_progress({ 
-      gps_2008 <- gps_2008 %>% get_resources(resource) })
-  }
-
-# Transformer le CRS 
-  if (st_crs(gps_2008)$epsg != 4326) {
-        gps_2008 <- st_transform(gps_2008, crs = 4326)
-      }
-      
-# Vérifier les types de géométries
-  geom_types <- st_geometry_type(gps_2008)
-  if (all(geom_types == "POINT")) {
-    # Créer un buffer autour de chaque point pour former un polygone
-    gps_2008 <- st_buffer(gps_2008, dist = 10000) 
-    cat("Les géométries de type POINT ont été converties en POLYGONS.\n")
-  } else if (!all(geom_types %in% c("POLYGON", "MULTIPOLYGON"))) {
-    stop("Les géométries doivent être de type 'POLYGON' ou 'MULTIPOLYGON'.")
-      }
-
-# Transformer le CRS en EPSG: 29702 
-  gps_2008 <- st_transform(gps_2008, crs = 29702)
-      
-  
-  tic()
-  for (resource in resources) {
-    progress_resource(resource)
-  }
-  toc()
-  
-  cat("Enregistrement des données dans Data/donnees_geo_menages/2008/gps_2008.rds\n")
-  write_rds(gps_2008, "Data/donnees_geo_menages/2008/gps_2008.rds")
-  cat("Processus terminé avec succès !\n")
-}
-```
-
-```{r 2021}
-library(mapme.biodiversity)
-library(tidyverse)
-library(progressr) # Pour avoir des barres de progression
-library(tictoc)
-library(future)
-library(sf)
-library(rstac)
-library(terra)
-
-# Activer la barre de progression
-handlers(global = TRUE)
-handlers("progress")
-
-# Vérifier et charger les données
-if (file.exists("Data/donnees_geo_menages/2021/gps_2021.rds")) {
-  gps_2021 <- readRDS("Data/donnees_geo_menages/2021/gps_2021.rds")
-} else {
-  plan(sequential)
-  
-  resources <- list(
-    get_gfw_treecover(),
-    get_gfw_lossyear(),
-    get_nasa_srtm(),
-    get_worldpop(years = 2000),
-    get_accessibility_2000()
-  )
-  
-  progress_resource <- function(resource) {
-    with_progress({ 
-      gps_2021 <- gps_2021 %>% get_resources(resource) })
-  }
-
-# Transformer le CRS 
-  if (st_crs(gps_2021)$epsg != 4326) {
-        gps_2021 <- st_transform(gps_2021, crs = 4326)
-      }
-      
-# Vérifier les types de géométries
-  geom_types <- st_geometry_type(gps_2021)
-  if (all(geom_types == "POINT")) {
-    # Créer un buffer autour de chaque point pour former un polygone
-    gps_2021 <- st_buffer(gps_2021, dist = 10000) 
-    cat("Les géométries de type POINT ont été converties en POLYGONS.\n")
-  } else if (!all(geom_types %in% c("POLYGON", "MULTIPOLYGON"))) {
-    stop("Les géométries doivent être de type 'POLYGON' ou 'MULTIPOLYGON'.")
-      }
-
-# Transformer le CRS en EPSG: 29702 
-  gps_2021 <- st_transform(gps_2021, crs = 29702)
-      
-  
-  tic()
-  for (resource in resources) {
-    progress_resource(resource)
-  }
-  toc()
-  
-  cat("Enregistrement des données dans Data/donnees_geo_menages/2021/gps_2008.rds\n")
-  write_rds(gps_2021, "Data/donnees_geo_menages/2021/gps_2021.rds")
-  cat("Processus terminé avec succès !\n")
-}
-```
-
-### Extraction des données de mapme.biodiversity
-
-```{r 2008}
-library(mapme.biodiversity)
-library(tidyverse)
-library(progressr) # Pour avoir des barres de progression
-library(tictoc)
-library(future)
-library(sf)
-library(rstac)
-library(terra)
-library(exactextractr)
-library(landscapemetrics)
-
-# Vérifier et charger les données
-if (file.exists("Data/donnees_geo_menages/2008/gps_2008.rds")) {
-  gps_2008 <- readRDS("Data/donnees_geo_menages/2008/gps_2008.rds")
-} else {
-  plan(sequential)
   
   # Forest cover rate in 2000
   tic()
@@ -336,7 +234,7 @@ if (file.exists("Data/donnees_geo_menages/2008/gps_2008.rds")) {
     gps_2008 <- calc_indicators(
       x = gps_2008, calc_treecover_area(years = 2000:2023, min_size = 10, min_cover = 35))
   })
-  toc()   
+  toc()   # 362.75 sec
   
   # slope
   tic()
@@ -344,7 +242,7 @@ if (file.exists("Data/donnees_geo_menages/2008/gps_2008.rds")) {
     gps_2008 <- calc_indicators(
       x = gps_2008, calc_slope(engine = "extract", stats = "mean"))
   })
-  toc()   
+  toc() # 316.09 sec
   
   # Elevation
   tic()
@@ -352,7 +250,7 @@ if (file.exists("Data/donnees_geo_menages/2008/gps_2008.rds")) {
     gps_2008 <- calc_indicators(
       x = gps_2008, calc_elevation(engine = "extract", stats = "mean"))
   })
-  toc()   
+  toc() # 662.1 sec
   
   # Population density
   tic()
@@ -360,7 +258,7 @@ if (file.exists("Data/donnees_geo_menages/2008/gps_2008.rds")) {
     gps_2008 <- calc_indicators(
       x = gps_2008, calc_population_count(engine = "extract", stats = "mean"))
   })
-  toc()   
+  toc() # 47.42 sec
   
   # Accessibility
   tic()
@@ -368,31 +266,47 @@ if (file.exists("Data/donnees_geo_menages/2008/gps_2008.rds")) {
     gps_2008 <- calc_indicators(
       x = gps_2008, calc_traveltime_2000(engine = "extract", stats = "mean"))
   })
-  toc()   
+  toc() # 37.81 sec
   
-  write_rds(x = gps_2008, file = "Data/donnees_geo_menages/2008/gps_2008.rds")
+  # Convertir les polygones en points en utilisant les centroids
+  gps_2008 <- st_centroid(gps_2008)
+  
+  # Enregistrement des données sous forme de points (dans le même dataframe gps_2008)
+  write_rds(gps_2008, "Data/donnees_geo_menages/2008/gps_2008.rds")
+  cat("✅ Données enregistrées dans gps_2008.rds avec géométries en POINT et indicateurs ajoutés.\n")
 }
-warnings()
-
 ```
 
 ```{r 2021}
-library(mapme.biodiversity)
-library(tidyverse)
-library(progressr) # Pour avoir des barres de progression
-library(tictoc)
-library(future)
-library(sf)
-library(rstac)
-library(terra)
-library(exactextractr)
-library(landscapemetrics)
+# Activer la barre de progression
+handlers(global = TRUE)
+handlers("progress")
 
-# Vérifier et charger les données
+# Créer un buffer autour de chaque point pour former des polygones (10 km ici)
+gps_2021 <- st_buffer(gps_2021, dist = 10000)
+
+# Définir les ressources à télécharger (corrigé)
+gps_2021 <- gps_2021 %>%
+  get_resources(get_gfw_treecover())
+
+gps_2021 <- gps_2021 %>%  
+  get_resources(get_gfw_lossyear())
+
+gps_2021 <- gps_2021 %>% 
+  get_resources(get_nasa_srtm())
+
+gps_2021 <- gps_2021 %>% 
+  get_resources(get_worldpop(years = 2000))
+
+gps_2021 <- gps_2021 %>%  
+  get_resources(get_accessibility_2000())
+
+# Extraire les ressources sans changer le type de géométrie
+plan(sequential)
+
 if (file.exists("Data/donnees_geo_menages/2021/gps_2021.rds")) {
   gps_2021 <- readRDS("Data/donnees_geo_menages/2021/gps_2021.rds")
 } else {
-  plan(sequential)
   
   
   # Forest cover rate in 2000
@@ -401,7 +315,7 @@ if (file.exists("Data/donnees_geo_menages/2021/gps_2021.rds")) {
     gps_2021 <- calc_indicators(
       x = gps_2021, calc_treecover_area(years = 2000:2023, min_size = 10, min_cover = 35))
   })
-  toc()   
+  toc()   # 1519.17 sec
   
   # slope
   tic()
@@ -409,7 +323,7 @@ if (file.exists("Data/donnees_geo_menages/2021/gps_2021.rds")) {
     gps_2021 <- calc_indicators(
       x = gps_2021, calc_slope(engine = "extract", stats = "mean"))
   })
-  toc()   
+  toc() # 1464.58 sec
   
   # Elevation
   tic()
@@ -417,7 +331,7 @@ if (file.exists("Data/donnees_geo_menages/2021/gps_2021.rds")) {
     gps_2021 <- calc_indicators(
       x = gps_2021, calc_elevation(engine = "extract", stats = "mean"))
   })
-  toc()   
+  toc() # 1792.73 sec
   
   # Population density
   tic()
@@ -425,7 +339,7 @@ if (file.exists("Data/donnees_geo_menages/2021/gps_2021.rds")) {
     gps_2021 <- calc_indicators(
       x = gps_2021, calc_population_count(engine = "extract", stats = "mean"))
   })
-  toc()   
+  toc() # 102.91 sec
   
   # Accessibility
   tic()
@@ -433,14 +347,16 @@ if (file.exists("Data/donnees_geo_menages/2021/gps_2021.rds")) {
     gps_2021 <- calc_indicators(
       x = gps_2021, calc_traveltime_2000(engine = "extract", stats = "mean"))
   })
-  toc()   
+  toc() # 39.22 sec
   
+  # Convertir les polygones en points en utilisant les centroids
+  gps_2021 <- st_centroid(gps_2021)
   
-  write_rds(x = gps_2021, file = "Data/donnees_geo_menages/2021/gps_2021.rds")
+  # Enregistrement des données sous forme de points (dans le même dataframe gps_2008)
+  write_rds(gps_2021, "Data/donnees_geo_menages/2021/gps_2021.rds")
+cat("✅ Données enregistrées dans gps_2021.rds avec géométries en POINT et indicateurs ajoutés.\n")
+
 }
-
-warnings()
-
 ```
 
 ### Chargement et extraction des données sur les précipitations
