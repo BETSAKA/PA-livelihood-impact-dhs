@@ -369,105 +369,112 @@ if (file.exists("Data/donnees_geo_menages/2021/gps_2021.rds")) {
 ### Chargement et extraction des données sur les précipitations
 
 ```{r 2008}
-# Vérifier et charger les données
+
+# Vérification et chargement des données
 if (file.exists("Data/donnees_geo_menages/2008/gps_2008_wc.rds")) {
+  # Si les données sont déjà présentes, on les charge directement
   gps_2008 <- readRDS("Data/donnees_geo_menages/2008/gps_2008_wc.rds")
 } else {
+  # Plan d'exécution séquentielle
   plan(sequential)
- 
-# Chargement des données de Precipitation
-  tic()
+  
+  # Étape 1 : Création d'un buffer autour des points GPS
+  gps_2008 <- st_transform(gps_2008, 3857)  # Transformation en projection en mètres
+  gps_2008 <- st_buffer(gps_2008, dist = 10000)  # Buffer de 10 km autour des points
+  gps_2008 <- st_transform(gps_2008, 4326)  # Retour en projection géographique (WGS84)
+
+  # Vérification du type de géométrie après transformation
+  if (!all(st_geometry_type(gps_2008) == "POLYGON")) {
+    stop("Les géométries ne sont pas de type POLYGON après la transformation.")
+  }
+
+  # Étape 2 : Chargement des données climatiques WorldClim (Température et Précipitation)
+  tic("Chargement des données climatiques")
   with_progress({
     gps_2008 <- gps_2008 %>%
       get_resources(
-        get_worldclim_max_temperature(years = 1981:2010, resolution = "10m"),
-        get_worldclim_min_temperature(years = 1981:2010, resolution = "10m"),
-        get_worldclim_precipitation(years = 1981:2010, resolution = "10m")
+        get_worldclim_max_temperature(years = 2000:2018, resolution = "10m"),
+        get_worldclim_min_temperature(years = 2000:2018, resolution = "10m"),
+        get_worldclim_precipitation(years = 2000:2018, resolution = "10m")
       )
   })
-  toc() 
+  toc()  # Temps d'exécution pour le chargement des données
 
+  # Étape 3 : Extraction des indicateurs climatiques pour chaque zone
+  tic("Extraction des indicateurs climatiques")
+  with_progress({
+    gps_2008 <- gps_2008 %>%
+      calc_indicators(
+        calc_precipitation_wc(engine = "extract", stats = "mean"),
+        calc_temperature_max_wc(engine = "extract", stats = "mean"),
+        calc_temperature_min_wc(engine = "extract", stats = "mean")
+      )
+  })
+  toc()  # Temps d'exécution pour l'extraction des données climatiques
 
-# Extraction des données de Precipitation
-  tic()
-  with_progress({
-    gps_2008 <- calc_indicators(
-      x = gps_2008, calc_precipitation_wc(engine = "extract", stats = "mean"))
-  })
-  toc()   
-  
-  # Temperature maximal
-  tic()
-  with_progress({
-    gps_2008 <- calc_indicators(
-      x = gps_2008, calc_temperature_max_wc(engine = "extract", stats = "mean"))
-  })
-  toc()   
-  
-  # Temperature minimal
-  tic()
-  with_progress({
-    gps_2008 <- calc_indicators(
-      x = gps_2008, calc_temperature_min_wc(engine = "extract", stats = "mean"))
-  })
-  toc()  
-
-  
-  # Convertir les polygones en points en utilisant les centroids
+  # Étape 4 : Retour aux points (en utilisant les centroids des polygones)
   gps_2008 <- st_centroid(gps_2008)
-  
- write_rds(x = gps_2008, file = "Data/donnees_geo_menages/2008/gps_2008_wc.rds")
+
+  # Étape 5 : Sauvegarde des données extraites dans un fichier .rds
+  write_rds(x = gps_2008, file = "Data/donnees_geo_menages/2008/gps_2008_wc.rds")
 }
 
+# Vérification des avertissements éventuels
 warnings()
+
 ```
 
 ```{r 2021}
-# Vérifier et charger les données
+# Vérification et chargement des données
 if (file.exists("Data/donnees_geo_menages/2021/gps_2021_wc.rds")) {
+  # Si les données sont déjà présentes, on les charge directement
   gps_2021 <- readRDS("Data/donnees_geo_menages/2021/gps_2021_wc.rds")
 } else {
+  # Plan d'exécution séquentielle
   plan(sequential)
-# Chargement des données de Precipitation
-  tic()
+  
+  # Étape 1 : Création d'un buffer autour des points GPS
+  gps_2021 <- st_transform(gps_2021, 3857)  # Transformation en projection en mètres
+  gps_2021 <- st_buffer(gps_2021, dist = 10000)  # Buffer de 10 km autour des points
+  gps_2021 <- st_transform(gps_2021, 4326)  # Retour en projection géographique (WGS84)
+
+  # Vérification du type de géométrie après transformation
+  if (!all(st_geometry_type(gps_2021) == "POLYGON")) {
+    stop("Les géométries ne sont pas de type POLYGON après la transformation.")
+  }
+
+  # Étape 2 : Chargement des données climatiques WorldClim (Température et Précipitation)
+  tic("Chargement des données climatiques")
   with_progress({
     gps_2021 <- gps_2021 %>%
       get_resources(
-        get_worldclim_max_temperature(years = 1981:2010, resolution = "10m"),
-        get_worldclim_min_temperature(years = 1981:2010, resolution = "10m"),
-        get_worldclim_precipitation(years = 1981:2010, resolution = "10m")
+        get_worldclim_max_temperature(years = 2000:2018, resolution = "10m"),
+        get_worldclim_min_temperature(years = 2000:2018, resolution = "10m"),
+        get_worldclim_precipitation(years = 2000:2018, resolution = "10m")
       )
   })
-  toc() 
+  toc()  # Temps d'exécution pour le chargement des données
 
-
-# Extraction des données de Precipitation
-  tic()
+  # Étape 3 : Extraction des indicateurs climatiques pour chaque zone
+  tic("Extraction des indicateurs climatiques")
   with_progress({
-    gps_2021 <- calc_indicators(
-      x = gps_2021, calc_precipitation_wc(engine = "extract", stats = "mean"))
+    gps_2021 <- gps_2021 %>%
+      calc_indicators(
+        calc_precipitation_wc(engine = "extract", stats = "mean"),
+        calc_temperature_max_wc(engine = "extract", stats = "mean"),
+        calc_temperature_min_wc(engine = "extract", stats = "mean")
+      )
   })
-  toc()   
-  
-  # Temperature maximal
-  tic()
-  with_progress({
-    gps_2021 <- calc_indicators(
-      x = gps_2021, calc_temperature_max_wc(engine = "extract", stats = "mean"))
-  })
-  toc()   
-  
-  # Temperature minimal
-  tic()
-  with_progress({
-    gps_2021 <- calc_indicators(
-      x = gps_2021, calc_temperature_min_wc(engine = "extract", stats = "mean"))
-  })
-  toc()  
+  toc()  # Temps d'exécution pour l'extraction des données climatiques
 
- write_rds(x = gps_2021, file = "Data/donnees_geo_menages/2021/gps_2021_wc.rds")
-}
+  # Étape 4 : Retour aux points (en utilisant les centroids des polygones)
+  gps_2021 <- st_centroid(gps_2021)
 
+  # Étape 5 : Sauvegarde des données extraites dans un fichier .rds
+  write_rds(x = gps_2021, file = "Data/donnees_geo_menages/2021/gps_2021_wc.rds")
+} # 46330.66 sec
+
+# Vérification des avertissements éventuels
 warnings()
 ```
 
