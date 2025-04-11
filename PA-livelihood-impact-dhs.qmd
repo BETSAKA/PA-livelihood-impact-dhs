@@ -490,8 +490,8 @@ library(devtools)
 library (fastmap)
 
 # Latitude calculation
-if (file.exists("data/donnees_geo_menages/2021/gps_2021_wc_spei.rds")) {
-  gps_2008_wc_spei <- read_rds("data/donnees_geo_menages/2021/gps_2021_wc_spei.rds")
+if (file.exists("data/donnees_geo_menages/2008/gps_2008_wc_spei.rds")) {
+  gps_2008_wc_spei <- read_rds("data/donnees_geo_menages/2008/gps_2008_wc_spei.rds")
 } else {
   gps_2008_wc_spei <- gps_2008 %>% 
     mutate(
@@ -571,10 +571,103 @@ if (file.exists("data/donnees_geo_menages/2021/gps_2021_wc_spei.rds")) {
         
         # Résultat
         tibble(datetime = dates_synced, spei = as.numeric(spei_obj$fitted))
+       
         }
       )
     )
 }
+ write_rds(x = gps_2008, file = "Data/donnees_geo_menages/2008/gps_2008_wc_spei.rds")
+```
+
+```{r}
+# Latitude calculation
+if (file.exists("data/donnees_geo_menages/2008/gps_2021_wc_spei.rds")) {
+  gps_2021_wc_spei <- read_rds("data/donnees_geo_menages/2021/gps_2021_wc_spei.rds")
+} else {
+  gps_2021_wc_spei <- gps_2021 %>% 
+    mutate(
+      lat = st_coordinates (st_centroid(geometry))[,2])
+  
+  # Extract the first cluster's climate time series
+  row1 <- gps_2021_wc_spei [1,]
+  
+  # Extract vectors 
+  tmin <- row1$temperature_min_wc[[1]]$value
+  tmax <- row1$temperature_max_wc[[1]]$value
+  prec <- row1$precipitation_wc[[1]]$value
+  dates <- row1$temperature_min_wc[[1]]$datetime
+  lat <- row1$LATNUM
+  
+  # Compute reference evapotranspiration (PET) using modified Hargreaves (Droogers & Allen)
+  pet <- hargreaves(Tmin = tmin, Tmax = tmax, Pre = prec, lat = lat)
+  
+  # Compute wtaer balance
+  wb <- prec - pet
+  
+  # Turn to time series
+  wb_ts <- ts(wb, start = c(year(min(dates)), month(min(dates))), frequency = 12)
+  
+  # Compute SPEI (e.g 3-month scale)
+  spei_obj <- spei(wb_ts, scale = 3)
+  
+  # Turn into tibble
+  spei_tbl <- tibble(
+    datetime = dates, 
+    spei = as.numeric(spei_obj$fitted)
+  )
+  
+  # SPEI sous forme de map
+  gps_2021_wc_spei <- gps_2021_wc_spei %>%
+    mutate(
+      spei_wc = pmap(
+        list(tmin = temperature_min_wc,
+             tmax = temperature_max_wc,
+             prec = precipitation_wc,
+             lat = lat),
+        function(tmin, tmax, prec, lat) {
+          data_tmin <- data.frame(date = tmin$datetime, tmin = tmin$value)
+          data_tmax <- data.frame(date = tmax$datetime, tmax = tmax$value)
+          data_prec <- data.frame(date = prec$datetime, prec = prec$value)
+          
+        # Fusionner
+        data_merged <- reduce(list(data_tmin, data_tmax, data_prec), merge, by = "date")
+
+        # Supprimer les lignes avec NA
+        data_clean <- na.omit(data_merged)
+
+        # Si les données nettoyées sont insuffisantes, retourner des NA
+        if (nrow(data_clean) < 12) {
+          return(tibble(datetime = data_merged$date, spei = NA_real_))
+        }
+
+        # Extraire les colonnes propres
+        tmin_synced <- data_clean$tmin
+        tmax_synced <- data_clean$tmax
+        prec_synced <- data_clean$prec
+        dates_synced <- data_clean$date
+        
+        # calcul PET
+        pet <- hargreaves(
+          Tmin = tmin_synced,
+          Tmax = tmax_synced,
+          Pre = prec_synced,
+          lat = lat
+        )
+        
+        wb <- prec_synced - pet
+        
+        wb_ts <- ts(wb, start = c(year(min(dates_synced)), month(min(dates_synced))), frequency = 12)
+        
+        spei_obj <- spei(wb_ts, scale = 3)
+        
+        # Résultat
+        tibble(datetime = dates_synced, spei = as.numeric(spei_obj$fitted))
+        
+        }
+      )
+    )
+}
+ write_rds(x = gps_2021, file = "Data/donnees_geo_menages/2021/gps_2021_wc_spei.rds")
 ```
 
 ## Données sur les aires protégées
