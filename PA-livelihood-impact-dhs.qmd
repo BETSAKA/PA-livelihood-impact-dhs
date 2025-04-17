@@ -1218,38 +1218,110 @@ gt_table
 
 2.  Application du caliper à un intervalle de 0.25 écart-type de la distance de Mahalanobis
 
-```{r}
+```{r 2008}
+library(Matching)
 library(MatchIt)
 library(cobalt)
 library(dplyr)
+library(rgenoud) # Optimisation
+
+# Variables de matching : treecover_area, slope, elevation, population_count, travel_time
+variables_matching <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000")
 
 
-# groupe: "Traitement" ou "controle"
+# groupe : "Traitement" ou "controle"
 matching_2008 <- gps_cluster_2008 %>%
   filter(groupe %in% c("Traitement", "Controle")) %>%
-  mutate(treatment = ifelse(groupe == "Traitement", 1, 0))
-
-# Variables de matching: treecover_area, slope, elevation,population_count, travel_time
-variables_matching <- c("treecover_area", "slope", "elevation","population_count", "traveltime_2000")
-
-# Vérification des NA 
-matching_2008 <- matching_2008 %>% 
+  mutate(
+    treatment = ifelse(groupe == "Traitement", 1, 0),
+    treecover_area_2000 = sapply(treecover_area, extract_value, year = "2000"), 
+    slope_val = sapply(slope, extract_value),
+    elevation_val = sapply (elevation, extract_value),
+    population_count_val = sapply(population_count, extract_value),
+    traveltime_val = sapply(traveltime_2000, extract_value)
+  ) %>% 
   drop_na(all_of(variables_matching))
 
-# Matching avec MatchIt pour 2008
-set.seed(123) 
+X_match <- as.data.frame(st_drop_geometry(matching_2008[, c("treecover_area_2000", "slope_val", "elevation_val", "population_count_val", "traveltime_val")]))
 
-matching_2008 <- matchit(
-  groupe == "Traitement" ~ treecover_area + slope + elevation + population_count + traveltime_2000,
-  data = gps_cluster_2008 %>% 
-    filter(groupe != "Exclu"),
-  method = "genetic", 
-  distance = "mahalanobis",
-  caliper = 0.25
+
+# Matching avec MatchIt pour 2008
+set.seed(123)
+
+gen_match_model <- GenMatch(
+  Tr = matching_2008$treatment, 
+  X = X_match,
+  M = 1,  # 1 appariement pour chaque unité du groupe de traitement
+  pop.size = 1000, 
+  print.level = 1
 )
 
-# Vérifiez les valeurs uniques de la variable treatment
-unique(matching_2008$treatment)
+# Matching avec caliper de 0.25 SD Mahalanobis 
+matching_result_2008 <- matchit(
+  treatment ~ treecover_area_2000 + slope_val + elevation_val + population_count_val + traveltime_val,
+  data = matching_2008 %>% filter(groupe != "Exclu"),
+  method = "genetic", 
+  distance = "mahalanobis",
+  gen.match = gen_match_model,
+  caliper = c(
+    treecover_area_2000 = 0.25, 
+    slope_val = 0.25,
+    elevation_val = 0.25,
+    population_count_val = 0.25,
+    traveltime_val = 0.25
+)
+
+)
+```
+
+```{r 2021}
+# Variables de matching : treecover_area, slope, elevation, population_count, travel_time
+variables_matching <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000")
+
+
+# groupe : "Traitement" ou "controle"
+matching_2021 <- gps_cluster_2021 %>%
+  filter(groupe %in% c("Traitement", "Controle")) %>%
+  mutate(
+    treatment = ifelse(groupe == "Traitement", 1, 0),
+    treecover_area_2000 = sapply(treecover_area, extract_value, year = "2000"), 
+    slope_val = sapply(slope, extract_value),
+    elevation_val = sapply (elevation, extract_value),
+    population_count_val = sapply(population_count, extract_value),
+    traveltime_val = sapply(traveltime_2000, extract_value)
+  ) %>% 
+  drop_na(all_of(variables_matching))
+
+X_match <- as.data.frame(st_drop_geometry(matching_2021[, c("treecover_area_2000", "slope_val", "elevation_val", "population_count_val", "traveltime_val")]))
+
+
+# Matching avec MatchIt pour 2021
+set.seed(123)
+
+gen_match_model <- GenMatch(
+  Tr = matching_2021$treatment, 
+  X = X_match,
+  M = 1,  # 1 appariement pour chaque unité du groupe de traitement
+  pop.size = 1000, 
+  print.level = 1
+)
+
+# Matching avec caliper de 0.25 SD Mahalanobis 
+matching_result_2021 <- matchit(
+  treatment ~ treecover_area_2000 + slope_val + elevation_val + population_count_val + traveltime_val,
+  data = matching_2021 %>% filter(groupe != "Exclu"),
+  method = "genetic", 
+  distance = "mahalanobis",
+  gen.match = gen_match_model,
+  caliper = c(
+    treecover_area_2000 = 0.25, 
+    slope_val = 0.25,
+    elevation_val = 0.25,
+    population_count_val = 0.25,
+    traveltime_val = 0.25
+)
+
+)
 ```
 
 ## Vérification de l'équilibre des covariables :
@@ -1263,6 +1335,88 @@ unique(matching_2008$treatment)
 2.  Après matching: Test visuel sur la qualité du matching
 
     Comparaison à partir du Q-Q Plot pour chaque covariable (dans le cas où le QQ plot se situe en diagonale, le quantile des 2 distributions sont similaires)
+
+```{r 2008}
+
+library(cobalt)
+library(sf)
+
+matching_2008_df <- st_drop_geometry(matching_2008)
+
+
+# Vérification de l'équilibre des covariables avant matching
+bal_tab_pre <- bal.tab(
+  treatment ~ treecover_area_2000 + slope_val + elevation_val + population_count_val + traveltime_val,
+  data = matching_2008_df
+)
+
+print(bal_tab_pre)
+
+# Vérification de l'équilibre des covariables après matching
+bal_tab_post <- bal.tab(matching_result_2008, quick = FALSE)
+
+print(bal_tab_post)
+
+# Plot de l'équilibre avant matching
+love.plot(bal_tab_pre, 
+          stats = "mean.diffs", 
+          abs = TRUE,
+          threshold = 0.1, 
+          var.order = "unadjusted", 
+          title = "Equilibre des covariables avant Matching (2008)")
+
+# Plot de l'équilibre après matching
+love.plot(bal_tab_post,
+          stats = "mean.diffs", 
+          abs = TRUE,
+          threshold = 0.1,
+          
+          var.order = "unadjusted", 
+          title = "Equilibre des covariables après Matching (2008)")
+
+```
+
+Avant le matching, il se trouve que plusieurs variables montrent un déséquilibre entre le groupe traité et le groupe contrôle. Après le matching, l'équilibre entre les groupes pour les covariables est rétabli avec 23 unités traitées appariées avec 23 contrôles.
+
+```{r 2021}
+library(cobalt)
+library(sf)
+
+matching_2021_df <- st_drop_geometry(matching_2021)
+
+
+# Vérification de l'équilibre des covariables avant matching
+bal_tab_pre <- bal.tab(
+  treatment ~ treecover_area_2000 + slope_val + elevation_val + population_count_val + traveltime_val,
+  data = matching_2021_df
+)
+
+print(bal_tab_pre)
+
+# Vérification de l'équilibre des covariables après matching
+bal_tab_post <- bal.tab(matching_result_2021, quick = FALSE)
+
+print(bal_tab_post)
+
+# Plot de l'équilibre avant matching
+love.plot(bal_tab_pre, 
+          stats = "mean.diffs", 
+          abs = TRUE,
+          threshold = 0.1, 
+          var.order = "unadjusted", 
+          title = "Equilibre des covariables avant Matching (2021)")
+
+# Plot de l'équilibre après matching
+love.plot(bal_tab_post,
+          stats = "mean.diffs", 
+          abs = TRUE,
+          threshold = 0.1,
+          
+          var.order = "unadjusted", 
+          title = "Equilibre des covariables après Matching (2021)")
+```
+
+Après le matching, l'équilibre entre les groupes pour les covariables est rétabli avec 42 unités traitées appariées avec 42 contrôles.
 
 # Estimation par la Difference-in-difference
 
