@@ -579,7 +579,7 @@ if (file.exists("data/donnees_geo_menages/2008/gps_2008_wc_spei.rds")) {
  write_rds(x = gps_2008, file = "Data/donnees_geo_menages/2008/gps_2008_wc_spei.rds")
 ```
 
-```{r}
+```{r 2021}
 # Latitude calculation
 if (file.exists("data/donnees_geo_menages/2021/gps_2021_wc_spei.rds")) {
   gps_2021_wc_spei <- read_rds("data/donnees_geo_menages/2021/gps_2021_wc_spei.rds")
@@ -1219,6 +1219,8 @@ gt_table
 2.  Application du caliper à un intervalle de 0.25 écart-type de la distance de Mahalanobis
 
 ```{r 2008}
+library(dplyr)
+library(purrr)
 library(Matching)
 library(MatchIt)
 library(cobalt)
@@ -1228,21 +1230,37 @@ library(rgenoud) # Optimisation
 # Variables de matching : treecover_area, slope, elevation, population_count, travel_time
 variables_matching <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000")
 
-
-# groupe : "Traitement" ou "controle"
+# Pré-traitement des données
 matching_2008 <- gps_cluster_2008 %>%
   filter(groupe %in% c("Traitement", "Controle")) %>%
   mutate(
     treatment = ifelse(groupe == "Traitement", 1, 0),
-    treecover_area_2000 = sapply(treecover_area, extract_value, year = "2000"), 
-    slope_val = sapply(slope, extract_value),
-    elevation_val = sapply (elevation, extract_value),
-    population_count_val = sapply(population_count, extract_value),
-    traveltime_val = sapply(traveltime_2000, extract_value)
+    treecover_area_val = map_dbl(treecover_area, ~ {
+      # Filtrer pour datetime == "2000-01-01"
+      value <- .x$value[.x$datetime == "2000-01-01"]
+      # Retourner NA si aucune valeur n'est trouvée
+      if (length(value) == 0) NA else value
+    }),
+    slope_val = map_dbl(slope, ~ {
+      value <- .x$value[.x$datetime == "2000-02-01"]
+      if (length(value) == 0) NA else value
+    }),
+    elevation_val = map_dbl(elevation, ~ {
+      value <- .x$value[.x$datetime == "2000-02-01"]
+      if (length(value) == 0) NA else value
+    }),
+    population_count_val = map_dbl(population_count, ~ {
+      value <- .x$value[.x$datetime == "2000-01-01"]
+      if (length(value) == 0) NA else value
+    }),
+    traveltime_val = map_dbl(traveltime_2000, ~ {
+      value <- .x$value[.x$datetime == "2000-01-01"]
+      if (length(value) == 0) NA else value
+    })
   ) %>% 
-  drop_na(all_of(variables_matching))
+  drop_na(all_of(variables_matching)) # Supprime les lignes avec des valeurs manquantes
 
-X_match <- as.data.frame(st_drop_geometry(matching_2008[, c("treecover_area_2000", "slope_val", "elevation_val", "population_count_val", "traveltime_val")]))
+X_match <- as.data.frame(st_drop_geometry(matching_2008[, c("treecover_area_val", "slope_val", "elevation_val", "population_count_val", "traveltime_val")]))
 
 
 # Matching avec MatchIt pour 2008
@@ -1258,13 +1276,13 @@ gen_match_model <- GenMatch(
 
 # Matching avec caliper de 0.25 SD Mahalanobis 
 matching_result_2008 <- matchit(
-  treatment ~ treecover_area_2000 + slope_val + elevation_val + population_count_val + traveltime_val,
+  treatment ~ treecover_area_val + slope_val + elevation_val + population_count_val + traveltime_val,
   data = matching_2008 %>% filter(groupe != "Exclu"),
   method = "genetic", 
   distance = "mahalanobis",
   gen.match = gen_match_model,
   caliper = c(
-    treecover_area_2000 = 0.25, 
+    treecover_area_val = 0.25, 
     slope_val = 0.25,
     elevation_val = 0.25,
     population_count_val = 0.25,
@@ -1272,27 +1290,45 @@ matching_result_2008 <- matchit(
 )
 
 )
+
+
 ```
 
 ```{r 2021}
 # Variables de matching : treecover_area, slope, elevation, population_count, travel_time
 variables_matching <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000")
 
-
-# groupe : "Traitement" ou "controle"
+# Pré-traitement des données
 matching_2021 <- gps_cluster_2021 %>%
   filter(groupe %in% c("Traitement", "Controle")) %>%
   mutate(
     treatment = ifelse(groupe == "Traitement", 1, 0),
-    treecover_area_2000 = sapply(treecover_area, extract_value, year = "2000"), 
-    slope_val = sapply(slope, extract_value),
-    elevation_val = sapply (elevation, extract_value),
-    population_count_val = sapply(population_count, extract_value),
-    traveltime_val = sapply(traveltime_2000, extract_value)
+    treecover_area_val = map_dbl(treecover_area, ~ {
+      # Filtrer pour datetime == "2000-01-01"
+      value <- .x$value[.x$datetime == "2000-01-01"]
+      # Retourner NA si aucune valeur n'est trouvée
+      if (length(value) == 0) NA else value
+    }),
+    slope_val = map_dbl(slope, ~ {
+      value <- .x$value[.x$datetime == "2000-02-01"]
+      if (length(value) == 0) NA else value
+    }),
+    elevation_val = map_dbl(elevation, ~ {
+      value <- .x$value[.x$datetime == "2000-02-01"]
+      if (length(value) == 0) NA else value
+    }),
+    population_count_val = map_dbl(population_count, ~ {
+      value <- .x$value[.x$datetime == "2000-01-01"]
+      if (length(value) == 0) NA else value
+    }),
+    traveltime_val = map_dbl(traveltime_2000, ~ {
+      value <- .x$value[.x$datetime == "2000-01-01"]
+      if (length(value) == 0) NA else value
+    })
   ) %>% 
-  drop_na(all_of(variables_matching))
+  drop_na(all_of(variables_matching)) # Supprime les lignes avec des valeurs manquantes
 
-X_match <- as.data.frame(st_drop_geometry(matching_2021[, c("treecover_area_2000", "slope_val", "elevation_val", "population_count_val", "traveltime_val")]))
+X_match <- as.data.frame(st_drop_geometry(matching_2021[, c("treecover_area_val", "slope_val", "elevation_val", "population_count_val", "traveltime_val")]))
 
 
 # Matching avec MatchIt pour 2021
@@ -1308,13 +1344,13 @@ gen_match_model <- GenMatch(
 
 # Matching avec caliper de 0.25 SD Mahalanobis 
 matching_result_2021 <- matchit(
-  treatment ~ treecover_area_2000 + slope_val + elevation_val + population_count_val + traveltime_val,
+  treatment ~ treecover_area_val + slope_val + elevation_val + population_count_val + traveltime_val,
   data = matching_2021 %>% filter(groupe != "Exclu"),
   method = "genetic", 
   distance = "mahalanobis",
   gen.match = gen_match_model,
   caliper = c(
-    treecover_area_2000 = 0.25, 
+    treecover_area_val = 0.25, 
     slope_val = 0.25,
     elevation_val = 0.25,
     population_count_val = 0.25,
@@ -1322,6 +1358,7 @@ matching_result_2021 <- matchit(
 )
 
 )
+
 ```
 
 ## Vérification de l'équilibre des covariables :
@@ -1346,7 +1383,7 @@ matching_2008_df <- st_drop_geometry(matching_2008)
 
 # Vérification de l'équilibre des covariables avant matching
 bal_tab_pre <- bal.tab(
-  treatment ~ treecover_area_2000 + slope_val + elevation_val + population_count_val + traveltime_val,
+  treatment ~ treecover_area_val + slope_val + elevation_val + population_count_val + traveltime_val,
   data = matching_2008_df
 )
 
@@ -1376,7 +1413,9 @@ love.plot(bal_tab_post,
 
 ```
 
-Avant le matching, il se trouve que plusieurs variables montrent un déséquilibre entre le groupe traité et le groupe contrôle. Après le matching, l'équilibre entre les groupes pour les covariables est rétabli avec 23 unités traitées appariées avec 23 contrôles.
+Avant le matching, il se trouve que plusieurs variables montrent un déséquilibre entre le groupe traité et le groupe contrôle.
+
+Après le matching, l'équilibre entre les groupes pour les covariables est rétabli avec 23 unités traitées appariées avec 23 contrôles.
 
 ```{r 2021}
 library(cobalt)
@@ -1387,7 +1426,7 @@ matching_2021_df <- st_drop_geometry(matching_2021)
 
 # Vérification de l'équilibre des covariables avant matching
 bal_tab_pre <- bal.tab(
-  treatment ~ treecover_area_2000 + slope_val + elevation_val + population_count_val + traveltime_val,
+  treatment ~ treecover_area_val + slope_val + elevation_val + population_count_val + traveltime_val,
   data = matching_2021_df
 )
 
@@ -1416,7 +1455,50 @@ love.plot(bal_tab_post,
           title = "Equilibre des covariables après Matching (2021)")
 ```
 
-Après le matching, l'équilibre entre les groupes pour les covariables est rétabli avec 42 unités traitées appariées avec 42 contrôles.
+Pour 2021, après le matching, l'équilibre entre les groupes pour les covariables est rétabli avec 42 unités traitées appariées avec 42 contrôles.
+
+## Vérification des distributions des covariables 
+
+```{r}
+
+# Fonction pour QQ plot corrigée
+plot_qq <- function(var, data, treat_col = "treatment") {
+  treated <- data[data[[treat_col]] == 1, var]
+  control <- data[data[[treat_col]] == 0, var]
+  
+  # Transformer en vecteurs numériques si nécessaire
+  treated <- unlist(treated)
+  control <- unlist(control)
+  
+  # Tracer le QQ plot
+  qqplot(control, treated, 
+         main = paste("QQ plot pour", var), 
+         xlab = "Quantiles Contrôle", 
+         ylab = "Quantiles Traitement")
+  abline(0, 1, col = "red") # Ligne de référence
+}
+
+# Application pour 2008
+plot_qq("treecover_area_val", matching_2008)
+plot_qq("slope_val", matching_2008)
+plot_qq("elevation_val", matching_2008)
+plot_qq("population_count_val", matching_2008)
+plot_qq("traveltime_val", matching_2008)
+
+# Application pour 2021
+plot_qq("treecover_area_val", matching_2021)
+plot_qq("slope_val", matching_2021)
+plot_qq("elevation_val", matching_2021)
+plot_qq("population_count_val", matching_2021)
+plot_qq("traveltime_val", matching_2021)
+
+
+# Résumé des appariements pour 2008
+summary(matching_result_2008)
+
+# Résumé des appariements pour 2021
+summary(matching_result_2021)
+```
 
 # Estimation par la Difference-in-difference
 
