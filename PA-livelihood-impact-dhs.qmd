@@ -1453,57 +1453,188 @@ love.plot(bal_tab_post,
           
           var.order = "unadjusted", 
           title = "Equilibre des covariables après Matching (2021)")
+
+
 ```
 
 Pour 2021, après le matching, l'équilibre entre les groupes pour les covariables est rétabli avec 42 unités traitées appariées avec 42 contrôles.
 
-## Vérification des distributions des covariables 
+## Vérification des distributions des covariables
 
-```{r}
+```{r 2008}
+# Extraire les données appariées pour 2008
+matched_data_2008 <- match.data(matching_result_2008)
 
-# Fonction pour QQ plot corrigée
-plot_qq <- function(var, data, treat_col = "treatment") {
-  treated <- data[data[[treat_col]] == 1, var]
-  control <- data[data[[treat_col]] == 0, var]
-  
-  # Transformer en vecteurs numériques si nécessaire
-  treated <- unlist(treated)
-  control <- unlist(control)
-  
-  # Tracer le QQ plot
-  qqplot(control, treated, 
-         main = paste("QQ plot pour", var), 
-         xlab = "Quantiles Contrôle", 
-         ylab = "Quantiles Traitement")
-  abline(0, 1, col = "red") # Ligne de référence
-}
+# Ajouter une colonne pour indiquer "Avant" ou "Après" le matching
+matching_2008$matching_status <- "Avant"
+matched_data_2008$matching_status <- "Après"
 
-# Application pour 2008
-plot_qq("treecover_area_val", matching_2008)
-plot_qq("slope_val", matching_2008)
-plot_qq("elevation_val", matching_2008)
-plot_qq("population_count_val", matching_2008)
-plot_qq("traveltime_val", matching_2008)
+# Combiner les deux jeux de données
+combined_data_2008 <- rbind(
+  matching_2008[, c("treecover_area_val", "slope_val", "elevation_val", "population_count_val", "traveltime_val", "treatment", "matching_status")],
+  matched_data_2008[, c("treecover_area_val", "slope_val", "elevation_val", "population_count_val", "traveltime_val", "treatment", "matching_status")]
+)
 
-# Application pour 2021
-plot_qq("treecover_area_val", matching_2021)
-plot_qq("slope_val", matching_2021)
-plot_qq("elevation_val", matching_2021)
-plot_qq("population_count_val", matching_2021)
-plot_qq("traveltime_val", matching_2021)
+# Histogramme pour treecover_area_val avant et après matching
+ggplot(combined_data_2008, aes(x = treecover_area_val, fill = as.factor(treatment))) +
+  geom_histogram(alpha = 0.6, position = "identity", bins = 30) +
+  facet_wrap(~matching_status) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red"), labels = c("Contrôle", "Traitement")) +
+  labs(title = "Distribution de treecover_area_val 2008",
+       x = "treecover_area_val", y = "Fréquence",
+       fill = "Groupe") +
+  theme_minimal()
+
+# Densité pour slope_val avant et après matching
+ggplot(combined_data_2008, aes(x = slope_val, color = as.factor(treatment), fill = as.factor(treatment))) +
+  geom_density(alpha = 0.3) +
+  facet_wrap(~matching_status) +
+  scale_color_manual(values = c("0" = "blue", "1" = "red"), labels = c("Contrôle", "Traitement")) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red"), labels = c("Contrôle", "Traitement")) +
+  labs(title = "Distribution de slope_val 2008",
+       x = "slope_val", y = "Densité",
+       color = "Groupe", fill = "Groupe") +
+  theme_minimal()
 
 
-# Résumé des appariements pour 2008
-summary(matching_result_2008)
+# Boxplot pour elevation_val avant et après matching
+ggplot(combined_data_2008, aes(x = as.factor(treatment), y = elevation_val, fill = as.factor(treatment))) +
+  geom_boxplot() +
+  facet_wrap(~matching_status) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red"), labels = c("Contrôle", "Traitement")) +
+  labs(title = "Comparaison de elevation_val 2008",
+       x = "Groupe", y = "elevation_val",
+       fill = "Groupe") +
+  theme_minimal()
 
-# Résumé des appariements pour 2021
-summary(matching_result_2021)
+# Densité pour population_count_val avant et après matching
+ggplot(combined_data_2008, aes(x = population_count_val, fill = as.factor(treatment), color = as.factor(treatment))) +
+  geom_density(alpha = 0.3) +
+  facet_wrap(~matching_status) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red")) +
+  scale_color_manual(values = c("0" = "blue", "1" = "red")) +
+  labs(title = "Densité de population_count_val 2008", x = "population_count_val", y = "Densité", fill = "Groupe", color = "Groupe") +
+  theme_minimal()
+
+# Boxplot
+ggplot(combined_data_2008, aes(x = as.factor(treatment), y = population_count_val, fill = as.factor(treatment))) +
+  geom_boxplot() +
+  facet_wrap(~matching_status) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red")) +
+  labs(title = "Comparaison de population_count_val 2008", x = "Groupe", y = "population_count_val", fill = "Groupe") +
+  theme_minimal()
+
+# Boxplot pour traveltime_val avant et après matching
+# Densité
+ggplot(combined_data_2008, aes(x = traveltime_val, fill = as.factor(treatment), color = as.factor(treatment))) +
+  geom_density(alpha = 0.3) +
+  facet_wrap(~matching_status) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red")) +
+  scale_color_manual(values = c("0" = "blue", "1" = "red")) +
+  labs(title = "Densité de traveltime_val 2008", x = "traveltime_val", y = "Densité", fill = "Groupe", color = "Groupe") +
+  theme_minimal()
+
+# Boxplot
+ggplot(combined_data_2008, aes(x = as.factor(treatment), y = traveltime_val, fill = as.factor(treatment))) +
+  geom_boxplot() +
+  facet_wrap(~matching_status) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red")) +
+  labs(title = "Comparaison de traveltime_val 2008", x = "Groupe", y = "traveltime_val", fill = "Groupe") +
+  theme_minimal()
+
 ```
 
-## Test pour assouplir les calipers 
+```{r 2021}
+# Extraire les données appariées pour 2021
+matched_data_2021 <- match.data(matching_result_2021)
 
-```{r}
-# Matching avec caliper de 0.5 SD Mahalanobis 
+# Ajouter une colonne pour indiquer "Avant" ou "Après" le matching
+matching_2021$matching_status <- "Avant"
+matched_data_2021$matching_status <- "Après"
+
+# Combiner les deux jeux de données
+combined_data_2021 <- rbind(
+  matching_2021[, c("treecover_area_val", "slope_val", "elevation_val", "population_count_val", "traveltime_val", "treatment", "matching_status")],
+  matched_data_2021[, c("treecover_area_val", "slope_val", "elevation_val", "population_count_val", "traveltime_val", "treatment", "matching_status")]
+)
+
+# Histogramme pour treecover_area_val avant et après matching
+ggplot(combined_data_2021, aes(x = treecover_area_val, fill = as.factor(treatment))) +
+  geom_histogram(alpha = 0.6, position = "identity", bins = 30) +
+  facet_wrap(~matching_status) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red"), labels = c("Contrôle", "Traitement")) +
+  labs(title = "Distribution de treecover_area_val 2021",
+       x = "treecover_area_val", y = "Fréquence",
+       fill = "Groupe") +
+  theme_minimal()
+
+# Densité pour slope_val avant et après matching
+ggplot(combined_data_2021, aes(x = slope_val, color = as.factor(treatment), fill = as.factor(treatment))) +
+  geom_density(alpha = 0.3) +
+  facet_wrap(~matching_status) +
+  scale_color_manual(values = c("0" = "blue", "1" = "red"), labels = c("Contrôle", "Traitement")) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red"), labels = c("Contrôle", "Traitement")) +
+  labs(title = "Distribution de slope_val 2021",
+       x = "slope_val", y = "Densité",
+       color = "Groupe", fill = "Groupe") +
+  theme_minimal()
+
+
+# Boxplot pour elevation_val avant et après matching
+ggplot(combined_data_2021, aes(x = as.factor(treatment), y = elevation_val, fill = as.factor(treatment))) +
+  geom_boxplot() +
+  facet_wrap(~matching_status) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red"), labels = c("Contrôle", "Traitement")) +
+  labs(title = "Comparaison de elevation_val 2021",
+       x = "Groupe", y = "elevation_val",
+       fill = "Groupe") +
+  theme_minimal()
+
+# Densité pour population_count_val avant et après matching
+ggplot(combined_data_2021, aes(x = population_count_val, fill = as.factor(treatment), color = as.factor(treatment))) +
+  geom_density(alpha = 0.3) +
+  facet_wrap(~matching_status) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red")) +
+  scale_color_manual(values = c("0" = "blue", "1" = "red")) +
+  labs(title = "Densité de population_count_val 2021", x = "population_count_val", y = "Densité", fill = "Groupe", color = "Groupe") +
+  theme_minimal()
+
+# Boxplot
+ggplot(combined_data_2021, aes(x = as.factor(treatment), y = population_count_val, fill = as.factor(treatment))) +
+  geom_boxplot() +
+  facet_wrap(~matching_status) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red")) +
+  labs(title = "Comparaison de population_count_val 2021", x = "Groupe", y = "population_count_val", fill = "Groupe") +
+  theme_minimal()
+
+# Boxplot pour traveltime_val avant et après matching
+# Densité
+ggplot(combined_data_2021, aes(x = traveltime_val, fill = as.factor(treatment), color = as.factor(treatment))) +
+  geom_density(alpha = 0.3) +
+  facet_wrap(~matching_status) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red")) +
+  scale_color_manual(values = c("0" = "blue", "1" = "red")) +
+  labs(title = "Densité de traveltime_val 2021", x = "traveltime_val", y = "Densité", fill = "Groupe", color = "Groupe") +
+  theme_minimal()
+
+# Boxplot
+ggplot(combined_data_2021, aes(x = as.factor(treatment), y = traveltime_val, fill = as.factor(treatment))) +
+  geom_boxplot() +
+  facet_wrap(~matching_status) +
+  scale_fill_manual(values = c("0" = "blue", "1" = "red")) +
+  labs(title = "Comparaison de traveltime_val 2021", x = "Groupe", y = "traveltime_val", fill = "Groupe") +
+  theme_minimal()
+
+```
+
+Nous avons visualisé la distribution des covariables entre les groupes de traitement et de contrôle à l'aide de courbes de densité et de boxplots. Avant le matching, on peut voir des écarts notables entre les distributions des deux groupes mettant en exergue un déséquilibre. Pour la variable treecover, la courbe de densité montre que les deux groupes ne se recouvrent pas exactement présentant ainsi un déséquilibre entre les groupes. Après matching, on observe une amélioration de la similarité entre les groupes, avec une superposition beaucoup plus importante des courbes de densité, et des médianes et interquartiles proches sur les boxplots.
+
+## Test pour assouplir les calipers
+
+Après le matching avec un caliper de 0.25, il se trouve que la taille des échantillons s'est rétrécie fortement. Nous avons 370 controles et 114 traitées avant le matching. Après le matching, seules 23 observations ont été matchées pour l'année 2008 et 42 pour l'année 2021. Nous allons augmenter la taille du caliper pour augmenter la taille des observations tout en vérifiant si SMD \< 0.1 .
+
+```{r 2008}
+# Matching avec caliper de 0.96 SD Mahalanobis 
 matching_result_2008 <- matchit(
   treatment ~ treecover_area_val + slope_val + elevation_val + population_count_val + traveltime_val,
   data = matching_2008 %>% filter(groupe != "Exclu"),
@@ -1511,11 +1642,11 @@ matching_result_2008 <- matchit(
   distance = "mahalanobis",
   gen.match = gen_match_model,
   caliper = c(
-    treecover_area_val = 0.5, 
-    slope_val = 0.5,
-    elevation_val = 0.5,
-    population_count_val = 0.5,
-    traveltime_val = 0.5
+    treecover_area_val = 0.96, 
+    slope_val = 0.96,
+    elevation_val = 0.96,
+    population_count_val = 0.96,
+    traveltime_val = 0.96
   )
 )
 
@@ -1553,8 +1684,8 @@ love.plot(bal_tab_post,
           title = "Equilibre des covariables après Matching (2008)")
 ```
 
-```{r}
-# Matching avec caliper de 0.5 SD Mahalanobis 
+```{r 2021}
+# Matching avec caliper de 0.96 SD Mahalanobis 
 matching_result_2021 <- matchit(
   treatment ~ treecover_area_val + slope_val + elevation_val + population_count_val + traveltime_val,
   data = matching_2021 %>% filter(groupe != "Exclu"),
@@ -1562,11 +1693,11 @@ matching_result_2021 <- matchit(
   distance = "mahalanobis",
   gen.match = gen_match_model,
   caliper = c(
-    treecover_area_val = 0.5, 
-    slope_val = 0.5,
-    elevation_val = 0.5,
-    population_count_val = 0.5,
-    traveltime_val = 0.5
+    treecover_area_val = 0.96, 
+    slope_val = 0.96,
+    elevation_val = 0.96,
+    population_count_val = 0.96,
+    traveltime_val = 0.96
   )
 )
 matching_2021_df <- st_drop_geometry(matching_2021)
