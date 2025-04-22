@@ -1218,7 +1218,49 @@ gt_table
 
 2.  Application du caliper à un intervalle de 0.25 écart-type de la distance de Mahalanobis
 
-```{r }
+```{r}
+library(dplyr)
+
+# Sélection des variables dans hr_2008 pour les zones rurales
+hr_2008_rural <- hr_2008 %>%
+  filter(hv025 == 2) %>%
+  select(
+    hhid, hv001, hv007, hv009, hv024, hv025, 
+    hv201, hv202, hv204, hv205, hv206, hv207, 
+    hv208, hv209, hv210, hv211, hv212, hv213, 
+    hv214, hv215, hv219, hv220, hv221, hv225, 
+    hv226, hv243a, hv243b, hv247, hv270, hv271
+  )
+
+# Jointure avec les données des ménages gps_cluster_2008 avec les caractéristiques géophysiques des ménages ruraux
+merged_2008_rural <- gps_cluster_2008 %>%
+  left_join(hr_2008_rural, by = c("DHSYEAR" = "hv007", "DHSCLUST" =  "hv001" ))
+
+glimpse(merged_2008_rural)
+summary(merged_2008_rural$hv270)
+
+# Sélection des variables dans hr_2021 pour les zones rurales
+hr_2021_rural <- hr_2021 %>%
+  filter(hv025 == 2) %>%
+  select(
+    hhid, hv001, hv007, hv009, hv024, hv025, 
+    hv201, hv202, hv204, hv205, hv206, hv207, 
+    hv208, hv209, hv210, hv211, hv212, hv213, 
+    hv214, hv215, hv219, hv220, hv221, hv225, 
+    hv226, hv243a, hv243b, hv247, hv270, hv271
+  )
+
+# Jointure avec les données des ménages gps_cluster_2021 avec les caractéristiques géophysiques des ménages ruraux
+merged_2021_rural <- gps_cluster_2021 %>%
+  left_join(hr_2021_rural, by = c("DHSYEAR" = "hv007", "DHSCLUST" =  "hv001" ))
+
+glimpse(merged_2021_rural)
+summary(merged_2021_rural$hv270)
+```
+
+## Matching pour 2008
+
+```{r 2008}
 library(dplyr)
 library(purrr)
 library(Matching)
@@ -1227,17 +1269,11 @@ library(cobalt)
 library(dplyr)
 library(rgenoud) # Optimisation
 
-# Créer une base combinée  des années d'étude
-gps_cluster_2008$year <- 2008
-gps_cluster_2021$year <- 2021
-
-gps_panel <- bind_rows(gps_cluster_2008, gps_cluster_2021)
-
 # Variables de matching : treecover_area, slope, elevation, population_count, travel_time
 variables_matching <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000")
 
 # Pré-traitement des données
-matching_result <- gps_panel %>%
+matching_2008 <- merged_2008_rural %>%
   filter(groupe %in% c("Traitement", "Controle")) %>%
   mutate(
     treatment = ifelse(groupe == "Traitement", 1, 0),
@@ -1264,17 +1300,15 @@ matching_result <- gps_panel %>%
       if (length(value) == 0) NA else value
     })
   ) %>% 
-  drop_na(treecover_area_val, slope_val, elevation_val, population_count_val, traveltime_val)
+  drop_na(all_of(variables_matching))
  
-
-X_match <- as.data.frame(st_drop_geometry(matching_result[, c("treecover_area_val", "slope_val", "elevation_val", "population_count_val", "traveltime_val")]))
-
-
-# Matching avec MatchIt
+X_match <- as.data.frame(st_drop_geometry(matching_2008[, c("treecover_area_val", "slope_val", "elevation_val", "population_count_val", "traveltime_val")]))
+ 
+# Matching avec MatchIt pour 2008
 set.seed(123)
-
+ 
 gen_match_model <- GenMatch(
-  Tr = matching_result$treatment, 
+  Tr = matching_2008$treatment, 
   X = X_match,
   M = 1,  # 1 appariement pour chaque unité du groupe de traitement
   pop.size = 1000, 
@@ -1282,9 +1316,9 @@ gen_match_model <- GenMatch(
 )
 
 # Matching avec caliper de 0.25 SD Mahalanobis 
-matchit_result<- matchit(
+matching_result_2008 <- matchit(
   treatment ~ treecover_area_val + slope_val + elevation_val + population_count_val + traveltime_val,
-  data = matching_result %>% filter(groupe != "Exclu"),
+  data = matching_2008 %>% filter(groupe != "Exclu"),
   method = "genetic", 
   distance = "mahalanobis",
   gen.match = gen_match_model,
@@ -1294,10 +1328,74 @@ matchit_result<- matchit(
     elevation_val = 0.25,
     population_count_val = 0.25,
     traveltime_val = 0.25
+  )
+)
+```
+
+## Matching pour 2021
+
+```{r}
+# Variables de matching : treecover_area, slope, elevation, population_count, travel_time
+variables_matching <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000")
+
+# Pré-traitement des données
+matching_2021 <- merged_2008_rural %>%
+  filter(groupe %in% c("Traitement", "Controle")) %>%
+  mutate(
+    treatment = ifelse(groupe == "Traitement", 1, 0),
+    treecover_area_val = map_dbl(treecover_area, ~ {
+      # Filtrer pour datetime == "2000-01-01"
+      value <- .x$value[.x$datetime == "2000-01-01"]
+      # Retourner NA si aucune valeur n'est trouvée
+      if (length(value) == 0) NA else value
+    }),
+    slope_val = map_dbl(slope, ~ {
+      value <- .x$value[.x$datetime == "2000-02-01"]
+      if (length(value) == 0) NA else value
+    }),
+    elevation_val = map_dbl(elevation, ~ {
+      value <- .x$value[.x$datetime == "2000-02-01"]
+      if (length(value) == 0) NA else value
+    }),
+    population_count_val = map_dbl(population_count, ~ {
+      value <- .x$value[.x$datetime == "2000-01-01"]
+      if (length(value) == 0) NA else value
+    }),
+    traveltime_val = map_dbl(traveltime_2000, ~ {
+      value <- .x$value[.x$datetime == "2000-01-01"]
+      if (length(value) == 0) NA else value
+    })
+  ) %>% 
+  drop_na(all_of(variables_matching))
+ 
+X_match <- as.data.frame(st_drop_geometry(matching_2021[, c("treecover_area_val", "slope_val", "elevation_val", "population_count_val", "traveltime_val")]))
+ 
+# Matching avec MatchIt pour 2008
+set.seed(123)
+ 
+gen_match_model <- GenMatch(
+  Tr = matching_2021$treatment, 
+  X = X_match,
+  M = 1,  # 1 appariement pour chaque unité du groupe de traitement
+  pop.size = 1000, 
+  print.level = 1
 )
 
+# Matching avec caliper de 0.25 SD Mahalanobis 
+matching_result_2021 <- matchit(
+  treatment ~ treecover_area_val + slope_val + elevation_val + population_count_val + traveltime_val,
+  data = matching_2021 %>% filter(groupe != "Exclu"),
+  method = "genetic", 
+  distance = "mahalanobis",
+  gen.match = gen_match_model,
+  caliper = c(
+    treecover_area_val = 0.25, 
+    slope_val = 0.25,
+    elevation_val = 0.25,
+    population_count_val = 0.25,
+    traveltime_val = 0.25
+  )
 )
-
 ```
 
 ## Vérification de l'équilibre des covariables :
@@ -1335,7 +1433,7 @@ love.plot(bal_tab_pre,
 
 
 # Vérification de l'équilibre des covariables après matching
-bal_tab_post <- bal.tab(matchit_result)
+bal_tab_post <- bal.tab(matchit_result, un = TRUE)
 
 print(bal_tab_post)
 
@@ -1456,31 +1554,71 @@ Nous avons visualisé la distribution des covariables entre les groupes de trait
 Après le matching avec un caliper de 0.25, il se trouve que la taille des échantillons s'est rétrécie fortement. Nous avons 690 controles et 185 traitées avant le matching. Après le matching, seules 81 observations ont été matchées. Nous allons augmenter la taille du caliper pour augmenter la taille des observations tout en vérifiant que SMD soit inférieur à 0.1 .
 
 ```{r }
-# Matching avec caliper de 0.30 SD Mahalanobis 
-# Appariement avec caliper assoupli
-matchit_result_cal <- matchit(
-  treatment ~ treecover_area_val + slope_val + elevation_val + population_count_val + traveltime_val,
-  data = matching_result %>% filter(groupe != "Exclu"),
-  method = "genetic", 
-  distance = "mahalanobis",
-  gen.match = gen_match_model,
-  caliper = c(
-    treecover_area_val = 0.5,  # 
-    slope_val = 0.5,
-    elevation_val = 0.5,
-    population_count_val = 0.5,
-    traveltime_val = 0.5
+
+# test sur différentes valeurs du caliper
+calipers <- c(0.25, 0.3, 0.4)
+
+results <- lapply(calipers, function(c) {
+  matchit(
+    treatment ~ treecover_area_val + slope_val + elevation_val + population_count_val + traveltime_val,
+    data = matching_result %>% filter(groupe != "Exclu"),
+    method = "genetic", 
+    distance = "mahalanobis",
+    gen.match = gen_match_model,
+    caliper = c(
+      treecover_area_val = c, 
+      slope_val = c,
+      elevation_val = c,
+      population_count_val = c,
+      traveltime_val = c
+    )
   )
-)
+})
+names(results) <- paste0("caliper_", calipers)
 
-# Vérification de l'équilibre après appariement avec caliper assoupli
-bal_tab_post_cal <- bal.tab(matchit_result_cal)
-print(bal_tab_post_cal)
+# comparaison de l'équilibre et des tailles d'échantillon
+library(cobalt)
 
-# Visualisation des distances de Mahalanobis après l'appariement avec caliper assoupli
-hist(matchit_result_cal$distance, main = "Distances de Mahalanobis après appariement avec caliper assoupli", xlab = "Distance")
+for (name in names(results)) {
+  cat("\n\n---- Résultats pour", name, "----\n")
+  
+  match <- results[[name]]
+  summary_stats <- summary(match, standardize = TRUE)
+  
+  print(summary_stats$nn)  
+  print(summary_stats$sum.matched[, "Std. Mean Diff."])  # SMD
+}
 
+# Plot
+# Caliper de 0.25
+matched_data <- match.data(results[["caliper_0.25"]])
+
+ggplot(matched_data, aes(sample = treecover_area_val, color = as.factor(treatment))) +
+  stat_qq(distribution = qnorm) +
+  stat_qq_line(distribution = qnorm) +
+  ggtitle("Q-Q plot: treecover_area_val (caliper 0.25)") +
+  theme_minimal()
+
+# Caliper de 0.3
+matched_data <- match.data(results[["caliper_0.3"]])
+
+ggplot(matched_data, aes(sample = treecover_area_val, color = as.factor(treatment))) +
+  stat_qq(distribution = qnorm) +
+  stat_qq_line(distribution = qnorm) +
+  ggtitle("Q-Q plot: treecover_area_val (caliper 0.3)") +
+  theme_minimal()
+
+# Caliper de 0.4
+matched_data <- match.data(results[["caliper_0.4"]])
+
+ggplot(matched_data, aes(sample = treecover_area_val, color = as.factor(treatment))) +
+  stat_qq(distribution = qnorm) +
+  stat_qq_line(distribution = qnorm) +
+  ggtitle("Q-Q plot: treecover_area_val (caliper 0.4)") +
+  theme_minimal()
 ```
+
+Nous avons appliqué trois calipers différents pour notre analyse pour pouvoir comparer l'équilibre des covariables et la taille de l'échantillon apparié. Pour le caliper = 0.25, nous avons un excellent équilibre en terme de SMD mais on perd beaucoup d'observations car seules 81 paires sont appariées pour 690 contrôles et 185 traités. En augmentant le caliper à 0.3, le SMD reste excellent et plus de 34 paires ont été appariées par rapport à la caliper 0.25
 
 ## Estimation de l'effet du traitement
 
