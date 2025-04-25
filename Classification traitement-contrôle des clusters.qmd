@@ -238,7 +238,6 @@ buffer_10km_after_2008 <- sapm_after_2008  %>%
   st_as_sf() %>%
   st_make_valid()
 
-
 # Visualisation des cartes 
 tm_shape(sapm_before_2008) +
 tm_polygons(fill = "darkgreen", 
@@ -371,24 +370,26 @@ buffer_10km_after_2008 <- st_transform(buffer_10km_after_2008, st_crs(gps_2008))
 gps_2008 <- gps_2008 %>%
   # Identifier le groupe de traitement: ménages proche d'AP créées après 2008
   mutate(
-    proche_AP_pre2008 = st_within(geometry, buffer_10km_before_2008, sparse = FALSE)[, 1],
-    proche_AP_post2008 = st_within(geometry, buffer_10km_after_2008, sparse = FALSE)[, 1],
     groupe = case_when(
-      proche_AP_post2008 & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Traitement", 
-      proche_AP_pre2008 | URBAN_RURA == "U" ~ "Exclu",
-      !(proche_AP_post2008) & !(proche_AP_pre2008) & URBAN_RURA == "R" ~ "Controle"
+      st_within(geometry, buffer_10km_before_2008, sparse = FALSE)[, 1] & # proche_AP_pre2008 
+        !st_within(geometry, buffer_10km_after_2008, sparse = FALSE)[, 1] & # proche_AP_post2008
+        URBAN_RURA == "R" ~ "Traitement", 
+      st_within(geometry, buffer_10km_before_2008, sparse = FALSE) [,1] |
+      URBAN_RURA == "U" ~ "Exclu",
+      TRUE ~ "Controle"
     )
   ) %>%
   # identifier le groupe de controle: ménages à plus de 10 km 
   mutate(
-    distance_pre2008 = st_distance(geometry, st_union(buffer_10km_before_2008)),
-    distance_post2008 = st_distance(geometry, st_union(buffer_10km_after_2008)),
-    distance_pre2008_km = set_units(distance_pre2008, "km") %>% drop_units(),
-    distance_post2008_km = set_units(distance_post2008, "km") %>% drop_units(),
     groupe = case_when(
-      distance_post2008_km > 10 & distance_pre2008_km > 10 & URBAN_RURA == "R" ~ "Controle",
-      distance_post2008_km <= 10 & distance_pre2008_km > 10 & URBAN_RURA == "R" ~ "Traitement", 
-      distance_pre2008_km <= 10 | URBAN_RURA == "U" ~ "Exclu"
+      st_distance(geometry, st_union(buffer_10km_after_2008)) %>% set_units("km") %>% drop_units() > 10 &
+        st_distance(geometry, st_union(buffer_10km_before_2008)) %>% set_units("km") %>% drop_units() > 10 &
+        URBAN_RURA == "R" ~ "Controle",
+      st_distance(geometry, st_union(buffer_10km_after_2008)) %>% set_units("km") %>% drop_units() <= 10 &
+        st_distance(geometry, st_union(buffer_10km_before_2008)) %>% set_units("km") %>% drop_units() > 10 &
+        URBAN_RURA == "R" ~ "Traitement",
+     st_distance(geometry, st_union(buffer_10km_before_2008)) %>% set_units("km") %>% drop_units() <= 10 | URBAN_RURA == "U" ~ "Exclu",
+     TRUE ~ groupe
     )
   ) 
   
@@ -456,12 +457,10 @@ buffer_2021 <- sapm %>%
 # Identification des clusters 
 gps_2021 <- gps_2021 %>%
   mutate(
-    proche_AP_post2008 = st_within(geometry, buffer_10km_after_2008, sparse = FALSE)[, 1],
     groupe = case_when(
-      proche_AP_post2008 & URBAN_RURA == "R" ~ "Traitement", 
-      URBAN_RURA == "U" ~ "Exclu",
-      !(proche_AP_post2008) & URBAN_RURA == "R" ~ "Controle",
-      
+    st_within(geometry, buffer_10km_after_2008, sparse = FALSE)[, 1] & URBAN_RURA == "R" ~ "Traitement", #proche_AP_post2008
+    URBAN_RURA == "U" ~ "Exclu",
+    !st_within(geometry, buffer_10km_after_2008, sparse = FALSE)[, 1] & URBAN_RURA == "R" ~ "Controle"
       )
     )
 
