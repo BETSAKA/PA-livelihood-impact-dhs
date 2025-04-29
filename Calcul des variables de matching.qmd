@@ -68,7 +68,6 @@ Nous allons charger les données géophysiques des ménages à partir du package
 
 ```{r}
 
-
 # Chargement des données 
 gps_2008 <- st_read("Data/DHS_data/DHS_2008/MDGE53FL/MDGE53FL.shp")
 
@@ -80,10 +79,11 @@ if (file.exists("Data/output/gps_2008_geo.rds")) {
   plan(sequential)
   plan(multisession, workers = 4)
   
-  # Créer un buffer autour de chaque point pour former des polygones (10 km ici)
-  gps_2008_geo <- st_buffer(gps_2008, dist = 10000)
   
-  # Définir les ressources à télécharger 
+  # Créer un buffer autour de chaque point pour former des polygones
+  gps_2008_geo <- st_buffer(gps_2008, dist = 10000)
+      
+  # chargement des ressources: slope, elevation, population_count, traveltime_2000
   gps_2008_geo <- gps_2008_geo %>%
     get_resources(get_gfw_treecover())
   
@@ -99,68 +99,13 @@ if (file.exists("Data/output/gps_2008_geo.rds")) {
   gps_2008_geo <- gps_2008_geo %>%  
     get_resources(get_accessibility_2000())
   
-  # Extraire les ressources sans changer le type de géométrie
-  plan(sequential)
-  
   # Forest cover rate in 2000
   tic()
   with_progress({
     gps_2008_geo <- calc_indicators(
-      x = gps_2008_geo, calc_treecover_area(years = 2000))
+      x = gps_2008_geo, calc_treecover_area(years = 2000, min_size = 10, min_cover = 35))
   })
-  toc()   # 173.35 sec
-  
-  #################
-  
-  library(tidyverse)
-  library(mapme.biodiversity)
-  library(sf)
-  library(tmap)
-  
-  mapme_options(outdir = "Data/mapme")
-  
-  my_point <- st_sf(
-    geometry = st_sfc(st_point(c(44.3, -25.0))),
-    crs = 4326 
-  )
-  my_buffer <- st_buffer(my_point, dist = 10000) 
-  my_buffer <- my_buffer %>%
-    get_resources(get_gfw_treecover(),
-                  get_gfw_lossyear())
-  
-  my_buffer_1 <- my_buffer %>%
-    calc_indicators(
-      calc_treecover_area(years = 2000, min_size = 10, min_cover = 35)
-    )
-  my_buffer_1
-  
-  my_buffer_2 <- my_buffer %>%
-    calc_indicators(
-      calc_treecover_area(years = 2000, min_size = 1, min_cover = 10)
-    )
-  my_buffer_2
-  my_buffer_2[[2]][[1]]
-  
-  tmap_mode("view")
-  tm_shape(my_buffer_2) + 
-    tm_polygons()
-  ###########
-  
-  test <- gps_2008_geo %>%
-    filter(treecover_area == "NULL") %>%
-    filter(LONGNUM != 0)
-  
-  test %>%
-    st_drop_geometry() %>%
-    select(LATNUM, LONGNUM)
-  
-  test_data_1 <- calc_indicators(
-      x = test, calc_treecover_area(years = 2000, min_size = 1, min_cover = 10))
-  
-  tmap_mode("view")
-  
-  tm_shape(test) +
-    tm_polygons()
+  toc()   # 362.75 sec
   
   # slope
   tic()
@@ -193,184 +138,101 @@ if (file.exists("Data/output/gps_2008_geo.rds")) {
       x = gps_2008_geo, calc_traveltime_2000(engine = "extract", stats = "mean"))
   })
   toc() # 37.81 sec
-  
-  # # Convertir les polygones en points en utilisant les centroids
-  # gps_2008_geo <- st_centroid(gps_2008_geo)
-  
+ 
   # Enregistrement des données sous forme de points (dans le même dataframe gps_2008)
   write_rds(gps_2008_geo, "Data/output/gps_2008_geo.rds")
   cat("✅ Données enregistrées dans gps_2008_geo.rds avec géométries en POINT et indicateurs ajoutés.\n")
-
-}
-```
-
-```{r}
-library(tmap)
-library(dplyr)
-
-tmap_mode("view")
-
-# vérification des aires protégées montrant des NULL dans le dataframe
-filtered_2008 <- gps_2008_geo %>%
-  filter(assetid == "84")
-
-tm_shape(filtered_2008) + 
-  tm_symbols(
-    col = "blue", 
-    size = 0.5,
-    border.col = "black"
-  ) + 
-  tm_layout(
-    title = "Carte pour l'assetid 1", 
-    legend.outside = TRUE
-  )
-
-# Identifiez les lignes avec des valeurs NULL
-null_rows <- gps_2008_geo[is.na(gps_2008_geo$treecover_area), ]
-print(null_rows) # Affichez les lignes avec des valeurs NULL 
-
-
-```
-
-# Estimation des effets par Matching
-
-```{r}
- # Préparation des données 
-# Load DHS data 
-dhs_folder <- "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/DHS_data"
-
-load_data <- function(year, type, dhs_folder) {
-  year_folder <- file.path(dhs_folder, paste0("DHS_", year))
   
-  # Get the .shp (GPS) and .dta (household) file paths
-  if (type == "HR") {
-    hr_path <- list.files(year_folder, pattern = ".*HR.*\\.dta$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-    if (length(hr_path) == 0) stop("No HR file found for the specified year.")
-    out <- read_dta(hr_path) # Lecture du fichier .dta
-  } else if (type == "GPS") {
-    shp_path <- list.files(year_folder, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
-    if (length(shp_path) == 0) stop("No GPS file found for the specified year.")
-    out <- st_read(shp_path, quiet = TRUE) %>%
-      st_transform(my_crs) # Lecture du fichier .shp
-  } else {
-    stop("Data type unknown, must be HR or GPS")
-  }
-  return(out) 
 }
+```
 
-# Executer la fonction pour l'année 2008
-hr_2008 <- load_data(2008, "HR", dhs_folder)
+### Correction des lignes NULL dans le dataframe
 
-# Sélection des variables dans hr_2008 
-hr_2008_selected <- hr_2008 %>%
-  dplyr::select(
-    hhid, hv001, hv270, hv271
+```{r}
+
+# Filtrer les lignes où il y a des valeurs NULL
+test <- gps_2008_geo %>%
+filter(sapply(treecover_area, is.null))
+
+# Supprimer les lignes avec LATNUM et LONGNUM nulles
+test_clean <- test %>% 
+  filter(LATNUM != 0, LONGNUM != 0)
+
+# création d'un point géospatial à partir des coordonnées de la ligne où la colonne treecover_area est NULL
+test_clean %>%
+    st_drop_geometry() %>%
+    select(LATNUM, LONGNUM)
+
+# Ligne 1
+my_point_1 <- st_sf(
+  geometry = st_sfc(st_point(c(44.3, -25.0))),
+  crs = 4326 
+)
+# Création d'un buffer de 10 km autour du point géospatial
+my_buffer_1 <- st_buffer(my_point_1, dist = 10000) 
+
+# Téléchargement de treecover_area pour le buffer spécifique 
+my_buffer_1 <- my_buffer_1 %>%
+  get_resources(get_gfw_treecover(),
+                get_gfw_lossyear()
   )
-
-# Jointure avec les données des ménages gps_cluster_2008 avec les caractéristiques géophysiques des ménages 
-merged_2008_selected <- hr_2008_selected  %>%
-  left_join(gps_2008_geo, by = c("hv001" = "DHSCLUST"))
-
-
-# Sélection des variables dans hr_2008 pour les zones rurales
-hr_2008_rural <- hr_2008 %>%
-  filter(hv025 == 2) %>%
-  dplyr::select(
-    hhid, hv001,hv270, hv271
+# Calcul des indicateurs pour le buffer spécifique
+my_buffer_1 <- my_buffer_1 %>%
+  calc_indicators(
+    calc_treecover_area(
+      years = 2000, 
+      min_size = 1, 
+      min_cover = 10
+    )
   )
- 
-# Jointure avec les données des ménages gps_cluster_2008 avec les caractéristiques géophysiques des ménages ruraux
-merged_2008_rural <- hr_2008_rural %>%
-  left_join(gps_2008_geo, by = c("hv001" = "DHSCLUST"))
+# Extraire la valeur calculée pour trecover_area
+new_value <- my_buffer_1$treecover_area[[1]]
+
+# Attribution de la nouvelle valeur à la ligne correspondante dans test_clean
+test_clean$treecover_area[[1]] <- new_value
+
+# Ligne 2
+my_point_2 <- st_sf(
+  geometry = st_sfc(st_point(c(44.9, -25.2))),
+  crs = 4326 
+)
+# Création d'un buffer de 10 km autour du point géospatial
+my_buffer_2 <- st_buffer(my_point_2, dist = 10000) 
+
+# Téléchargement de treecover_area pour le buffer spécifique 
+my_buffer_2 <- my_buffer_2 %>%
+  get_resources(get_gfw_treecover(),
+                get_gfw_lossyear()
+  )
+# Calcul des indicateurs pour le buffer spécifique
+my_buffer_2 <- my_buffer_2 %>%
+  calc_indicators(
+    calc_treecover_area(
+      years = 2000, 
+      min_size = 1, 
+      min_cover = 10
+    )
+  )
+# Extraire la valeur calculée pour trecover_area
+new_value <- my_buffer_2$treecover_area[[1]]
 
 
+# Attribution de la nouvelle valeur à la ligne correspondante dans test_clean
+test_clean$treecover_area[[2]] <- new_value
 
 ```
 
-## Matching et optimisation de l'équilibre des groupes
-
-1.  Utilisation du Genetic matching et du Mahalanobis Distance Matching avec la fonction de GenMatch() du package R MatchIt
-
-2.  Application du caliper à un intervalle de 0.25 écart-type de la distance de Mahalanobis
+### Mise à jour du dataframe gps_2008_geo
 
 ```{r}
-library(dplyr)
-library(purrr)
-install.packages("Matching")
-library(Matching)
-library(MatchIt)
-library(cobalt)
-library(dplyr)
-library(rgenoud) # Optimisation
-library(sf)
 
-# Variables de matching: treecover_area, slope, elevation, population_count, traveltime_2000
-variables_matching <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000")
+# Remplacement des lignes avec celles de test_clean 
+gps_2008_geo[c(462, 472), ] <- test_clean[c(1, 2), ]
 
-# Pré-traitement des données
-extract_value_treecover <- function(x) {
-  if (is.null(x)) return(NA_real_)
-  value <- x$value[x$datetime == "2000-01-01"]
-  if (length(value) == 0) return(NA_real_) else return(value[1])
-}
-
-extract_value <- function(x) {
-  if (is.null(x)) return(NA_real_)
-  return(x$value[1])
-}
-
-matching_2008 <- merged_2008_selected %>%
-  filter(groupe %in% c("Traitement", "Controle")) %>%
-  mutate(
-    treatment = if_else(groupe == "Traitement", 1, 0),
-    
-    treecover_area = map_dbl(treecover_area, ~ extract_value_treecover(.x)),
-    slope = map_dbl(slope, ~ extract_value(.x)),
-    elevation = map_dbl(elevation, ~ extract_value(.x)),
-    population_count = map_dbl(population_count, ~ extract_value(.x)),
-    traveltime_2000 = map_dbl(traveltime_2000, ~ extract_value(.x)) 
-  )%>%
-  drop_na(all_of(variables_matching))
- 
-
-# Standardisation des covariables de matching 
-matching_2008_scaled <- matching_2008 %>%
-  mutate(across(
-    c(treecover_area, slope, elevation, population_count, traveltime_2000),
-    scale
-  ))
-
-# Générer une matrice pour GenMatch
-X_match <- as.data.frame(st_drop_geometry(matching_2008_scaled[, c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000")]))
- 
-# Matching avec MatchIt pour 2008
-set.seed(123)
- 
-gen_match_model <- GenMatch(
-  Tr = matching_2008_scaled$treatment, 
-  X = X_match,
-  M = 1,  # 1 appariement pour chaque unité du groupe de traitement
-  pop.size = 1000, 
-  wait.generations = 1,
-  max.generations = 4,
-  print.level = 1,
-  BalanceMatrix = X_match,
-  estimand = "ATT"
-)
-
-# Matching avec caliper de 0.25 SD Mahalanobis 
-matching_result_2008 <- matchit(
-  treatment ~ treecover_area + slope + elevation + population_count + traveltime_2000,
-  data = matching_2008_scaled %>% filter(groupe != "Exclu"),
-  method = "genetic", 
-  distance = "mahalanobis",
-  gen.match = gen_match_model,
-  caliper = c(
-    treecover_area = 0.25, 
-    slope = 0.25,
-    elevation = 0.25,
-    population_count = 0.25,
-    traveltime_2000 = 0.25
-  )
-)
+# Suppression des lignes avec des LATNUM et LONGNUM nulles
+idx_to_remove <- which(sapply(gps_2008_geo$treecover_area, is.null) &
+                         (gps_2008_geo$LATNUM == 0 | gps_2008_geo$LONGNUM == 0))
+  
+# Mise à jour du gps_2008_geo
+gps_2008_geo <- gps_2008_geo[-idx_to_remove, ]
 ```
