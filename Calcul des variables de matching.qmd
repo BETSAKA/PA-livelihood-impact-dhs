@@ -24,15 +24,15 @@ library(labelled) # Manipulation des labels
 library(readxl) #Lecture des fichiers excels
 library(progressr) # Pour avoir des barres de progression
 library(tictoc) # Pour minuter le temps d'exécution
-library(mapme.biodiversity)
 library(future) # Pour permettre du calcul parallèle
 library(lubridate) # Gestion des dates
 library(terra) # Manipulation des données raster 
 library(geodata)
 library(rstac)
+library(mapme.biodiversity)
 ```
 
-## Répertoire
+# Répertoire
 
 ```{r}
 
@@ -54,7 +54,7 @@ mapme_options(
               )
 ```
 
-## Chargement des données géophysiques des ménages
+# Chargement des données géophysiques des ménages pour 2008
 
 Nous allons charger les données géophysiques des ménages à partir du package R mapme.biodiversity (<https://mapme-initiative.github.io/mapme.biodiversity/index.html>) pour charger et extraire les données sur:
 
@@ -139,14 +139,14 @@ if (file.exists("Data/output/gps_2008_geo.rds")) {
   })
   toc() # 37.81 sec
  
-  # Enregistrement des données sous forme de points (dans le même dataframe gps_2008)
+  # Enregistrement des données 
   write_rds(gps_2008_geo, "Data/output/gps_2008_geo.rds")
   cat("✅ Données enregistrées dans gps_2008_geo.rds avec géométries en POINT et indicateurs ajoutés.\n")
   
 }
 ```
 
-### Correction des lignes NULL dans le dataframe
+## Correction des lignes NULL dans le dataframe
 
 ```{r}
 
@@ -222,7 +222,7 @@ test_clean$treecover_area[[2]] <- new_value
 
 ```
 
-### Mise à jour du dataframe gps_2008_geo
+## Mise à jour de la colonne treecover_area
 
 ```{r}
 
@@ -234,5 +234,47 @@ idx_to_remove <- which(sapply(gps_2008_geo$treecover_area, is.null) &
                          (gps_2008_geo$LATNUM == 0 | gps_2008_geo$LONGNUM == 0))
   
 # Mise à jour du gps_2008_geo
-gps_2008_geo <- gps_2008_geo[-idx_to_remove, ]
+gps_2008_geo_clean <- gps_2008_geo[-idx_to_remove, ]
+
+```
+
+## Chargement des données sur les précipitations
+
+```{r}
+
+if (file.exists("Data/output/gps_2008_geo_clean.rds")) {
+  gps_2008_geo_clean <- readRDS("Data/output/gps_2008_geo_clean.rds")
+} else {
+  cat("Fichier introuvable, début du traitement...\n")
+  plan(sequential)
+  plan(multisession, workers = 4)
+  
+  # Chargement des données
+  tic("Chargement des données climatiques")
+  with_progress({
+    gps_2008_geo_clean <- gps_2008_geo_clean %>%
+      get_resources(
+        get_worldclim_max_temperature(years = 1996:2021, resolution = "10m"),
+        get_worldclim_min_temperature(years = 1996:2021, resolution = "10m"),
+        get_worldclim_precipitation(years = 1996:2021, resolution = "10m")
+      )
+  })
+  toc()
+  
+  # Extraction des données 
+  tic()
+  with_progress({
+    gps_2008_geo_clean <- gps_2008_geo_clean %>%
+      calc_indicators(
+        calc_precipitation_wc(engine = "extract", stats = "mean"),
+        calc_temperature_max_wc(engine = "extract", stats = "mean"),
+        calc_temperature_min_wc(engine = "extract", stats = "mean")
+      )
+  })
+  toc()
+  
+  # Enregistrement 
+  write_rds(x= gps_2008_geo_clean, file = "Data/output/gps_2008_geo_clean.rds")
+}
+
 ```
