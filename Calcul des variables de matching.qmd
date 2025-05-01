@@ -554,11 +554,15 @@ idx_null <- which(sapply(gps_2021_geo$treecover_area, is.null))
 
 # Remplacement des valeurs NULL par les valeurs corrigées
 gps_2021_geo$treecover_area[idx_null] <- test_2021$treecover_area
+
 ```
 
 ## Chargement des données sur les précipitations pour 2021
 
 ```{r}
+
+gps_2021_geo_clean <- gps_2021_geo 
+
 if (file.exists("Data/output/gps_2021_geo_clean.rds")) {
   gps_2021_geo_clean <- readRDS("Data/output/gps_2021_geo_clean.rds")
 } else {
