@@ -35,6 +35,7 @@ resources <- list(
 
 get_from_s3_batch <- function(resource) {
  # resource <- "gfw_lossyear"
+  print(resource)
   root_local <- "data/raw/mapme/"
   root_s3 <- "diffusion/PA-impact-on-deforestation/mapme/"
   
@@ -53,7 +54,9 @@ get_from_s3_batch <- function(resource) {
   # To put files
   my_files_local <- list.files(dir_local, full.names = TRUE, recursive = TRUE)
   
-  add_files <- my_files_s3[!my_files_s3 %in% my_files_local]
+  local_compare <- str_replace(my_files_local,root_local, root_s3)
+  
+  add_files <- my_files_s3[!my_files_s3 %in% local_compare]
   
   my_files_dest <- str_replace(add_files, root_s3, root_local)
   
