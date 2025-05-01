@@ -1,0 +1,22 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Replication package",
+    "section": "",
+    "text": "1 Introduction\nCe travaille utilise mapme.biodiversity (Görgen and Bhandari 2024).\n\n\n\n\nGörgen, Darius A., and Om Prakash Bhandari. 2024. “Mapme.biodiversity: Efficient Monitoring of Global Biodiversity Portfolios.” https://CRAN.R-project.org/package=mapme.biodiversity.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction</span>"
+    ]
+  },
+  {
+    "objectID": "10-references.html",
+    "href": "10-references.html",
+    "title": "References",
+    "section": "",
+    "text": "Görgen, Darius A., and Om Prakash Bhandari. 2024.\n“Mapme.biodiversity: Efficient Monitoring of Global Biodiversity\nPortfolios.” https://CRAN.R-project.org/package=mapme.biodiversity.",
+    "crumbs": [
+      "References"
+    ]
+  }
+]

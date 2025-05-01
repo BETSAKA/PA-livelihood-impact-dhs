@@ -1,197 +1,61 @@
 ---
-title: "Classification traitement-contrôle des clusters"
-format: html
-editor: visual
+output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+# Treatment assignation
 
-# Environnement
-
-```{r}
-library(tidyverse) #Manipulation et visualisation des données
-library(haven) #Importation des données
-library(writexl) #Exportation des données
-library(sf) #Analyse des données spatiales
-library(tmap) #Analyse cartographique
-library(codebook) #Documentation et mise en forme des données 
-library(gt) #Mise en forme des tableaux 
-library(survey) #Analyse des données d'enquêtes
-library(MatchIt) #Matching
-library(ggplot2) #Figure
-library(labelled) # Manipulation des labels
-library(readxl) #Lecture des fichiers excels
-library(progressr) # Pour avoir des barres de progression
-library(tictoc) # Pour minuter le temps d'exécution
-library(mapme.biodiversity)
-library(future) # Pour permettre du calcul parallèle
-library(lubridate) # Gestion des dates
-library(terra) # Manipulation des données raster 
-library(geodata)
-```
-
-# Répertoire
-
-```{r}
-# Définir le chemin absolu pour ton répertoire local
-outdir <- "Statistiques/PA-livelihood-impact-dhs2/Data"
-
-# Créer le répertoire si il n'existe pas déjà
-dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
-
-# Vérifier si le répertoire a bien été créé
-if (dir.exists(outdir)) {
-  cat("Répertoire créé ou déjà existant : ", outdir)
-} else {
-  cat("Le répertoire n'a pas pu être créé.")
-}
-mapme_options(
-  outdir = outdir,
-  verbose = TRUE
-              )
-```
-
-# Chargement gps
+## Chargement des coordonnées GPS des clusters d'enquête
 
 gardez les numéros de cluters + année enquête + rural urbain
 
 L'unité d'analyse de cette étude est le ménage. Nous allons charger nos clusters de 2008 et 2021 à partir des données de DHS.
 
-```{r}
-# Définition du système de coordonnées et de la distance de buffer utilisé
+Les coordonnées GPS, comme la plupart des données ouvertes distribuées sur Internet, sont en WGS 84 (codé EPSG : 4326). Pour calculer des distances, on va utiliser le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702).
 
-# Coordonnées géographiques (Projection officielle-Laborde) 
+```{r}
+library(tidyverse) #Manipulation et visualisation des données
+library(sf) #Analyse des données spatiales
+library(tmap) #Analyse cartographique
+library(gt) #Mise en forme des tableaux 
+library(geodata) # Pour avoir le contour de Madagascar
+library(writexl) # Pour faire une sortie sous Excel
+
+# Systèmes de coordonnées de référence 
+standard_crs <- 4326
 my_crs <- 29702 
 
-# Buffer de 10 km
-buffer_dist <- 10000 
+# On charge les données
+gps_1997 <- st_read("data/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp")
+gps_2008 <- st_read("data/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp")
+gps_2021 <- st_read("data/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
 
-# Load boundary
-contour_mada <- gadm(country = "Madagascar", level = 0, path = "Data") %>%
-  st_as_sf() %>%
-  st_transform(my_crs)
-
-# Visualisation de la carte avec les contours
+# Set for interactive viewing
 tmap_mode("view")
 
-contour_mada %>%
-  st_transform(my_crs) %>%
-  tm_shape() +
-  tm_borders(col = "black")
-  
-# Load DHS data 
-dhs_folder <- "C:/Users/irian/Documents/Statistiques/PA-livelihood-impact-dhs2/Data/DHS_data"
+bind_rows(gps_1997, gps_2008, gps_2021) |> 
+  tm_shape() + 
+  tm_dots() +
+  tm_facets("DHSYEAR")
 
-load_data <- function(year, type, dhs_folder) {
-  year_folder <- file.path(dhs_folder, paste0("DHS_", year))
-  
-  # Get the .shp (GPS) and .dta (household) file paths
-  if (type == "HR") {
-    hr_path <- list.files(year_folder, pattern = ".*HR.*\\.dta$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
-    if (length(hr_path) == 0) stop("No HR file found for the specified year.")
-    out <- read_dta(hr_path) # Lecture du fichier .dta
-  } else if (type == "GPS") {
-    shp_path <- list.files(year_folder, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
-    if (length(shp_path) == 0) stop("No GPS file found for the specified year.")
-    out <- st_read(shp_path, quiet = TRUE) %>%
-      st_transform(my_crs) # Lecture du fichier .shp
-  } else {
-    stop("Data type unknown, must be HR or GPS")
-  }
-  return(out) 
-}
-
-# Execute the function for a specific year
-hr_1997 <- load_data(1997, "HR", dhs_folder)
-gps_1997 <- load_data(1997, "GPS", dhs_folder)
-
-hr_2008 <- load_data(2008, "HR", dhs_folder)
-gps_2008 <- load_data(2008, "GPS", dhs_folder)
-
-hr_2021 <- load_data(2021, "HR", dhs_folder)
-gps_2021 <- load_data(2021, "GPS", dhs_folder)
-
-# Vérification des données GPS
-print(gps_1997) 
-print(gps_2008)
-print(gps_2021)
-
-st_geometry(gps_1997)
-st_geometry(gps_2008)
-st_geometry(gps_2021)
-
-# Vérification des données GPS
-if (!"DHSCLUST" %in% colnames(gps_1997)) {
-  stop("La colonne 'DHSCLUST' n'existe pas dans les données GPS.")
-} else {
-  message("Les clusters sont bien identifiés.")
-}
-
-if (!"DHSCLUST" %in% colnames(gps_2008)) {
-  stop("La colonne 'DHSCLUST' n'existe pas dans les données GPS.")
-} else {
-  message("Les clusters sont bien identifiés.")
-}
-
-if (!"DHSCLUST" %in% colnames(gps_2021)) {
-  stop("La colonne 'DHSCLUST' n'existe pas dans les données GPS.")
-} else {
-  message("Les clusters sont bien identifiés.")
-}
-
-# Générer et afficher les cartes pour chaque année
-dhs_map <- function(gps_data, year) {
-  
-  tm_shape(contour_mada) +
-    tm_borders(col = "black") +
-    tm_shape(gps_data) +
-    tm_symbols(
-      fill = "URBAN_RURA", 
-      fill.legend = tm_legend("Zones"),
-      fill.scale = tm_scale(values = c("R" = "red", "U" = "steelblue")),
-      size = 0.5,
-      shape = 21
-    ) +
-    tm_title(paste("DHS Clusters -", year))
-}
-
-# Création des cartes
-dhs_map(gps_1997, 1997)
-dhs_map(gps_2008, 2008)
-dhs_map(gps_2021, 2021)
 ```
 
-# Classification des AP
+On a bien des clusters par année (commenter.)
+
+
+
+## Chargement des données AP
 
 Les données utilisées sont les données de SGAP (SAPM).
 
-```{r}
-# library
-library(wdpar)
-library(pwr)
-library(lme4)
-library(units)
-library(sf)
+On est en cours de vérification pour les dates de création des AP. Pour l'instant on utilise la version officielle de 2017, sur laquelle on a corrigé des anomalies topologiques.
 
+```{r}
 # Load SAPM data
-sapm <- st_read("Data/Aires protégées/SAPM_2017_corrected/SAPM_2017_corrected.shp", quiet = TRUE) %>%
+sapm <- st_read("data/sapm/SAPM_2017_corrected.shp") |> # en EPSG 9001
   st_transform(my_crs) %>%
   st_make_valid() %>%
   mutate(YEAR_CREAT = year(ymd(DATE_CREAT)), .after = DATE_CREAT)
-
-# Intersection des SAPM avec la limite de Madagascar
-sapm <- sapm %>% 
-  st_intersection(contour_mada)%>%
-  st_make_valid()
-
-sapm_tb <- sapm %>%
-  st_drop_geometry()
-
-write_xlsx(sapm_tb, "Data/Aires protégées/output/SAPM_2017.xlsx")
-
-sapm %>%
-  DT::datatable()
-
 # Visualisation
 tmap_mode("view")
 tm_shape(contour_mada) +
@@ -204,7 +68,69 @@ tm_shape(sapm) +
   tmap_options(check_and_fix = TRUE) +
   tm_title("Aires protégées de Madagascar") +
   tm_layout(legend.outside = TRUE)
+
 ```
+
+On peut aussi générer un format tabulaire pour visualiser les données.
+
+```{r}
+sapm_tb <- sapm %>%
+  st_drop_geometry()
+
+write_xlsx(sapm_tb, "output/SAPM_2017.xlsx")
+
+sapm %>%
+  DT::datatable()
+
+```
+
+
+## Sélection des parties terrestres des AP
+
+On veut garder les AP terrestres ou la partie terrestre des AP côtières, donc on va limiter les contrours.
+
+```{r}
+
+
+# Load boundary
+contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
+  st_as_sf() %>%
+  st_set_crs(standard_crs) %>%
+  st_transform(my_crs)
+
+# Visualisation de la carte avec les contours
+tmap_mode("view")
+
+contour_mada %>%
+  st_transform(my_crs) %>%
+  tm_shape() +
+  tm_borders(col = "black")
+
+```
+
+On garde maintenant les éléments de SAPM qui sont contenu à l'intérieur des AP de Madagascar
+
+```{r}
+
+# Intersection des SAPM avec la limite de Madagascar
+sapm_terrestre <- sapm %>% 
+  st_intersection(contour_mada)%>%
+  st_make_valid() %>%
+  mutate(`HECTARE_TERR` = st_area(.))
+
+tm_shape(contour_mada) +
+  tm_borders() +
+tm_shape(sapm_terrestre) +
+  tm_polygons(fill =  "green", 
+              id = "FULL_NAME",
+              popup.vars = c("Superficie (ha)" = "HECTARE_TERR")) +
+  tm_scalebar(position = c("left", "bottom")) + 
+  tmap_options(check_and_fix = TRUE) +
+  tm_title("Aires protégées de Madagascar") +
+  tm_layout(legend.outside = TRUE)
+```
+
+
 
 ## Identification des aires protégées avant et après 2008
 
@@ -215,12 +141,15 @@ tm_shape(sapm) +
 -   [Groupe à exclure]{.underline}: clusters à moins de 10 km des aire protégées créées avant 2008 et dans la zone urbaine
 
 ```{r}
+# Buffer de 10 km
+buffer_dist <- 10000 
+
 # Spécification des aires protégées avant 2008
-sapm_before_2008 <- sapm %>%
+sapm_before_2008 <- sapm_terrestre %>%
   filter(year(DATE_CREAT) < 2008)
 
 # Spécification des aires protégées après 2008
-sapm_after_2008 <- sapm %>%
+sapm_after_2008 <- sapm_terrestre %>%
   filter(year(DATE_CREAT) >= 2008)
 
 # Créer des buffers de 10 km autour des AP
@@ -240,18 +169,18 @@ buffer_10km_after_2008 <- sapm_after_2008  %>%
 
 # Visualisation des cartes 
 tm_shape(sapm_before_2008) +
-tm_polygons(fill = "darkgreen", 
+tm_polygons(fill = "blue", 
             col =  "black", 
             fill_alpha = 0.5) +
 tm_shape(buffer_10km_after_2008) +
-tm_borders(col = "green", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
-tm_shape(buffer_10km_before_2008) +
 tm_borders(col = "darkgreen", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
+tm_shape(buffer_10km_before_2008) +
+tm_borders(col = "blue", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
 tm_shape(sapm_after_2008) +
-tm_polygons(fill = "green", 
+tm_polygons(fill = "darkgreen", 
             col = "black", 
             fill_alpha = 0.5) +
-tm_add_legend(type = "polygons", fill = c("green", "darkgreen"), labels = c("avant 2008", "après 2008")) +
+tm_add_legend(type = "polygons", fill = c("blue", "darkgreen"), labels = c("avant 2008", "après 2008")) +
   tm_title("Aires protégées du SAPM par période de création") +
   tm_layout(
     legend.outside = TRUE, 
@@ -262,8 +191,10 @@ tm_add_legend(type = "polygons", fill = c("green", "darkgreen"), labels = c("ava
   ) +
   tm_compass(type = "8star", position = c("right", "top")) +
   tm_scalebar(position = c("right", "bottom"))
+```
 
 
+```{r}
 # Definition de la fonction
 create_summary_table <- function(data, pivot_year) {
   summary_table <- data %>%
@@ -351,13 +282,8 @@ create_summary_table <- function(data, pivot_year) {
   return(gt_table)
 }
 
-# Tableau pour 2008
-create_summary_table(sapm, 2008)
-
 # Enregistrement 
-summary_table_2008 <- create_summary_table(sapm, 2008)
-saveRDS(summary_table_2008, "Data/output/summary_table_2008.rds")
-
+create_summary_table(sapm, 2008)
 ```
 
 ## Identification du groupe de traitement et du groupe de contrôle en 2008

@@ -3,11 +3,5 @@
 .RData
 .Ruserdata
 
-# Fichiers LaTeX temporaires
-*.aux
-*.log
-*.aux
-*.bbl
-*.bcf
-*.blg
-*.run.xml
+data/*
+old/*
