@@ -65,19 +65,15 @@ Nous allons charger les données géophysiques des ménages à partir du package
 
 ```{r}
 # Définir le chemin relatif pour ton répertoire local
-outdir <- "data"
+outdir <- "data/raw/mapme"
 dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
 mapme_options(outdir = outdir, verbose = TRUE)
 
-library(geodata)
-contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
-  st_as_sf() %>%
-  st_set_crs(standard_crs)
 
 # Couvert forestier
 tic()
 with_progress({
-  contour_mada_1 <- contour_mada  %>% 
+  buffer_all <- buffer_all  %>% 
     get_resources(get_gfw_treecover())
 })
 toc()
@@ -159,42 +155,49 @@ plan(multisession, workers = 4)
         calc_treecover_area(years = 2000, min_size = 1, min_cover = 35)
         )
   })
-  toc()   # 362.75 sec
+  toc()   # 548.69 sec
   
   # slope
   tic()
   with_progress({
-    gps_2008_geo <- calc_indicators(
-      x = gps_2008_geo, calc_slope(engine = "extract", stats = "mean"))
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+      calc_slope(engine = "extract", stats = "mean")
+      )
   })
-  toc() # 367.26 sec
+  toc() # 365.87 sec
   
   # Elevation
   tic()
   with_progress({
-    gps_2008_geo <- calc_indicators(
-      x = gps_2008_geo, calc_elevation(engine = "extract", stats = "mean"))
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+     calc_elevation(engine = "extract", stats = "mean")
+     )
   })
-  toc() # 349.14 sec
+  toc() # 283.51 sec
   
   # Population density
   tic()
   with_progress({
-    gps_2008_geo <- calc_indicators(
-      x = gps_2008_geo, calc_population_count(engine = "extract", stats = "mean"))
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_population_count(engine = "extract", stats = "mean")
+        )
   })
-  toc() # 52.58 sec
+  toc() # 83.55 sec
   
   # Accessibility
   tic()
   with_progress({
-    gps_2008_geo <- calc_indicators(
-      x = gps_2008_geo, calc_traveltime_2000(engine = "extract", stats = "mean"))
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_traveltime_2000(engine = "extract", stats = "mean"))
   })
-  toc() # 37.81 sec
+  toc() # 87.63 sec
  
   # Enregistrement des données 
-  write_rds(gps_2008_geo, "Data/output/gps_2008_geo.rds")
+  write_rds(buffer_all, "data/derived/variable_all_cluster.rds")
   cat("✅ Données enregistrées dans gps_2008_geo.rds avec géométries en POINT et indicateurs ajoutés.\n")
 
 ```
