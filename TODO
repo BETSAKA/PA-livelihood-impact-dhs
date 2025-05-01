@@ -1,4 +1,11 @@
 
+@Iriana
+Vérifier les unités dans (ha/m2 dans les tableaux/graphiques)
+Mettre des fig-cap pour tous rendus
+Traduire en anglais
+Commenter le code, entre chunks et dedans
+
+
 1) Installation des packages 
 - MatchIt
 - Matching

@@ -1,1 +1,304 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Spatial covariates
+
+
+```{r}
+if (packageVersion("mapme.biodiversity") < "0.9.4") {
+  remotes::install_github("mapme-initiative/mapme.biodiversity")
+}
+
+library(tidyverse) #Manipulation et visualisation des données
+library(sf) #Analyse des données spatiales
+library(tmap) #Analyse cartographique
+library(labelled) # Manipulation des labels
+library(mapme.biodiversity)
+library(progressr) # Pour avoir des barres de progression
+library(tictoc) # Pour minuter le temps d'exécution
+library(future) # Pour permettre du calcul parallèle
+
+
+# Systèmes de coordonnées de référence 
+standard_crs <- 4326
+mdg_crs <- 29702 
+
+# On charge les données
+gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp")
+gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp") 
+gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
+
+# On retire les cluster dont les coordonnées spatials sont nulles
+gps_1997 <- filter(gps_1997_initial, LONGNUM != 0 | LATNUM != 0) 
+gps_2008 <- filter(gps_2008_initial, LONGNUM != 0 | LATNUM != 0) 
+gps_2021 <- filter(gps_2021_initial, LONGNUM != 0 | LATNUM != 0)
+
+gps_all <- bind_rows(gps_1997, gps_2008, gps_2021)
+
+# On crée les buffers
+buffer_all <- gps_all %>%
+  st_transform(mdg_crs) %>% # projection dans le CRS malgache
+  st_buffer(dist = 10000) %>% # 10 km
+  st_transform(standard_crs) # Retour en WGS 84
+
+tmap_mode("view")
+tm_shape(buffer_all) +
+  tm_polygons() +
+  tm_facets("DHSYEAR")
+```
+
+# Chargement des données géophysiques des ménages pour 2008
+
+Nous allons charger les données géophysiques des ménages à partir du package R mapme.biodiversity (<https://mapme-initiative.github.io/mapme.biodiversity/index.html>) pour charger et extraire les données sur:
+
+-   Le couvert forestier en 2000 (Hansen et al.2013)
+
+-   La pente et l'altitude (NASA SRTM)
+
+-   La densité de population en 2000 (Worldpop)
+
+-   L'accessibilité en 2000 (JRC, Uchida et Nelson 2011)
+
+-   Les données worldclim
+
+```{r}
+# Définir le chemin relatif pour ton répertoire local
+outdir <- "data"
+dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+mapme_options(outdir = outdir, verbose = TRUE)
+
+library(geodata)
+contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
+  st_as_sf() %>%
+  st_set_crs(standard_crs)
+
+# Couvert forestier
+tic()
+with_progress({
+  contour_mada_1 <- contour_mada  %>% 
+    get_resources(get_gfw_treecover())
+})
+toc()
+
+# Perte de couvert
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% 
+  get_resources(get_gfw_lossyear()) 
+})
+toc()
+
+# NASA SRTM
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% 
+  get_resources(get_nasa_srtm()) 
+})
+toc()
+
+# Worldpop 2000
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% 
+  get_resources(get_worldpop(years = 2000)) 
+})
+toc()
+  
+# Accesibility
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% 
+  get_resources(get_accessibility_2000()) 
+})
+toc()
+
+# Maximum temperatures
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% get_resources(
+    get_worldclim_max_temperature(years = 1996:2021, resolution = "10m")
+  )
+})
+toc()
+
+# Minimum temperatures
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% get_resources(
+    get_worldclim_min_temperature(years = 1996:2021, resolution = "10m")
+  )
+})
+toc()
+
+# Maximum temperatures
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% get_resources(
+    get_worldclim_precipitation(years = 1996:2021, resolution = "10m")
+  )
+})
+toc()
+```
+
+
+# Calcul des indicateurs
+
+
+```{r}
+# Créer un plan pour paralléliser les calculs
+plan(sequential)
+plan(multisession, workers = 4)
+
+# Forest cover rate in 2000
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_treecover_area(years = 2000, min_size = 1, min_cover = 35)
+        )
+  })
+  toc()   # 362.75 sec
+  
+  # slope
+  tic()
+  with_progress({
+    gps_2008_geo <- calc_indicators(
+      x = gps_2008_geo, calc_slope(engine = "extract", stats = "mean"))
+  })
+  toc() # 367.26 sec
+  
+  # Elevation
+  tic()
+  with_progress({
+    gps_2008_geo <- calc_indicators(
+      x = gps_2008_geo, calc_elevation(engine = "extract", stats = "mean"))
+  })
+  toc() # 349.14 sec
+  
+  # Population density
+  tic()
+  with_progress({
+    gps_2008_geo <- calc_indicators(
+      x = gps_2008_geo, calc_population_count(engine = "extract", stats = "mean"))
+  })
+  toc() # 52.58 sec
+  
+  # Accessibility
+  tic()
+  with_progress({
+    gps_2008_geo <- calc_indicators(
+      x = gps_2008_geo, calc_traveltime_2000(engine = "extract", stats = "mean"))
+  })
+  toc() # 37.81 sec
+ 
+  # Enregistrement des données 
+  write_rds(gps_2008_geo, "Data/output/gps_2008_geo.rds")
+  cat("✅ Données enregistrées dans gps_2008_geo.rds avec géométries en POINT et indicateurs ajoutés.\n")
+
+```
+
+### Calcul de l'indice Standardized Precipitation Evapotranspiration Index (SPEI)
+
+L'indice SPEI est calculé à partir d'une référence à long terme (1981-2010) pour quantifier l'excès ou le manque de pluie. Son calcul se fait à partir des données mensuelles de précipitation et de température minimum et maximum provenant de Worlclim, en utilisant une version améliorée de la méthode Hargreaves ( Modified-Hargreaves methods) définie par Droogers et Allen (2002). La variable sera calculée pour un cercle de 10 km de rayon autour de la coordonnée GPS de la grappe.
+
+```{r}
+
+library(SPEI)
+library(gander)
+library(ellmer)
+library(devtools)
+library (fastmap)
+
+# Latitude calculation
+if (file.exists("data/output/gps_2008_spei.rds")) {
+  gps_2008_spei <- read_rds("data/output/gps_2008_spei.rds")
+} else {
+  gps_2008_spei <- gps_2008_geo_clean %>% 
+    mutate(
+      lat = st_coordinates (st_centroid(geometry))[,2])
+  
+  # Extract the first cluster's climate time series
+  row1 <- gps_2008_spei [1,]
+  
+  # Extract vectors 
+  tmin <- row1$temperature_min_wc[[1]]$value
+  tmax <- row1$temperature_max_wc[[1]]$value
+  prec <- row1$precipitation_wc[[1]]$value
+  dates <- row1$temperature_min_wc[[1]]$datetime
+  lat <- row1$LATNUM
+  
+  # Compute reference evapotranspiration (PET) using modified Hargreaves (Droogers & Allen)
+  pet <- hargreaves(Tmin = tmin, Tmax = tmax, Pre = prec, lat = lat)
+  
+  # Compute wtaer balance
+  wb <- prec - pet
+  
+  # Turn to time series
+  wb_ts <- ts(wb, start = c(year(min(dates)), month(min(dates))), frequency = 12)
+  
+  # Compute SPEI (e.g 3-month scale)
+  spei_obj <- spei(wb_ts, scale = 3)
+  
+  # Turn into tibble
+  spei_tbl <- tibble(
+    datetime = dates, 
+    spei = as.numeric(spei_obj$fitted)
+  )
+  
+  # SPEI sous forme de map
+  gps_2008_spei <- gps_2008_spei %>%
+    mutate(
+      spei_wc = pmap(
+        list(tmin = temperature_min_wc,
+             tmax = temperature_max_wc,
+             prec = precipitation_wc,
+             lat = lat),
+        function(tmin, tmax, prec, lat) {
+          data_tmin <- data.frame(date = tmin$datetime, tmin = tmin$value)
+          data_tmax <- data.frame(date = tmax$datetime, tmax = tmax$value)
+          data_prec <- data.frame(date = prec$datetime, prec = prec$value)
+          
+        # Fusionner
+        data_merged <- reduce(list(data_tmin, data_tmax, data_prec), merge, by = "date")
+
+        # Supprimer les lignes avec NA
+        data_clean <- na.omit(data_merged)
+
+        # Si les données nettoyées sont insuffisantes, retourner des NA
+        if (nrow(data_clean) < 12) {
+          return(tibble(datetime = data_merged$date, spei = NA_real_))
+        }
+
+        # Extraire les colonnes propres
+        tmin_synced <- data_clean$tmin
+        tmax_synced <- data_clean$tmax
+        prec_synced <- data_clean$prec
+        dates_synced <- data_clean$date
+        
+        # calcul PET
+        pet <- hargreaves(
+          Tmin = tmin_synced,
+          Tmax = tmax_synced,
+          Pre = prec_synced,
+          lat = lat
+        )
+        
+        wb <- prec_synced - pet
+        
+        wb_ts <- ts(wb, start = c(year(min(dates_synced)), month(min(dates_synced))), frequency = 12)
+        
+        spei_obj <- spei(wb_ts, scale = 3)
+        
+        # Résultat
+        tibble(datetime = dates_synced, spei = as.numeric(spei_obj$fitted))
+       
+        }
+      )
+    )
+}
+ write_rds(x = gps_2008_spei, file = "Data/output/gps_2008_spei.rds")
+```
+
+# Chargement des données géophysiques des ménages pour 2021

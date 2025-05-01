@@ -3,5 +3,8 @@
 .RData
 .Ruserdata
 
+TODO
 data/*
 old/*
+
+/.quarto/
