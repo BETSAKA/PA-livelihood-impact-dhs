@@ -34,7 +34,7 @@ resources <- list(
 )
 
 get_from_s3_batch <- function(resource) {
- # resource <- "gfw_lossyear"
+ # resource <- "w"
   print(resource)
   root_local <- "data/raw/mapme/"
   root_s3 <- "diffusion/PA-impact-on-deforestation/mapme/"
@@ -64,3 +64,31 @@ get_from_s3_batch <- function(resource) {
 }
 
 map(resources, get_from_s3_batch)
+
+get_from_s3_batch("worldclim_max_temperature")
+
+
+# A function to iterate/vectorize deletion
+delete_on_s3 <- function(obj, to) {
+  aws.s3::delete_object(
+    object = obj,
+    bucket = "projet-betsaka",
+    region = "")
+}
+
+
+batch_delete_s3 <- function(resource, pattern) {
+  root_s3 <- "diffusion/PA-impact-on-deforestation/mapme/"
+  #resource <- "worldclim_precipitation"
+  #pattern = "wc2\\.1_2\\.5"
+  dir_s3 <- paste0(root_s3, resource)
+  my_files_s3 <- get_bucket_df(bucket = "projet-betsaka",
+                               prefix = root_s3,
+                               region = "",
+                               max = Inf) %>%
+    pluck("Key")
+  to_delete <- my_files_s3[str_detect(my_files_s3, pattern)]
+  map(to_delete, delete_on_s3)
+}
+batch_delete_s3(resource = "worldclim_min_temperature",
+                pattern = "wc2\\.1_2\\.5")
