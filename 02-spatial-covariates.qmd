@@ -3,10 +3,22 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
 # Spatial covariates
 
+## Introduction
+
+Ce document vise à charger les données géophysiques des ménages à l'aide du package R mapme.biodiversity (<https://mapme-initiative.github.io/mapme.biodiversity/index.html>) @görgen2022. Ce package va automatiser la récupération de données volumineuses au format raster et leur traitement pour produire une série d'indicateurs appliqués à des polygones.
+
+## Données DHS
+
+Avant chargement des données des clusters GPS, nous définissons les systèmes de coordonnées. Par défaut, les coordonnées GPS sont fournies dans le système de référence géographique WGS 84 (EPSG: 4326). Toutefois, pour effectuer des calculs précis de distances ou de surfaces, nous adoptons le système de projection officiel de Madagascar, qui est le Laborde (EPSG: 29702). On travaille en 4326 puis temporairement reprojetées en 29702 lorsque les opérations métriques sont nécessaires. Après le chargement des données DHS, certains clusters n'ont pas de coordonnées valides (0,0). on les retire pour éviter des erreurs dans les calculs géospatiaux.
+
+On regroupe ensuite les clusters de l'année 1997, 2008 et 2021 dans un seul objet spatial pour faciliter les opérations ultérieures. Puis, on applique un buffer zone de 10 km autour de chaque cluster, qui serviront à extraire les données géophysiques et à analyser les expositions à certaines zones.
 
 ```{r}
+#| fig-cap: "Buffer de 10 km autour des clusters DHS à Madagascar "
+
 if (packageVersion("mapme.biodiversity") < "0.9.4") {
   remotes::install_github("mapme-initiative/mapme.biodiversity")
 }
@@ -49,9 +61,9 @@ tm_shape(buffer_all) +
   tm_facets("DHSYEAR")
 ```
 
-# Chargement des données géophysiques des ménages pour 2008
+# Chargement des données géophysiques des ménages
 
-Nous allons charger les données géophysiques des ménages à partir du package R mapme.biodiversity (<https://mapme-initiative.github.io/mapme.biodiversity/index.html>) pour charger et extraire les données sur:
+Nous allons charger et extraire les données sur les données géophysiques des ménages qui serviront de variables d'appariement et de variables de contrôle pour l'analyse. Ces covariables sont des covariables succeptibles d'influencer le traitement (aires protégées créées à proximité du ménage) et le résultat (wealth index et inégalité des ménages):
 
 -   Le couvert forestier en 2000 (Hansen et al.2013)
 
@@ -62,6 +74,8 @@ Nous allons charger les données géophysiques des ménages à partir du package
 -   L'accessibilité en 2000 (JRC, Uchida et Nelson 2011)
 
 -   Les données worldclim
+
+On définit notre environnement de travail pour automatiser le téléchargement et le stockage des données spatiales à l'aide de mapme.biodiversity, issus de plusieurs sources mondiaux. Nous utilisons la fonction get_resources () pour cela en démarrant un chronomètre avec le package tictoc pour mesurer le temps d'exécution du bloc de code.
 
 ```{r}
 # Définir le chemin relatif pour ton répertoire local
@@ -128,7 +142,7 @@ with_progress({
 })
 toc()
 
-# Maximum temperatures
+# Precipitations
 tic()
 with_progress({
   buffer_all <- buffer_all %>% get_resources(
@@ -138,22 +152,28 @@ with_progress({
 toc()
 ```
 
-
 # Calcul des indicateurs
 
+Nous appliquons calc_indicators() du package pour calculer les indicateurs environnementaux pour chaque buffer zone de 10 km autour des clusters DHS.
 
 ```{r}
-# Créer un plan pour paralléliser les calculs
-plan(sequential)
-plan(multisession, workers = 4)
 
-# Forest cover rate in 2000
+if (file.exists("data/derived/variable_all_cluster.rds")) {
+  variable_all_cluster <- readRDS("data/derived/variable_all_cluster.rds")
+} else {
+  cat("Fichier introuvable, début du traitement...\n")
+  
+  # Créer un plan pour paralléliser les calculs
+  plan(sequential)
+  plan(multisession, workers = 4)
+  
+  # Forest cover rate in 2000
   tic()
   with_progress({
     buffer_all <- buffer_all %>%
       calc_indicators(
-        calc_treecover_area(years = 2000, min_size = 1, min_cover = 35)
-        )
+        calc_treecover_area(years = 2000, min_size = 1, min_cover = 10)
+      )
   })
   toc()   # 548.69 sec
   
@@ -162,7 +182,7 @@ plan(multisession, workers = 4)
   with_progress({
     buffer_all <- buffer_all %>%
       calc_indicators(
-      calc_slope(engine = "extract", stats = "mean")
+        calc_slope(engine = "extract", stats = "mean")
       )
   })
   toc() # 365.87 sec
@@ -172,8 +192,8 @@ plan(multisession, workers = 4)
   with_progress({
     buffer_all <- buffer_all %>%
       calc_indicators(
-     calc_elevation(engine = "extract", stats = "mean")
-     )
+        calc_elevation(engine = "extract", stats = "mean")
+      )
   })
   toc() # 283.51 sec
   
@@ -183,7 +203,7 @@ plan(multisession, workers = 4)
     buffer_all <- buffer_all %>%
       calc_indicators(
         calc_population_count(engine = "extract", stats = "mean")
-        )
+      )
   })
   toc() # 83.55 sec
   
@@ -192,38 +212,70 @@ plan(multisession, workers = 4)
   with_progress({
     buffer_all <- buffer_all %>%
       calc_indicators(
-        calc_traveltime_2000(engine = "extract", stats = "mean"))
+        calc_traveltime_2000(engine = "extract", stats = "mean")
+      )
   })
   toc() # 87.63 sec
- 
+  
+  
+  # Maximum temperatures
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_temperature_max_wc(engine = "extract", stats = "mean")
+      )
+  })
+  toc()
+  
+  # Minimum temperatures
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+         calc_temperature_min_wc( engine = "extract", stats = "mean")
+      )
+  })
+  toc()
+  
+  
+  # Precipitations
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_precipitation_wc(engine = "extract",, stats = "mean")
+      )
+  })
+  toc()
+  
   # Enregistrement des données 
   write_rds(buffer_all, "data/derived/variable_all_cluster.rds")
-  cat("✅ Données enregistrées dans gps_2008_geo.rds avec géométries en POINT et indicateurs ajoutés.\n")
+  cat("✅  Données enregistrées dans variable_all_cluster.rds")
+}
 
 ```
 
-### Calcul de l'indice Standardized Precipitation Evapotranspiration Index (SPEI)
+Nous obtenons un dataframe contenant les variables utilisées dans l'analyse.
 
-L'indice SPEI est calculé à partir d'une référence à long terme (1981-2010) pour quantifier l'excès ou le manque de pluie. Son calcul se fait à partir des données mensuelles de précipitation et de température minimum et maximum provenant de Worlclim, en utilisant une version améliorée de la méthode Hargreaves ( Modified-Hargreaves methods) définie par Droogers et Allen (2002). La variable sera calculée pour un cercle de 10 km de rayon autour de la coordonnée GPS de la grappe.
+# Calcul de l'indice Standardized Precipitation Evapotranspiration Index (SPEI)
+
+L'indice SPEI est calculé à partir des données mensuelles de précipitation et de température minimum et maximum provenant de Worlclim, en utilisant une version améliorée de la méthode Hargreaves ( Modified-Hargreaves methods) définie par Droogers et Allen @2002. La variable sera calculée pour un cercle de 10 km de rayon autour de la coordonnée GPS de la grappe.
 
 ```{r}
 
 library(SPEI)
-library(gander)
-library(ellmer)
-library(devtools)
-library (fastmap)
 
 # Latitude calculation
-if (file.exists("data/output/gps_2008_spei.rds")) {
-  gps_2008_spei <- read_rds("data/output/gps_2008_spei.rds")
+if (file.exists("data/derived/buffer_all_spei.rds")) {
+  buffer_all_spei <- read_rds("data/derived/buffer_all_spei.rds")
 } else {
-  gps_2008_spei <- gps_2008_geo_clean %>% 
+  buffer_all_spei <- buffer_all_spei %>% 
     mutate(
       lat = st_coordinates (st_centroid(geometry))[,2])
   
   # Extract the first cluster's climate time series
-  row1 <- gps_2008_spei [1,]
+  row1 <- buffer_all_spei [1,]
   
   # Extract vectors 
   tmin <- row1$temperature_min_wc[[1]]$value
@@ -231,6 +283,8 @@ if (file.exists("data/output/gps_2008_spei.rds")) {
   prec <- row1$precipitation_wc[[1]]$value
   dates <- row1$temperature_min_wc[[1]]$datetime
   lat <- row1$LATNUM
+  
+  
   
   # Compute reference evapotranspiration (PET) using modified Hargreaves (Droogers & Allen)
   pet <- hargreaves(Tmin = tmin, Tmax = tmax, Pre = prec, lat = lat)
@@ -251,7 +305,7 @@ if (file.exists("data/output/gps_2008_spei.rds")) {
   )
   
   # SPEI sous forme de map
-  gps_2008_spei <- gps_2008_spei %>%
+  buffer_all_spei <- buffer_all_spei %>%
     mutate(
       spei_wc = pmap(
         list(tmin = temperature_min_wc,
@@ -301,7 +355,21 @@ if (file.exists("data/output/gps_2008_spei.rds")) {
       )
     )
 }
- write_rds(x = gps_2008_spei, file = "Data/output/gps_2008_spei.rds")
+
+
+
+
+
+
+
+ write_rds(x = buffer_all_spei, file = "data/derived/buffer_all_spei.rds")
 ```
 
-# Chargement des données géophysiques des ménages pour 2021
+# 
+
+```{r}
+# Enregistrement des données 
+  write_rds(buffer_all, "data/derived/variable_all_cluster.rds")
+  cat("✅  Données  enregistrées  dans  variable_all_cluster.rds")
+
+```
