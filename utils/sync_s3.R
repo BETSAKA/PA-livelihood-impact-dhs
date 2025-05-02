@@ -30,7 +30,8 @@ resources <- list(
   "nasa_srtm",
   "worldclim_max_temperature",
   "worldclim_min_temperature",
-  "worldclim_precipitation"
+  "worldclim_precipitation",
+  "worldpop"
 )
 
 get_from_s3_batch <- function(resource) {

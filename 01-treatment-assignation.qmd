@@ -3,11 +3,12 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
 # Treatment assignation
 
 ## Objectifs
 
-Classer les clusters d'enquêtes DHS (1997, 2008 et 2021) par rapport à leur distance aux aires protégées et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
+Nous classons les clusters d'enquêtes DHS (1997, 2008 et 2021) par rapport à leur distance aux aires protégées et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
 
 -   [Groupe de traitement]{.underline}: clusters à moins de 10 km des aires protégées créées après 2008 dans les zones rurales
 
@@ -15,16 +16,13 @@ Classer les clusters d'enquêtes DHS (1997, 2008 et 2021) par rapport à leur di
 
 -   [Groupe à exclure]{.underline}: clusters à moins de 10 km des aire protégées créées avant 2008 et dans la zone urbaine
 
-
 ## Chargement des coordonnées GPS des clusters d'enquête
 
-gardez les numéros de cluters + année enquête + rural urbain
-
-L'unité d'analyse de cette étude est le ménage. Nous allons charger nos clusters de 2008 et 2021 à partir des données de DHS.
-
-Les coordonnées GPS, comme la plupart des données ouvertes distribuées sur Internet, sont en WGS 84 (codé EPSG : 4326). Pour calculer des distances, on va utiliser le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702). On travaille en 4326 et on transforme uniquement quand on a besoin de calculer des surface ou des distances.
+Avant de charger les données GPS de 1997, 2008, 2021, nous définissons les coordonnées GPS appliquées. Les coordonnées GPS, comme la plupart des données ouvertes distribuées sur Internet, sont en WGS 84 (codé EPSG : 4326). Pour calculer des distances, on va utiliser le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702). On travaille en 4326 et on transforme uniquement quand on a besoin de calculer des surface ou des distances. Après chargement, on fusionne les trois jeux de données en un seul puis le visualiser sur une carte.
 
 ```{r}
+#| fig-cap: "Grappes d'enquêtes DHS par rapport aux AP existantes en 2008"
+
 library(tidyverse) #Manipulation et visualisation des données
 library(sf) #Analyse des données spatiales
 library(tmap) #Analyse cartographique
@@ -51,7 +49,7 @@ bind_rows(gps_1997_initial, gps_2008_initial, gps_2021_initial) |>
 
 ```
 
-On a bien des clusters par année (commenter.)
+Nous obtenons une carte distincte pour chaque année d'enquête. Sur chaque carte figure des points dont chaque point représente un cluster d'enquête, correspondant aux coordonnées GPS fournies par DHS.
 
 ## Vérification des données gps des clusters
 
@@ -111,9 +109,7 @@ sapm %>%
 
 ```
 
-
 ## Sélection des parties terrestres des AP
-
 
 On garde maintenant les éléments de SAPM qui sont contenu à l'intérieur des AP de Madagascar
 
@@ -144,16 +140,15 @@ tm_shape(sapm_terrestre) +
   tm_layout(legend.outside = TRUE)
 ```
 
-::: {.callout-warning}
-
+::: callout-warning
 On a un poblème avec les unités pour les surfaces dans la carte.
-
 :::
 
 ## Création de buffer pour les AP avant et après 2008
 
-On travaille toujours avec les portions terrestres des AP.
+On travaille toujours avec les portions terrestres des AP .
 
+Pour distinguer l'impact des aires protégées selon leur période de création, nous avons spécifié les aires protégées créées avant 2008 et à partir de 2008. On applique ensuite une zone tampon de 10 km autour de chaque groupe d'aires protégées. Chaque groupe a été reprojeté dans le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702).
 
 ```{r}
 # Buffer de 10 km
@@ -211,7 +206,6 @@ tm_add_legend(type = "polygons", fill = c("blue", "darkgreen"), labels = c("avan
   tm_compass(type = "8star", position = c("right", "top")) +
   tm_scalebar(position = c("right", "bottom"))
 ```
-
 
 ```{r}
 # Definition de la fonction
@@ -337,7 +331,6 @@ tm_shape(buffer_10km_from_2008) +
 
 ## Statistiques descriptives
 
-
 ```{r}
 stats_class <- gps_all_class %>%
   st_drop_geometry() %>%
@@ -345,7 +338,6 @@ stats_class <- gps_all_class %>%
   summarise(n = n()) %>%
   pivot_wider(names_from = "Année", values_from = "n")
 ```
-
 
 ## Enregistrement
 
