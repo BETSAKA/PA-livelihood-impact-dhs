@@ -15,7 +15,8 @@ book:
       chapters: 
         - 01-treatment-assignation.qmd
         - 02-spatial-covariates.qmd
-        - 03-wealt-index.qmd
+        - 02bis-spei-calculation.qmd
+        - 03-wealth-index.qmd
         - 04-variable-consolidation.qmd
     - part: "Data analysis"
       chapters:

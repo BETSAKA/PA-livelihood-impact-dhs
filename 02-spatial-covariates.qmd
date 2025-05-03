@@ -17,17 +17,12 @@ Avant chargement des données des clusters GPS, nous définissons les systèmes 
 On regroupe ensuite les clusters de l'année 1997, 2008 et 2021 dans un seul objet spatial pour faciliter les opérations ultérieures. Puis, on applique un buffer zone de 10 km autour de chaque cluster, qui serviront à extraire les données géophysiques et à analyser les expositions à certaines zones.
 
 ```{r}
-<<<<<<< HEAD
+#| fig-cap: "Buffer de 10 km autour des clusters DHS à Madagascar "
+
 # if (packageVersion("mapme.biodiversity") < "0.9.4") {
 #   remotes::install_github("mapme-initiative/mapme.biodiversity")
 # }
-=======
-#| fig-cap: "Buffer de 10 km autour des clusters DHS à Madagascar "
 
-if (packageVersion("mapme.biodiversity") < "0.9.4") {
-  remotes::install_github("mapme-initiative/mapme.biodiversity")
-}
->>>>>>> 21ccef7e3da7335698ccf91bfadc9b123155d500
 
 library(tidyverse) #Manipulation et visualisation des données
 library(sf) #Analyse des données spatiales
@@ -134,7 +129,7 @@ toc()
 tic()
 with_progress({
   buffer_all <- buffer_all %>% get_resources(
-    get_worldclim_max_temperature(years = 1996:2021, resolution = "10m")
+    get_worldclim_max_temperature(years = 1980:2021, resolution = "2.5m")
   )
 })
 toc()
@@ -143,7 +138,7 @@ toc()
 tic()
 with_progress({
   buffer_all <- buffer_all %>% get_resources(
-    get_worldclim_min_temperature(years = 1996:2021, resolution = "10m")
+    get_worldclim_min_temperature(years = 1980:2021, resolution = "2.5m")
   )
 })
 toc()
@@ -152,7 +147,7 @@ toc()
 tic()
 with_progress({
   buffer_all <- buffer_all %>% get_resources(
-    get_worldclim_precipitation(years = 1996:2021, resolution = "10m")
+    get_worldclim_precipitation(years = 1980:2021, resolution = "2.5m")
   )
 })
 toc()
@@ -164,8 +159,8 @@ Nous appliquons calc_indicators() du package pour calculer les indicateurs envir
 
 ```{r}
 
-if (file.exists("data/derived/variable_all_cluster.rds")) {
-  variable_all_cluster <- readRDS("data/derived/variable_all_cluster.rds")
+if (file.exists("data/derived/spatial_covars.rds")) {
+  cat("Le fichier spatial_covars.rds existe déjà")
 } else {
   cat("Fichier introuvable, début du traitement...\n")
   
@@ -256,8 +251,8 @@ if (file.exists("data/derived/variable_all_cluster.rds")) {
   toc()
   
   # Enregistrement des données 
-  write_rds(buffer_all, "data/derived/variable_all_cluster.rds")
-  cat("✅  Données enregistrées dans variable_all_cluster.rds")
+  write_rds(buffer_all, "data/derived/spatial_covars.rds")
+  cat("Données enregistrées dans vspatial covars ds")
 }
 
 ```
