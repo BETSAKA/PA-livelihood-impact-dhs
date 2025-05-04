@@ -12,7 +12,7 @@ Ce document vise à charger les données géophysiques des ménages à l'aide du
 
 ## Données DHS
 
-Avant chargement des données des clusters GPS, nous définissons les systèmes de coordonnées. Par défaut, les coordonnées GPS sont fournies dans le système de référence géographique WGS 84 (EPSG: 4326). Toutefois, pour effectuer des calculs précis de distances ou de surfaces, nous adoptons le système de projection officiel de Madagascar, qui est le Laborde (EPSG: 29702). On travaille en 4326 puis temporairement reprojetées en 29702 lorsque les opérations métriques sont nécessaires. Après le chargement des données DHS, certains clusters n'ont pas de coordonnées valides (0,0). on les retire pour éviter des erreurs dans les calculs géospatiaux.
+Avant le chargement des données des clusters GPS, nous définissons les systèmes de coordonnées. Les coordonnées GPS sont fournies dans le système de référence géographique WGS 84 (EPSG: 4326). Toutefois, pour effectuer des calculs précis de distances ou de surfaces, nous utilisons le système de projection officiel de Madagascar, qui est le Laborde (EPSG: 29702). On travaille en 4326 puis on le transforme en 29702 lorsque les opérations métriques sont nécessaires. Après le chargement des données, certains clusters n'ont pas de coordonnées valides (0,0). On les retire pour éviter des erreurs dans les calculs géospatiaux.
 
 On regroupe ensuite les clusters de l'année 1997, 2008 et 2021 dans un seul objet spatial pour faciliter les opérations ultérieures. Puis, on applique un buffer zone de 10 km autour de chaque cluster, qui serviront à extraire les données géophysiques et à analyser les expositions à certaines zones.
 
@@ -66,17 +66,17 @@ buffer_all <- gps_all %>%
 
 Nous allons charger et extraire les données sur les données géophysiques des ménages qui serviront de variables d'appariement et de variables de contrôle pour l'analyse. Ces covariables sont des covariables succeptibles d'influencer le traitement (aires protégées créées à proximité du ménage) et le résultat (wealth index et inégalité des ménages):
 
--   Le couvert forestier en 2000 (Hansen et al.2013)
+-   Le couvert forestier en 2000 @hansen2013 (Hansen et al.2013)
 
--   La pente et l'altitude (NASA SRTM)
+-   La pente et l'altitude @nasajpl2020 (NASA SRTM)
 
--   La densité de population en 2000 (Worldpop)
+-   La densité de population en 2000 @worldpop2018 (Worldpop)
 
--   L'accessibilité en 2000 (JRC, Uchida et Nelson 2011)
+-   L'accessibilité en 2000 @uchida2011 (JRC, Uchida et Nelson 2011)
 
--   Les données worldclim
+-   Les données worldclim @vicente-serrano2010 (Vicente-Serrano, Beguería, et López-Moreno 2010)
 
-On définit notre environnement de travail pour automatiser le téléchargement et le stockage des données spatiales à l'aide de mapme.biodiversity, issus de plusieurs sources mondiaux. Nous utilisons la fonction get_resources () pour cela en démarrant un chronomètre avec le package tictoc pour mesurer le temps d'exécution du bloc de code.
+On définit notre environnement de travail pour automatiser le téléchargement et le stockage des données spatiales à l'aide de mapme.biodiversity. Nous utilisons la fonction get_resources () pour cela en démarrant un chronomètre avec le package tictoc pour mesurer le temps d'exécution du bloc de code.
 
 ```{r}
 # Définir le chemin relatif pour ton répertoire local
@@ -227,7 +227,7 @@ if (file.exists("data/derived/spatial_covars.rds")) {
         calc_temperature_max_wc(engine = "extract", stats = "mean")
       )
   })
-  toc()
+  toc() # 
   
   # Minimum temperatures
   tic()
@@ -237,7 +237,7 @@ if (file.exists("data/derived/spatial_covars.rds")) {
          calc_temperature_min_wc( engine = "extract", stats = "mean")
       )
   })
-  toc()
+  toc() # 12588.37 sec 
   
   
   # Precipitations
@@ -245,10 +245,10 @@ if (file.exists("data/derived/spatial_covars.rds")) {
   with_progress({
     buffer_all <- buffer_all %>%
       calc_indicators(
-        calc_precipitation_wc(engine = "extract",, stats = "mean")
+        calc_precipitation_wc(engine = "extract", stats = "mean")
       )
   })
-  toc()
+  toc() # 17857.13 sec
   
   # Enregistrement des données 
   write_rds(buffer_all, "data/derived/spatial_covars.rds")
@@ -257,120 +257,4 @@ if (file.exists("data/derived/spatial_covars.rds")) {
 
 ```
 
-Nous obtenons un dataframe contenant les variables utilisées dans l'analyse.
-
-# Calcul de l'indice Standardized Precipitation Evapotranspiration Index (SPEI)
-
-L'indice SPEI est calculé à partir des données mensuelles de précipitation et de température minimum et maximum provenant de Worlclim, en utilisant une version améliorée de la méthode Hargreaves ( Modified-Hargreaves methods) définie par Droogers et Allen @2002. La variable sera calculée pour un cercle de 10 km de rayon autour de la coordonnée GPS de la grappe.
-
-```{r}
-
-library(SPEI)
-
-# Latitude calculation
-if (file.exists("data/derived/buffer_all_spei.rds")) {
-  buffer_all_spei <- read_rds("data/derived/buffer_all_spei.rds")
-} else {
-  buffer_all_spei <- buffer_all_spei %>% 
-    mutate(
-      lat = st_coordinates (st_centroid(geometry))[,2])
-  
-  # Extract the first cluster's climate time series
-  row1 <- buffer_all_spei [1,]
-  
-  # Extract vectors 
-  tmin <- row1$temperature_min_wc[[1]]$value
-  tmax <- row1$temperature_max_wc[[1]]$value
-  prec <- row1$precipitation_wc[[1]]$value
-  dates <- row1$temperature_min_wc[[1]]$datetime
-  lat <- row1$LATNUM
-  
-  
-  
-  # Compute reference evapotranspiration (PET) using modified Hargreaves (Droogers & Allen)
-  pet <- hargreaves(Tmin = tmin, Tmax = tmax, Pre = prec, lat = lat)
-  
-  # Compute wtaer balance
-  wb <- prec - pet
-  
-  # Turn to time series
-  wb_ts <- ts(wb, start = c(year(min(dates)), month(min(dates))), frequency = 12)
-  
-  # Compute SPEI (e.g 3-month scale)
-  spei_obj <- spei(wb_ts, scale = 3)
-  
-  # Turn into tibble
-  spei_tbl <- tibble(
-    datetime = dates, 
-    spei = as.numeric(spei_obj$fitted)
-  )
-  
-  # SPEI sous forme de map
-  buffer_all_spei <- buffer_all_spei %>%
-    mutate(
-      spei_wc = pmap(
-        list(tmin = temperature_min_wc,
-             tmax = temperature_max_wc,
-             prec = precipitation_wc,
-             lat = lat),
-        function(tmin, tmax, prec, lat) {
-          data_tmin <- data.frame(date = tmin$datetime, tmin = tmin$value)
-          data_tmax <- data.frame(date = tmax$datetime, tmax = tmax$value)
-          data_prec <- data.frame(date = prec$datetime, prec = prec$value)
-          
-        # Fusionner
-        data_merged <- reduce(list(data_tmin, data_tmax, data_prec), merge, by = "date")
-
-        # Supprimer les lignes avec NA
-        data_clean <- na.omit(data_merged)
-
-        # Si les données nettoyées sont insuffisantes, retourner des NA
-        if (nrow(data_clean) < 12) {
-          return(tibble(datetime = data_merged$date, spei = NA_real_))
-        }
-
-        # Extraire les colonnes propres
-        tmin_synced <- data_clean$tmin
-        tmax_synced <- data_clean$tmax
-        prec_synced <- data_clean$prec
-        dates_synced <- data_clean$date
-        
-        # calcul PET
-        pet <- hargreaves(
-          Tmin = tmin_synced,
-          Tmax = tmax_synced,
-          Pre = prec_synced,
-          lat = lat
-        )
-        
-        wb <- prec_synced - pet
-        
-        wb_ts <- ts(wb, start = c(year(min(dates_synced)), month(min(dates_synced))), frequency = 12)
-        
-        spei_obj <- spei(wb_ts, scale = 3)
-        
-        # Résultat
-        tibble(datetime = dates_synced, spei = as.numeric(spei_obj$fitted))
-       
-        }
-      )
-    )
-}
-
-
-
-
-
-
-
- write_rds(x = buffer_all_spei, file = "data/derived/buffer_all_spei.rds")
-```
-
-# 
-
-```{r}
-# Enregistrement des données 
-  write_rds(buffer_all, "data/derived/variable_all_cluster.rds")
-  cat("✅  Données  enregistrées  dans  variable_all_cluster.rds")
-
-```
+Nous obtenons un dataframe contenant le couvert forestier en 2000, la pente et l'altitude, la densité de population, l'accessibilité, la température maximale et minimale, ainsi que la précipitation.
