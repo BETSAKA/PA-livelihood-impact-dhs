@@ -12,9 +12,7 @@ Ce document vise à charger les données géophysiques des ménages à l'aide du
 
 ## Données DHS
 
-Avant le chargement des données des clusters GPS, nous définissons les systèmes de coordonnées. Les coordonnées GPS sont fournies dans le système de référence géographique WGS 84 (EPSG: 4326). Toutefois, pour effectuer des calculs précis de distances ou de surfaces, nous utilisons le système de projection officiel de Madagascar, qui est le Laborde (EPSG: 29702). On travaille en 4326 puis on le transforme en 29702 lorsque les opérations métriques sont nécessaires. Après le chargement des données, certains clusters n'ont pas de coordonnées valides (0,0). On les retire pour éviter des erreurs dans les calculs géospatiaux.
-
-On regroupe ensuite les clusters de l'année 1997, 2008 et 2021 dans un seul objet spatial pour faciliter les opérations ultérieures. Puis, on applique un buffer zone de 10 km autour de chaque cluster, qui serviront à extraire les données géophysiques et à analyser les expositions à certaines zones.
+Avant le chargement des données des clusters GPS, nous définissons les systèmes de coordonnées. Les coordonnées GPS sont fournies dans le système de référence géographique WGS 84 (EPSG: 4326). Toutefois, pour effectuer des calculs précis de distances ou de surfaces, nous utilisons le système de projection officiel de Madagascar, qui est le Laborde (EPSG: 29702). On travaille en 4326 puis on le transforme en 29702 lorsque les opérations métriques sont nécessaires. Après le chargement des données, certains clusters n'ont pas de coordonnées valides (0,0). On les retire pour éviter des erreurs dans les calculs géospatiaux. On regroupe ensuite les clusters de l'année 1997, 2008 et 2021 dans un seul objet spatial pour faciliter les opérations ultérieures. Puis, on applique un buffer zone de 10 km autour de chaque cluster, qui serviront à extraire les données géophysiques et à analyser les expositions à certaines zones.
 
 ```{r}
 #| fig-cap: "Buffer de 10 km autour des clusters DHS à Madagascar "
@@ -155,7 +153,7 @@ toc()
 
 # Calcul des indicateurs
 
-Nous appliquons calc_indicators() du package pour calculer les indicateurs environnementaux pour chaque buffer zone de 10 km autour des clusters DHS.
+Nous appliquons la fonction calc_indicators() du package pour calculer les indicateurs environnementaux avec un buffer zone de 10 km autour des clusters.
 
 ```{r}
 
