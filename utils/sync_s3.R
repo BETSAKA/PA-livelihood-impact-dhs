@@ -66,7 +66,7 @@ get_from_s3_batch <- function(resource) {
 
 map(resources, get_from_s3_batch)
 
-get_from_s3_batch("worldclim_max_temperature")
+get_from_s3_batch("worldpop")
 
 
 # A function to iterate/vectorize deletion

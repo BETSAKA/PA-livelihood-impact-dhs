@@ -166,55 +166,6 @@ if (file.exists("data/derived/spatial_covars.rds")) {
   plan(sequential)
   plan(multisession, workers = 4)
   
-  # Forest cover rate in 2000
-  tic()
-  with_progress({
-    buffer_all <- buffer_all %>%
-      calc_indicators(
-        calc_treecover_area(years = 2000, min_size = 1, min_cover = 10)
-      )
-  })
-  toc()   # 548.69 sec
-  
-  # slope
-  tic()
-  with_progress({
-    buffer_all <- buffer_all %>%
-      calc_indicators(
-        calc_slope(engine = "extract", stats = "mean")
-      )
-  })
-  toc() # 365.87 sec
-  
-  # Elevation
-  tic()
-  with_progress({
-    buffer_all <- buffer_all %>%
-      calc_indicators(
-        calc_elevation(engine = "extract", stats = "mean")
-      )
-  })
-  toc() # 283.51 sec
-  
-  # Population density
-  tic()
-  with_progress({
-    buffer_all <- buffer_all %>%
-      calc_indicators(
-        calc_population_count(engine = "extract", stats = "mean")
-      )
-  })
-  toc() # 83.55 sec
-  
-  # Accessibility
-  tic()
-  with_progress({
-    buffer_all <- buffer_all %>%
-      calc_indicators(
-        calc_traveltime_2000(engine = "extract", stats = "mean")
-      )
-  })
-  toc() # 87.63 sec
   
   
   # Maximum temperatures
@@ -225,7 +176,7 @@ if (file.exists("data/derived/spatial_covars.rds")) {
         calc_temperature_max_wc(engine = "extract", stats = "mean")
       )
   })
-  toc() # 
+  toc() # 11984.55 sec elapsed
   
   # Minimum temperatures
   tic()
@@ -235,7 +186,7 @@ if (file.exists("data/derived/spatial_covars.rds")) {
          calc_temperature_min_wc( engine = "extract", stats = "mean")
       )
   })
-  toc() # 12588.37 sec 
+  toc() # 12588.37 sec | 9660.17 sec elapsed 
   
   
   # Precipitations
@@ -246,7 +197,58 @@ if (file.exists("data/derived/spatial_covars.rds")) {
         calc_precipitation_wc(engine = "extract", stats = "mean")
       )
   })
-  toc() # 17857.13 sec
+  toc() # 17857.13 sec | 8883.61 sec elapsed 
+  
+  
+  # Forest cover rate in 2000
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_treecover_area(years = 2000, min_size = 1, min_cover = 10)
+      )
+  })
+  toc()   # 548.69 sec | 2519.61 sec elapsed
+  
+  # slope 
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_slope(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 365.87 sec | 2557.28 sec elapsed    
+  
+  # Elevation
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_elevation(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 283.51 sec | 2672.57 sec elapsed  
+  
+  # Population density
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_population_count(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 83.55 sec | 1877.78 sec elapsed
+  
+  # Accessibility
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_traveltime_2000(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 87.63 sec | 2594.06 sec elapsed   
   
   # Enregistrement des données 
   write_rds(buffer_all, "data/derived/spatial_covars.rds")
