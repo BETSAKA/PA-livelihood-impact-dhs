@@ -10,7 +10,7 @@ editor_options:
 
 Nous classons les clusters d'enquêtes DHS (1997, 2008 et 2021) par rapport à leur distance aux aires protégées et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
 
--   [Groupe de traitement]{.underline}: clusters à moins de 10 km des aires protégées créées après 2008 dans les zones rurales
+-   [Groupe de traitement]{.underline}: clusters à moins de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
 
 -   [Groupe de contrôle]{.underline}: clusters à plus de 10 km des aires protégées dans les zones rurales
 
@@ -18,7 +18,7 @@ Nous classons les clusters d'enquêtes DHS (1997, 2008 et 2021) par rapport à l
 
 ## Chargement des coordonnées GPS des clusters d'enquête
 
-Avant de charger les données GPS de 1997, 2008, 2021, nous définissons les coordonnées GPS appliquées. Les coordonnées GPS, comme la plupart des données ouvertes distribuées sur Internet, sont en WGS 84 (codé EPSG : 4326). Pour calculer des distances, on va utiliser le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702). On travaille en 4326 et on transforme uniquement quand on a besoin de calculer des surface ou des distances. Après chargement, on fusionne les trois jeux de données en un seul puis le visualiser sur une carte.
+Avant de charger les données GPS de 1997, 2008, 2021, nous précisons les coordonnées GPS utilisées. Les coordonnées GPS, comme la plupart des données ouvertes distribuées sur Internet, sont en WGS 84 (codé EPSG : 4326). Nos données sont aussi traitées en 4326. Toutefois, uniquement pour le calcul des surfaces ou des distances, on va utiliser le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702). Une fois les données chargées, on fusionne les trois jeux de données en un seul puis visualisés sur une carte.
 
 ```{r}
 #| fig-cap: "Grappes d'enquêtes DHS par rapport aux AP existantes en 2008"
@@ -29,6 +29,7 @@ library(tmap) #Analyse cartographique
 library(gt) #Mise en forme des tableaux 
 library(geodata) # Pour avoir le contour de Madagascar
 library(writexl) # Pour faire une sortie sous Excel
+library(units)
 
 # Systèmes de coordonnées de référence 
 standard_crs <- 4326
@@ -46,10 +47,11 @@ bind_rows(gps_1997_initial, gps_2008_initial, gps_2021_initial) |>
   tm_shape() + 
   tm_dots() +
   tm_facets("DHSYEAR")
+  
 
 ```
 
-Nous obtenons une carte distincte pour chaque année d'enquête. Sur chaque carte figure des points dont chaque point représente un cluster d'enquête, correspondant aux coordonnées GPS fournies par DHS.
+Nous obtenons une carte distincte pour chaque année d'enquête. Sur chaque carte figure des points, dans laquelle chaque point représente un cluster d'enquête, correspondant aux coordonnées GPS fournies par DHS.
 
 ## Vérification des données gps des clusters
 
@@ -71,11 +73,13 @@ Les coordonnées GPS de 9 clusters de l'enquête 2008 ont été perdus. Il en ma
 
 ## Chargement des données AP
 
-Les données utilisées sont les données de SGAP (SAPM).
+Les données utilisées sont les données du Système des Aires Protégées à Madgascar (SAPM) obtenues auprès du Service de la Gouvernance des Aires Protégées (SGAP) du Ministère de l'Environnement et de Développement Durable de Madagascar (MEDD). La vérification des dates de création des aires protégées est actuellement en cours. En attendant, nous utilisons la version officielle de 2017, sur laquelle on a corrigé des anomalies topologiques.
 
-On est en cours de vérification pour les dates de création des AP. Pour l'instant on utilise la version officielle de 2017, sur laquelle on a corrigé des anomalies topologiques.
+Les données de SAPM sont codées en EPSG 9001, que l'on transforme en 4326 pour uniformiser les coordonnées GPS que nous utilisons. Nous le visualisons par la suite à travers une carte.
 
 ```{r}
+#| fig-cap: "Aires protégées de Madagascar"
+
 # Load SAPM data
 sapm <- st_read("data/raw/sapm/SAPM_2017_corrected.shp") |> # en EPSG 9001
   st_transform(standard_crs) %>%
@@ -111,9 +115,12 @@ sapm %>%
 
 ## Sélection des parties terrestres des AP
 
-On garde maintenant les éléments de SAPM qui sont contenu à l'intérieur des AP de Madagascar
+Nous commençons par charger les limites administratives nationales de Madagascar, dont on attribue un système de coordonnées 4326. Ces limites sont ensuite croisées avec les aires protégées de SAPM pour extraire uniquement les zones terrestres situées à l'intérieur du pays. Après la transformation au coordonnées de Laborde (29702), nous calculons la superficie de chaque aire protégée terrestre, et visualiser le tout sur une carte.
+
+On garde que les éléments de SAPM qui sont contenu à l'intérieur des aires protégées de Madagascar.
 
 ```{r}
+#| fig-cap: "Aires protégées terrestres de Madagascar"
 
 # Load boundary
 contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
@@ -125,7 +132,7 @@ sapm_terrestre <- sapm %>%
   st_intersection(contour_mada)%>%
   st_make_valid() %>%
   st_transform(mdg_crs) %>%
-  mutate(`HECTARES_TERR` = st_area(.)) %>%
+  mutate(`HECTARES_TERR` = as.numeric(st_area(.)) / 10000) %>%
   st_transform(standard_crs)
 
 tm_shape(contour_mada) +
@@ -136,7 +143,7 @@ tm_shape(sapm_terrestre) +
               popup.vars = c("Superficie terrestre (ha)" = "HECTARES_TERR")) +
   tm_scalebar(position = c("left", "bottom")) + 
   tmap_options(check_and_fix = TRUE) +
-  tm_title("Aires protégées de Madagascar") +
+  tm_title("Aires protégées terrestres de Madagascar") +
   tm_layout(legend.outside = TRUE)
 ```
 
@@ -146,11 +153,13 @@ On a un poblème avec les unités pour les surfaces dans la carte.
 
 ## Création de buffer pour les AP avant et après 2008
 
-On travaille toujours avec les portions terrestres des AP .
+On travaille toujours avec les portions terrestres des AP.
 
-Pour distinguer l'impact des aires protégées selon leur période de création, nous avons spécifié les aires protégées créées avant 2008 et à partir de 2008. On applique ensuite une zone tampon de 10 km autour de chaque groupe d'aires protégées. Chaque groupe a été reprojeté dans le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702).
+Pour analyser l'impact des aires protégées selon leur période de création, on spécifie les aires protégées créées avant 2008 et à partir de 2008. On applique ensuite une zone tampon de 10 km autour de chaque groupe d'aires protégées. Chaque groupe a été reprojeté dans le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702) pour les calculs de distances. Nous créons ensuite une carte pour visualiser les aires protégées et leurs zones d'influence.
 
 ```{r}
+#| fig-cap: "Aires protégées du SAPM par période de création"
+
 # Buffer de 10 km
 buffer_dist <- 10000 
 
@@ -207,6 +216,8 @@ tm_add_legend(type = "polygons", fill = c("blue", "darkgreen"), labels = c("avan
   tm_scalebar(position = c("right", "bottom"))
 ```
 
+On agrège les données pour chaque groupe, en calculant le nombre total d'aires protégées et leur superficie totale, que l'on présente sous forme de tableau.
+
 ```{r}
 # Definition de la fonction
 pivot_year <- 2008
@@ -247,8 +258,10 @@ gt_table
 
 ## Classification des clusters
 
+Les grappes d'enquête sont classées selon leur proximité aux aires protégées créées avant 2008 et à partir de 2008. A l'aide de la fonction classify_clusters(), nous catégorisons chaque cluster en trois groupes: traitement, contrôle ou exclu, selon leur localisation par rapport aux aires protégées et leur statut urbain ou rural. Cette classification est appliquée aux clusters de 1997, 2008 et 2021, puis les résultats sont fusionnés. Nous créons ensuite une carte par année d'étude pour visualiser la localisation des aires protégées et la répartition spatiale des clusters selon leur groupe.
+
 ```{r}
-#| fig-cap: "Grappes d'enquêtes DHS par rapport aux AP existantes en 2008"
+#| fig-cap: "Grappes d'enquêtes DHS par rapport aux aires protégées existantes"
 
 classify_clusters <- function(cluster_gps, buffer_before, buffer_from,
                               label_treatment = "Treatment",
@@ -303,7 +316,7 @@ tm_shape(buffer_10km_from_2008) +
   tm_polygons(fill = "green", 
               fill_alpha = 0.5,
               col = "black", 
-              fill.legend = tm_legend(title = "après 2008", position = tm_pos_in("right", "top"))) +
+              fill.legend = tm_legend(title = "à partir de 2008", position = tm_pos_in("right", "top"))) +
   tm_shape(sapm_before_2008) +
   tm_polygons(fill = "darkgreen", 
               fill_alpha = 0.5, 
@@ -320,7 +333,7 @@ tm_shape(buffer_10km_from_2008) +
   tm_facets("DHSYEAR") +
   tm_add_legend(type = "polygons", 
                 fill = c("green", "darkgreen"), 
-                labels = c("après 2008", "avant 2008")) +
+                labels = c("à partir de 2008", "avant 2008")) +
   tm_layout(
     legend.outside = TRUE, 
     legend.position = c("left", "top"),
@@ -331,6 +344,8 @@ tm_shape(buffer_10km_from_2008) +
 
 ## Statistiques descriptives
 
+Nous produisons un tableau récapitulatif du nombre de grappes d'enquête classées dans chaque groupe pour les années 1997, 2008 et 2021. Afin de faciliter le comptage et la transformation en tableau, nous supprimons les données spatiales pour ne conserver que les informations attributaires (année d'enquête "DHSYEAR" et groupe de clasification "groupe").
+
 ```{r}
 stats_class <- gps_all_class %>%
   st_drop_geometry() %>%
@@ -340,6 +355,8 @@ stats_class <- gps_all_class %>%
 ```
 
 ## Enregistrement
+
+Les informations essentielles sur la classification des grappes d'enquête sont extraites et enregistrées dans un fichier csv en vue d'une utilisation ultérieure. Seules les informations nécessaires à l'identification des grappes et à leur groupe de traitement sont conservées, excluant les données géographiques et les variables non pertinentes.
 
 ```{r}
 all_class <- gps_all_class %>%
