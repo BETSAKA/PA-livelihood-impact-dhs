@@ -132,5 +132,7 @@ spatial_covars_spei <- spatial_covars %>%
     )
   )
 
+# Enregistrement
+spatial_covars_spei <- as.data.frame(spatial_covars_spei)
 write_rds(x = spatial_covars_spei, file = "data/derived/spatial_covars_spei.rds")
 ```
