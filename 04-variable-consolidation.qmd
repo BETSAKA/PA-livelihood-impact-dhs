@@ -10,7 +10,7 @@ editor_options:
 
 L'objectif de ce document est de combiner les clusters de 1997, 2008 et 2021 avec leurs caractéristiques géophysiques et leur variable de résultat respectif dans un seul dataframe.
 
-## Méthodes 
+## Méthodes
 
 Les fichiers contenant les données du Household Recode (HR) pour les années 1997, 2008 et 2021, fournis par DHS, sont d'abord chargés. Pour chaque année, on sélectionne que les variables nécessaires pour l'analyse, à savoir les identifiants des ménages (hv001 et hv002) et les wealth index. On fusionne ces données avec les données géophysiques des ménages, permettant ainsi de constituer un seul dataframe consolidé pour chaque année.
 
@@ -108,7 +108,7 @@ hr_2021_selected <- hr_2021_selected %>%
 
 ```
 
-## Registration 
+## Registration
 
 Nous enregistrons les données combinées dans un fichier rds pour une usage ultérieure.
 
