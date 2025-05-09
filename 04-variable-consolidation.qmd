@@ -48,14 +48,49 @@ hr_1997_selected <- hr_1997 %>%
   )
 
 # Merge dataframe with wealth index 
-merged_1997 <- hr_1997_selected %>%
+hr_1997_selected <- hr_1997_selected %>%
   left_join(hh_1997_hv271_hv271a, by = c("hv001", "hv002"))
 
-hr_1997_selected <- merged_1997 %>%
+hr_1997_selected <- hr_1997_selected %>%
   left_join(
     all_covars %>% filter(DHSYEAR == 1997),
     by = c("hv001" = "DHSCLUST")
   )
+
+# Imbriquer les données 
+vars_to_nest <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000","spei_wc")
+
+df_long_1997 <- hr_1997_selected %>% 
+  pivot_longer(
+    cols = all_of(vars_to_nest), 
+    names_to = "indicator", 
+    values_to = "data") %>% 
+  unnest(data) %>%
+  filter(indicator != "spei_wc" | lubridate::year(datetime) %in% 1995:1997) %>%
+  mutate(year_indicator = paste0(indicator, "_", year(datetime)))
+
+df_wide_1997 <- df_long_1997 %>%
+  pivot_wider(
+    names_from = year_indicator, 
+    values_from = value, 
+    names_glue = "{year_indicator}"
+  )  %>%
+  select(-URBAN_RURA) %>% 
+  group_by(hv001, hv002) %>% 
+  summarise(across(everything(), ~mean(., na.rm = TRUE)), .groups = "drop")
+
+
+# Joindre avec le dataframe de base 
+df_base_1997 <- hr_1997_selected %>% 
+  select(-all_of(vars_to_nest)) %>%
+  distinct(hv001, hv002, .keep_all = TRUE)
+
+hr_1997_final <- df_base_1997 %>%
+  left_join(df_wide_1997, by = c("hv001", "hv002", "hv219", "hv220", "hv271", "hv271a", "DHSYEAR"))
+
+hr_1997_final <- hr_1997_final %>% 
+  dplyr:: select(-indicator, -datetime, -variable, -unit) 
+
 ```
 
 ## Final dataframe 2008
@@ -83,6 +118,41 @@ hr_2008_selected <- merged_2008 %>%
     all_covars %>% filter(DHSYEAR == 2008),
     by = c("hv001" = "DHSCLUST")
   )
+
+# Imbriquer les données 
+vars_to_nest <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000","spei_wc")
+
+df_long_2008 <- hr_2008_selected %>% 
+  pivot_longer(
+    cols = all_of(vars_to_nest), 
+    names_to = "indicator", 
+    values_to = "data") %>% 
+  unnest(data) %>%
+  filter(indicator != "spei_wc" | lubridate::year(datetime) %in% 2006:2008) %>%
+  mutate(year_indicator = paste0(indicator, "_", year(datetime)))
+
+df_wide_2008 <- df_long_2008 %>%
+  pivot_wider(
+    names_from = year_indicator, 
+    values_from = value, 
+    names_glue = "{year_indicator}"
+  )  %>%
+  select(-URBAN_RURA) %>% 
+  group_by(hv001, hv002) %>% 
+  summarise(across(everything(), ~mean(., na.rm = TRUE)), .groups = "drop")
+
+
+# Joindre avec le dataframe de base 
+df_base_2008 <- hr_2008_selected %>% 
+  select(-all_of(vars_to_nest)) %>%
+  distinct(hv001, hv002, .keep_all = TRUE)
+
+hr_2008_final <- df_base_2008 %>%
+  left_join(df_wide_2008, by = c("hv001", "hv002", "hv219", "hv220", "hv271", "hv271a", "DHSYEAR"))
+
+hr_2008_final <- hr_2008_final %>% 
+  dplyr:: select(-indicator, -datetime, -variable, -unit) 
+
 ```
 
 ## Consolidated Dataset 2021
@@ -105,6 +175,39 @@ hr_2021_selected <- hr_2021_selected %>%
     all_covars %>% filter(DHSYEAR == 2021),
     by = c("hv001" = "DHSCLUST")
   )
+# Imbriquer les données 
+vars_to_nest <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000","spei_wc")
+
+df_long_2021 <- hr_2021_selected %>% 
+  pivot_longer(
+    cols = all_of(vars_to_nest), 
+    names_to = "indicator", 
+    values_to = "data") %>% 
+  unnest(data) %>%
+  filter(indicator != "spei_wc" | lubridate::year(datetime) %in% 2019:2021) %>%
+  mutate(year_indicator = paste0(indicator, "_", year(datetime)))
+
+df_wide_2021 <- df_long_2021 %>%
+  pivot_wider(
+    names_from = year_indicator, 
+    values_from = value, 
+    names_glue = "{year_indicator}"
+  )  %>%
+  select(-URBAN_RURA) %>% 
+  group_by(hv001, hv002) %>% 
+  summarise(across(everything(), ~mean(., na.rm = TRUE)), .groups = "drop")
+
+
+# Joindre avec le dataframe de base 
+df_base_2021 <- hr_2021_selected %>% 
+  select(-all_of(vars_to_nest)) %>%
+  distinct(hv001, hv002, .keep_all = TRUE)
+
+hr_2021_final <- df_base_2021 %>%
+  left_join(df_wide_2021, by = c("hv001", "hv002", "hv219", "hv220", "hv271", "hv271a", "DHSYEAR"))
+
+hr_2021_final <- hr_2021_final %>% 
+  dplyr:: select(-indicator, -datetime, -variable, -unit) 
 
 ```
 
@@ -114,6 +217,7 @@ Nous enregistrons les données combinées dans un fichier rds pour une usage ult
 
 ```{r}
 
+# Les données combinées contenant des colonnes avec des dataframes 
 write_rds(hr_1997_selected, "data/derived/hr_1997_selected.rds")
   cat("Données enregistrées") # 1997
   
@@ -123,4 +227,13 @@ write_rds(hr_2008_selected, "data/derived/hr_2008_selected.rds")
 write_rds(hr_2021_selected, "data/derived/hr_2021_selected.rds")
   cat("Données enregistrées") # 2021
 
+# Données finales 
+write_rds(hr_1997_final, "data/derived/hr_1997_final.rds")
+  cat("Données enregistrées") # 1997
+  
+write_rds(hr_2008_final, "data/derived/hr_2008_final.rds")
+  cat("Données enregistrées") # 2008
+  
+write_rds(hr_2021_final , "data/derived/hr_2021_final.rds")
+  cat("Données enregistrées") # 2021  
 ```
