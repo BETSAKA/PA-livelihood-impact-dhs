@@ -344,7 +344,7 @@ tm_shape(buffer_10km_from_2008) +
 
 ## Statistiques descriptives
 
-Nous produisons un tableau récapitulatif du nombre de grappes d'enquête classées dans chaque groupe pour les années 1997, 2008 et 2021. Afin de faciliter le comptage et la transformation en tableau, nous supprimons les données spatiales pour ne conserver que les informations attributaires (année d'enquête "DHSYEAR" et groupe de clasification "groupe").
+Nous produisons un tableau récapitulatif du nombre de grappes d'enquête classées dans chaque groupe pour les années 1997, 2008 et 2021. Afin de faciliter le comptage et la transformation en tableau, nous supprimons les données spatiales pour ne conserver que les informations attributaires (année d'enquête "DHSYEAR" et groupe de classification "groupe").
 
 ```{r}
 stats_class <- gps_all_class %>%
