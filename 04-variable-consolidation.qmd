@@ -6,14 +6,17 @@ editor_options:
 
 # Consolidation
 
-## Objectif 
+## Objectif
 
-L'objectif de ce document est de combiner les clusters de 1997, 2008 et 2021 avec leurs caractéristiques géophysiques et en ajoutant la variable de résultat dans le dataframe
+L'objectif de ce document est de combiner les clusters de 1997, 2008 et 2021 avec leurs caractéristiques géophysiques et leur variable de résultat respectif dans un seul dataframe.
+
+## Méthodes 
+
+Les fichiers contenant les données du Household Recode (HR) pour les années 1997, 2008 et 2021, fournis par DHS, sont d'abord chargés. Pour chaque année, on sélectionne que les variables nécessaires pour l'analyse, à savoir les identifiants des ménages (hv001 et hv002) et les wealth index. On fusionne ces données avec les données géophysiques des ménages, permettant ainsi de constituer un seul dataframe consolidé pour chaque année.
 
 ## Sélection des variables nécessaires
 
 ```{r}
-
 library(tidyverse)
 library(sf)
 library(haven)
@@ -24,25 +27,13 @@ spatial_covars_spei <- readRDS("data/derived/spatial_covars_spei.rds")
 # Sélectionner les variables nécessaires dans les données géophysiques des ménages 
 all_covars <- spatial_covars_spei %>%
   select(DHSYEAR, DHSCLUST, URBAN_RURA, treecover_area, slope, elevation, population_count, traveltime_2000, spei_wc)
-
-# Transformation spei_wc en format "wider"
-all_covars <- all_covars %>%
-  mutate(
-    spei_wc = lapply(spei_wc, function(df){
-      df %>%
-        mutate(
-          datetime = as.Date(paste0(year, "-01-01")),
-          variable = "spei_scale12_mean",
-          unit = "annual", 
-          value = spei_mean 
-        ) %>%
-        select(datetime, variable, unit, value, everything()) %>%
-        select(-year, -spei_mean)
-    })
-  )
 ```
 
-## Final dataframe 1997 
+Nous obtenons un tableau contenant que 9 variables dont l'identifiant de nos clusters et les variables utilisées dans l'analyse.
+
+## Final dataframe 1997
+
+Nous avons sélectionné dans le HR de 1997 les identifiants des clusters, puis l'avons fusionné avec le fichier contenant les wealth index (hv217 et hv271a), ainsi que les données géophysiques des ménages. Nous obtenons un dataframe composé de 12 variables.
 
 ```{r}
 
@@ -50,13 +41,13 @@ all_covars <- all_covars %>%
 hh_1997_hv271_hv271a <- read_rds("data/derived/hh_1997_hv271_hv271a.rds") # wealth index factor et wealth index factor rural 1997
 hr_1997 <- read_dta("data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA")
 
-# Sélection des variables nécessaires dans hr_1997
+# Variable selection in hr_2008
 hr_1997_selected <- hr_1997 %>%
   dplyr:: select(
-    hv001, hv002, 
+    hv001, hv002
   )
 
-# Fusion de hr_1997_selected avec le wealth index 
+# Merge dataframe with wealth index 
 merged_1997 <- hr_1997_selected %>%
   left_join(hh_1997_hv271_hv271a, by = c("hv001", "hv002"))
 
@@ -69,19 +60,21 @@ hr_1997_selected <- merged_1997 %>%
 
 ## Final dataframe 2008
 
+Nous avons sélectionné dans le HR de 2008 les identifiants des clusters et le wealth index factor, puis le fusionné avec le fichier contenant le wealth index factor rural (hv271a) et les données géophysiques des ménages. Nous obtenons un dataframe composé de 12 variables pour 2008.
+
 ```{r}
 
 # Load data 
 hh_2008_hv271a <- read_rds("data/derived/hh_2008_hv271a.rds") # wealth index factor rural 2008
 hr_2008 <- read_dta("data/raw/dhs/DHS_2008/MDHR51DT/MDHR51FL.DTA")
 
-# Sélection des variables dans hr_2008
+# Variable selection in hr_2008 
 hr_2008_selected <- hr_2008 %>%
   dplyr:: select(
     hv001, hv002, hv271
   )
 
-# Fusion du dataframe avec les wealth index 
+# Merge dataframe with wealth index
 merged_2008 <- hr_2008_selected %>%
   left_join(hh_2008_hv271a, by = c("hv001", "hv002"))
   
@@ -92,14 +85,16 @@ hr_2008_selected <- merged_2008 %>%
   )
 ```
 
-## Final dataframe 2021 
+## Consolidated Dataset 2021
+
+Nous avons sélectionné les identifiants des ménages et les wealth index. Puis, nous l'avons fusionné avec le dataframe contenant les données géophysiques des ménages. Aucune fusion supplémentaire n'est nécessaire, car les informations relatives au wealth index sont déjà présentes dans le fichier household recode fourni par DHS pour l'année 2021 .
 
 ```{r}
 
 # Load data 
 hr_2021 <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA")
 
-# Sélectionner les varaibles nécessaires dans 2021
+# Select the variables required in 2021
 hr_2021_selected <- hr_2021 %>%
   dplyr:: select(
     hv001, hv002, hv271, hv271a
@@ -110,5 +105,22 @@ hr_2021_selected <- hr_2021_selected %>%
     all_covars %>% filter(DHSYEAR == 2021),
     by = c("hv001" = "DHSCLUST")
   )
+
+```
+
+## Registration 
+
+Nous enregistrons les données combinées dans un fichier rds pour une usage ultérieure.
+
+```{r}
+
+write_rds(hr_1997_selected, "data/derived/hr_1997_selected.rds")
+  cat("Données enregistrées") # 1997
+  
+write_rds(hr_2008_selected, "data/derived/hr_2008_selected.rds")
+  cat("Données enregistrées") # 2008
+  
+write_rds(hr_2021_selected, "data/derived/hr_2021_selected.rds")
+  cat("Données enregistrées") # 2021
 
 ```
