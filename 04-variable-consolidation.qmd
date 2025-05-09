@@ -6,62 +6,109 @@ editor_options:
 
 # Consolidation
 
+## Objectif 
+
 L'objectif de ce document est de combiner les clusters de 1997, 2008 et 2021 avec leurs caractéristiques géophysiques et en ajoutant la variable de résultat dans le dataframe
+
+## Sélection des variables nécessaires
 
 ```{r}
 
-library(dplyr)
-library(readr)
+library(tidyverse)
 library(sf)
 library(haven)
 
 # Load data 
-spatial_covars_spei <- readRDS("data/derived/spatial_covars_spei.rds") # Données geophysiques des ménages 
-hh_1997_hv271_hv271a <- read_rds("data/derived/hh_1997_hv271_hv271a.rds") # wealth index factor et wealth index factor rural 1997
-hr_1997 <- read_dta("data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA")
-hh_2008_hv271a <- read_rds("data/derived/hh_2008_hv271a.rds") # wealth index factor rural 2008
-hr_2008 <- read_dta("data/raw/dhs/DHS_2008/MDHR51DT/MDHR51FL.DTA")
-hr_2021 <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA")
+spatial_covars_spei <- readRDS("data/derived/spatial_covars_spei.rds") 
 
-# Ajout des wealth index avec les données physiques des ménages
-# 1997
-merged_1997 <- spatial_covars_spei %>%
-  filter(DHSYEAR == 1997)
+# Sélectionner les variables nécessaires dans les données géophysiques des ménages 
+all_covars <- spatial_covars_spei %>%
+  select(DHSYEAR, DHSCLUST, URBAN_RURA, treecover_area, slope, elevation, population_count, traveltime_2000, spei_wc)
 
-merged_1997 <- hh_1997_hv271_hv271a %>% 
-  left_join(merged_1997, by = c("hv001" = "DHSCLUST")) 
-
-# 2008
-hr_2008_selected <- hr_2008 %>%
-  dplyr:: select(
-    hv001, hv025,hv271
+# Transformation spei_wc en format "wider"
+all_covars <- all_covars %>%
+  mutate(
+    spei_wc = lapply(spei_wc, function(df){
+      df %>%
+        mutate(
+          datetime = as.Date(paste0(year, "-01-01")),
+          variable = "spei_scale12_mean",
+          unit = "annual", 
+          value = spei_mean 
+        ) %>%
+        select(datetime, variable, unit, value, everything()) %>%
+        select(-year, -spei_mean)
+    })
   )
-
-merged_2008 <- spatial_covars_spei %>%
-  filter(DHSYEAR == 2008)
-  
-merged_2008 <- hh_2008_hv271a %>%
-  left_join(merged_2008, by = c("hv001" = "DHSCLUST"))
-
-# 2021
-hr_2021_selected <- hr_2021 %>%
-  dplyr:: select(
-    hv001, hv271, hv271a
-  )
-
-merged_2021 <- spatial_covars_spei %>%
-  filter(DHSYEAR == 2021)
-
-merged_2021 <- hr_2021_selected %>%
-  left_join(merged_2021, by = c("hv001" = "DHSCLUST")) 
-
-# Combiner les résultats 
-merged_all <- bind_rows(
-  merged_1997, 
-  merged_2008,
-  merged_2021
-)
-
 ```
 
-## 
+## Final dataframe 1997 
+
+```{r}
+
+# Load data 1997
+hh_1997_hv271_hv271a <- read_rds("data/derived/hh_1997_hv271_hv271a.rds") # wealth index factor et wealth index factor rural 1997
+hr_1997 <- read_dta("data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA")
+
+# Sélection des variables nécessaires dans hr_1997
+hr_1997_selected <- hr_1997 %>%
+  dplyr:: select(
+    hv001, hv002, 
+  )
+
+# Fusion de hr_1997_selected avec le wealth index 
+merged_1997 <- hr_1997_selected %>%
+  left_join(hh_1997_hv271_hv271a, by = c("hv001", "hv002"))
+
+hr_1997_selected <- merged_1997 %>%
+  left_join(
+    all_covars %>% filter(DHSYEAR == 1997),
+    by = c("hv001" = "DHSCLUST")
+  )
+```
+
+## Final dataframe 2008
+
+```{r}
+
+# Load data 
+hh_2008_hv271a <- read_rds("data/derived/hh_2008_hv271a.rds") # wealth index factor rural 2008
+hr_2008 <- read_dta("data/raw/dhs/DHS_2008/MDHR51DT/MDHR51FL.DTA")
+
+# Sélection des variables dans hr_2008
+hr_2008_selected <- hr_2008 %>%
+  dplyr:: select(
+    hv001, hv002, hv271
+  )
+
+# Fusion du dataframe avec les wealth index 
+merged_2008 <- hr_2008_selected %>%
+  left_join(hh_2008_hv271a, by = c("hv001", "hv002"))
+  
+hr_2008_selected <- merged_2008 %>% 
+  left_join(
+    all_covars %>% filter(DHSYEAR == 2008),
+    by = c("hv001" = "DHSCLUST")
+  )
+```
+
+## Final dataframe 2021 
+
+```{r}
+
+# Load data 
+hr_2021 <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA")
+
+# Sélectionner les varaibles nécessaires dans 2021
+hr_2021_selected <- hr_2021 %>%
+  dplyr:: select(
+    hv001, hv002, hv271, hv271a
+  )
+
+hr_2021_selected <- hr_2021_selected %>%
+  left_join(
+    all_covars %>% filter(DHSYEAR == 2021),
+    by = c("hv001" = "DHSCLUST")
+  )
+
+```
