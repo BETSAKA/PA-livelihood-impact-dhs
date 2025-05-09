@@ -186,7 +186,7 @@ ggplot(spei_df, aes(x = year, y = spei_mean, group = DHSCLUST)) +
 
 Chaque ligne bleue correspond à un groupe de ménages différent. On constate que ces lignes ne se superposent pas parfaitement, ce qui suggère que les conditions d'humidité varient d'une région à l'autre. Un indice SPEI positif indique des périodes plus humides, tandis qu'un indice SPEI négatif correspond à des périodes plus sèches. Cela montre que, même si les ménages sont regroupés, ils n'ont pas vécu les mêmes conditions climatiques. On observe néanmoins des baisses significatives de l'indice SPEI, notamment des épisodes de sécheresse très sévère en 1992 et entre 2017 et 2020.
 
-## Transformation de la colonne spei_wc en format wide 
+## Transformation de la colonne spei_wc en format wide
 
 ```{r}
 
