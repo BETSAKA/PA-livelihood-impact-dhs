@@ -33,7 +33,7 @@ Nous obtenons un tableau contenant que 9 variables dont l'identifiant de nos clu
 
 ## Final dataframe 1997
 
-Nous avons sélectionné dans le HR de 1997 les identifiants des clusters, puis l'avons fusionné avec le fichier contenant les wealth index (hv217 et hv271a), ainsi que les données géophysiques des ménages. Nous obtenons un dataframe composé de 12 variables.
+Nous avons sélectionné dans le HR de 1997 les identifiants des clusters et l'âge et le sexe du chef des ménages, puis l'avons fusionné avec le fichier contenant les wealth index (hv217 et hv271a), ainsi que les données géophysiques des ménages. Nous obtenons un dataframe composé de 14 variables.
 
 ```{r}
 
@@ -44,7 +44,7 @@ hr_1997 <- read_dta("data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA")
 # Variable selection in hr_2008
 hr_1997_selected <- hr_1997 %>%
   dplyr:: select(
-    hv001, hv002
+    hv001, hv002,hv219, hv220
   )
 
 # Merge dataframe with wealth index 
@@ -60,7 +60,7 @@ hr_1997_selected <- merged_1997 %>%
 
 ## Final dataframe 2008
 
-Nous avons sélectionné dans le HR de 2008 les identifiants des clusters et le wealth index factor, puis le fusionné avec le fichier contenant le wealth index factor rural (hv271a) et les données géophysiques des ménages. Nous obtenons un dataframe composé de 12 variables pour 2008.
+Nous avons sélectionné dans le HR de 2008 les identifiants des clusters, l'âge et le sexe du chef du ménage et le wealth index factor, puis le fusionné avec le fichier contenant le wealth index factor rural (hv271a) et les données géophysiques des ménages. Nous obtenons un dataframe composé de 14 variables pour 2008.
 
 ```{r}
 
@@ -71,7 +71,7 @@ hr_2008 <- read_dta("data/raw/dhs/DHS_2008/MDHR51DT/MDHR51FL.DTA")
 # Variable selection in hr_2008 
 hr_2008_selected <- hr_2008 %>%
   dplyr:: select(
-    hv001, hv002, hv271
+    hv001, hv002, hv219, hv220, hv271
   )
 
 # Merge dataframe with wealth index
@@ -87,7 +87,7 @@ hr_2008_selected <- merged_2008 %>%
 
 ## Consolidated Dataset 2021
 
-Nous avons sélectionné les identifiants des ménages et les wealth index. Puis, nous l'avons fusionné avec le dataframe contenant les données géophysiques des ménages. Aucune fusion supplémentaire n'est nécessaire, car les informations relatives au wealth index sont déjà présentes dans le fichier household recode fourni par DHS pour l'année 2021 .
+Nous avons sélectionné les identifiants des ménages, l'âge et le sex du chef de ménage et les wealth index. Puis, nous l'avons fusionné avec le dataframe contenant les données géophysiques des ménages. Aucune fusion supplémentaire n'est nécessaire, car les informations relatives au wealth index sont déjà présentes dans le fichier household recode fourni par DHS pour l'année 2021 .
 
 ```{r}
 
@@ -97,7 +97,7 @@ hr_2021 <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA")
 # Select the variables required in 2021
 hr_2021_selected <- hr_2021 %>%
   dplyr:: select(
-    hv001, hv002, hv271, hv271a
+    hv001, hv002, hv219, hv220, hv271, hv271a
   )
 
 hr_2021_selected <- hr_2021_selected %>%
@@ -110,7 +110,7 @@ hr_2021_selected <- hr_2021_selected %>%
 
 ## Registration
 
-Nous enregistrons les données combinées dans un fichier rds pour une usage ultérieure.
+Nous enregistrons les données combinées dans un fichier rds pour une usage ultérieure. Chaque jeux de données est composé de 14 variables.
 
 ```{r}
 
