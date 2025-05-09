@@ -82,7 +82,7 @@ ggplot(spei_tbl, aes(x = year, y = spei_mean)) +
   geom_point(color = "red", size = 2) + # point for each annual value
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") +  
   labs(
-    title = "Annual variation of the SPEI index for one cluster in the period 1980-2021",
+    title = "Annual variation of the SPEI index for one cluster in the period 1981-2021",
     x = "Year",
     y = "SPEI mean"
   ) + 
@@ -95,9 +95,9 @@ ggplot(spei_tbl, aes(x = year, y = spei_mean)) +
 
 ```
 
-Le graphique illustre l'évolution annuelle de l'indice SPEI moyen pour un cluster géographique entre 1981 et 2021. La courbe bleue représente la tendance annuelle du SPEI moyen, mettant en exergue les variations interannuelles du climat dans la zone étudiée. Les points rouges indiquent les valeurs du SPEI moyens pour chaque année. La ligne horizontale noire en pointillées, placées à y = 0, sert de référence pour les conditions climatiques neutres.
+Le graphique illustre l'évolution annuelle de l'indice SPEI moyen pour un cluster géographique entre 1981 et 2021. La courbe bleue représente la tendance annuelle du SPEI moyen, mettant en exergue les variations interannuelles du climat dans la zone étudiée. Les points rouges indiquent les valeurs du SPEI moyen pour chaque année. La ligne horizontale noire en pointillées, placées à y = 0, sert de référence pour les conditions climatiques neutres.
 
-On observe qu'entre 1980 et 2000, la majorité des années a un SPEI supérieur à 0, correspondant à des conditions normales ou légèrement humides, avec peu d'épisodes de sécheresse significative selon la classification de Mckee et al @1993. En revanche, à partir des années 2004, on obtient des SPEI inférieur à 0, marquant une augmentation de la fréquence des épisodes de sécheresse. Par contre en 2017, le SPEI a une valeur particulièrement basse (SPEI = -2.40012658), qui d'après la classification de Vicente-Serrano et al. @2010 caractérise une sécheresse très sévère.
+On observe qu'entre 1980 et 2000, la majorité des années a un SPEI supérieur à 0, correspondant à des conditions normales ou légèrement humides, avec peu d'épisodes de sécheresse significative selon la classification de Mckee et al @1993. En revanche, à partir des années 2004, on obtient des SPEI inférieur à 0, marquant une augmentation de la fréquence des épisodes de sécheresse. En 2017, le SPEI a une valeur particulièrement basse (SPEI = -2.40012658), qui d'après la classification de Vicente-Serrano et al. @2010 caractérise une sécheresse très sévère.
 
 Nous appliquons la même procédure pour l'ensemble des clusters étudiés.
 
@@ -146,11 +146,12 @@ spatial_covars_spei <- spatial_covars %>%
         
         spei_obj <- spei(wb_ts, 
                          scale = 12, 
-                         ref.start = c(1980,1),
+                         ref.start = c(1981,1),
                          ref.end = c(2021,12))
         
         # Result
         tibble(datetime = dates_synced, spei = as.numeric(spei_obj$fitted)) %>%
+          filter(datetime >= as.Date("1981-01-01") & datetime <= as.Date("2021-12-31")) %>%
           mutate(year = year(datetime)) %>%
           group_by(year) %>%
           summarise(
@@ -160,7 +161,6 @@ spatial_covars_spei <- spatial_covars %>%
       }
     )
   )
-
 # Turn into tibble
 spei_df <- spatial_covars_spei %>%
   select(DHSCLUST, spei_wc) %>%
@@ -171,7 +171,7 @@ ggplot(spei_df, aes(x = year, y = spei_mean, group = DHSCLUST)) +
   geom_line(alpha = 0.4, color = "blue")+
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") + 
   labs(
-    title = "Annual SPEI index by cluster in period 1980-2021",
+    title = "Annual SPEI index by cluster in period 1981-2021",
     x = "Year",
     y = "SPEI mean"
   ) + 
@@ -182,10 +182,30 @@ ggplot(spei_df, aes(x = year, y = spei_mean, group = DHSCLUST)) +
     axis.text = element_text(size = 10)
   )
 
-
-# Enregistrement
-spatial_covars_spei <- as.data.frame(spatial_covars_spei)
-write_rds(x = spatial_covars_spei, file = "data/derived/spatial_covars_spei.rds")
 ```
 
 Chaque ligne bleue correspond à un groupe de ménages différent. On constate que ces lignes ne se superposent pas parfaitement, ce qui suggère que les conditions d'humidité varient d'une région à l'autre. Un indice SPEI positif indique des périodes plus humides, tandis qu'un indice SPEI négatif correspond à des périodes plus sèches. Cela montre que, même si les ménages sont regroupés, ils n'ont pas vécu les mêmes conditions climatiques. On observe néanmoins des baisses significatives de l'indice SPEI, notamment des épisodes de sécheresse très sévère en 1992 et entre 2017 et 2020.
+
+## Transformation de la colonne spei_wc en format wide 
+
+```{r}
+
+# Converting spei_wc to wide format
+spatial_covars_spei <- spatial_covars_spei %>%
+  mutate(
+    spei_wc = lapply(spei_wc, function(df){
+      df %>%
+        mutate(
+          datetime = as.Date(paste0(year, "-01-01")),
+          variable = "spei_scale12_mean",
+          unit = "annual", 
+          value = spei_mean 
+        ) %>%
+        select(datetime, variable, unit, value, everything()) %>%
+        select(-year, -spei_mean)
+    })
+  )
+# Registration 
+spatial_covars_spei <- as.data.frame(spatial_covars_spei)
+write_rds(x = spatial_covars_spei, file = "data/derived/spatial_covars_spei.rds")
+```
