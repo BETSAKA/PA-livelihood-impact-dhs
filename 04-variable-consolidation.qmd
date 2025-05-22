@@ -1,5 +1,6 @@
 ---
 output: html_document
+editor: source
 editor_options: 
   chunk_output_type: console
 ---
@@ -27,6 +28,8 @@ spatial_covars_spei <- readRDS("data/derived/spatial_covars_spei.rds")
 # Sélectionner les variables nécessaires dans les données géophysiques des ménages 
 all_covars <- spatial_covars_spei %>%
   select(DHSYEAR, DHSCLUST, URBAN_RURA, treecover_area, slope, elevation, population_count, traveltime_2000, spei_wc)
+
+all_class <- read.csv("data/derived/cluster_treatment_classification.csv") # clusters group classification 
 ```
 
 Nous obtenons un tableau contenant que 9 variables dont l'identifiant de nos clusters et les variables utilisées dans l'analyse.
@@ -88,8 +91,16 @@ df_base_1997 <- hr_1997_selected %>%
 hr_1997_final <- df_base_1997 %>%
   left_join(df_wide_1997, by = c("hv001", "hv002", "hv219", "hv220", "hv271", "hv271a", "DHSYEAR"))
 
+hr_1997_final <- hr_1997_final %>%
+  left_join(
+    all_class %>% 
+      filter(DHSYEAR == 1997) %>%
+      select(-DHSYEAR),
+    by = c("hv001" = "DHSCLUST"))
+  
 hr_1997_final <- hr_1997_final %>% 
   dplyr:: select(-indicator, -datetime, -variable, -unit) 
+
 
 ```
 
@@ -150,6 +161,13 @@ df_base_2008 <- hr_2008_selected %>%
 hr_2008_final <- df_base_2008 %>%
   left_join(df_wide_2008, by = c("hv001", "hv002", "hv219", "hv220", "hv271", "hv271a", "DHSYEAR"))
 
+hr_2008_final <- hr_2008_final %>%
+  left_join(
+    all_class %>%
+      filter(DHSYEAR == 2008) %>%
+      select(-DHSYEAR),
+    by = c("hv001" = "DHSCLUST"))
+
 hr_2008_final <- hr_2008_final %>% 
   dplyr:: select(-indicator, -datetime, -variable, -unit) 
 
@@ -205,6 +223,13 @@ df_base_2021 <- hr_2021_selected %>%
 
 hr_2021_final <- df_base_2021 %>%
   left_join(df_wide_2021, by = c("hv001", "hv002", "hv219", "hv220", "hv271", "hv271a", "DHSYEAR"))
+
+hr_2021_final <- hr_2021_final %>%
+  left_join(
+    all_class %>%
+      filter(DHSYEAR == 2021) %>%
+      select(-DHSYEAR),
+    by = c("hv001" = "DHSCLUST"))
 
 hr_2021_final <- hr_2021_final %>% 
   dplyr:: select(-indicator, -datetime, -variable, -unit) 
