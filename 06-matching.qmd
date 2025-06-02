@@ -1,1 +1,74 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
 # Matching
+
+## Objectif 
+
+Le document illustre l'application de la méthode de matching dans l'analyse, en maximisant la comparabilité entre les groupes de traitement et de contrôle en termes de caractéristiques observables @ho2007.
+
+## Méthodes
+
+Nous réalisons le matching à l'aide de la méthode genetic matching, en utilisant la fonction GenMatch() du package R MatchIt. Cette méthode combine les variables de matching en une seule mesure unique de distance "Mahalanobis distance matching". Cette distance mesurera la différence entre les unités des groupes appariés pour quantifier la similitude entre les deux groupes d'observations, tout en tenant compte des corrélations entre les covariables et de leurs covariances @diamond2013.
+
+```{r}
+# Library 
+library(tidyverse) #Manipulation et visualisation des données
+library(sf) #Analyse des données spatiales
+library(tmap) #Analyse cartographique
+library(MatchIt) #Matching
+library(ggplot2) #Figure
+library(rbounds)
+library(cobalt)
+library(rgenoud)
+library(Matching)
+
+# Load data 
+hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
+
+# Matching variables 
+matching_variables <- c("treecover_area_2000", "slope_2000", "elevation_2000", "population_count_2000", "traveltime_2000_2000")
+
+# Specifying binary variables in the column GROUP
+matching_2008 <- hr_2008_final %>%
+  filter(GROUP %in% c("Treatment", "Control")) %>%
+  mutate(
+    treatment = if_else(GROUP == "Treatment", 1, 0)) %>%
+  drop_na(all_of(matching_variables))
+
+# Generate a matrix for GenMatch 
+X_match <- as.data.frame(st_drop_geometry(matching_2008[, c("treecover_area_2000", "slope_2000", "elevation_2000", "population_count_2000", "traveltime_2000_2000")]))
+
+# Matching with MatchIt for 2008
+set.seed(123)
+
+gen_match_model <- GenMatch(
+  Tr = matching_2008$treatment,
+  X = X_match,
+  BalanceMatrix = X_match,
+  estimand = "ATT",
+  M = 1, # 1 appariement pour chaque unité du groupe de traitement
+  weights = NULL,
+  pop.size = 1000, 
+  max.generations = 100,
+  wait.generations = 4, 
+  caliper = .25,
+  print.level = 1,
+  cluster = rep("localhost", 4)
+) # 15 min 
+
+
+matching_result_2008 <- Match(
+  Tr = matching_2008$treatment,
+  X = X_match,
+  M = 1, 
+  Weight.matrix = gen_match_model,
+  caliper = 0.25
+)
+
+# Result
+summary(matching_result_2008)
+```
