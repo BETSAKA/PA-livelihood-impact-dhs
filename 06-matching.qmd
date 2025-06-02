@@ -61,12 +61,12 @@ gen_match_model <- GenMatch(
 ) # 15 min 
 
 
-matching_result_2008 <- Match(
-  Tr = matching_2008$treatment,
-  X = X_match,
-  M = 1, 
-  Weight.matrix = gen_match_model,
-  caliper = 0.25
+matching_result_2008 <- matchit(
+  treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
+  data = matching_2008,
+  method = "genetic",
+  distance = "mahalanobis",
+  gen.match = gen_match_model
 )
 
 # Result
