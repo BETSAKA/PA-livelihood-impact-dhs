@@ -91,7 +91,7 @@ summary(matching_result_2008)
 plot(matching_result_2008)
 ```
 
-Avant le matching, nous avons 9 664 groupes de contrôle et 2149 groupes de traitement sur les 11 813 observations. Après le matching, 2 149 groupes sont appariés.
+Avant le matching pour l'année 2008, nous avons 9 664 groupes de contrôle et 2149 groupes de traitement sur les 11 813 observations. Après le matching, 2 149 groupes sont appariés.
 
 ```{r}
 # Load data 
@@ -157,25 +157,27 @@ summary(matching_result_2021)
 plot(matching_result_2021)
 ```
 
-Avant le matching, nous avons 2990 groupe de traitement et 10 761 groupe de contrôle sur 13 751 observations. Après le macthing, 2 990 groupes sont appariés.
+Avant le matching pour l'année 2021, nous avons 2990 groupe de traitement et 10 761 groupe de contrôle sur 13 751 observations. Après le macthing, 2 990 groupes sont appariés.
 
 # Checking covariate balance 
 
 Les modèles d'appariement reposent sur l'hypothèse que les distributions des covariables sont similaires entre les groupes de traitement et de contrôle, rendant cruciale l'évaluation de l'équilibre des covariables. La validité des estimations dépend directement de la qualité de cet équilibre, d'où l'importance de réaliser des tests pour le mesurer. On effectue donc un test d'équilibre des covariables en deux étapes: un test avant appariement et un test après appariement.
 
-## Balance test before matching
+Pour effectuer le test avant l'appariement, on détermine les déséquilibres initiaux à partir du test de Standardized Mean Difference (SMD). Le SMD mesure l'écart entre les moyennes des covariables dans les groupes de traitement et les groupes de contrôle pour comparer l'équilibre relatif des variables mesurées dans des unités différentes:
 
-On détermine les déséquilibres initiaux à partir du test de Standardized Mean Difference (SMD). Le SMD mesure l'écart entre les moyennes des covariables dans les groupes de traitement et les groupes de contrôle pour comparer l'équilibre relatif des variables mesurées dans des unités différentes.
-
--   Si SMD \< 0.1, il existe un équilibre satisfaisant entre les groupes pour la covariable.
+-   Si \|SMD\| \< 0.1, il existe un équilibre satisfaisant entre les groupes pour la covariable.
 
 -   Si SMD \> 0.1, le déséquilibre est significatif @austin2009. Pour réajuster l'équilibre, on augmentera l'intervalle des calipers afin d'obtenir un SMD **≤** 0.1.
+
+Le test après appariement sera un test visuel de la qualité du matching en comparant la distribution de chaque covariable à partir du Q-Q Plot. Dans le cas où le QQ plot se situe en diagonale, le quantile des 2 distributions sont similaires.
+
+## Balance test for 2008
 
 ```{r 2008}
 library(cobalt)
 
 # Balance before matching
-bal_before_2008 <-bal.tab(
+bal_before_2008 <- bal.tab(
   treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
   data = matching_2008,
   estimand = "ATT",
@@ -185,11 +187,41 @@ bal_before_2008 <-bal.tab(
 print(bal_before_2008)
 ```
 
-Les groupes sont très déséquilibrées sur la plupart des covariables. Seule la variable slope_2000 a un SMD inférieur à 0,1.
+Les résultats montrent que la valeur de la différence standardisée des moyennes entre les groupes traités et contrôles, calculées avant le matching est supérieur à 0.1, qui indique un déséquilibre significatif . Seule la variable slope_2000 est bien équilibrée avec une valeur de SMD égale à 0.0257. Sans l'appariement, les données brutes montrent des déséquilibres importants entre les groupes pour plusieurs covariables. D'où la nécessité de réaliser un appariement pour réduire ces différences et obtenir des groupes plus comparables pour l'analyse de l'effet du traitement.
 
-## Balance test after matching
+```{r}
+# Balance after matching
+bal_after_2008 <- bal.tab(matching_result_2008)
+print(bal_after_2008)
+```
 
-On détermine l'équilibre des covariables à partir d'un test visuel sur la qualité du matching. On compare à partir du Q-Q Plot pour chaque covariable (dans le cas où le QQ plot se situe en diagonale, le quantile des 2 distributions sont similaires)
+Après l'appariement, toutes les variables présentent un SMD très faible (en dessous du seuil de 0.1), qui signifie que les groupes de traitement et de contrôle sont désormais très similaires sur ces variables. Tous les individus traités ont été appariés à un contrôle.
+
+```{r}
+library(halfmoon)
+
+# Balance plot before matching
+balance_plot_2008 <- matching_2008 %>%
+  mutate()
+
+
+ggplot(matching_2008, aes(p, fill = t, group = t)) + 
+  geom_mirror_histogram(bins = 30) +
+  annotate("label", 0.5, -10, label = "Control", color = "orange") +
+  annotate("label", 0.5, 10, label = "Treated", color = "yellow") +
+  scale_y_continuous(labels = abs) +
+  labs(x = "gen_match_model_2008",
+       y = "count") + 
+  theme(legend.position = "none")
+
+
+
+
+```
+
+## Balance test for 2021
+
+On détermine
 
 ```{r}
 
