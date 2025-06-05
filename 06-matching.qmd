@@ -6,7 +6,7 @@ editor_options:
 
 # Matching
 
-## Objectif 
+## Objectif
 
 Le document illustre l'application de la méthode de matching dans l'analyse, en maximisant la comparabilité entre les groupes de traitement et de contrôle en termes de caractéristiques observables @ho2007.
 
@@ -163,7 +163,7 @@ plot(matching_result_2021)
 
 Avant le matching pour l'année 2021, nous avons 2 990 groupe de traitement et 10 761 groupe de contrôle sur 13 751 observations. Après le macthing, 2 990 groupes sont appariés.
 
-## Checking covariate balance 
+## Checking covariate balance
 
 Les modèles d'appariement reposent sur l'hypothèse que les distributions des covariables sont similaires entre les groupes de traitement et de contrôle, rendant cruciale l'évaluation de l'équilibre des covariables. La validité des estimations dépend directement de la qualité de cet équilibre, d'où l'importance de réaliser des tests pour le mesurer. On effectue donc un test d'équilibre des covariables en deux étapes: un test avant appariement et un test après appariement.
 
@@ -173,11 +173,11 @@ Pour effectuer le test avant l'appariement, on détermine les déséquilibres in
 
 -   Si SMD \> 0.1, le déséquilibre est significatif @austin2009. Pour réajuster l'équilibre, on augmentera l'intervalle des calipers afin d'obtenir un SMD **≤** 0.1.
 
-Le test après appariement sera un test visuel de la qualité du matching en comparant la distribution de chaque covariable à partir d'un plot. Dans le cas où le QQ plot se situe en diagonale, le quantile des 2 distributions sont similaires.
+Le test après appariement sera un test visuel de la qualité du matching en comparant la distribution de chaque covariable à partir d'un plot. La méthode graphique offre une vue d'ensemble de la distribution des covariables. Le graphique facilite ainsi l'identification des déséquilibres à différents niveaux de la distribution. Lorsque les points Q-Q plot se situent près de la diagonale, le quantile des deux distributions sont similaires, signalant ainsi un bon équilibre
 
 ### Balance test for 2008
 
-#### Balance test before matching 
+#### Balance test before matching
 
 ```{r 2008}
 
@@ -252,6 +252,30 @@ values_to = "value"
 
 Après l'appariement, toutes les variables présentent un SMD très faible (en dessous du seuil de 0.1), qui signifie que les groupes de traitement et de contrôle sont désormais très similaires sur ces variables. Tous les individus traités ont été appariés à un contrôle.
 
+#### Q-Q Plot analysis
+
+```{r}
+library(patchwork)
+
+plots_2008 <- lapply(matching_variables, function(var){
+  ggplot(matched_data_2008, aes(sample = .data[[var]], color = GROUP)) +
+    stat_qq() +
+    stat_qq_line() +
+    labs(
+      title = paste("Q-Q plot de", var), 
+      x = "Quantiles théoriques", 
+      y = "Quantiles échantillon", color = "Groupe"
+      ) +
+    theme_minimal() +
+    theme(legend.position = "none")
+})
+
+# Patchwork grid assembly
+wrap_plots(plots_2008, ncol = 2)
+```
+
+Sur les graphiques, on peut voir qu'il y a des différences de forme entre les distributions comparées. Pour la majorité des covariables (treecover_area_2000, slope_2000, traveltime_2000), les distributions des groupes de contrôle et de traitement sont similaires, presque parfaite. Les points Q-Q plots sont proches de la diagonale montrant que le matching a bien équilibré ces variables. Quant aux covariables elevation_2000 , les courbes de distribution montrent quelques différences entre le groupe de traitement et de contrôle. Ces différences s'accentuent dans le cas de la covariable population_count_2000, qui se diffèrent beaucoup dans les extrêmes. Le matching a équilibré les covariables mais ce n'est pas totalement parfait.
+
 ### Balance test for 2021
 
 #### Balance test before matching
@@ -323,3 +347,25 @@ values_to = "value"
 ```
 
 Les résultats montrent que toutes les valeurs des SMD sont très faibles, comprises entre 0.0361 et 0.1033, indiquant ainsi un excellent équilibre entre les groupes pour l'ensemble des covariables. Les graphiques confirment également cet équilibre: les courbes des groupes de contrôle (en vert) et les groupes de traitement (en bleue) se superposent largement, traduisant une forte similitude dans la distribution des covariables après l'appariement.
+
+#### Q-Q Plot analysis
+
+```{r}
+library(patchwork)
+
+plots_2021 <- lapply(matching_variables, function(var){
+  ggplot(matched_data_2021, aes(sample = .data[[var]], color = GROUP)) +
+    stat_qq() +
+    stat_qq_line() +
+    labs(
+      title = paste("Q-Q plot de", var), 
+      x = "Quantiles théoriques", 
+      y = "Quantiles échantillon", color = "Groupe"
+      ) +
+    theme_minimal() +
+    theme(legend.position = "none")
+})
+
+# Patchwork grid assembly
+wrap_plots(plots_2021, ncol = 2)
+```
