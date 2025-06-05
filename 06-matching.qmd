@@ -212,7 +212,7 @@ ggplot(matching_before_2008, aes(x = value, fill = GROUP)) +
     tittle = "Distribution des covariables avant matching (2008)",
     x = "Valeur de la covariable",
     y = "Densité",
-    fill = "Groupe"
+    fill = "Group"
   ) +
   theme_minimal()
 ```
@@ -245,7 +245,7 @@ values_to = "value"
       title = "Distribution des covariables après matching (2008)",
       x = "Valeur de la covariable",
       y = "Densité",
-      fill = "Groupe"
+      fill = "Group"
     ) +
     theme_minimal()
 ```
@@ -267,7 +267,7 @@ plots_2008 <- lapply(matching_variables, function(var){
       y = "Quantiles échantillon", color = "Groupe"
       ) +
     theme_minimal() +
-    theme(legend.position = "none")
+    theme(legend.position = "bottom")
 })
 
 # Patchwork grid assembly
@@ -308,7 +308,7 @@ ggplot(matching_before_2021, aes(x = value, fill = GROUP)) +
     tittle = "Distribution des covariables avant matching (2021)",
     x = "Valeur de la covariable",
     y = "Densité",
-    fill = "Groupe"
+    fill = "Group"
   ) +
   theme_minimal()
 ```
@@ -341,7 +341,7 @@ values_to = "value"
       title = "Distribution des covariables après matching (2021)",
       x = "Valeur de la covariable",
       y = "Densité",
-      fill = "Groupe"
+      fill = "Group"
     ) +
     theme_minimal()
 ```
@@ -358,14 +358,16 @@ plots_2021 <- lapply(matching_variables, function(var){
     stat_qq() +
     stat_qq_line() +
     labs(
-      title = paste("Q-Q plot de", var), 
-      x = "Quantiles théoriques", 
-      y = "Quantiles échantillon", color = "Groupe"
+      title = paste("Q-Q plot of", var), 
+      x = " Theorical Quantiles", 
+      y = "Sample Quantile", color = "Group"
       ) +
     theme_minimal() +
-    theme(legend.position = "none")
+    theme(legend.position = "bottom")
 })
 
 # Patchwork grid assembly
 wrap_plots(plots_2021, ncol = 2)
 ```
+
+Les distributions des groupes de contrôle et de traitement de treecover_area_2000, slope_2000, elevation_2000 et traveltime_2000_2000 sont presque similairement parfaite. Cela montre que le matching a bien équilibré ces variables. Dans le cas du population_count_2000, les courbes sont également très proches de la diagonale, mais présentent des petits écarts pour les valeurs extrêmes.
