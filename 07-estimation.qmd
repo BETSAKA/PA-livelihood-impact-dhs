@@ -1,1 +1,56 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
 # Estimation
+
+## Objectif
+
+Le document présente l'estimation en double différence des groupes de traitement et de contrôle pour la période 1997- 2021. Le principe est de comparer l'indice de richesse des ménages de contrôle et de traitement à une période antérieure et une période postérieure à la mise en place des aires protégées.
+
+## Methods
+
+1.  Définition des périodes de traitement
+
+    -   Période de pré-traitement: Aires protégées crées entre 1997 et 2008
+
+    -   Période de post-traitement: Aires protégées crées entre 2008 et 2021 (71 AP créées sur 47 282 km²)
+
+2.  Vérification de l'hypothèse des tendances parallèles
+
+    -   Création d'un groupe de traitement placebo basé sur les ménages de 1997 (traitement= ménages situés à **≤** 10 km des aires protégées créées entre 2008 et 2021)
+
+    -   Appariement du groupe de traitement placebo avec un groupe de contrôle placebo
+
+    -   Représentation graphique de l'évolution des groupes en 1997, 2008 et 2021 pour une confirmation visuelle
+
+    -   Effectuer un test placebo en faisant une estimation en double différence sur la période de pré-traitement (1997-2008): un effet non significatif confirmerait l'absence de tendances divergentes avant l'intervention
+
+3.  Estimation du modèle DID
+
+    -   Estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes pour gérer la dépendance des observations au sein des grappes:
+
+        -   calcul des résidus à partir du modèle de régression
+
+        -   Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
+
+## Definition of treatment periods
+
+La période de pré-traitement sera les aires protégées créées entre 1997 et 2008. Le post-traitement sera les aires protégées créées entre 2008 et 2021.
+
+```{r}
+
+# Library 
+library(tidyverse) #Manipulation et visualisation des données
+library(tmap) #Analyse cartographique 
+library(ggplot2) #Figure
+
+# Load data 
+hr_1997_final <- readRDS("data/derived/hr_1997_final.rds")
+hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
+hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
+
+# 
+```
