@@ -209,7 +209,7 @@ ggplot(matching_before_2008, aes(x = value, fill = GROUP)) +
   facet_wrap(~variable, scales = "free") +
   scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
   labs(
-    tittle = "Distribution des covariables avant matching (2008)",
+    tittle = "Covariate Distribution before matching (2008)",
     x = "Valeur de la covariable",
     y = "Densité",
     fill = "Group"
@@ -242,7 +242,7 @@ values_to = "value"
     facet_wrap(~variable, scales = "free") +
     scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
     labs(
-      title = "Distribution des covariables après matching (2008)",
+      title = "Covariate distribution after matching (2008)",
       x = "Valeur de la covariable",
       y = "Densité",
       fill = "Group"
@@ -305,7 +305,7 @@ ggplot(matching_before_2021, aes(x = value, fill = GROUP)) +
   facet_wrap(~variable, scales = "free") +
   scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
   labs(
-    tittle = "Distribution des covariables avant matching (2021)",
+    tittle = "Covariate Distribution before matching (2021)",
     x = "Valeur de la covariable",
     y = "Densité",
     fill = "Group"
@@ -338,7 +338,7 @@ values_to = "value"
     facet_wrap(~variable, scales = "free") +
     scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
     labs(
-      title = "Distribution des covariables après matching (2021)",
+      title = "Covariate Distribution after matching (2021)",
       x = "Valeur de la covariable",
       y = "Densité",
       fill = "Group"
