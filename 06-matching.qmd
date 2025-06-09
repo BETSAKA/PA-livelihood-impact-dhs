@@ -306,8 +306,8 @@ ggplot(matching_before_2021, aes(x = value, fill = GROUP)) +
   scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
   labs(
     tittle = "Covariate Distribution before matching (2021)",
-    x = "Valeur de la covariable",
-    y = "Densité",
+    x = "Covariate value",
+    y = "Density",
     fill = "Group"
   ) +
   theme_minimal()
@@ -339,8 +339,8 @@ values_to = "value"
     scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
     labs(
       title = "Covariate Distribution after matching (2021)",
-      x = "Valeur de la covariable",
-      y = "Densité",
+      x = "Covariate value",
+      y = "Density",
       fill = "Group"
     ) +
     theme_minimal()
