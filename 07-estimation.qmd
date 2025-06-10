@@ -46,11 +46,65 @@ La période de pré-traitement sera les aires protégées créées entre 1997 et
 library(tidyverse) #Manipulation et visualisation des données
 library(tmap) #Analyse cartographique 
 library(ggplot2) #Figure
+library(sf)
+library(gt) #Mise en forme des tableaux 
+library(geodata) # Pour avoir le contour de Madagascar
+library(units)
 
 # Load data 
 hr_1997_final <- readRDS("data/derived/hr_1997_final.rds")
 hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
 hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
 
-# 
+# Systèmes de coordonnées de référence 
+standard_crs <- 4326
+mdg_crs <- 29702 
+
+# Load boundary
+contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
+  st_as_sf() %>%
+  st_set_crs(standard_crs)
+
+# PA data
+sapm <- st_read("data/raw/sapm/SAPM_2017_corrected.shp") |> # en EPSG 9001
+  st_transform(standard_crs) %>%
+  st_make_valid() %>%
+  mutate(YEAR_CREAT = year(ymd(DATE_CREAT)), .after = DATE_CREAT)
+
+sapm_terrestre <- sapm %>% 
+  st_intersection(contour_mada)%>%
+  st_make_valid() %>%
+  st_transform(mdg_crs) %>%
+  mutate(`HECTARES_TERR` = as.numeric(st_area(.)) / 10000) %>%
+  st_transform(standard_crs)
+
+# Buffer de 10 km
+buffer_dist <- 10000 
+
+# Spécification des aires protégées avant 2008
+sapm_before_2008 <- sapm_terrestre %>%
+  filter(year(DATE_CREAT) < 2008)
+
+# Spécification des aires protégées après 2008
+sapm_from_2008 <- sapm_terrestre %>%
+  filter(year(DATE_CREAT) >= 2008)
+
+# Créer des buffers de 10 km autour des AP
+buffer_10km_before_2008 <- sapm_before_2008 %>%
+  st_transform(mdg_crs) %>%
+  st_buffer(dist = buffer_dist) %>%
+  st_make_valid() %>%
+  st_union() %>%
+  st_as_sf() %>%
+  st_make_valid() %>%
+  st_transform(standard_crs)
+
+buffer_10km_from_2008 <- sapm_from_2008  %>%
+  st_transform(mdg_crs) %>%
+  st_buffer(dist = buffer_dist) %>% 
+  st_make_valid() %>%
+  st_union() %>%
+  st_as_sf() %>%
+  st_make_valid() %>%
+  st_transform(standard_crs)
 ```
