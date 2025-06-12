@@ -92,23 +92,54 @@ post_treatment <- data_all %>% filter(period_DID == 1)
 
 ## Testing the parallel trends hypothesis 
 
-La méthode de double différence repose sur les hypothèses de tendances parallèles.
-
-1.  Création d'un groupe de traitement placebo basé sur les ménages de 1997 (traitement= ménages situés à **≤** 10 km des aires protégées créées entre 2008 et 2021)
-
-2.  Appariement du groupe de traitement placebo avec un groupe de contrôle placebo
-
-3.  Représentation graphique de l'évolution des groupes en 1997, 2008 et 2021 pour une confirmation visuelle
-
-4.  Effectuer un test placebo en faisant une estimation en double différence sur la période de pré-traitement (1997-2008): un effet non significatif confirmerait l'absence de tendances divergentes avant l'intervention
-
 ```{r}
+
+library(scales)
+
 # Placebo Group for 1997--------
 # Placebo treatment group = ménages à ≤ 10 km des AP créées entre 2008 et 2021
 # Placebo control group = ménages à plus de 10 km des AP créées entre 2008 et 2021
-placebo_1997 <- data_all %>%
-  filter(DHSYEAR = 1997, URBAN_RURA == 1, distance_to_AP_2008_2021 <= 10) %>%
-  mutate(placebo_treated = 1)
+placebo_data <- data_all %>%
+  filter(DHSYEAR %in% c(1997,2008)) %>%
+  mutate(
+    placebo_treated = ifelse(GROUP == "Treatment", 1, 0), # 1 si ≤ 10 km, O sinon
+    post = ifelse(DHSYEAR == 2008, 1, 0)
+    )
+# DID: 1997-2008
+did_placebo <- lm(hv271a ~ placebo_treated * post, data = placebo_data)
+summary(did_placebo)
 
-placebo_controls_1997
+# Coefficient presentation
+tidy(did_placebo)
+
+# Plot
+evolution_placebo <- placebo_data %>%
+  group_by(DHSYEAR, GROUP) %>%
+  summarise(mean = mean(hv271a, na.rm = TRUE),
+            .groups = "drop"
+            )
+
+ggplot(evolution_placebo,aes(x = factor(DHSYEAR), y = mean, color = GROUP)) +
+  geom_point(size = 4) +
+  geom_line(size = 1.3) +
+  geom_text(
+    aes(label = sprintf("%.2f", mean)),
+    vjust = -0.7,
+    size = 4.5,
+    color = "black"
+  ) +
+  scale_color_manual(
+    values = c("Treatment" = "#D55E00", "Control" = "#0072B2")) +
+  scale_y_continuous(trans = pseudo_log_trans(base = 10),
+                     name = "Wealth index mean (hv271a)") +
+  labs( 
+    title = "Test Placebo: Wealth Index Mean by group and by year (1997-2008)",
+    x = "Year", 
+    color = "Group") +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+    legend.position = "top"
+  )
+
 ```
