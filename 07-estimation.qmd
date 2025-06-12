@@ -40,71 +40,75 @@ Le document présente l'estimation en double différence des groupes de traiteme
 
 La période de pré-traitement sera les aires protégées créées entre 1997 et 2008. Le post-traitement sera les aires protégées créées entre 2008 et 2021.
 
+-   Période de pré-traitement: Aires protégées crées entre 1997 et 2008 (X AP créées sur Y)
+
+-   Période de post-traitement: Aires protégées crées entre 2008 et 2021 (71 AP créées sur 47 282 km²)
+
 ```{r}
 
-# Library 
+# Library
+library(did)
 library(tidyverse) #Manipulation et visualisation des données
 library(tmap) #Analyse cartographique 
 library(ggplot2) #Figure
 library(sf)
 library(gt) #Mise en forme des tableaux 
-library(geodata) # Pour avoir le contour de Madagascar
-library(units)
+library(MatchIt)
+library(haven)
 
 # Load data 
-hr_1997_final <- readRDS("data/derived/hr_1997_final.rds")
-hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
-hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
+data_matched_1997 <- read_rds("data/derived/data_matched_1997.rds")
+data_matched_2008 <- read_rds("data/derived/data_matched_2008.rds")
+data_matched_2021 <- read_rds("data/derived/data_matched_2021.rds")
 
-# Systèmes de coordonnées de référence 
-standard_crs <- 4326
-mdg_crs <- 29702 
+# Add year in each dataset
+data_matched_1997 <- data_matched_1997 %>%
+  mutate(year = 1997)
+data_matched_2008 <- data_matched_2008 %>%
+  mutate(year = 2008)
+data_matched_2021 <- data_matched_2021 %>%
+  mutate(year = 2021)
 
-# Load boundary
-contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
-  st_as_sf() %>%
-  st_set_crs(standard_crs)
+# Uniformisation de la colonne hv220 dans chaque dataframe
+data_matched_1997$hv220 <- as.numeric(as_factor(data_matched_1997$hv220))
+data_matched_2008$hv220 <- as.numeric(as_factor(data_matched_2008$hv220))
+data_matched_2021$hv220 <- as.numeric(as_factor(data_matched_2021$hv220))
 
-# PA data
-sapm <- st_read("data/raw/sapm/SAPM_2017_corrected.shp") |> # en EPSG 9001
-  st_transform(standard_crs) %>%
-  st_make_valid() %>%
-  mutate(YEAR_CREAT = year(ymd(DATE_CREAT)), .after = DATE_CREAT)
+# Merge the three waves
+data_all <- bind_rows(data_matched_1997, data_matched_2008, data_matched_2021)
 
-sapm_terrestre <- sapm %>% 
-  st_intersection(contour_mada)%>%
-  st_make_valid() %>%
-  st_transform(mdg_crs) %>%
-  mutate(`HECTARES_TERR` = as.numeric(st_area(.)) / 10000) %>%
-  st_transform(standard_crs)
+# Treatment period---------------
+data_all <- data_all %>%
+  mutate(
+    period_DID = case_when(
+      DHSYEAR == 1997 ~ 0,           # 1997-2008 = Pre-treatment
+      DHSYEAR %in% c(2008,2021) ~ 1  # 2008-2021 = post-treatment
+    )
+  )
 
-# Buffer de 10 km
-buffer_dist <- 10000 
+pre_treatment <- data_all %>% filter(period_DID == 0)
+post_treatment <- data_all %>% filter(period_DID == 1)
+```
 
-# Spécification des aires protégées avant 2008
-sapm_before_2008 <- sapm_terrestre %>%
-  filter(year(DATE_CREAT) < 2008)
+## Testing the parallel trends hypothesis 
 
-# Spécification des aires protégées après 2008
-sapm_from_2008 <- sapm_terrestre %>%
-  filter(year(DATE_CREAT) >= 2008)
+La méthode de double différence repose sur les hypothèses de tendances parallèles.
 
-# Créer des buffers de 10 km autour des AP
-buffer_10km_before_2008 <- sapm_before_2008 %>%
-  st_transform(mdg_crs) %>%
-  st_buffer(dist = buffer_dist) %>%
-  st_make_valid() %>%
-  st_union() %>%
-  st_as_sf() %>%
-  st_make_valid() %>%
-  st_transform(standard_crs)
+1.  Création d'un groupe de traitement placebo basé sur les ménages de 1997 (traitement= ménages situés à **≤** 10 km des aires protégées créées entre 2008 et 2021)
 
-buffer_10km_from_2008 <- sapm_from_2008  %>%
-  st_transform(mdg_crs) %>%
-  st_buffer(dist = buffer_dist) %>% 
-  st_make_valid() %>%
-  st_union() %>%
-  st_as_sf() %>%
-  st_make_valid() %>%
-  st_transform(standard_crs)
+2.  Appariement du groupe de traitement placebo avec un groupe de contrôle placebo
+
+3.  Représentation graphique de l'évolution des groupes en 1997, 2008 et 2021 pour une confirmation visuelle
+
+4.  Effectuer un test placebo en faisant une estimation en double différence sur la période de pré-traitement (1997-2008): un effet non significatif confirmerait l'absence de tendances divergentes avant l'intervention
+
+```{r}
+# Placebo Group for 1997--------
+# Placebo treatment group = ménages à ≤ 10 km des AP créées entre 2008 et 2021
+# Placebo control group = ménages à plus de 10 km des AP créées entre 2008 et 2021
+placebo_1997 <- data_all %>%
+  filter(DHSYEAR = 1997, URBAN_RURA == 1, distance_to_AP_2008_2021 <= 10) %>%
+  mutate(placebo_treated = 1)
+
+placebo_controls_1997
 ```
