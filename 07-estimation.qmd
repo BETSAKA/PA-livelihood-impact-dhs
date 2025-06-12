@@ -143,3 +143,7 @@ ggplot(evolution_placebo,aes(x = factor(DHSYEAR), y = mean, color = GROUP)) +
   )
 
 ```
+
+Le graphique présente les moyennes de l'indice de richesse (hv271a) pour les groupes de traitement et de contrôles pour les années 1997 et 2008. Le point en orange représente la moyenne de l'indice de richesse pour le groupe de traitement et le point en bleu est celui du groupe de contrôle. En 1997, les deux moyennes sont proches pour les deux groupes dont une valeur de -1.79 pour les groupes de traitement et -1.97 pour les groupes de contrôle. En 2008, les deux moyennes baissent mais restent relativement proches (Groupe de traitement = -2.80 et Groupe de controle = -3.45). D'après ces résultats, il n'y a pas de différence marquée dans l'évolution de la richesse entre les deux groupes sur la période 1997-2008, période où aucune aire protégée n'a été crée pour ces groupes. L'hypothèse des tendances parallèles est donc vérifié.
+
+## Estimation du modèle DID
