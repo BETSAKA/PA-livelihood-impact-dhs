@@ -45,6 +45,10 @@ La période de pré-traitement sera les aires protégées créées entre 1997 et
 -   Période de post-traitement: Aires protégées crées entre 2008 et 2021 (71 AP créées sur 47 282 km²)
 
 ```{r}
+# Treatment periods definition--------------------------------
+# Pre-treatment = 2008
+# Post-treatment = 2021 
+# Placebo = 1997-2008
 
 # Library
 library(did)
@@ -69,10 +73,10 @@ data_matched_2008 <- data_matched_2008 %>%
 data_matched_2021 <- data_matched_2021 %>%
   mutate(year = 2021)
 
-# Uniformisation de la colonne hv220 dans chaque dataframe
-data_matched_1997$hv220 <- as.numeric(as_factor(data_matched_1997$hv220))
-data_matched_2008$hv220 <- as.numeric(as_factor(data_matched_2008$hv220))
-data_matched_2021$hv220 <- as.numeric(as_factor(data_matched_2021$hv220))
+# Standardization of the hv220 column in each dataframe
+#data_matched_1997$hv220 <- as.numeric(as_factor(data_matched_1997$hv220))
+#data_matched_2008$hv220 <- as.numeric(as_factor(data_matched_2008$hv220))
+#data_matched_2021$hv220 <- as.numeric(as_factor(data_matched_2021$hv220))
 
 # Merge the three waves
 data_all <- bind_rows(data_matched_1997, data_matched_2008, data_matched_2021)
@@ -90,22 +94,27 @@ pre_treatment <- data_all %>% filter(period_DID == 0)
 post_treatment <- data_all %>% filter(period_DID == 1)
 ```
 
-## Testing the parallel trends hypothesis 
+## Testing the parallel trends hypothesis
+
+La méthode de double différence repose sur des hypothèses de tendances parallèlles. Pour valider cette hypothèse, nous construisons un groupe de placebo basé sur les ménages ruraux enquêtés en 1997, ceux qui vivent dans une zone située dans ou à moins de 10 km d'une aire protégée créée entre 2008 et 2021 (groupe de traitement placebo), et leurs groupes de contrôles appariés.
+
+Nous estimons alors un modèle DID sur la période 1997-2008, période sans intervention, où un effet non significatif confirmerait l'absence de tendances divergentes avant le traitement.
 
 ```{r}
-
+#--------------------------------------------------
+# Test Placebo sur 1997-2008 with outcome = wealth index 
+#--------------------------------------------------
 library(scales)
 
-# Placebo Group for 1997--------
 # Placebo treatment group = ménages à ≤ 10 km des AP créées entre 2008 et 2021
 # Placebo control group = ménages à plus de 10 km des AP créées entre 2008 et 2021
 placebo_data <- data_all %>%
   filter(DHSYEAR %in% c(1997,2008)) %>%
   mutate(
     placebo_treated = ifelse(GROUP == "Treatment", 1, 0), # 1 si ≤ 10 km, O sinon
-    post = ifelse(DHSYEAR == 2008, 1, 0)
+    post = ifelse(DHSYEAR == 2008, 1, 0) # post = 1 pour 2008 et 0 pour l'année 1997
     )
-# DID: 1997-2008
+# DID Regression placebo: 1997-2008
 did_placebo <- lm(hv271a ~ placebo_treated * post, data = placebo_data)
 summary(did_placebo)
 
@@ -115,31 +124,44 @@ tidy(did_placebo)
 # Plot
 evolution_placebo <- placebo_data %>%
   group_by(DHSYEAR, GROUP) %>%
-  summarise(mean = mean(hv271a, na.rm = TRUE),
-            .groups = "drop"
-            )
+  summarise(
+    mean_value = mean(hv271a, na.rm = TRUE),
+    sd_value = sd(hv271a, na.rm = TRUE),
+    n = n(),
+    se = sd_value / sqrt(n),
+    .groups = "drop"
+  )
 
-ggplot(evolution_placebo,aes(x = factor(DHSYEAR), y = mean, color = GROUP)) +
+ggplot(evolution_placebo,aes(x = factor(DHSYEAR), y = mean_value, color = GROUP, group = GROUP)) +
   geom_point(size = 4) +
   geom_line(size = 1.3) +
+  geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se),
+                width = 0.2, size = 0.8, alpha = 0.5) +
   geom_text(
-    aes(label = sprintf("%.2f", mean)),
-    vjust = -0.7,
+    aes(label = sprintf("%.2f", mean_value)),
+    vjust = -1,
     size = 4.5,
     color = "black"
   ) +
   scale_color_manual(
-    values = c("Treatment" = "#D55E00", "Control" = "#0072B2")) +
-  scale_y_continuous(trans = pseudo_log_trans(base = 10),
-                     name = "Wealth index mean (hv271a)") +
+    values = c("Treatment" = "#D55E00", "Control" = "#0072B2"),
+    name = "Group"
+  ) +
+  scale_y_continuous(
+    trans = pseudo_log_trans(base = 10),
+    name = "Wealth index mean (hv271a)"
+  ) +
   labs( 
-    title = "Test Placebo: Wealth Index Mean by group and by year (1997-2008)",
-    x = "Year", 
-    color = "Group") +
+    title = "Placebo test: Wealth Index Mean by group (1997-2008)",
+    x = "Survey Year"
+  ) +
   theme_minimal(base_size = 16) +
   theme(
     plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
-    legend.position = "top"
+    axis.title = element_text(face = "bold"),
+    legend.position = "top",
+    panel.grid.major = element_line(size = 0.3),
+    panel.grid.minor = element_blank()
   )
 
 ```
@@ -147,3 +169,218 @@ ggplot(evolution_placebo,aes(x = factor(DHSYEAR), y = mean, color = GROUP)) +
 Le graphique présente les moyennes de l'indice de richesse (hv271a) pour les groupes de traitement et de contrôles pour les années 1997 et 2008. Le point en orange représente la moyenne de l'indice de richesse pour le groupe de traitement et le point en bleu est celui du groupe de contrôle. En 1997, les deux moyennes sont proches pour les deux groupes dont une valeur de -1.79 pour les groupes de traitement et -1.97 pour les groupes de contrôle. En 2008, les deux moyennes baissent mais restent relativement proches (Groupe de traitement = -2.80 et Groupe de controle = -3.45). D'après ces résultats, il n'y a pas de différence marquée dans l'évolution de la richesse entre les deux groupes sur la période 1997-2008, période où aucune aire protégée n'a été crée pour ces groupes. L'hypothèse des tendances parallèles est donc vérifié.
 
 ## Estimation du modèle DID
+
+1.  Estimation du modèle DID
+
+    -   Estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes pour gérer la dépendance des observations au sein des grappes:
+
+        -   calcul des résidus à partir du modèle de régression
+
+        -   Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
+
+```{r}
+
+#---------------------------------------------
+#DID Estimation with controls (2008-2021)
+#--------------------------------------------
+
+library(sandwich)
+library(lmtest)
+
+
+# Treatment period: 2008-2021
+model_data <- data_all %>%
+  filter(DHSYEAR %in% c(2008,2021)) %>%
+  mutate(
+    treated = ifelse(GROUP == "Treatment", 1, 0),
+    post = ifelse(DHSYEAR == 2021, 1, 0)
+  ) %>%
+  filter(!if_any(c("hv271a", "treated", "post"), is.na)) %>%
+  
+  # Add control variables 
+  mutate(
+    sex_head = as.factor(hv219),
+    age_head = hv220,
+    forest_cover_rate = treecover_area_2000,
+    slope = slope_2000,
+    elevation = elevation_2000,
+    population_count = population_count_2000,
+    accessibility = traveltime_2000_2000,
+    spei_wc_2019 = spei_wc_2019,
+    spei_wc_2020 = spei_wc_2020,
+    spei_wc_2021 = spei_wc_2021
+  )
+
+# Main DID regression with robust standard errors per cluster
+did_2008_2021 <- lm(
+  hv271a ~ treated * post + sex_head + age_head + 
+    forest_cover_rate + slope + elevation + 
+    population_count + accessibility + 
+    spei_wc_2019 + spei_wc_2020 + spei_wc_2021, 
+  data = model_data )
+
+
+summary(did_2008_2021)
+
+#-------------------------------------------------
+#Erreurs standards robustes intra-cluster (hv001)
+#-------------------------------------------------
+
+cluster_se <- function(model, cluster) {
+  # Extraction des observations utilisées dans le modèle 
+  cluster <- cluster[as.numeric(rownames(model$model))]
+  
+  # Calcul des quantiles nécessaires 
+  M <- length(unique(cluster)) # nombre de clusters 
+  N <- length(cluster)         # nombre d'observations
+  K <- model$rank              # nombre de paramètres estimés
+  
+  # Correction de variance 
+  dfc <- (M/ (M-1) * (N-1) / (N-K))
+  
+  # Calcul des scores agrégés au niveau des clusters
+  uj <- apply(estfun(model), 2, function(x) tapply(x, cluster, sum))
+  
+  # Matrice de variance-covariance clusterisée
+  vcovCL <- dfc * sandwich(model, meat = crossprod(uj)/N)
+  
+  
+  return(vcovCL)
+}
+  
+# Application aux résultats DID
+if("hv001" %in% names(model_data)){
+  cl_vcov <- cluster_se(did_2008_2021, model_data$hv001)
+  cluster_results <- coeftest(did_2008_2021, vcov. = cl_vcov)
+  
+  
+  print(cluster_results)
+
+} else {
+  summary(did_2008_2021)
+}
+
+# Coefficient presentation
+tidy(did_2008_2021)
+
+# Plot 
+evolution_main <- model_data %>%
+  group_by(DHSYEAR, GROUP) %>%
+  summarise(
+    mean_value = mean(hv271a, na.rm = TRUE),
+    sd_value = sd(hv271a, na.rm = TRUE),
+    n = n(),
+    se = sd_value / sqrt(n),
+    .groups = "drop"
+  )
+
+ggplot(evolution_main, aes(x = factor(DHSYEAR), y = mean_value, color = GROUP, group = GROUP)) +
+  geom_point(size = 4) +
+  geom_line(size = 1.3) +
+  geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se), 
+                width = 0.2, size = 0.8, alpha = 0.5) + 
+  geom_text(
+    aes(label = sprintf("%.2f", mean_value)),
+    vjust = -1,
+    size = 4.5,
+    color = "black"
+  ) +
+  scale_color_manual(
+    values = c("Treatment" = "#D55E00", "Control" = "#0072B2"),
+    name = "Group"
+  ) +
+  scale_y_continuous(
+    trans = pseudo_log_trans(base = 10),
+    name = "Mean Wealth Index (hv271a)"
+  ) +
+  labs(
+    title = "Evolution of Wealth Index by Group (2008-2021)",
+    x = "Survey Year"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+    axis.title = element_text(face = "bold"),
+    legend.position = "top",
+    panel.grid.major = element_line(size = 0.3),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+## Graphique
+
+```{r}
+
+# Dataset principal
+evolution_main <- model_data %>%
+  group_by(DHSYEAR, GROUP) %>%
+  summarise(
+    mean_value = mean(hv271a, na.rm = TRUE),
+    sd_value = sd(hv271a, na.rm = TRUE),
+    n = n(),
+    se = sd_value / sqrt(n),
+    .groups = "drop"
+  ) %>%
+  mutate(period = "Main (2008-2021)")
+
+
+# Dataset placebo
+evolution_placebo <- placebo_data %>%
+  group_by(DHSYEAR, GROUP) %>%
+  summarise(
+    mean_value = mean(hv271a, na.rm = TRUE),
+    sd_value = sd(hv271a, na.rm = TRUE),
+    n = n(),
+    se = sd_value / sqrt(n),
+    .groups = "drop"
+  ) %>%
+  mutate(Period = "Placebo (1997-2008)")
+
+
+# Combined the two datasets 
+evolution_combined <- bind_rows(evolution_main, evolution_placebo)
+
+evolution_combined <- evolution_combined %>%
+  mutate(GroupPeriod = paste(GROUP, Period, sep = "_"))
+
+# Plot
+ggplot(evolution_combined, 
+       aes(x = factor(DHSYEAR), 
+           y = mean_value, 
+           group = interaction(GROUP, Period))) +
+  geom_point(aes(color = GROUP, shape = Period), size = 3.5) +
+  geom_line(aes(color = GROUP, linetype = Period), size = 1.3) +
+  geom_errorbar(aes(ymin = mean_value - 1.96 * se, 
+                    ymax = mean_value + 1.96 * se,
+                    color = GROUP),
+                width = 0.2, size = 0.8, alpha = 0.5) +
+  geom_text(aes(label = sprintf("%.2f", mean_value)),
+             vjust = -1, size = 4, color = "black") +
+  scale_color_manual(
+    values = c("Treatment" = "#D55E00", "Control" = "#0072B2"),
+    name = "Group"
+  ) +
+  scale_linetype_manual( 
+    values = c("Main (2008-2021)" = "solid",
+               "Placebo (1997-2008)" = "dashed"),
+    name = "Period"
+  ) +
+  scale_y_continuous(
+    trans = pseudo_log_trans(base = 10),
+    name = "Mean Wealth Index (hv271a)"
+  ) +
+  labs(
+    title = "Weath Index Evolution: Main DID vs Placebo",
+    x = "Survey Year"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+    axis.title = element_text(face = "bold"),
+    legend.position = "top",
+    panel.grid.major = element_line(size = 0.3),
+    panel.grid.minor = element_blank()
+  )
+  
+```
