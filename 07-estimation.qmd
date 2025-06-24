@@ -114,6 +114,7 @@ placebo_data <- data_all %>%
     placebo_treated = ifelse(GROUP == "Treatment", 1, 0), # 1 si ≤ 10 km, O sinon
     post = ifelse(DHSYEAR == 2008, 1, 0) # post = 1 pour 2008 et 0 pour l'année 1997
     )
+
 # DID Regression placebo: 1997-2008
 did_placebo <- lm(hv271a ~ placebo_treated * post, data = placebo_data)
 summary(did_placebo)
@@ -125,8 +126,8 @@ tidy(did_placebo)
 evolution_placebo <- placebo_data %>%
   group_by(DHSYEAR, GROUP) %>%
   summarise(
-    mean_value = mean(hv271a, na.rm = TRUE),
-    sd_value = sd(hv271a, na.rm = TRUE),
+    mean_value = mean(hv271a, na.rm = FALSE),
+    sd_value = sd(hv271a, na.rm = FALSE),
     n = n(),
     se = sd_value / sqrt(n),
     .groups = "drop"
@@ -164,6 +165,57 @@ ggplot(evolution_placebo,aes(x = factor(DHSYEAR), y = mean_value, color = GROUP,
     panel.grid.minor = element_blank()
   )
 
+
+
+# DID Regression placebo: 1997-2008
+did_placebo <- lm(hv271a ~ placebo_treated * post, data = placebo_data)
+summary(did_placebo)
+
+# Coefficient presentation
+tidy(did_placebo)
+
+# Plot
+evolution_placebo <- placebo_data %>%
+  group_by(DHSYEAR, GROUP) %>%
+  summarise(
+    mean_value = mean(hv271a, na.rm = FALSE),
+    sd_value = sd(hv271a, na.rm = FALSE),
+    n = n(),
+    se = sd_value / sqrt(n),
+    .groups = "drop"
+  )
+
+ggplot(evolution_placebo,aes(x = factor(DHSYEAR), y = mean_value, color = GROUP, group = GROUP)) +
+  geom_point(size = 4) +
+  geom_line(size = 1.3) +
+  geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se),
+                width = 0.2, size = 0.8, alpha = 0.5) +
+  geom_text(
+    aes(label = sprintf("%.2f", mean_value)),
+    vjust = -1,
+    size = 4.5,
+    color = "black"
+  ) +
+  scale_color_manual(
+    values = c("Treatment" = "#D55E00", "Control" = "#0072B2"),
+    name = "Group"
+  ) +
+  scale_y_continuous(
+    trans = pseudo_log_trans(base = 10),
+    name = "Wealth index mean (hv271a)"
+  ) +
+  labs( 
+    title = "Placebo test: Wealth Index Mean by group (1997-2008)",
+    x = "Survey Year"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+    axis.title = element_text(face = "bold"),
+    legend.position = "top",
+    panel.grid.major = element_line(size = 0.3),
+    panel.grid.minor = element_blank()
+  )
 ```
 
 Le graphique présente les moyennes de l'indice de richesse (hv271a) pour les groupes de traitement et de contrôles pour les années 1997 et 2008. Le point en orange représente la moyenne de l'indice de richesse pour le groupe de traitement et le point en bleu est celui du groupe de contrôle. En 1997, les deux moyennes sont proches pour les deux groupes dont une valeur de -1.79 pour les groupes de traitement et -1.97 pour les groupes de contrôle. En 2008, les deux moyennes baissent mais restent relativement proches (Groupe de traitement = -2.80 et Groupe de controle = -3.45). D'après ces résultats, il n'y a pas de différence marquée dans l'évolution de la richesse entre les deux groupes sur la période 1997-2008, période où aucune aire protégée n'a été crée pour ces groupes. L'hypothèse des tendances parallèles est donc vérifié.
@@ -267,8 +319,8 @@ tidy(did_2008_2021)
 evolution_main <- model_data %>%
   group_by(DHSYEAR, GROUP) %>%
   summarise(
-    mean_value = mean(hv271a, na.rm = TRUE),
-    sd_value = sd(hv271a, na.rm = TRUE),
+    mean_value = mean(hv271a, na.rm = FALSE),
+    sd_value = sd(hv271a, na.rm = FALSE),
     n = n(),
     se = sd_value / sqrt(n),
     .groups = "drop"
@@ -350,7 +402,7 @@ ggplot(evolution_combined,
            y = mean_value, 
            group = interaction(GROUP, Period))) +
   geom_point(aes(color = GROUP, shape = Period), size = 3.5) +
-  geom_line(aes(color = GROUP, linetype = Period), size = 1.3) +
+  geom_line(aes(color = GROUP, linetype = Period, group = interaction(GROUP, Period)), size = 1.3) +
   geom_errorbar(aes(ymin = mean_value - 1.96 * se, 
                     ymax = mean_value + 1.96 * se,
                     color = GROUP),
