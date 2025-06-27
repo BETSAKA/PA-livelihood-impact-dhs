@@ -3,6 +3,7 @@ editor: source
 editor_options: 
   chunk_output_type: console
 ---
+
 # Wealth Indexes
 
 ## Objectives
@@ -503,7 +504,7 @@ cor.test(as.numeric(comparison$`DHS Factor Score`), comparison$r_pca_loading)
 
 ```
 
-The plot and correlation results strongly support the accuracy of our implementation of the national PCA. The scatterplot shows an almost perfect linear alignment between the DHS-provided factor loadings and those we reproduced using the harmonized dataset. This is confirmed statistically by a Pearson correlation coefficient of 0.998, with a p-value < 2.2e-16, indicating an extremely high degree of agreement between the two sets of loadings. This near-perfect correlation suggests that our harmonization and PCA procedure closely replicates the methodology applied by DHS for constructing the national wealth index (`hv271`).
+The plot and correlation results strongly support the accuracy of our implementation of the national PCA. The scatterplot shows an almost perfect linear alignment between the DHS-provided factor loadings and those we reproduced using the harmonized dataset. This is confirmed statistically by a Pearson correlation coefficient of 0.998, with a p-value \< 2.2e-16, indicating an extremely high degree of agreement between the two sets of loadings. This near-perfect correlation suggests that our harmonization and PCA procedure closely replicates the methodology applied by DHS for constructing the national wealth index (`hv271`).
 
 We then compute a household-level wealth score using this national PCA and compare it to the hv271 variable in the DHS dataset.
 
@@ -574,20 +575,19 @@ hh_2021_rec <- hh_2021_rec %>%
                        as.vector(scale(select(., all_of(rural_pca_vars))) %*% 
                                    pca_rural$loadings[, 1]), 
                        NA_real_),
-    domscor = case_when(
+    wealth_index_rural = case_when(
       hv025 == 1 ~ urbscore,
       hv025 == 2 ~ rurscore
     )
   )
 
-
 ```
 
-We finally compare the domain-specific score (domscor) to hv271a to assess the accuracy of our reconstruction:
+We finally compare the domain-specific score (wealth_index_rural) to hv271a to assess the accuracy of our reconstruction:
 
 ```{r}
-# Scatterplot: domscor vs hv271a
-ggplot(hh_2021_rec, aes(x = domscor, y = hv271a)) +
+# Scatterplot: wealth_index_rural vs hv271a
+ggplot(hh_2021_rec, aes(x = wealth_index_rural, y = hv271a)) +
   geom_point(alpha = 0.6) +
   geom_smooth(method = "lm", color = "blue", se = FALSE, linewidth = 0.2) +
   facet_wrap(~ hv025, labeller = labeller(hv025 = c("1" = "Urban", "2" = "Rural"))) +
@@ -601,13 +601,13 @@ ggplot(hh_2021_rec, aes(x = domscor, y = hv271a)) +
 # Spearman correlations
 spearman_urban <- cor(
   hh_2021_rec %>% filter(hv025 == 1) %>% pull(hv271a),
-  hh_2021_rec %>% filter(hv025 == 1) %>% pull(domscor),
+  hh_2021_rec %>% filter(hv025 == 1) %>% pull(wealth_index_rural),
   method = "spearman", use = "complete.obs"
 )
 
 spearman_rural <- cor(
   hh_2021_rec %>% filter(hv025 == 2) %>% pull(hv271a),
-  hh_2021_rec %>% filter(hv025 == 2) %>% pull(domscor),
+  hh_2021_rec %>% filter(hv025 == 2) %>% pull(wealth_index_rural),
   method = "spearman", use = "complete.obs"
 )
 
@@ -858,7 +858,7 @@ hh_2008_rec <- hh_2008_rec %>%
 # Combine domain-specific scores
 hh_2008_rec <- hh_2008_rec %>%
   mutate(
-    domscor = case_when(
+    wealth_index_rural = case_when(
       hv025 == 1 ~ urbscore,
       hv025 == 2 ~ rurscore
     )
@@ -866,15 +866,11 @@ hh_2008_rec <- hh_2008_rec %>%
 
 # Keep only household IDs and domain-specific score
 hh_2008_hv271a <- hh_2008_rec %>%
-  select(hv001, hv002, hv271a = domscor)
+  select(hv001, hv002,hv005, hv025, wealth_index_rural)
 
-# Save for later use
-write_rds(hh_2008_hv271a, "data/derived/hh_2008_hv271a.rds")
 ```
 
 To extend the DHS 2008 analysis with a domain-specific wealth index, we computed separate PCA scores for urban and rural households, based on the subset of variables used by DHS in their original index construction. We then assigned to each household a domain-specific wealth score (`hv271a`) using the appropriate urban or rural PCA loadings. In order to facilitate later merging with other household-level data, we retained only the unique household identifiers (`hv001`, `hv002`) along with the computed score. The resulting dataset was saved as an `.rds` file in the `data/derived/` directory for use in downstream analyses.
-
-
 
 ## Calculating DHS 1997
 
@@ -1084,7 +1080,7 @@ hh_1997_rec <- hh_1997_rec %>%
 hh_1997_rec <- hh_1997_rec %>%
   mutate(
     hv271 = as.vector(scale(select(., all_of(all_factor_vars_1997))) %*% pca_result_1997$loadings[, 1]), # common
-    hv271a = case_when(
+    wealth_index_rural = case_when(
       hv025 == 1 ~ urbscore,
       hv025 == 2 ~ rurscore
     ) # domain-specific
@@ -1092,13 +1088,61 @@ hh_1997_rec <- hh_1997_rec %>%
 
 # Keep only identifiers and the two wealth indices
 hh_1997_pca_scores <- hh_1997_rec %>%
-  select(hv001, hv002, hv271, hv271a)
+  select(hv001, hv002, hv005, hv025, hv271, wealth_index_rural)
+
+
+```
+
+These results confirm the reliability of our methodology in replicating the wealth index calculations for the DHS 1997 and 2008 surveys. We will be able to use these to compute wealth scores dedicated to the rural areas, equivalent to **HV270A** and **HV271A**.
+
+## Wealth index percentile segmentation
+
+```{r}
+
+library(Hmisc)
+
+# Percentiles 2021
+hh_2021_rec <- hh_2021_rec %>%
+  mutate(w = hv005 / 1e6) %>%
+  group_by(hv025)%>%
+  arrange(wealth_index_rural) %>%
+  mutate(
+    cum_w = cumsum(w),
+    total_w = sum(w),
+    pct_w = cum_w / total_w,
+    wealth_centil_rural= floor(pct_w * 100) + 1
+  ) %>%
+  ungroup() %>%
+  select(-cum_w, -total_w, -pct_w, -w)
+
+# Percentiles 2008
+hh_2008_hv271a <- hh_2008_hv271a %>%
+  mutate(w = hv005 / 1e6) %>%
+  group_by(hv025) %>%
+  arrange(wealth_index_rural) %>%
+  mutate(
+    cum_w = cumsum(w),
+    total_w = sum(w),
+    wealth_centile_rural = floor(cum_w / total_w * 100) + 1 
+  ) %>%
+  ungroup () %>%
+  select(-cum_w, -total_w)
+
+# Save for later use
+write_rds(hh_2008_hv271a, "data/derived/hh_2008_hv271a.rds")
+
+# Percentiles 1997
+hh_1997_pca_scores <- hh_1997_pca_scores %>%
+  mutate(w = hv005/1e6) %>%
+  filter(hv025 == 2 & !is.na(wealth_index_rural)) %>%
+  arrange(wealth_index_rural) %>%
+  mutate(
+    cum_w = cumsum(w),
+    total_w = sum(w),
+    wealth_centile_rural = floor(cum_w / total_w * 100) + 1
+  ) %>%
+  select(-cum_w, -total_w, -w)
 
 # Save to file
 write_rds(hh_1997_pca_scores, "data/derived/hh_1997_hv271_hv271a.rds")
 ```
-
-
-# Conclusion
-
-These results confirm the reliability of our methodology in replicating the wealth index calculations for the DHS 1997 and 2008 surveys. We will be able to use these to compute wealth scores dedicated to the rural areas, equivalent to **HV270A** and **HV271A**.
