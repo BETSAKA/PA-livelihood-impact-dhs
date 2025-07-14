@@ -1110,7 +1110,7 @@ hh_2021_rec <- hh_2021_rec %>%
     cum_w = cumsum(w),
     total_w = sum(w),
     pct_w = cum_w / total_w,
-    wealth_centil_rural= floor(pct_w * 100) + 1
+    wealth_centile_rural= floor(pct_w * 100) + 1
   ) %>%
   ungroup() %>%
   select(-cum_w, -total_w, -pct_w, -w)
@@ -1126,10 +1126,7 @@ hh_2008_hv271a <- hh_2008_hv271a %>%
     wealth_centile_rural = floor(cum_w / total_w * 100) + 1 
   ) %>%
   ungroup () %>%
-  select(-cum_w, -total_w)
-
-# Save for later use
-write_rds(hh_2008_hv271a, "data/derived/hh_2008_hv271a.rds")
+  select(-cum_w, -total_w, -w)
 
 # Percentiles 1997
 hh_1997_pca_scores <- hh_1997_pca_scores %>%
@@ -1143,8 +1140,6 @@ hh_1997_pca_scores <- hh_1997_pca_scores %>%
   ) %>%
   select(-cum_w, -total_w, -w)
 
-# Save to file
-write_rds(hh_1997_pca_scores, "data/derived/hh_1997_hv271_hv271a.rds")
 ```
 
 ## Secondary outcome variable Calculation: inequality of household living standards
@@ -1154,10 +1149,14 @@ write_rds(hh_1997_pca_scores, "data/derived/hh_1997_hv271_hv271a.rds")
 hh_2021_rec <- hh_2021_rec %>%
   group_by(hv001) %>%
   mutate(
-   mean_wealth = mean(wealth_centil_rural, na.rm = TRUE),
-   sd_wealth = sd(wealth_centil_rural, na.rm = TRUE),
-   z_score_wealth = (wealth_centil_rural - mean_wealth) / sd_wealth) %>% 
+   mean_wealth = mean(wealth_centile_rural, na.rm = TRUE),
+   sd_wealth = sd(wealth_centile_rural, na.rm = TRUE),
+   z_score_wealth = (wealth_centile_rural - mean_wealth) / sd_wealth) %>% 
   ungroup ()
+
+
+# Save for later use
+write_rds(hh_2021_rec, "data/derived/hh_2021_rec.rds")
 
 # Z-score 2008
 hh_2008_hv271a <- hh_2008_hv271a %>%
@@ -1168,6 +1167,9 @@ hh_2008_hv271a <- hh_2008_hv271a %>%
    z_score_wealth = (wealth_centile_rural - mean_wealth) / sd_wealth) %>% 
   ungroup ()
 
+# Save for later use
+write_rds(hh_2008_hv271a, "data/derived/hh_2008_hv271a.rds")
+
 # Z-score 1997
 hh_1997_pca_scores <- hh_1997_pca_scores %>%
   group_by(hv001) %>%
@@ -1176,4 +1178,7 @@ hh_1997_pca_scores <- hh_1997_pca_scores %>%
    sd_wealth = sd(wealth_centile_rural, na.rm = TRUE),
    z_score_wealth = (wealth_centile_rural - mean_wealth) / sd_wealth) %>% 
   ungroup ()
+
+# Save to file
+write_rds(hh_1997_pca_scores, "data/derived/hh_1997_hv271_hv271a.rds")
 ```
