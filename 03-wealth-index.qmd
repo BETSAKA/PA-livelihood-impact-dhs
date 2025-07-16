@@ -1172,13 +1172,16 @@ add_centile_survey <- function(df, value_col, weight_col = "hv005", cluster_col 
 }
 hh_1997_rural <- add_centile_survey(hh_1997_rural, 
                                     value_col = "wealth_index_rural", 
-                                    new_col = "wealth_centile_rural")
+                                    new_col = "wealth_centile_rural_weighted") %>%
+  mutate(wealth_centile_rural_simple = ntile(wealth_index_rural, 100))
 hh_2008_rural <- add_centile_survey(hh_2008_rural, 
                                     value_col = "wealth_index_rural", 
-                                    new_col = "wealth_centile_rural")
+                                    new_col = "wealth_centile_rural_weighted") %>%
+  mutate(wealth_centile_rural_simple = ntile(wealth_index_rural, 100))
 hh_2021_rural <- add_centile_survey(hh_2021_rural, 
                                     value_col = "wealth_index_rural", 
-                                    new_col = "wealth_centile_rural")
+                                    new_col = "wealth_centile_rural_weighted") %>%
+  mutate(wealth_centile_rural_simple = ntile(wealth_index_rural, 100))
 ```
 
 ## Secondary outcome variable Calculation: inequality of household living standards
