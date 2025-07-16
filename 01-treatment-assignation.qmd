@@ -80,11 +80,13 @@ Les données de SAPM sont codées en EPSG 9001, que l'on transforme en 4326 pour
 ```{r}
 #| fig-cap: "Aires protégées de Madagascar"
 
-# Load SAPM data
-sapm <- st_read("data/raw/SAPM_2017/SAPM_2017_corrected.shp") |> # en EPSG 9001
-  st_transform(standard_crs) %>%
-  st_make_valid() %>%
-  mutate(YEAR_CREAT = year(ymd(DATE_CREAT)), .after = DATE_CREAT)
+library(wdpar)
+
+sapm <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
+  wdpa_clean() |> 
+  filter(STATUS == "Designated") |> 
+  filter(MARINE != "marine")
+
 # Visualisation
 tmap_mode("view")
 tm_shape(sapm) +
