@@ -1152,7 +1152,8 @@ hh_2021_rec <- hh_2021_rec %>%
    mean_wealth = mean(wealth_centile_rural, na.rm = TRUE),
    sd_wealth = sd(wealth_centile_rural, na.rm = TRUE),
    z_score_wealth = (wealth_centile_rural - mean_wealth) / sd_wealth) %>% 
-  ungroup ()
+  ungroup () %>%
+  select(-mean_wealth, -sd_wealth)
 
 
 # Save for later use
@@ -1165,7 +1166,8 @@ hh_2008_hv271a <- hh_2008_hv271a %>%
    mean_wealth = mean(wealth_centile_rural, na.rm = TRUE),
    sd_wealth = sd(wealth_centile_rural, na.rm = TRUE),
    z_score_wealth = (wealth_centile_rural - mean_wealth) / sd_wealth) %>% 
-  ungroup ()
+  ungroup () %>%
+  select(-mean_wealth, -sd_wealth)
 
 # Save for later use
 write_rds(hh_2008_hv271a, "data/derived/hh_2008_hv271a.rds")
@@ -1177,7 +1179,8 @@ hh_1997_pca_scores <- hh_1997_pca_scores %>%
    mean_wealth = mean(wealth_centile_rural, na.rm = TRUE),
    sd_wealth = sd(wealth_centile_rural, na.rm = TRUE),
    z_score_wealth = (wealth_centile_rural - mean_wealth) / sd_wealth) %>% 
-  ungroup ()
+  ungroup () %>%
+  select(-mean_wealth, -sd_wealth)
 
 # Save to file
 write_rds(hh_1997_pca_scores, "data/derived/hh_1997_hv271_hv271a.rds")
