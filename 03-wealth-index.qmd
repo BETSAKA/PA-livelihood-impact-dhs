@@ -575,8 +575,12 @@ hh_2021_rec <- hh_2021_rec %>%
                        as.vector(scale(select(., all_of(rural_pca_vars))) %*% 
                                    pca_rural$loadings[, 1]), 
                        NA_real_),
-    wealth_index_rural = case_when(
+    wealth_index_domain = case_when(
       hv025 == 1 ~ urbscore,
+      hv025 == 2 ~ rurscore
+    ), 
+    wealth_index_rural = case_when(
+      hv025 == 1 ~ NA_real_,
       hv025 == 2 ~ rurscore
     )
   )
@@ -601,7 +605,7 @@ ggplot(hh_2021_rec, aes(x = wealth_index_rural, y = hv271a)) +
 # Spearman correlations
 spearman_urban <- cor(
   hh_2021_rec %>% filter(hv025 == 1) %>% pull(hv271a),
-  hh_2021_rec %>% filter(hv025 == 1) %>% pull(wealth_index_rural),
+  hh_2021_rec %>% filter(hv025 == 1) %>% pull(wealth_index_domain),
   method = "spearman", use = "complete.obs"
 )
 
@@ -616,9 +620,19 @@ tibble(
   spearman_dom_vs_HV271A = c(spearman_urban, spearman_rural)
 )
 
+
 ```
 
 We then assess the quality of our domain-specific PCA reconstruction by comparing our computed scores to the official DHS variable hv271a, which provides separate wealth indices for urban and rural areas. The scatterplots indicate a strong concordance across both domains, and the Spearman correlation coefficients—0.995 for urban households and 0.999 for rural ones—confirm that our domain-specific factor scores closely replicate the rank ordering captured in hv271a. Although minor non-linearities are visible, particularly in the upper ranges, these results suggest that our approach captures the intended within-domain variation with a high degree of fidelity.
+
+
+```{r}
+# Keep only household IDs and domain-specific score
+hh_2021_rural <- hh_2021_rec %>%
+  filter(hv025 == 2) %>%
+  select(hv001, hv002,hv005, hv025, wealth_index_rural)
+```
+
 
 ## Extending DHS 2008
 
@@ -858,17 +872,26 @@ hh_2008_rec <- hh_2008_rec %>%
 # Combine domain-specific scores
 hh_2008_rec <- hh_2008_rec %>%
   mutate(
-    wealth_index_rural = case_when(
+    wealth_index_domain = case_when(
       hv025 == 1 ~ urbscore,
+      hv025 == 2 ~ rurscore
+    ), 
+    wealth_index_rural = case_when(
+      hv025 == 1 ~ NA_real_,
       hv025 == 2 ~ rurscore
     )
   )
 
-# Keep only household IDs and domain-specific score
-hh_2008_hv271a <- hh_2008_rec %>%
-  select(hv001, hv002,hv005, hv025, wealth_index_rural)
-
 ```
+
+
+```{r}
+# Keep only household IDs and domain-specific score
+hh_2008_rural <- hh_2008_rec %>%
+  filter(hv025 == 2) %>%
+  select(hv001, hv002,hv005, hv025, wealth_index_rural)
+```
+
 
 To extend the DHS 2008 analysis with a domain-specific wealth index, we computed separate PCA scores for urban and rural households, based on the subset of variables used by DHS in their original index construction. We then assigned to each household a domain-specific wealth score (`hv271a`) using the appropriate urban or rural PCA loadings. In order to facilitate later merging with other household-level data, we retained only the unique household identifiers (`hv001`, `hv002`) along with the computed score. The resulting dataset was saved as an `.rds` file in the `data/derived/` directory for use in downstream analyses.
 
@@ -1080,18 +1103,27 @@ hh_1997_rec <- hh_1997_rec %>%
 hh_1997_rec <- hh_1997_rec %>%
   mutate(
     hv271 = as.vector(scale(select(., all_of(all_factor_vars_1997))) %*% pca_result_1997$loadings[, 1]), # common
-    wealth_index_rural = case_when(
+    wealth_index_domain = case_when(
       hv025 == 1 ~ urbscore,
       hv025 == 2 ~ rurscore
-    ) # domain-specific
+    ), # domain-specific
+    wealth_index_rural = case_when(
+      hv025 == 1 ~ NA_real_,
+      hv025 == 2 ~ rurscore
+    )
   )
 
-# Keep only identifiers and the two wealth indices
-hh_1997_pca_scores <- hh_1997_rec %>%
-  select(hv001, hv002, hv005, hv025, hv271, wealth_index_rural)
+```
 
+
+```{r}
+# Keep only household IDs and domain-specific score
+hh_1997_rural <- hh_1997_rec %>%
+  filter(hv025 == 2) %>%
+  select(hv001, hv002,hv005, hv025, wealth_index_rural)
 
 ```
+
 
 These results confirm the reliability of our methodology in replicating the wealth index calculations for the DHS 1997 and 2008 surveys. We will be able to use these to compute wealth scores dedicated to the rural areas, equivalent to **HV270A** and **HV271A**.
 
@@ -1101,44 +1133,56 @@ These results confirm the reliability of our methodology in replicating the weal
 
 library(Hmisc)
 
-# Percentiles 2021
-hh_2021_rec <- hh_2021_rec %>%
-  mutate(w = hv005 / 1e6) %>%
-  group_by(hv025)%>%
-  arrange(wealth_index_rural) %>%
-  mutate(
-    cum_w = cumsum(w),
-    total_w = sum(w),
-    pct_w = cum_w / total_w,
-    wealth_centile_rural= floor(pct_w * 100) + 1
-  ) %>%
-  ungroup() %>%
-  select(-cum_w, -total_w, -pct_w, -w)
+# Crée une fonction pour obtenir les seuils de centile pondérés
+get_centile_thresholds <- function(x, w, probs = seq(0, 1, by = 0.01)) {
+  Hmisc::wtd.quantile(x, weights = w, probs = probs, na.rm = TRUE)
+}
 
-# Percentiles 2008
-hh_2008_hv271a <- hh_2008_hv271a %>%
-  mutate(w = hv005 / 1e6) %>%
-  group_by(hv025) %>%
-  arrange(wealth_index_rural) %>%
-  mutate(
-    cum_w = cumsum(w),
-    total_w = sum(w),
-    wealth_centile_rural = floor(cum_w / total_w * 100) + 1 
-  ) %>%
-  ungroup () %>%
-  select(-cum_w, -total_w, -w)
+# Percentile 2021-----------------------------------------------------
+thresholds <- get_centile_thresholds(hh_2021_rural$wealth_index_rural, hh_2021_rural$w)
 
-# Percentiles 1997
-hh_1997_pca_scores <- hh_1997_pca_scores %>%
-  mutate(w = hv005/1e6) %>%
-  filter(hv025 == 2 & !is.na(wealth_index_rural)) %>%
-  arrange(wealth_index_rural) %>%
+# Attribue à chaque observation son centile pondéré
+hh_2021_rural<- hh_2021_rural %>%
   mutate(
-    cum_w = cumsum(w),
-    total_w = sum(w),
-    wealth_centile_rural = floor(cum_w / total_w * 100) + 1
-  ) %>%
-  select(-cum_w, -total_w, -w)
+    wealth_centile_rural = cut(
+      wealth_index_rural,
+      breaks = c(-Inf, thresholds[-1]), 
+      labels = 1:100,
+      include.lowest = TRUE,
+      right = TRUE
+    ) %>% as.integer()
+  )
+
+# Percentile 2008----------------------------------------------------------
+thresholds <- get_centile_thresholds(hh_2008_rural$wealth_index_rural, hh_2008_rural$w)
+
+# Attribue à chaque observation son centile pondéré
+hh_2008_rural<- hh_2008_rural %>%
+  mutate(
+    wealth_centile_rural = cut(
+      wealth_index_rural,
+      breaks = c(-Inf, thresholds[-1]),  # évite double inclusion des bornes
+      labels = 1:100,
+      include.lowest = TRUE,
+      right = TRUE
+    ) %>% as.integer()
+  )
+
+# Percentile 1997-------------------------------------------------
+thresholds <- get_centile_thresholds(hh_1997_rural$wealth_index_rural, hh_1997_rural$w)
+
+# Attribue à chaque observation son centile pondéré
+hh_1997_rural<- hh_1997_rural %>%
+  mutate(
+    wealth_centile_rural = cut(
+      wealth_index_rural,
+      breaks = c(-Inf, thresholds[-1]),  # évite double inclusion des bornes
+      labels = 1:100,
+      include.lowest = TRUE,
+      right = TRUE
+    ) %>% as.integer()
+  )
+
 
 ```
 
@@ -1146,7 +1190,7 @@ hh_1997_pca_scores <- hh_1997_pca_scores %>%
 
 ```{r}
 # Z-score 2021
-hh_2021_rec <- hh_2021_rec %>%
+hh_2021_rural <- hh_2021_rural %>%
   group_by(hv001) %>%
   mutate(
    mean_wealth = mean(wealth_centile_rural, na.rm = TRUE),
@@ -1160,7 +1204,7 @@ hh_2021_rec <- hh_2021_rec %>%
 write_rds(hh_2021_rec, "data/derived/hh_2021_rec.rds")
 
 # Z-score 2008
-hh_2008_hv271a <- hh_2008_hv271a %>%
+hh_2008_rural <- hh_2008_rural %>%
   group_by(hv001) %>%
   mutate(
    mean_wealth = mean(wealth_centile_rural, na.rm = TRUE),
@@ -1170,10 +1214,10 @@ hh_2008_hv271a <- hh_2008_hv271a %>%
   select(-mean_wealth, -sd_wealth)
 
 # Save for later use
-write_rds(hh_2008_hv271a, "data/derived/hh_2008_hv271a.rds")
+write_rds(hh_2008_rural, "data/derived/hh_2008_rural.rds")
 
 # Z-score 1997
-hh_1997_pca_scores <- hh_1997_pca_scores %>%
+hh_1997_rural <- hh_1997_rural %>%
   group_by(hv001) %>%
   mutate(
    mean_wealth = mean(wealth_centile_rural, na.rm = TRUE),
@@ -1183,5 +1227,5 @@ hh_1997_pca_scores <- hh_1997_pca_scores %>%
   select(-mean_wealth, -sd_wealth)
 
 # Save to file
-write_rds(hh_1997_pca_scores, "data/derived/hh_1997_hv271_hv271a.rds")
+write_rds(hh_1997_rural, "data/derived/hh_1997_rural.rds")
 ```
