@@ -11,3 +11,4 @@
 *.bcf
 *.blg
 *.run.xml
+data/*
