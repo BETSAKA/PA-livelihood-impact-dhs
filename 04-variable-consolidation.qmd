@@ -44,7 +44,7 @@ Nous avons sélectionné dans le HR de 1997 les identifiants des clusters et l'�
 hh_1997_hv271_hv271a <- read_rds("data/derived/hh_1997_hv271_hv271a.rds") # wealth index factor et wealth index factor rural 1997
 hr_1997 <- read_dta("data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA")
 
-# Variable selection in hr_2008
+# Variable selection in hr_1997
 hr_1997_selected <- hr_1997 %>%
   dplyr:: select(
     hv001, hv002,hv219, hv220
@@ -54,9 +54,13 @@ hr_1997_selected <- hr_1997 %>%
 hr_1997_selected <- hr_1997_selected %>%
   left_join(hh_1997_hv271_hv271a, by = c("hv001", "hv002"))
 
+
 hr_1997_selected <- hr_1997_selected %>%
   left_join(
-    all_covars %>% filter(DHSYEAR == 1997),
+    all_covars %>% filter(DHSYEAR == 1997) %>%
+      select(
+        DHSCLUST, URBAN_RURA, DHSYEAR, treecover_area, slope, elevation, population_count, traveltime_2000, spei_wc
+      ), 
     by = c("hv001" = "DHSCLUST")
   )
 
@@ -78,7 +82,6 @@ df_wide_1997 <- df_long_1997 %>%
     values_from = value, 
     names_glue = "{year_indicator}"
   )  %>%
-  select(-URBAN_RURA) %>% 
   group_by(hv001, hv002) %>% 
   summarise(across(everything(), ~mean(., na.rm = TRUE)), .groups = "drop")
 
@@ -89,7 +92,7 @@ df_base_1997 <- hr_1997_selected %>%
   distinct(hv001, hv002, .keep_all = TRUE)
 
 hr_1997_final <- df_base_1997 %>%
-  left_join(df_wide_1997, by = c("hv001", "hv002", "hv219", "hv220", "hv271", "hv271a", "DHSYEAR"))
+  left_join(df_wide_1997, by = c("hv001", "hv002"))
 
 hr_1997_final <- hr_1997_final %>%
   left_join(
