@@ -1129,61 +1129,56 @@ These results confirm the reliability of our methodology in replicating the weal
 
 ## Wealth index percentile segmentation
 
-```{r}
+Attention : certains seuils sont uniques, donc on applique un léger jitter aux seuils pour permettre le "cut".
 
+```{r}
 library(Hmisc)
 
-# Crée une fonction pour obtenir les seuils de centile pondérés
-get_centile_thresholds <- function(x, w, probs = seq(0, 1, by = 0.01)) {
-  Hmisc::wtd.quantile(x, weights = w, probs = probs, na.rm = TRUE)
+add_centile_survey <- function(df, value_col, weight_col = "hv005", cluster_col = "hv001", new_col = "centile") {
+  # Évaluer dynamiquement les noms de colonnes
+  val <- rlang::sym(value_col)
+  wgt <- rlang::sym(weight_col)
+  clu <- rlang::sym(cluster_col)
+  
+  # Créer une variable de poids correctement mise à l’échelle si c'est hv005
+  df <- df %>%
+    mutate(.weight_survey = if (weight_col == "hv005") !!wgt / 1e6 else !!wgt)
+  
+  # Créer le design survey avec clustering
+  design <- svydesign(
+    ids = as.formula(paste0("~", cluster_col)),
+    weights = ~.weight_survey,
+    data = df
+  )
+  
+  # Calculer les seuils des centiles pondérés
+  thresholds <- svyquantile(as.formula(paste0("~", value_col)), design,
+                            quantiles = seq(0.01, 1, 0.01),
+                            ci = FALSE, na.rm = TRUE)
+   
+  thresholds <- as.numeric(thresholds[[1]])
+  thresholds <- thresholds1 + seq_along(thresholds) * 1e-10
+  
+  # Attribuer les centiles
+  df[[new_col]] <- cut(
+    df[[value_col]],
+    breaks = c(-Inf, thresholds),
+    labels = 1:100,
+    include.lowest = TRUE,
+    right = TRUE
+  ) %>% as.integer()
+  
+  return(df)
 }
-
-# Percentile 2021-----------------------------------------------------
-thresholds <- get_centile_thresholds(hh_2021_rural$wealth_index_rural, hh_2021_rural$w)
-
-# Attribue à chaque observation son centile pondéré
-hh_2021_rural<- hh_2021_rural %>%
-  mutate(
-    wealth_centile_rural = cut(
-      wealth_index_rural,
-      breaks = c(-Inf, thresholds[-1]), 
-      labels = 1:100,
-      include.lowest = TRUE,
-      right = TRUE
-    ) %>% as.integer()
-  )
-
-# Percentile 2008----------------------------------------------------------
-thresholds <- get_centile_thresholds(hh_2008_rural$wealth_index_rural, hh_2008_rural$w)
-
-# Attribue à chaque observation son centile pondéré
-hh_2008_rural<- hh_2008_rural %>%
-  mutate(
-    wealth_centile_rural = cut(
-      wealth_index_rural,
-      breaks = c(-Inf, thresholds[-1]),  # évite double inclusion des bornes
-      labels = 1:100,
-      include.lowest = TRUE,
-      right = TRUE
-    ) %>% as.integer()
-  )
-
-# Percentile 1997-------------------------------------------------
-thresholds <- get_centile_thresholds(hh_1997_rural$wealth_index_rural, hh_1997_rural$w)
-
-# Attribue à chaque observation son centile pondéré
-hh_1997_rural<- hh_1997_rural %>%
-  mutate(
-    wealth_centile_rural = cut(
-      wealth_index_rural,
-      breaks = c(-Inf, thresholds[-1]),  # évite double inclusion des bornes
-      labels = 1:100,
-      include.lowest = TRUE,
-      right = TRUE
-    ) %>% as.integer()
-  )
-
-
+hh_1997_rural <- add_centile_survey(hh_1997_rural, 
+                                    value_col = "wealth_index_rural", 
+                                    new_col = "wealth_centile_rural")
+hh_2008_rural <- add_centile_survey(hh_2008_rural, 
+                                    value_col = "wealth_index_rural", 
+                                    new_col = "wealth_centile_rural")
+hh_2021_rural <- add_centile_survey(hh_2021_rural, 
+                                    value_col = "wealth_index_rural", 
+                                    new_col = "wealth_centile_rural")
 ```
 
 ## Secondary outcome variable Calculation: inequality of household living standards
