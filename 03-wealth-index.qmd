@@ -1193,7 +1193,7 @@ hh_2021_rural <- hh_2021_rural %>%
   mutate(
    mean_wealth = mean(wealth_centile_rural, na.rm = TRUE),
    sd_wealth = sd(wealth_centile_rural, na.rm = TRUE),
-   z_score_wealth = (wealth_centile_rural - mean_wealth) / sd_wealth) %>% 
+   z_score_wealth = abs(wealth_centile_rural - mean_wealth) / sd_wealth) %>% 
   ungroup () %>%
   select(-mean_wealth, -sd_wealth)
 
