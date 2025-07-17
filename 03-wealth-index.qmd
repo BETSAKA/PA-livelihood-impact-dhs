@@ -1219,3 +1219,13 @@ hh_1997_rural <- add_zscore_by_cluster(hh_1997_rural, "wealth_centile_rural_simp
 hh_2008_rural <- add_zscore_by_cluster(hh_2008_rural, "wealth_centile_rural_simple", "hv001")
 hh_2021_rural <- add_zscore_by_cluster(hh_2021_rural, "wealth_centile_rural_simple", "hv001")
 ```
+
+Registration 
+
+```{r}
+# Save for later use
+write_rds(hh_1997_rural, "data/derived/hh_1997_rural.rds")
+write_rds(hh_2008_rural, "data/derived/hh_2008_rural.rds")
+write_rds(hh_2021_rural, "data/derived/hh_2021_rural.rds")
+```
+
