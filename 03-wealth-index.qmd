@@ -1133,6 +1133,7 @@ Attention : certains seuils sont uniques, donc on applique un léger jitter aux 
 
 ```{r}
 library(Hmisc)
+library(survey)
 
 add_centile_survey <- function(df, value_col, weight_col = "hv005", cluster_col = "hv001", new_col = "centile") {
   # Évaluer dynamiquement les noms de colonnes
@@ -1157,7 +1158,7 @@ add_centile_survey <- function(df, value_col, weight_col = "hv005", cluster_col 
                             ci = FALSE, na.rm = TRUE)
    
   thresholds <- as.numeric(thresholds[[1]])
-  thresholds <- thresholds1 + seq_along(thresholds) * 1e-10
+  thresholds <- thresholds + seq_along(thresholds) * 1e-10
   
   # Attribuer les centiles
   df[[new_col]] <- cut(
@@ -1187,43 +1188,34 @@ hh_2021_rural <- add_centile_survey(hh_2021_rural,
 ## Secondary outcome variable Calculation: inequality of household living standards
 
 ```{r}
-# Z-score 2021
-hh_2021_rural <- hh_2021_rural %>%
-  group_by(hv001) %>%
-  mutate(
-   mean_wealth = mean(wealth_centile_rural, na.rm = TRUE),
-   sd_wealth = sd(wealth_centile_rural, na.rm = TRUE),
-   z_score_wealth = abs(wealth_centile_rural - mean_wealth) / sd_wealth) %>% 
-  ungroup () %>%
-  select(-mean_wealth, -sd_wealth)
 
+add_zscore_by_cluster <- function(df, wealth_col, cluster_col, zscore_col = "zscore_wealth") {
+  
+  # Calculer les statistiques par grappe
+  stats <- df %>%
+    group_by(.data[[cluster_col]]) %>%
+    summarise(
+      mean_wealth = mean(.data[[wealth_col]], na.rm = TRUE),
+      sd_wealth = sd(.data[[wealth_col]], na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # Joindre les stats au dataset initial et calculer le z-score
+  df <- df %>%
+    left_join(stats, by = cluster_col) %>%
+    mutate(
+      !!zscore_col := ifelse(
+        !is.na(sd_wealth) & sd_wealth > 0,
+        abs(.data[[wealth_col]] - mean_wealth) / sd_wealth,
+        NA_real_
+      )
+    ) %>%
+    select(-mean_wealth, -sd_wealth) 
+  
+  return(df)
+}
 
-# Save for later use
-write_rds(hh_2021_rec, "data/derived/hh_2021_rec.rds")
-
-# Z-score 2008
-hh_2008_rural <- hh_2008_rural %>%
-  group_by(hv001) %>%
-  mutate(
-   mean_wealth = mean(wealth_centile_rural, na.rm = TRUE),
-   sd_wealth = sd(wealth_centile_rural, na.rm = TRUE),
-   z_score_wealth = (wealth_centile_rural - mean_wealth) / sd_wealth) %>% 
-  ungroup () %>%
-  select(-mean_wealth, -sd_wealth)
-
-# Save for later use
-write_rds(hh_2008_rural, "data/derived/hh_2008_rural.rds")
-
-# Z-score 1997
-hh_1997_rural <- hh_1997_rural %>%
-  group_by(hv001) %>%
-  mutate(
-   mean_wealth = mean(wealth_centile_rural, na.rm = TRUE),
-   sd_wealth = sd(wealth_centile_rural, na.rm = TRUE),
-   z_score_wealth = (wealth_centile_rural - mean_wealth) / sd_wealth) %>% 
-  ungroup () %>%
-  select(-mean_wealth, -sd_wealth)
-
-# Save to file
-write_rds(hh_1997_rural, "data/derived/hh_1997_rural.rds")
+hh_1997_rural <- add_zscore_by_cluster(hh_1997_rural, "wealth_centile_rural_simple", "hv001")
+hh_2008_rural <- add_zscore_by_cluster(hh_2008_rural, "wealth_centile_rural_simple", "hv001")
+hh_2021_rural <- add_zscore_by_cluster(hh_2021_rural, "wealth_centile_rural_simple", "hv001")
 ```
