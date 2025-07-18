@@ -98,6 +98,16 @@ tm_shape(sapm) +
   tm_title("Aires protégées de Madagascar") +
   tm_layout(legend.outside = TRUE)
 
+# Visualisation avec les noms exactes dans les colonnes du dataset de WDPA 
+tmap_mode("view")
+tm_shape(sapm) +
+  tm_polygons(fill =  "green", 
+              id = "ORIG_NAME",
+              popup.vars = c("Superficie (ha)" = "REP_AREA")) +
+  tm_scalebar(position = c("left", "bottom")) + 
+  tmap_options(check_and_fix = TRUE) +
+  tm_title("Aires protégées de Madagascar") +
+  tm_layout(legend.outside = TRUE)
 ```
 
 On peut aussi générer un format tabulaire pour visualiser les données.
