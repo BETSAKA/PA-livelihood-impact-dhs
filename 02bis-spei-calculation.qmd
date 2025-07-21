@@ -76,22 +76,67 @@ spei_tbl <- tibble(
     spei_mean = mean(spei, na.rm = TRUE)
   )
 
+# Ajout des indicateurs de sécheresse--------------
+# Identifier les années en sécheresse (SPEI <-1)
+spei_tbl <- spei_tbl %>%
+  mutate(is_drought = spei_mean < -1)
+
+# Identifier les séquences consécutives 
+rle_drought <- rle(spei_tbl$is_drought)
+group_ids <- rep(seq_along(rle_drought$lengths), rle_drought$lengths)
+
+spei_tbl <- spei_tbl %>%
+  mutate(group_id = group_ids) %>%
+  group_by(group_id) %>%
+  mutate(
+    drought_duration = if (first(is_drought)) n() else 0,
+    drought_duration = if(first(is_drought)) abs(sum(spei_mean)) else 0 
+  ) %>%
+  ungroup()
+
+# Afficher la fréquence globale des sécheresses 
+drought_frequency <- spei_tbl %>%
+  filter(drought_duration > 0) %>%
+  distinct(group_id) %>%
+  nrow()
+
+# Mise à l’échelle pour affichage sur second axe
+max_dur <- max(spei_tbl$drought_duration, na.rm = TRUE)
+max_spei <- max(abs(spei_tbl$spei_mean), na.rm = TRUE)
+
+spei_tbl <- spei_tbl %>%
+  mutate(drought_duration_scaled = drought_duration / max_dur * max_spei)
+
 # Plot
-ggplot(spei_tbl, aes(x = year, y = spei_mean)) + 
-  geom_line(color = "blue", linewidth = 1) + # SPEI mean
-  geom_point(color = "red", size = 2) + # point for each annual value
+ggplot(spei_tbl, aes(x = year)) + 
+  # Durée de sécheresse
+  geom_col(aes(y = drought_duration_scaled), fill = "yellow", alpha = 0.3, width = 0.8)  +
+  # Moyenne SPEI 
+  geom_line(aes(y = spei_mean), color = "blue", linewidth = 1) + 
+  geom_point(aes(y = spei_mean), color = "red", size = 2) +
+  # Intensité de la sécheresse 
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") +  
+  annotate("text", x = min(spei_tbl$year) + 1, y = 2.5, hjust = 0,
+           label = paste("Fréquence des sécheresses :", drought_frequency),
+           color = "black", size = 4.5, fontface = "bold") +
+  scale_size_continuous(name = "Intensité", range = c(1,6)) +
   labs(
     title = "Annual variation of the SPEI index for one cluster in the period 1981-2021",
+    subtitle = "Duration, Intensity, frequency",
     x = "Year",
-    y = "SPEI mean"
+    y = "SPEI index / Duration"
   ) + 
   theme_minimal() + 
   theme(
-    plot.title = element_text(hjust = 0.5),
+    plot.title = element_text(hjust = 0.5, size = 14),
+    plot.subtitle = element_text(hjust = 0.5, size = 11),
     axis.title = element_text(size = 12),
-    axis.text = element_text(size = 10)
+    axis.text = element_text(size = 10),
+    legend.position = "right"
   )
+
+
+
 
 ```
 
