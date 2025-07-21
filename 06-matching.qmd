@@ -106,7 +106,7 @@ Avant le matching, nous comptons 4458 observations pour l'année 1997. Après le
 
 ## Matching for 2008
 
-```{r 2008}
+```{r}
 
 # Load data 
 hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
@@ -348,7 +348,7 @@ values_to = "value"
 
 #### Balance test before matching
 
-```{r 2008}
+```{r}
 
 library(halfmoon)
 library(cobalt)
