@@ -91,17 +91,6 @@ sapm <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
 tmap_mode("view")
 tm_shape(sapm) +
   tm_polygons(fill =  "green", 
-              id = "FULL_NAME",
-              popup.vars = c("Superficie (ha)" = "HECTARES")) +
-  tm_scalebar(position = c("left", "bottom")) + 
-  tmap_options(check_and_fix = TRUE) +
-  tm_title("Aires protégées de Madagascar") +
-  tm_layout(legend.outside = TRUE)
-
-# Visualisation avec les noms exactes dans les colonnes du dataset de WDPA 
-tmap_mode("view")
-tm_shape(sapm) +
-  tm_polygons(fill =  "green", 
               id = "ORIG_NAME",
               popup.vars = c("Superficie (ha)" = "REP_AREA")) +
   tm_scalebar(position = c("left", "bottom")) + 
@@ -118,7 +107,7 @@ sapm_tb <- sapm %>%
 
 dir.create("derived")
 
-write_xlsx(sapm_tb, "data/derived/SAPM_2017.xlsx")
+write_xlsx(sapm_tb, "data/derived/WDPA_WDOECM_Jul2025_Public_MDG.xlsx")
 
 sapm %>%
   DT::datatable()
@@ -141,18 +130,19 @@ contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
 
 # Intersection des SAPM avec la limite de Madagascar
 sapm_terrestre <- sapm %>% 
+  st_transform(crs = standard_crs) %>%
+  st_make_valid()%>%
   st_intersection(contour_mada)%>%
-  st_make_valid() %>%
   st_transform(mdg_crs) %>%
-  mutate(`HECTARES_TERR` = as.numeric(st_area(.)) / 10000) %>%
+  mutate(`REP_AREA` = as.numeric(st_area(.)) / 10000) %>%
   st_transform(standard_crs)
 
 tm_shape(contour_mada) +
   tm_borders() +
 tm_shape(sapm_terrestre) +
   tm_polygons(fill =  "green", 
-              id = "FULL_NAME",
-              popup.vars = c("Superficie terrestre (ha)" = "HECTARES_TERR")) +
+              id = "ORIG_NAME",
+              popup.vars = c("Superficie terrestre (ha)" = "REP_AREA")) +
   tm_scalebar(position = c("left", "bottom")) + 
   tmap_options(check_and_fix = TRUE) +
   tm_title("Aires protégées terrestres de Madagascar") +
@@ -177,11 +167,11 @@ buffer_dist <- 10000
 
 # Spécification des aires protégées avant 2008
 sapm_before_2008 <- sapm_terrestre %>%
-  filter(year(DATE_CREAT) < 2008)
+  filter(STATUS_YR < 2008)
 
 # Spécification des aires protégées après 2008
 sapm_from_2008 <- sapm_terrestre %>%
-  filter(year(DATE_CREAT) >= 2008)
+  filter(STATUS_YR >= 2008)
 
 # Créer des buffers de 10 km autour des AP
 buffer_10km_before_2008 <- sapm_before_2008 %>%
@@ -238,13 +228,13 @@ summary_table <- sapm_terrestre %>%
   st_drop_geometry() %>%
   mutate(
     Creation_Period = case_when(
-      YEAR_CREAT < pivot_year ~ paste("Avant", pivot_year),
-      YEAR_CREAT >= pivot_year ~ paste("A partir de", pivot_year)
+      STATUS_YR < pivot_year ~ paste("Avant", pivot_year),
+      STATUS_YR >= pivot_year ~ paste("A partir de", pivot_year)
     )) %>%
   group_by(Creation_Period) %>%
   summarise(
     Count = n(),
-    Area = sum(HECTARES_TERR, na.rm = TRUE) / 100,  # Convert hectares to km²
+    Area = sum(REP_AREA, na.rm = TRUE) / 100,  # Convert hectares to km²
     .groups = 'drop'
   )
 
