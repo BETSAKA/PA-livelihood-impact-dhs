@@ -112,56 +112,50 @@ hr_2008_selected <- hr_2008 %>%
     hv001, hv002, hv219, hv220
   )
 
-# Merge dataframe with wealth index
-merged_2008 <- hr_2008_selected %>%
-  left_join(hh_2008_rural, by = c("hv001", "hv002"))
-  
-hr_2008_selected <- merged_2008 %>% 
+# Merge dataframe with hh_2008_rural et hr_2008
+hr_2008_final <- hh_2008_rural %>%
+  left_join(hr_2008_selected, by = c("hv001", "hv002")) %>%
   left_join(
-    all_covars %>% filter(DHSYEAR == 2008),
+    all_covars %>% filter(DHSYEAR == 2008) %>% select(-DHSYEAR),
     by = c("hv001" = "DHSCLUST")
-  )
+  ) %>%
+  left_join(
+    all_class %>%
+      filter(DHSYEAR == 2008) %>% select(-DHSYEAR), by = c("hv001" = "DHSCLUST")
+  ) %>%
+  mutate(DHSYEAR = 2008) %>%
+  relocate(DHSYEAR, .before = everything())
 
 # Imbriquer les données 
 vars_to_nest <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000","spei_wc")
 
-df_long_2008 <- hr_2008_selected %>% 
+df_long_2008 <- hr_2008_final %>% 
   pivot_longer(
-    cols = all_of(vars_to_nest), 
+    cols = all_of(vars_to_nest),
     names_to = "indicator", 
     values_to = "data") %>% 
   unnest(data) %>%
   filter(indicator != "spei_wc" | lubridate::year(datetime) %in% 2006:2008) %>%
-  mutate(year_indicator = paste0(indicator, "_", year(datetime)))
+  mutate(year_indicator = paste0(indicator, "_", year(datetime))) %>%
+  select(hv001, hv002, year_indicator, value)
 
 df_wide_2008 <- df_long_2008 %>%
   pivot_wider(
-    names_from = year_indicator, 
+    names_from = year_indicator,
     values_from = value, 
     names_glue = "{year_indicator}"
   )  %>%
-  select(-URBAN_RURA) %>% 
   group_by(hv001, hv002) %>% 
   summarise(across(everything(), ~mean(., na.rm = TRUE)), .groups = "drop")
 
 
 # Joindre avec le dataframe de base 
-df_base_2008 <- hr_2008_selected %>% 
+df_base_2008 <- hr_2008_final %>% 
   select(-all_of(vars_to_nest)) %>%
   distinct(hv001, hv002, .keep_all = TRUE)
 
 hr_2008_final <- df_base_2008 %>%
-  left_join(df_wide_2008, by = c("hv001", "hv002", "hv219", "hv220", "hv271", "hv271a", "DHSYEAR"))
-
-hr_2008_final <- hr_2008_final %>%
-  left_join(
-    all_class %>%
-      filter(DHSYEAR == 2008) %>%
-      select(-DHSYEAR),
-    by = c("hv001" = "DHSCLUST"))
-
-hr_2008_final <- hr_2008_final %>% 
-  dplyr:: select(-indicator, -datetime, -variable, -unit) 
+  left_join(df_wide_2008, by = c("hv001", "hv002"))
 
 ```
 
