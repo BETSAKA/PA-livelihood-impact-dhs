@@ -41,7 +41,7 @@ Nous avons sélectionné dans le HR de 1997 les identifiants des clusters et l'�
 ```{r}
 
 # Load data 1997
-hh_1997_hv271_hv271a <- read_rds("data/derived/hh_1997_hv271_hv271a.rds") # wealth index factor et wealth index factor rural 1997
+hh_1997_rural <- read_rds("data/derived/hh_1997_rural.rds") # wealth index centile
 hr_1997 <- read_dta("data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA")
 
 # Variable selection in hr_1997
@@ -50,35 +50,35 @@ hr_1997_selected <- hr_1997 %>%
     hv001, hv002,hv219, hv220
   )
 
-# Merge dataframe with wealth index 
-hr_1997_selected <- hr_1997_selected %>%
-  left_join(hh_1997_hv271_hv271a, by = c("hv001", "hv002"))
-
-
-hr_1997_selected <- hr_1997_selected %>%
+# Merge dataframe with hh_1997_rural et hr_1997_selected
+hr_1997_final <- hh_1997_rural %>%
+  left_join(hr_1997_selected, by = c("hv001", "hv002")) %>%
   left_join(
-    all_covars %>% filter(DHSYEAR == 1997) %>%
-      select(
-        DHSCLUST, URBAN_RURA, DHSYEAR, treecover_area, slope, elevation, population_count, traveltime_2000, spei_wc
-      ), 
-    by = c("hv001" = "DHSCLUST")
-  )
+    all_covars %>%
+      filter(DHSYEAR == 1997) %>% select(-DHSYEAR), by = c("hv001" = "DHSCLUST")
+  ) %>%
+  left_join(
+    all_class %>% 
+      filter(DHSYEAR == 1997) %>% select(-DHSYEAR), by = c("hv001" = "DHSCLUST")) %>%
+  mutate(DHSYEAR = 1997) %>%
+  relocate(DHSYEAR, .before = everything())
 
 # Imbriquer les données 
 vars_to_nest <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000","spei_wc")
 
-df_long_1997 <- hr_1997_selected %>% 
+df_long_1997 <- hr_1997_final %>% 
   pivot_longer(
-    cols = all_of(vars_to_nest), 
+    cols = all_of(vars_to_nest),
     names_to = "indicator", 
     values_to = "data") %>% 
   unnest(data) %>%
   filter(indicator != "spei_wc" | lubridate::year(datetime) %in% 1995:1997) %>%
-  mutate(year_indicator = paste0(indicator, "_", year(datetime)))
+  mutate(year_indicator = paste0(indicator, "_", year(datetime))) %>%
+  select(hv001, hv002, year_indicator, value)
 
 df_wide_1997 <- df_long_1997 %>%
   pivot_wider(
-    names_from = year_indicator, 
+    names_from = year_indicator,
     values_from = value, 
     names_glue = "{year_indicator}"
   )  %>%
@@ -87,23 +87,12 @@ df_wide_1997 <- df_long_1997 %>%
 
 
 # Joindre avec le dataframe de base 
-df_base_1997 <- hr_1997_selected %>% 
+df_base_1997 <- hr_1997_final %>% 
   select(-all_of(vars_to_nest)) %>%
   distinct(hv001, hv002, .keep_all = TRUE)
 
 hr_1997_final <- df_base_1997 %>%
   left_join(df_wide_1997, by = c("hv001", "hv002"))
-
-hr_1997_final <- hr_1997_final %>%
-  left_join(
-    all_class %>% 
-      filter(DHSYEAR == 1997) %>%
-      select(-DHSYEAR),
-    by = c("hv001" = "DHSCLUST"))
-  
-hr_1997_final <- hr_1997_final %>% 
-  dplyr:: select(-indicator, -datetime, -variable, -unit) 
-
 
 ```
 
@@ -114,18 +103,18 @@ Nous avons sélectionné dans le HR de 2008 les identifiants des clusters, l'âg
 ```{r}
 
 # Load data 
-hh_2008_hv271a <- read_rds("data/derived/hh_2008_hv271a.rds") # wealth index factor rural 2008
+hh_2008_rural <- read_rds("data/derived/hh_2008_rural.rds") # wealth index factor rural 2008
 hr_2008 <- read_dta("data/raw/dhs/DHS_2008/MDHR51DT/MDHR51FL.DTA")
 
 # Variable selection in hr_2008 
 hr_2008_selected <- hr_2008 %>%
   dplyr:: select(
-    hv001, hv002, hv219, hv220, hv271
+    hv001, hv002, hv219, hv220
   )
 
 # Merge dataframe with wealth index
 merged_2008 <- hr_2008_selected %>%
-  left_join(hh_2008_hv271a, by = c("hv001", "hv002"))
+  left_join(hh_2008_rural, by = c("hv001", "hv002"))
   
 hr_2008_selected <- merged_2008 %>% 
   left_join(
@@ -184,6 +173,7 @@ Nous avons sélectionné les identifiants des ménages, l'âge et le sex du chef
 
 # Load data 
 hr_2021 <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA")
+hh_2021_rural <- read_rds("data/derived/hh_2021_rural.rds")
 
 # Select the variables required in 2021
 hr_2021_selected <- hr_2021 %>%
@@ -196,6 +186,7 @@ hr_2021_selected <- hr_2021_selected %>%
     all_covars %>% filter(DHSYEAR == 2021),
     by = c("hv001" = "DHSCLUST")
   )
+
 # Imbriquer les données 
 vars_to_nest <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000","spei_wc")
 
@@ -233,6 +224,9 @@ hr_2021_final <- hr_2021_final %>%
       filter(DHSYEAR == 2021) %>%
       select(-DHSYEAR),
     by = c("hv001" = "DHSCLUST"))
+
+hr_2021_final <- hr_2021_final %>%
+  left_join(hh_2021_rural, by = c("hv001"))
 
 hr_2021_final <- hr_2021_final %>% 
   dplyr:: select(-indicator, -datetime, -variable, -unit) 
