@@ -155,7 +155,7 @@ df_base_2008 <- hr_2008_final %>%
   distinct(hv001, hv002, .keep_all = TRUE)
 
 hr_2008_final <- df_base_2008 %>%
-  left_join(df_wide_2008, by = c("hv001", "hv002"))
+  left_join(df_wide_2008, by = c("hv001", "hv002")) 
 
 ```
 
@@ -172,58 +172,55 @@ hh_2021_rural <- read_rds("data/derived/hh_2021_rural.rds")
 # Select the variables required in 2021
 hr_2021_selected <- hr_2021 %>%
   dplyr:: select(
-    hv001, hv002, hv219, hv220, hv271, hv271a
+    hv001, hv002, hv219, hv220
   )
 
-hr_2021_selected <- hr_2021_selected %>%
+hr_2021_final <- hh_2021_rural %>%
+  left_join(hr_2021_selected, by = c("hv001", "hv002")) %>%
   left_join(
-    all_covars %>% filter(DHSYEAR == 2021),
+    all_covars %>% filter(DHSYEAR == 2021)%>% select(-DHSYEAR),
     by = c("hv001" = "DHSCLUST")
-  )
+  ) %>%
+  left_join(
+    all_class %>%
+      filter(DHSYEAR == 2021) %>% select(-DHSYEAR), by = c("hv001" = "DHSCLUST")
+  ) %>%
+  mutate(DHSYEAR = 2021) %>%
+  relocate(DHSYEAR, .before = everything())
 
 # Imbriquer les données 
 vars_to_nest <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000","spei_wc")
 
-df_long_2021 <- hr_2021_selected %>% 
+df_long_2021 <- hr_2021_final %>%
+  select(hv001, hv002, all_of(vars_to_nest)) %>%
   pivot_longer(
-    cols = all_of(vars_to_nest), 
+    cols = all_of(vars_to_nest),
     names_to = "indicator", 
     values_to = "data") %>% 
   unnest(data) %>%
   filter(indicator != "spei_wc" | lubridate::year(datetime) %in% 2019:2021) %>%
-  mutate(year_indicator = paste0(indicator, "_", year(datetime)))
+  mutate(
+    year = lubridate::year(datetime),
+    year_indicator = paste0(indicator, "_", year))
 
 df_wide_2021 <- df_long_2021 %>%
   pivot_wider(
-    names_from = year_indicator, 
+    names_from = year_indicator,
     values_from = value, 
     names_glue = "{year_indicator}"
   )  %>%
-  select(-URBAN_RURA) %>% 
   group_by(hv001, hv002) %>% 
   summarise(across(everything(), ~mean(., na.rm = TRUE)), .groups = "drop")
 
 
 # Joindre avec le dataframe de base 
-df_base_2021 <- hr_2021_selected %>% 
-  select(-all_of(vars_to_nest)) %>%
+df_base_2021 <- hr_2021_final %>%
+  select(-any_of(vars_to_nest)) %>%
   distinct(hv001, hv002, .keep_all = TRUE)
 
 hr_2021_final <- df_base_2021 %>%
-  left_join(df_wide_2021, by = c("hv001", "hv002", "hv219", "hv220", "hv271", "hv271a", "DHSYEAR"))
-
-hr_2021_final <- hr_2021_final %>%
-  left_join(
-    all_class %>%
-      filter(DHSYEAR == 2021) %>%
-      select(-DHSYEAR),
-    by = c("hv001" = "DHSCLUST"))
-
-hr_2021_final <- hr_2021_final %>%
-  left_join(hh_2021_rural, by = c("hv001"))
-
-hr_2021_final <- hr_2021_final %>% 
-  dplyr:: select(-indicator, -datetime, -variable, -unit) 
+  left_join(df_wide_2021, by = c("hv001", "hv002")) %>%
+  select(-indicator, -variable, -unit, -datetime, -year)
 
 ```
 
