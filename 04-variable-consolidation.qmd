@@ -36,7 +36,7 @@ Nous obtenons un tableau contenant que 9 variables dont l'identifiant de nos clu
 
 ## Final dataframe 1997
 
-Nous avons sélectionné dans le HR de 1997 les identifiants des clusters et l'âge et le sexe du chef des ménages, puis l'avons fusionné avec le fichier contenant les wealth index (hv217 et hv271a), ainsi que les données géophysiques des ménages. Nous obtenons un dataframe composé de 14 variables.
+Nous avons sélectionné dans le HR de 1997 les identifiants des clusters et l'âge et le sexe du chef des ménages, puis l'avons fusionné avec le fichier contenant les wealth index (wealth_centile_rural_weighted et wealth_centile_rural_simple), ainsi que les données géophysiques des ménages. Nous obtenons un dataframe composé de 14 variables.
 
 ```{r}
 
@@ -98,7 +98,7 @@ hr_1997_final <- df_base_1997 %>%
 
 ## Final dataframe 2008
 
-Nous avons sélectionné dans le HR de 2008 les identifiants des clusters, l'âge et le sexe du chef du ménage et le wealth index factor, puis le fusionné avec le fichier contenant le wealth index factor rural (hv271a) et les données géophysiques des ménages. Nous obtenons un dataframe composé de 14 variables pour 2008.
+Nous avons sélectionné dans le HR de 2008 les identifiants des clusters, l'âge et le sexe du chef du ménage et le wealth index factor, puis le fusionné avec le fichier contenant le wealth index en centile (wealth_centile_rural_weighted, wealth_centile_rural_simple) et les données géophysiques des ménages. Nous obtenons un dataframe composé de 14 variables pour 2008.
 
 ```{r}
 
