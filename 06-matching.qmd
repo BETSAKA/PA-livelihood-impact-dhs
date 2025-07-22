@@ -8,13 +8,13 @@ editor_options:
 
 ## Objectif
 
-Le document illustre l'application de la méthode de matching dans l'analyse, en maximisant la comparabilité entre les groupes de traitement et de contrôle en termes de caractéristiques observables @ho2007.
+Le document illustre l'application de la méthode de matching dans l'analyse. L'objectif de cette méthode est d'équilibrer les échantillons, c'est-à-dire de maximiser la comparabilité entre les groupes de traitement et de contrôle en termes de caractéristiques observables [@ho2007]. En effet, si les deux groupes sont très différents avant le traitement, il est difficile de savoir si les différences observées après viennent du traitement ou simplement de ces différences initiales. D'où l'importance du matching, qui permet de neutraliser ces différences. Plus précisement, nous utilisons le genetic matching, une variante des méthodes de matching. Bien qu'ayant le même objectif, cette approche repose sur des algorithmes d'optimisation qui ajustent les facteurs de confusion susceptibles d'influencer à la fois la probabilité de recevoir le traitement et les résultats observés.
 
 ## Méthodes
 
-Nous réalisons le matching à l'aide de la méthode genetic matching, en utilisant la fonction GenMatch() du package R MatchIt. Cette méthode combine les variables de matching en une seule mesure unique de distance "Mahalanobis distance matching". Cette distance mesurera la différence entre les unités des groupes appariés pour quantifier la similitude entre les deux groupes d'observations, tout en tenant compte des corrélations entre les covariables et de leurs covariances @diamond2013.
+Nous réalisons le matching à l'aide de la méthode genetic matching, en utilisant la fonction GenMatch() du package R MatchIt. Cette méthode combine les variables de matching en une seule mesure unique de distance "Mahalanobis distance matching". Cette distance mesurera la différence entre les unités des groupes appariés pour quantifier la similitude entre les deux groupes d'observations, tout en tenant compte des corrélations entre les covariables et de leurs covariances [@diamond2013].
 
-Dans un premier temps, nous appliquons la fonction GenMatch() pour rechercher la combinaison optimale de poids pour chaque covariable afin de maximiser l'équilibre entre le groupe de traitement et de contrôle. Nous obtenons une matrice de poids mais aucune paire n'est encore formée. Dans un second temps, nous utilisons la fonction matchIt(), en intégrant la pondération trouvée auparavant, afin de constituer les paires entre les unités traitées et non traitées.
+Dans un premier temps, nous appliquons la fonction GenMatch() pour identifier la combinaison optimale de poids attribués à chaque covariable, dans le but de maximiser l'équilibre entre le groupe de traitement et de contrôle. Nous obtenons une matrice de poids mais aucune paire n'est encore formée. Dans un second temps, nous utilisons la fonction matchIt(), en intégrant la pondération trouvée auparavant, afin de constituer les paires entre les unités traitées et non traitées.
 
 ## Matching for 1997
 
@@ -102,7 +102,7 @@ nrow(data_matched_1997)
 saveRDS(data_matched_1997,"data/derived/data_matched_1997.rds" )
 ```
 
-Avant le matching, nous comptons 4458 observations pour l'année 1997. Après le matching, nous obtenons 1644 observations appariées (822 groupes de traitement et 822 groupes de contrôles).
+Avant le matching, nous comptons 3 505 observations pour l'année 1997. Après le matching, nous obtenons 1930 observations appariées (965 groupes de traitement et 965 groupes de contrôles).
 
 ## Matching for 2008
 
@@ -181,7 +181,7 @@ nrow(data_matched_2008)
 saveRDS(data_matched_2008,"data/derived/data_matched_2008.rds" )
 ```
 
-Avant le matching pour l'année 2008, nous avons 9 664 groupes de contrôle et 2149 groupes de traitement sur les 11 813 observations. Après le matching, 2 149 groupes sont appariés, avec un total de 4 298 observations.
+Avant le matching pour l'année 2008, nous avons 9 307 groupes de contrôle et 2 419 groupes de traitement sur les 15 364 observations. Après le matching, 4 838 groupes sont appariés, avec un total de 13 405 observations.
 
 ## Matching for 2021
 
@@ -258,7 +258,7 @@ nrow(data_matched_2021)
 saveRDS(data_matched_2021,"data/derived/data_matched_2021.rds" )
 ```
 
-Avant le matching pour l'année 2021, nous avons 2 990 groupe de traitement et 10 761 groupe de contrôle sur 13 751 observations. Après le macthing, 2 990 groupes sont appariés, avec un total de 5980 observations.
+Avant le matching pour l'année 2021, nous avons 10 074 groupe de traitement et 3 331 groupe de contrôle sur 15 364 observations. Après le macthing, 6 662 groupes sont appariés, avec un total de 13 405 observations.
 
 ## Checking covariate balance
 
@@ -386,7 +386,7 @@ ggplot(matching_before_2008, aes(x = value, fill = GROUP)) +
   theme_minimal()
 ```
 
-Les résultats montrent que la valeur de la différence standardisée des moyennes entre les groupes traités et contrôles, calculées avant le matching est supérieur à 0.1, qui indique un déséquilibre significatif . Seule la variable slope_2000 est bien équilibrée avec une valeur de SMD égale à 0.0257. Sans l'appariement, les données brutes montrent des déséquilibres importants entre les groupes pour plusieurs covariables. D'où la nécessité de réaliser un appariement pour réduire ces différences et obtenir des groupes plus comparables pour l'analyse de l'effet du traitement.
+Les résultats montrent que la valeur de la différence standardisée des moyennes entre les groupes traités et contrôles, calculées avant le matching est supérieur à 0.1, qui indique un déséquilibre significatif . Seule la variable slope_2000 a un équilibre modérée avec une valeur de SMD égale à 0.1337. Sans l'appariement, les données brutes montrent des déséquilibres importants entre les groupes pour plusieurs covariables. D'où la nécessité de réaliser un appariement pour réduire ces différences et obtenir des groupes plus comparables pour l'analyse de l'effet du traitement.
 
 #### Balance test after matching
 
@@ -515,7 +515,7 @@ values_to = "value"
     theme_minimal()
 ```
 
-Les résultats montrent que toutes les valeurs des SMD sont très faibles, comprises entre 0.0361 et 0.1033, indiquant ainsi un excellent équilibre entre les groupes pour l'ensemble des covariables. Les graphiques confirment également cet équilibre: les courbes des groupes de contrôle (en vert) et les groupes de traitement (en bleue) se superposent largement, traduisant une forte similitude dans la distribution des covariables après l'appariement.
+Les résultats montrent que toutes les valeurs des SMD sont très faibles, comprises entre -0.0692 et 0.1155, indiquant ainsi un excellent équilibre entre les groupes pour l'ensemble des covariables. Les graphiques confirment également cet équilibre: les courbes des groupes de contrôle (en vert) et les groupes de traitement (en bleue) se superposent largement, traduisant une forte similitude dans la distribution des covariables après l'appariement.
 
 #### Q-Q Plot analysis
 
