@@ -108,12 +108,12 @@ with_progress({
 toc()
 
 # Worldpop 2000
-tic()
-with_progress({
-  buffer_all <- buffer_all %>% 
-  get_resources(get_worldpop(years = 2000)) 
-})
-toc()
+#tic()
+#with_progress({
+  #buffer_all <- buffer_all %>% 
+  #get_resources(get_worldpop(years = 2000)) 
+#})
+#toc()
   
 # Accesibility
 tic()
