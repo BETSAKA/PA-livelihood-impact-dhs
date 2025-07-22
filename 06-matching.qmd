@@ -268,7 +268,7 @@ Pour effectuer le test avant l'appariement, on détermine les déséquilibres in
 
 -   Si \|SMD\| \< 0.1, il existe un équilibre satisfaisant entre les groupes pour la covariable.
 
--   Si SMD \> 0.1, le déséquilibre est significatif @austin2009. Pour réajuster l'équilibre, on augmentera l'intervalle des calipers afin d'obtenir un SMD **≤** 0.1.
+-   Si SMD \> 0.1, le déséquilibre est significatif [@austin2009]. Pour réajuster l'équilibre, on augmentera l'intervalle des calipers afin d'obtenir un SMD **≤** 0.1.
 
 Le test après appariement sera un test visuel de la qualité du matching en comparant la distribution de chaque covariable à partir d'un plot. La méthode graphique offre une vue d'ensemble de la distribution des covariables. Le graphique facilite ainsi l'identification des déséquilibres à différents niveaux de la distribution. Lorsque les points Q-Q plot se situent près de la diagonale, le quantile des deux distributions sont similaires, signalant ainsi un bon équilibre
 
