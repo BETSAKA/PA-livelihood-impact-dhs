@@ -260,6 +260,51 @@ saveRDS(data_matched_2021,"data/derived/data_matched_2021.rds" )
 
 Avant le matching pour l'année 2021, nous avons 10 074 groupe de traitement et 3 331 groupe de contrôle sur 15 364 observations. Après le macthing, 6 662 groupes sont appariés, avec un total de 13 405 observations.
 
+```{r}
+# Chargement des données 
+
+gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp")
+gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp") 
+gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
+
+# Fusion des données GPS 
+gps_data <- bind_rows(
+  gps_1997_initial %>% st_drop_geometry(),
+  gps_2008_initial %>% st_drop_geometry(),
+  gps_2021_initial %>% st_drop_geometry()
+)
+
+# Fonction pour convertir les variables labelled en facteur 
+convert_labelled <- function(df) {
+  df %>% mutate(across(where(haven::is.labelled), haven::as_factor))
+}
+
+# Chargement des données appariées 
+data_matched_1997 <- readRDS("data/derived/data_matched_1997.rds") %>% convert_labelled()
+data_matched_2008 <- readRDS("data/derived/data_matched_2008.rds")%>% convert_labelled()
+data_matched_2021 <- readRDS("data/derived/data_matched_2021.rds")%>% convert_labelled()
+
+# Fusion des datasets appariés 
+df_all <- bind_rows(data_matched_1997, data_matched_2008, data_matched_2021)
+
+# Jointure des coordonnées GPS aux données appariées 
+df_all_with_coords <- df_all %>%
+  left_join(gps_data)
+
+# Conversion en objet spatial sf 
+df_all_sf <- st_as_sf(df_all_with_coords, coords = c("LONGNUM", "LATNUM"), crs = 4326)
+
+# Set for interactive viewing
+tmap_mode("view")
+
+df_all_sf |> 
+  tm_shape() + 
+  tm_dots(fill = "DHSYEAR", size = 0.05, fill.scale = tm_scale(values = "brewer.set1")) +
+  tm_facets("DHSYEAR")
+
+
+```
+
 ## Checking covariate balance
 
 Les modèles d'appariement reposent sur l'hypothèse que les distributions des covariables sont similaires entre les groupes de traitement et de contrôle, rendant cruciale l'évaluation de l'équilibre des covariables. La validité des estimations dépend directement de la qualité de cet équilibre, d'où l'importance de réaliser des tests pour le mesurer. On effectue donc un test d'équilibre des covariables en deux étapes: un test avant appariement et un test après appariement.
