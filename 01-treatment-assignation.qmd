@@ -1,5 +1,8 @@
 ---
 output: html_document
+format:
+html:
+embed-resources: true
 editor_options: 
   chunk_output_type: console
 ---
@@ -84,19 +87,42 @@ library(wdpar)
 
 sapm <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
   wdpa_clean() |> 
-  filter(STATUS == "Designated") |> 
-  filter(MARINE != "marine")
+  filter(STATUS == "Designated") %>%
+  mutate(MARINE = recode(MARINE,
+                           "terrestrial" = "Terrestre",
+                         "marine" = "Marine",
+                         "partial" = "Mixte"))
+
+# Load boundary
+contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
+  st_as_sf() %>%
+  st_set_crs(standard_crs)
 
 # Visualisation
 tmap_mode("view")
+
 tm_shape(sapm) +
-  tm_polygons(fill =  "green", 
-              id = "ORIG_NAME",
-              popup.vars = c("Superficie (ha)" = "REP_AREA")) +
+  tm_polygons(
+    fill = "MARINE",
+    fill.scale = tm_scale(
+      values = c(
+        "terrestrial" = "green",
+        "marine" = "blue",
+        "partial" = "gray"
+      )
+    ),
+    id = "ORIG_NAME",
+    popup.vars = c("Superficie (ha)" = "REP_AREA")) +
+  tm_shape(contour_mada) +
+  tm_borders(
+    col = "black",
+    lwd = 0.5) +
   tm_scalebar(position = c("left", "bottom")) + 
   tmap_options(check_and_fix = TRUE) +
-  tm_title("Aires protégées de Madagascar") +
-  tm_layout(legend.outside = TRUE)
+  tm_title("Aires protégées de Madagascar\nSource : WDPA, 2024") + 
+  tm_layout(
+    legend.outside = TRUE
+  )
 ```
 
 On peut aussi générer un format tabulaire pour visualiser les données.
