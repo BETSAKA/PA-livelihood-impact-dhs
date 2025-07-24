@@ -12,35 +12,12 @@ Le document présente l'estimation en double différence des groupes de traiteme
 
 ## Methods
 
-1.  Définition des périodes de traitement
-
-    -   Période de pré-traitement: Aires protégées crées entre 1997 et 2008
-
-    -   Période de post-traitement: Aires protégées crées entre 2008 et 2021 (71 AP créées sur 47 282 km²)
-
-2.  Vérification de l'hypothèse des tendances parallèles
-
-    -   Création d'un groupe de traitement placebo basé sur les ménages de 1997 (traitement= ménages situés à **≤** 10 km des aires protégées créées entre 2008 et 2021)
-
-    -   Appariement du groupe de traitement placebo avec un groupe de contrôle placebo
-
-    -   Représentation graphique de l'évolution des groupes en 1997, 2008 et 2021 pour une confirmation visuelle
-
-    -   Effectuer un test placebo en faisant une estimation en double différence sur la période de pré-traitement (1997-2008): un effet non significatif confirmerait l'absence de tendances divergentes avant l'intervention
-
-3.  Estimation du modèle DID
-
-    -   Estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes pour gérer la dépendance des observations au sein des grappes:
-
-        -   calcul des résidus à partir du modèle de régression
-
-        -   Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
 
 ## Definition of treatment periods
 
 La période de pré-traitement sera les aires protégées créées entre 1997 et 2008. Le post-traitement sera les aires protégées créées entre 2008 et 2021.
 
--   Période de pré-traitement: Aires protégées crées entre 1997 et 2008 (X AP créées sur Y)
+-   Période de pré-traitement: Aires protégées crées entre 1997 et 2008 (34 AP créées sur 23 939 km²)
 
 -   Période de post-traitement: Aires protégées crées entre 2008 et 2021 (71 AP créées sur 47 282 km²)
 
@@ -94,6 +71,17 @@ pre_treatment <- data_all %>% filter(period_DID == 0)
 post_treatment <- data_all %>% filter(period_DID == 1)
 ```
 
+2.  Vérification de l'hypothèse des tendances parallèles
+
+    -   Création d'un groupe de traitement placebo basé sur les ménages de 1997 (traitement= ménages situés à **≤** 10 km des aires protégées créées entre 2008 et 2021)
+
+    -   Appariement du groupe de traitement placebo avec un groupe de contrôle placebo
+
+    -   Représentation graphique de l'évolution des groupes en 1997, 2008 et 2021 pour une confirmation visuelle
+
+    -   Effectuer un test placebo en faisant une estimation en double différence sur la période de pré-traitement (1997-2008): un effet non significatif confirmerait l'absence de tendances divergentes avant l'intervention
+
+
 ## Testing the parallel trends hypothesis
 
 La méthode de double différence repose sur des hypothèses de tendances parallèlles. Pour valider cette hypothèse, nous construisons un groupe de placebo basé sur les ménages ruraux enquêtés en 1997, ceux qui vivent dans une zone située dans ou à moins de 10 km d'une aire protégée créée entre 2008 et 2021 (groupe de traitement placebo), et leurs groupes de contrôles appariés.
@@ -116,7 +104,7 @@ placebo_data <- data_all %>%
     )
 
 # DID Regression placebo: 1997-2008
-did_placebo <- lm(hv271a ~ placebo_treated * post, data = placebo_data)
+did_placebo <- lm(wealth_centile_rural_simple ~ placebo_treated * post, data = placebo_data)
 summary(did_placebo)
 
 # Coefficient presentation
@@ -126,8 +114,8 @@ tidy(did_placebo)
 evolution_placebo <- placebo_data %>%
   group_by(DHSYEAR, GROUP) %>%
   summarise(
-    mean_value = mean(hv271a, na.rm = FALSE),
-    sd_value = sd(hv271a, na.rm = FALSE),
+    mean_value = mean(wealth_centile_rural_simple , na.rm = FALSE),
+    sd_value = sd(wealth_centile_rural_simple , na.rm = FALSE),
     n = n(),
     se = sd_value / sqrt(n),
     .groups = "drop"
@@ -150,7 +138,7 @@ ggplot(evolution_placebo,aes(x = factor(DHSYEAR), y = mean_value, color = GROUP,
   ) +
   scale_y_continuous(
     trans = pseudo_log_trans(base = 10),
-    name = "Wealth index mean (hv271a)"
+    name = "Wealth index mean (wealth_centile_rural_simple )"
   ) +
   labs( 
     title = "Placebo test: Wealth Index Mean by group (1997-2008)",
@@ -168,7 +156,7 @@ ggplot(evolution_placebo,aes(x = factor(DHSYEAR), y = mean_value, color = GROUP,
 
 
 # DID Regression placebo: 1997-2008
-did_placebo <- lm(hv271a ~ placebo_treated * post, data = placebo_data)
+did_placebo <- lm(wealth_centile_rural_simple  ~ placebo_treated * post, data = placebo_data)
 summary(did_placebo)
 
 # Coefficient presentation
@@ -178,8 +166,8 @@ tidy(did_placebo)
 evolution_placebo <- placebo_data %>%
   group_by(DHSYEAR, GROUP) %>%
   summarise(
-    mean_value = mean(hv271a, na.rm = FALSE),
-    sd_value = sd(hv271a, na.rm = FALSE),
+    mean_value = mean(wealth_centile_rural_simple, na.rm = FALSE),
+    sd_value = sd(wealth_centile_rural_simple, na.rm = FALSE),
     n = n(),
     se = sd_value / sqrt(n),
     .groups = "drop"
@@ -202,7 +190,7 @@ ggplot(evolution_placebo,aes(x = factor(DHSYEAR), y = mean_value, color = GROUP,
   ) +
   scale_y_continuous(
     trans = pseudo_log_trans(base = 10),
-    name = "Wealth index mean (hv271a)"
+    name = "Wealth index mean (wealth_centile_rural_simple)"
   ) +
   labs( 
     title = "Placebo test: Wealth Index Mean by group (1997-2008)",
@@ -218,17 +206,18 @@ ggplot(evolution_placebo,aes(x = factor(DHSYEAR), y = mean_value, color = GROUP,
   )
 ```
 
-Le graphique présente les moyennes de l'indice de richesse (hv271a) pour les groupes de traitement et de contrôles pour les années 1997 et 2008. Le point en orange représente la moyenne de l'indice de richesse pour le groupe de traitement et le point en bleu est celui du groupe de contrôle. En 1997, les deux moyennes sont proches pour les deux groupes dont une valeur de -1.79 pour les groupes de traitement et -1.97 pour les groupes de contrôle. En 2008, les deux moyennes baissent mais restent relativement proches (Groupe de traitement = -2.80 et Groupe de controle = -3.45). D'après ces résultats, il n'y a pas de différence marquée dans l'évolution de la richesse entre les deux groupes sur la période 1997-2008, période où aucune aire protégée n'a été crée pour ces groupes. L'hypothèse des tendances parallèles est donc vérifié.
+Le graphique présente les moyennes de l'indice de richesse (wealth_centile_rural_simple) pour les groupes de traitement et de contrôles pour les années 1997 et 2008. Le point en orange représente la moyenne de l'indice de richesse pour le groupe de traitement et le point en bleu est celui du groupe de contrôle. En 1997, les deux moyennes sont proches pour les deux groupes dont une valeur de -1.79 pour les groupes de traitement et -1.97 pour les groupes de contrôle. En 2008, les deux moyennes baissent mais restent relativement proches (Groupe de traitement = -2.80 et Groupe de controle = -3.45). D'après ces résultats, il n'y a pas de différence marquée dans l'évolution de la richesse entre les deux groupes sur la période 1997-2008, période où aucune aire protégée n'a été crée pour ces groupes. L'hypothèse des tendances parallèles est donc vérifié.
 
 ## Estimation du modèle DID
 
-1.  Estimation du modèle DID
+3.  Estimation du modèle DID
 
     -   Estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes pour gérer la dépendance des observations au sein des grappes:
 
         -   calcul des résidus à partir du modèle de régression
 
         -   Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
+
 
 ```{r}
 
@@ -247,7 +236,7 @@ model_data <- data_all %>%
     treated = ifelse(GROUP == "Treatment", 1, 0),
     post = ifelse(DHSYEAR == 2021, 1, 0)
   ) %>%
-  filter(!if_any(c("hv271a", "treated", "post"), is.na)) %>%
+  filter(!if_any(c("wealth_centile_rural_simple", "treated", "post"), is.na)) %>%
   
   # Add control variables 
   mutate(
@@ -265,7 +254,7 @@ model_data <- data_all %>%
 
 # Main DID regression with robust standard errors per cluster
 did_2008_2021 <- lm(
-  hv271a ~ treated * post + sex_head + age_head + 
+  wealth_centile_rural_simple  ~ treated * post + sex_head + age_head + 
     forest_cover_rate + slope + elevation + 
     population_count + accessibility + 
     spei_wc_2019 + spei_wc_2020 + spei_wc_2021, 
@@ -319,8 +308,8 @@ tidy(did_2008_2021)
 evolution_main <- model_data %>%
   group_by(DHSYEAR, GROUP) %>%
   summarise(
-    mean_value = mean(hv271a, na.rm = FALSE),
-    sd_value = sd(hv271a, na.rm = FALSE),
+    mean_value = mean(wealth_centile_rural_simple, na.rm = FALSE),
+    sd_value = sd(wealth_centile_rural_simple, na.rm = FALSE),
     n = n(),
     se = sd_value / sqrt(n),
     .groups = "drop"
@@ -343,7 +332,7 @@ ggplot(evolution_main, aes(x = factor(DHSYEAR), y = mean_value, color = GROUP, g
   ) +
   scale_y_continuous(
     trans = pseudo_log_trans(base = 10),
-    name = "Mean Wealth Index (hv271a)"
+    name = "Mean Wealth Index (wealth_centile_rural_simple)"
   ) +
   labs(
     title = "Evolution of Wealth Index by Group (2008-2021)",
@@ -368,8 +357,8 @@ ggplot(evolution_main, aes(x = factor(DHSYEAR), y = mean_value, color = GROUP, g
 evolution_main <- model_data %>%
   group_by(DHSYEAR, GROUP) %>%
   summarise(
-    mean_value = mean(hv271a, na.rm = TRUE),
-    sd_value = sd(hv271a, na.rm = TRUE),
+    mean_value = mean(wealth_centile_rural_simple, na.rm = TRUE),
+    sd_value = sd(wealth_centile_rural_simple, na.rm = TRUE),
     n = n(),
     se = sd_value / sqrt(n),
     .groups = "drop"
@@ -381,8 +370,8 @@ evolution_main <- model_data %>%
 evolution_placebo <- placebo_data %>%
   group_by(DHSYEAR, GROUP) %>%
   summarise(
-    mean_value = mean(hv271a, na.rm = TRUE),
-    sd_value = sd(hv271a, na.rm = TRUE),
+    mean_value = mean(wealth_centile_rural_simple, na.rm = TRUE),
+    sd_value = sd(wealth_centile_rural_simple, na.rm = TRUE),
     n = n(),
     se = sd_value / sqrt(n),
     .groups = "drop"
@@ -420,7 +409,7 @@ ggplot(evolution_combined,
   ) +
   scale_y_continuous(
     trans = pseudo_log_trans(base = 10),
-    name = "Mean Wealth Index (hv271a)"
+    name = "Mean Wealth Index (wealth_centile_rural_simple)"
   ) +
   labs(
     title = "Weath Index Evolution: Main DID vs Placebo",
