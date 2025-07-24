@@ -106,9 +106,9 @@ tm_shape(sapm) +
     fill = "MARINE",
     fill.scale = tm_scale(
       values = c(
-        "terrestrial" = "green",
-        "marine" = "blue",
-        "partial" = "gray"
+        "Terrestre" = "#228B22",
+        "Marine" = "#1E90FF",
+        "Mixte" = "gray"
       )
     ),
     id = "ORIG_NAME",
