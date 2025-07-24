@@ -10,11 +10,11 @@ editor_options:
 
 Nous classons les clusters d'enquêtes DHS (1997, 2008 et 2021) par rapport à leur distance aux aires protégées et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
 
--   [Groupe de traitement]{.underline}: clusters à moins de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
+-   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
 
--   [Groupe de contrôle]{.underline}: clusters à plus de 10 km des aires protégées dans les zones rurales
+-   [Groupe de contrôle]{.underline}: Ménages localisées dans les clusters à plus de 10 km des aires protégées dans les zones rurales
 
--   [Groupe à exclure]{.underline}: clusters à moins de 10 km des aire protégées créées avant 2008 et dans la zone urbaine
+-   [Groupe à exclure]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aire protégées créées avant 2008 et dans la zone urbaine
 
 ## Chargement des coordonnées GPS des clusters d'enquête
 
@@ -69,7 +69,7 @@ gps_2008 <- check_coordinates(gps_2008_initial)
 gps_2021 <- check_coordinates(gps_2021_initial) 
 ```
 
-Les coordonnées GPS de 9 clusters de l'enquête 2008 ont été perdus. Il en manque également un en 1997.
+Les coordonnées GPS de 9 clusters de l'enquête 2008 n'ont pas de coordonnées valides (0,0). Il en manque également un en 1997.
 
 ## Chargement des données AP
 
