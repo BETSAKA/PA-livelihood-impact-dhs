@@ -8,7 +8,9 @@ editor_options:
 
 ## Objectif
 
-Le document illustre l'application de la méthode de matching dans l'analyse. L'objectif de cette méthode est d'équilibrer les échantillons, c'est-à-dire de maximiser la comparabilité entre les groupes de traitement et de contrôle en termes de caractéristiques observables [@ho2007]. En effet, si les deux groupes sont très différents avant le traitement, il est difficile de savoir si les différences observées après viennent du traitement ou simplement de ces différences initiales. D'où l'importance du matching, qui permet de neutraliser ces différences. Plus précisement, nous utilisons le genetic matching, une variante des méthodes de matching. Bien qu'ayant le même objectif, cette approche repose sur des algorithmes d'optimisation qui ajustent les facteurs de confusion susceptibles d'influencer à la fois la probabilité de recevoir le traitement et les résultats observés.
+Le document illustre l'application de la méthode de matching dans l'analyse. L'objectif de cette méthode est d'équilibrer les échantillons, c'est-à-dire de maximiser la comparabilité entre les groupes de traitement et de contrôle en termes de caractéristiques observables [@ho2007]. Nous comparons donc des groupes traités et contrôles en les appariant selon 5 covariables environnementales (taux de couvert forestier en 2000, la pente, l'altitude, la densité de population en 2000 et l'accessibilité en 2000).
+
+En effet, si les deux groupes sont très différents avant le traitement, il est difficile de savoir si les différences observées après viennent du traitement ou simplement de ces différences initiales. D'où l'importance du matching, qui permet de neutraliser ces différences. Plus précisement, nous utilisons le genetic matching, une variante des méthodes de matching. Bien qu'ayant le même objectif, cette approche repose sur des algorithmes d'optimisation qui ajustent les facteurs de confusion susceptibles d'influencer à la fois la probabilité de recevoir le traitement et les résultats observés.
 
 ## Méthodes
 
@@ -102,7 +104,11 @@ nrow(data_matched_1997)
 saveRDS(data_matched_1997,"data/derived/data_matched_1997.rds" )
 ```
 
-Avant le matching, nous comptons 3 505 observations pour l'année 1997. Après le matching, nous obtenons 1930 observations appariées (965 groupes de traitement et 965 groupes de contrôles).
+Avant le matching, nous comptons 3 505 observations pour l'année 1997. Les groupes traités et contrôles diffèrent fortement en moyenne pour certaines covariables. Il y a plus de traités (avec un moyenne de 22875) qui vivent dans des zones avec plus de couverture que des contrôles (avec une moyenne de 16932). Mais ce sont les contrôles qui vivent le plus à une haute altitude (en moyenne 595 m) que les traités (en moyenne 419 m) et dans des zones plus peuplées. Le déséquilibre est particulièrement fort pour la variable population_count_2000.
+
+Après le matching, les mêmes variables montrent une forte amélioration avec des moyennes bien plus proches qu'avant le matching. Seule la variable population_count_2000 reste préoccupante. Son ratio de variance est très bas, a une valeur de 0,4968 indiquant une forte hétérogénéité.
+
+Pour maintenir l'équilibre des covariables, nous obtenons alors 1930 observations appariées (965 groupes de traitement et 965 groupes de contrôles).
 
 ## Matching for 2008
 
@@ -181,7 +187,7 @@ nrow(data_matched_2008)
 saveRDS(data_matched_2008,"data/derived/data_matched_2008.rds" )
 ```
 
-Avant le matching pour l'année 2008, nous avons 9 307 groupes de contrôle et 2 419 groupes de traitement sur les 15 364 observations. Après le matching, 4 838 groupes sont appariés, avec un total de 13 405 observations.
+Avant le matching pour l'année 2008, nous avons 9 307 groupes de contrôle et 2 419 groupes de traitement sur les 15 364 observations. Nous remarquons que les groupes sont très différents sur la plupart des variables utilisées, surtout sur la variable treecover_area_2000 et population_count_2000. Après le matching, la majorité des variables sont en équilibres sauf pour la variable population_count_2000. Cette variable a une ration de variance très bas indiquant une forte hétérogénéité. Nous obtenons alors 4 838 groupes appariés, avec un total de 13 405 observations.
 
 ## Matching for 2021
 
@@ -258,7 +264,9 @@ nrow(data_matched_2021)
 saveRDS(data_matched_2021,"data/derived/data_matched_2021.rds" )
 ```
 
-Avant le matching pour l'année 2021, nous avons 10 074 groupe de traitement et 3 331 groupe de contrôle sur 15 364 observations. Après le macthing, 6 662 groupes sont appariés, avec un total de 13 405 observations.
+Avant le matching pour l'année 2021, nous avons 10 074 groupe de traitement et 3 331 groupe de contrôle sur 15 364 observations. L'équilibre des covariables différent pour les deux groupes. Après le matching, on voit une forte réduction du biais de sélection, surtout pour les variables de base comme le treecover_area et elevation. Tandis quer les variables traveltime_2000_2000 et population_count_2000 présentent encore des problèmes de variance résiduels avec une valeur de 1.4583 et 1.9191. Au total, nous obtenons 6 662 groupes appariés (dont 6743 groupes exclus) avec un total de 13 405 observations.
+
+Ci-suit une carte qui représente les localisations des groupes appariées pour les trois années d'études. Chaque point représente les ménages retenus après le matching.
 
 ```{r}
 
@@ -332,7 +340,8 @@ bal_before_1997 <- bal.tab(
   treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
   data = matching_1997,
   estimand = "ATT",
-  un = TRUE # Inclusion des covariables non appariées 
+  un = TRUE, # Inclusion des covariables non appariées 
+  abs = TRUE
 )
 
 print(bal_before_1997)
@@ -357,7 +366,26 @@ ggplot(matching_before_1997, aes(x = value, fill = GROUP)) +
     fill = "Group"
   ) +
   theme_minimal()
+
+
+  ggplot(matching_before_1997, aes(x = value, fill = GROUP)) +
+    geom_density(alpha = 0.5, color = "black", linewidth = 0.7, adjust = 0.7) +
+    facet_wrap(~variable, scales = "free") +
+    scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
+    labs(
+      title = "Covariate distribution before matching (1997)",
+      x = "Valeur de la covariable",
+      y = "Densité",
+      fill = "Group"
+    ) +
+    theme_minimal()
 ```
+
+D'après le balance measures, aucune variable n'est bien équilibrée entre les deux groupes. Deux variables (treecover_area_2000 et population_count_2000) ont des déséquilibres majeurs (SMD \> 0.6).
+
+Les graphiques ici montrent que la distribution de chaque covariable pour les deux groupes: "Traitement" en violet et "Contrôle" en vert. L'axe des ordonnées représente la densité, avec des valeurs positives pour le groupe de traitement et des valeurs négatives pour le groupe de contrôle. Quant à l'axe des abscisses, il représente la valeur de la covariable.
+
+Les résultats indiquent des déséquilibres importants entre les deux groupes. Les déséquilibres sont plus frappantes pour population_count_2000 et treecover_area_2000.
 
 #### Balance test after matching
 
@@ -366,29 +394,71 @@ ggplot(matching_before_1997, aes(x = value, fill = GROUP)) +
 bal_after_1997 <- bal.tab(matching_result_1997)
 print(bal_after_1997)
 
-# Balance plot after matching
+# Création d'un format long
 matched_data_1997 <- match.data(matching_result_1997)
 
-
-matching_after_1997 <- matched_data_1997 %>%
+qq_1997 <- matched_data_1997 %>% 
   pivot_longer(
     cols = all_of(matching_variables),
 names_to = "variable",
 values_to = "value"
 )
+
+# Traçage des QQ plots
+ggplot(qq_1997, aes(sample = value, color = GROUP)) +
+  stat_qq(distribution = stats::qunif) + 
+  facet_wrap(~variable, scales = "free") +
+  labs(
+    title = "QQ plots after matching (1997)",
+    x = "Quantiles of control group",
+    y = "Quantiles of treated group",
+    color = "Groupe"
+  ) + 
+  scale_color_manual(values = c("Control" = "green", "Treatment" = "blue")) + 
+  theme_minimal()
+
+
+# Une autre graphe 
+qq_plots_list <- list()
+for (var in matching_variables) {
+  # Extraire les valeurs pour Control et Treatment
+  control_values <- matched_data_1997 %>% filter(GROUP == "Control") %>% pull(!!sym(var))
+  treated_values <- matched_data_1997 %>% filter(GROUP == "Treatment") %>% pull(!!sym(var))
+
+  # S'assurer que les deux vecteurs ont la même longueur pour les quantiles
+  # On utilise le nombre d'observations du plus petit groupe pour les quantiles
+  n_min <- min(length(control_values), length(treated_values))
   
-  ggplot(matching_after_1997, aes(x = value, fill = GROUP)) +
-    geom_density(alpha = 0.5, color = "black", linewidth = 0.7, adjust = 0.7) +
-    facet_wrap(~variable, scales = "free") +
-    scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
-    labs(
-      title = "Covariate distribution after matching (1997)",
-      x = "Valeur de la covariable",
-      y = "Densité",
-      fill = "Group"
-    ) +
-    theme_minimal()
+  # Calcul des quantiles
+  quantiles_control <- quantile(control_values, probs = seq(0, 1, length.out = n_min), na.rm = TRUE)
+  quantiles_treated <- quantile(treated_values, probs = seq(0, 1, length.out = n_min), na.rm = TRUE)
+  
+  # Création d'un data frame pour ce QQ plot
+  qq_data_var <- tibble(
+    control_q = quantiles_control,
+    treated_q = quantiles_treated,
+    variable = var
+  )
+  qq_plots_list[[var]] <- qq_data_var
+}
+
+qq_combined_data <- bind_rows(qq_plots_list)
+
+# Traçage des QQ plots (quantiles de Control sur X, quantiles de Treatment sur Y)
+ggplot(qq_combined_data, aes(x = control_q, y = treated_q)) +
+  geom_point(color = "blue") + # Points pour la comparaison des quantiles
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "red") +
+  facet_wrap(~variable, scales = "free") +
+  labs(
+    title = "QQ plots after matching (1997)",
+    x = "Quantiles of control group",
+    y = "Quantiles of treated group"
+  ) +
+  theme_minimal() +
+  NULL
 ```
+
+D'après le Quantile-Quantile plots, les points sont proches de la ligne diagonale pour la plupart des variables. Tandis que pour les variables treecover_area_2000 et population_count_2000 présentent des déséquilibres. Pour les quantiles supérieurs de la variable population_count_2000, les points s'écartent clairement de la ligne diagonale. Cet écart signifie que les quantiles du groupe de traitement sont inférieurs à ceux du groupe de contrôle. On voit le même cas pour la variable treecover_area_2000, indiquant que le groupe de traitement a des valeurs de couverture arborée légèrement plus élevées que le groupe de contrôle apparié. Le matching a donc amélioré l'équilibre des covariables, mais n'a pas complètement résolu le déséquilibre pour ces deux variables.
 
 ### Balance test for 2008
 
