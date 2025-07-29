@@ -387,7 +387,7 @@ Les graphiques ici montrent que la distribution de chaque covariable pour les de
 
 Les résultats indiquent des déséquilibres importants entre les deux groupes. Les déséquilibres sont plus frappantes pour population_count_2000 et treecover_area_2000.
 
-#### Balance test after matching
+#### Balance test after matching: Q-Q Plot analysis
 
 ```{r}
 # Balance after matching
@@ -475,7 +475,8 @@ bal_before_2008 <- bal.tab(
   treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
   data = matching_2008,
   estimand = "ATT",
-  un = TRUE # Inclusion des covariables non appariées 
+  un = TRUE, # Inclusion des covariables non appariées
+  abs = TRUE
 )
 
 print(bal_before_2008)
@@ -500,34 +501,14 @@ ggplot(matching_before_2008, aes(x = value, fill = GROUP)) +
     fill = "Group"
   ) +
   theme_minimal()
-```
-
-Les résultats montrent que la valeur de la différence standardisée des moyennes entre les groupes traités et contrôles, calculées avant le matching est supérieur à 0.1, qui indique un déséquilibre significatif . Seule la variable slope_2000 a un équilibre modérée avec une valeur de SMD égale à 0.1337. Sans l'appariement, les données brutes montrent des déséquilibres importants entre les groupes pour plusieurs covariables. D'où la nécessité de réaliser un appariement pour réduire ces différences et obtenir des groupes plus comparables pour l'analyse de l'effet du traitement.
-
-#### Balance test after matching
-
-```{r}
-# Balance after matching
-bal_after_2008 <- bal.tab(matching_result_2008)
-print(bal_after_2008)
-
-# Balance plot after matching
-matched_data_2008 <- match.data(matching_result_2008)
 
 
-matching_after_2008 <- matched_data_2008 %>%
-  pivot_longer(
-    cols = all_of(matching_variables),
-names_to = "variable",
-values_to = "value"
-)
-  
-  ggplot(matching_after_2008, aes(x = value, fill = GROUP)) +
+ggplot(matching_before_2008, aes(x = value, fill = GROUP)) +
     geom_density(alpha = 0.5, color = "black", linewidth = 0.7, adjust = 0.7) +
     facet_wrap(~variable, scales = "free") +
     scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
     labs(
-      title = "Covariate distribution after matching (2008)",
+      title = "Covariate distribution before matching (2008)",
       x = "Valeur de la covariable",
       y = "Densité",
       fill = "Group"
@@ -535,31 +516,82 @@ values_to = "value"
     theme_minimal()
 ```
 
-Après l'appariement, toutes les variables présentent un SMD très faible (en dessous du seuil de 0.1), qui signifie que les groupes de traitement et de contrôle sont désormais très similaires sur ces variables. Tous les individus traités ont été appariés à un contrôle.
+Les résultats montrent que la valeur de la différence standardisée des moyennes entre les groupes traités et contrôles, calculées avant le matching est supérieur à 0.1, qui indique un déséquilibre significatif . Seule la variable slope_2000 a un équilibre modérée avec une valeur de SMD égale à 0.1337.
 
-#### Q-Q Plot analysis
+#### Balance test after matching: Q-Q Plot analysis
 
 ```{r}
-library(patchwork)
+# Balance after matching
+bal_after_2008 <- bal.tab(matching_result_2008)
+print(bal_after_2008)
 
-plots_2008 <- lapply(matching_variables, function(var){
-  ggplot(matched_data_2008, aes(sample = .data[[var]], color = GROUP)) +
-    stat_qq() +
-    stat_qq_line() +
-    labs(
-      title = paste("Q-Q plot de", var), 
-      x = "Quantiles théoriques", 
-      y = "Quantiles échantillon", color = "Groupe"
-      ) +
-    theme_minimal() +
-    theme(legend.position = "bottom")
-})
+# Création d'un format long
+matched_data_2008 <- match.data(matching_result_2008)
 
-# Patchwork grid assembly
-wrap_plots(plots_2008, ncol = 2)
+qq_2008 <- matched_data_2008 %>% 
+  pivot_longer(
+    cols = all_of(matching_variables),
+names_to = "variable",
+values_to = "value"
+)
+
+# Traçage des QQ plots
+ggplot(qq_2008, aes(sample = value, color = GROUP)) +
+  stat_qq(distribution = stats::qunif) + 
+  facet_wrap(~variable, scales = "free") +
+  labs(
+    title = "QQ plots after matching (1997)",
+    x = "Quantiles of control group",
+    y = "Quantiles of treated group",
+    color = "Groupe"
+  ) + 
+  scale_color_manual(values = c("Control" = "green", "Treatment" = "blue")) + 
+  theme_minimal()
+
+
+# Une autre graphe 
+qq_plots_list <- list()
+for (var in matching_variables) {
+  # Extraire les valeurs pour Control et Treatment
+  control_values <- matched_data_2008 %>% filter(GROUP == "Control") %>% pull(!!sym(var))
+  treated_values <- matched_data_2008 %>% filter(GROUP == "Treatment") %>% pull(!!sym(var))
+
+  # S'assurer que les deux vecteurs ont la même longueur pour les quantiles
+  # On utilise le nombre d'observations du plus petit groupe pour les quantiles
+  n_min <- min(length(control_values), length(treated_values))
+  
+  # Calcul des quantiles
+  quantiles_control <- quantile(control_values, probs = seq(0, 1, length.out = n_min), na.rm = TRUE)
+  quantiles_treated <- quantile(treated_values, probs = seq(0, 1, length.out = n_min), na.rm = TRUE)
+  
+  # Création d'un data frame pour ce QQ plot
+  qq_data_var <- tibble(
+    control_q = quantiles_control,
+    treated_q = quantiles_treated,
+    variable = var
+  )
+  qq_plots_list[[var]] <- qq_data_var
+}
+
+qq_combined_data <- bind_rows(qq_plots_list)
+
+# Traçage des QQ plots (quantiles de Control sur X, quantiles de Treatment sur Y)
+ggplot(qq_combined_data, aes(x = control_q, y = treated_q)) +
+  geom_point(color = "blue") + # Points pour la comparaison des quantiles
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "red") +
+  facet_wrap(~variable, scales = "free") +
+  labs(
+    title = "QQ plots after matching (2008)",
+    x = "Quantiles of control group",
+    y = "Quantiles of treated group"
+  ) +
+  theme_minimal() +
+  NULL
+  
+  
 ```
 
-Sur les graphiques, on peut voir qu'il y a des différences de forme entre les distributions comparées. Pour la majorité des covariables (treecover_area_2000, slope_2000, traveltime_2000), les distributions des groupes de contrôle et de traitement sont similaires, presque parfaite. Les points Q-Q plots sont proches de la diagonale montrant que le matching a bien équilibré ces variables. Quant aux covariables elevation_2000 , les courbes de distribution montrent quelques différences entre le groupe de traitement et de contrôle. Ces différences s'accentuent dans le cas de la covariable population_count_2000, qui se diffèrent beaucoup dans les extrêmes. Le matching a équilibré les covariables mais ce n'est pas totalement parfait.
+Sur les graphiques, on peut voir que les points s'écartent légèrement de la ligne diagonale pour les variables elevation_2000 et traveltime_2000 à un certain moment. Ce déséquilibre est accentué pour la variable population_count_2000 pour ces quantiles supérieurs de la variables.
 
 ### Balance test for 2021
 
@@ -571,7 +603,8 @@ bal_before_2021 <- bal.tab(
   treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
   data = matching_2021,
   estimand = "ATT",
-  un = TRUE # Inclusion des covariables non appariées 
+  un = TRUE, # Inclusion des covariables non appariées 
+  abs = TRUE
 )
 
 print(bal_before_2021)
@@ -596,34 +629,13 @@ ggplot(matching_before_2021, aes(x = value, fill = GROUP)) +
     fill = "Group"
   ) +
   theme_minimal()
-```
 
-Les résultats montrent qu'il y a une différence entre les groupes de traitement et les groupes de contrôle pour chaque covariable avant l'appariement. Tous les covariables présentes des déséquilibres modérés entre les groupes, sauf pour la variable population_count_2000 qui montre un déséquilibre majeur.
-
-#### Balance test after matching
-
-```{r}
-# Balance after matching
-bal_after_2021 <- bal.tab(matching_result_2021)
-print(bal_after_2021)
-
-# Balance plot after matching
-matched_data_2021 <- match.data(matching_result_2021)
-
-
-matching_after_2021 <- matched_data_2021 %>%
-  pivot_longer(
-    cols = all_of(matching_variables),
-names_to = "variable",
-values_to = "value"
-)
-  
-  ggplot(matching_after_2021, aes(x = value, fill = GROUP)) +
+ggplot(matching_before_2021, aes(x = value, fill = GROUP)) +
     geom_density(alpha = 0.5, color = "black", linewidth = 0.7, adjust = 0.7) +
     facet_wrap(~variable, scales = "free") +
     scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
     labs(
-      title = "Covariate Distribution after matching (2021)",
+      title = "Covariate Distribution before matching (2021)",
       x = "Covariate value",
       y = "Density",
       fill = "Group"
@@ -631,28 +643,79 @@ values_to = "value"
     theme_minimal()
 ```
 
-Les résultats montrent que toutes les valeurs des SMD sont très faibles, comprises entre -0.0692 et 0.1155, indiquant ainsi un excellent équilibre entre les groupes pour l'ensemble des covariables. Les graphiques confirment également cet équilibre: les courbes des groupes de contrôle (en vert) et les groupes de traitement (en bleue) se superposent largement, traduisant une forte similitude dans la distribution des covariables après l'appariement.
+Les résultats montrent qu'il y a une différence entre les groupes de traitement et les groupes de contrôle pour chaque covariable avant l'appariement. Trois variables dont treecover_area_2000, elevation, population_count montrent des déséquilibres majeurs, avec un SMD \> 0.4. Les deux restants sont juste au-dessus du seuil de 0.25, qui sont eux aussi déséquilibrées.
 
-#### Q-Q Plot analysis
+#### Balance test after matching: Q-Q Plot analysis
 
 ```{r}
-library(patchwork)
+# Balance after matching
+bal_after_2021 <- bal.tab(matching_result_2021)
+print(bal_after_2021)
 
-plots_2021 <- lapply(matching_variables, function(var){
-  ggplot(matched_data_2021, aes(sample = .data[[var]], color = GROUP)) +
-    stat_qq() +
-    stat_qq_line() +
-    labs(
-      title = paste("Q-Q plot of", var), 
-      x = " Theorical Quantiles", 
-      y = "Sample Quantile", color = "Group"
-      ) +
-    theme_minimal() +
-    theme(legend.position = "bottom")
-})
+# Création d'un format long
+matched_data_2008 <- match.data(matching_result_2021)
 
-# Patchwork grid assembly
-wrap_plots(plots_2021, ncol = 2)
+qq_2021 <- matched_data_2021 %>% 
+  pivot_longer(
+    cols = all_of(matching_variables),
+names_to = "variable",
+values_to = "value"
+)
+
+# Traçage des QQ plots
+ggplot(qq_2021, aes(sample = value, color = GROUP)) +
+  stat_qq(distribution = stats::qunif) + 
+  facet_wrap(~variable, scales = "free") +
+  labs(
+    title = "QQ plots after matching (2021)",
+    x = "Quantiles of control group",
+    y = "Quantiles of treated group",
+    color = "Groupe"
+  ) + 
+  scale_color_manual(values = c("Control" = "green", "Treatment" = "blue")) + 
+  theme_minimal()
+
+
+# Une autre graphe 
+qq_plots_list <- list()
+for (var in matching_variables) {
+  # Extraire les valeurs pour Control et Treatment
+  control_values <- matched_data_2021 %>% filter(GROUP == "Control") %>% pull(!!sym(var))
+  treated_values <- matched_data_2021 %>% filter(GROUP == "Treatment") %>% pull(!!sym(var))
+
+  # S'assurer que les deux vecteurs ont la même longueur pour les quantiles
+  # On utilise le nombre d'observations du plus petit groupe pour les quantiles
+  n_min <- min(length(control_values), length(treated_values))
+  
+  # Calcul des quantiles
+  quantiles_control <- quantile(control_values, probs = seq(0, 1, length.out = n_min), na.rm = TRUE)
+  quantiles_treated <- quantile(treated_values, probs = seq(0, 1, length.out = n_min), na.rm = TRUE)
+  
+  # Création d'un data frame pour ce QQ plot
+  qq_data_var <- tibble(
+    control_q = quantiles_control,
+    treated_q = quantiles_treated,
+    variable = var
+  )
+  qq_plots_list[[var]] <- qq_data_var
+}
+
+qq_combined_data <- bind_rows(qq_plots_list)
+
+# Traçage des QQ plots (quantiles de Control sur X, quantiles de Treatment sur Y)
+ggplot(qq_combined_data, aes(x = control_q, y = treated_q)) +
+  geom_point(color = "blue") + # Points pour la comparaison des quantiles
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "red") +
+  facet_wrap(~variable, scales = "free") +
+  labs(
+    title = "QQ plots after matching (2021)",
+    x = "Quantiles of control group",
+    y = "Quantiles of treated group"
+  ) +
+  theme_minimal() +
+  NULL
 ```
 
-Les distributions des groupes de contrôle et de traitement de treecover_area_2000, slope_2000, elevation_2000 et traveltime_2000_2000 sont presque similairement parfaite. Cela montre que le matching a bien équilibré ces variables. Dans le cas du population_count_2000, les courbes sont également très proches de la diagonale, mais présentent des petits écarts pour les valeurs extrêmes.
+Les graphiques montrent que les points s'alignent légèrement par rapport à la ligne diagonale pour la plupart des variables. Tandis que pour les quantiles supérieurs de la variable population_count_2000, les points s'écartent clairement de la diagonale. Le groupe de traitement apparié manque toujours d'unités de populations que celles du groupe de contrôle apparié.
+
+Le matching utilisé aux ménages de l'année 2021 a permi d'atteindre un niveau d'équilibre des covariables très similaire à celui obtenu en 1997, et de même elle fait face aux mêmes défis concernant l'équilibrage de la variable population_count_2000.
