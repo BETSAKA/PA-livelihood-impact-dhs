@@ -74,9 +74,13 @@ post_treatment <- data_all %>% filter(period_DID == 1)
 
 Nous obtenons 1 930 observations pour le pre_treatment et 11 500 observations pour la période de post_treatment.
 
-## Testing the parallel trends hypothesis
+## Testing the parallel trends hypothesis 
 
 La méthode de double différence repose sur des hypothèses de tendances parallèlles. Pour tester la validité de cette hypothèse, nous construisons un groupe de traitement et de contrôle placebo basé sur les ménages ruraux enquêtés en 1997. Le groupe de traitement placebo comprend ceux qui vivent dans une zone située dans ou à moins de 10 km d'une aire protégée créée entre 2008 et 2021, et le groupe de contrôle placebo est composé de ceux qui leur sont appariés. Ce test placebo a pour but de vérifier si les deux groupes suivaient des tendances similaires avant l'introduction du traitement. Si un effet est observé pendant la période placebo, cela pourrait indiquer que les tendances pré-traitement n'étaient pas parallèles, remettant en question la validité de l'estimation DID. Il faut donc que le résultat de ce test soit nul ou statistiquement non significatif pour renforcer l'idée que les zones traitées et non traitées évoluaient de manière similaire avant la mise en place des aires protégées étudiées sur la période 2008-2021.
+
+Nous allons appliquer pour le test deux outcomes dont le wealth index et le z-score du wealth index.
+
+### Test with the principal outcome: Wealth index 
 
 ```{r}
 #--------------------------------------------------
@@ -161,7 +165,64 @@ ggplot(evolution_placebo,aes(x = DHSYEAR, y = mean_value, color = GROUP, group =
 
 Le graphique présente les moyennes de l'indice de richesse (wealth_centile_rural_simple) pour les groupes de traitement et de contrôles pour les années 1997 et 2008. Le point en orange représente la moyenne de l'indice de richesse pour le groupe de traitement et le point en bleu est celui du groupe de contrôle. En 1997, les deux moyennes sont proches pour les deux groupes dont une valeur de -1.79 pour les groupes de traitement et -1.97 pour les groupes de contrôle. En 2008, les deux moyennes baissent mais restent relativement proches (Groupe de traitement = -2.80 et Groupe de controle = -3.45). D'après ces résultats, il n'y a pas de différence marquée dans l'évolution de la richesse entre les deux groupes sur la période 1997-2008, période où aucune aire protégée n'a été crée pour ces groupes. L'hypothèse des tendances parallèles est donc vérifié.
 
-## Estimation du modèle DID
+### Test with the secondary outcome: Z-score of the Wealth index 
+
+```{r}
+#--------------------------------------------------
+# Test Placebo sur 1997-2008 with outcome = wealth index 
+#--------------------------------------------------
+
+# Estimation
+did_placebo <- lm(zscore_wealth ~ placebo_treated + post + placebo_treated:post + spei_wc_1995 +  spei_wc_1996 + spei_wc_1997 + hv219 + hv220, data = placebo_data)
+summary(did_placebo)
+
+# Coefficient presentation
+tidy(did_placebo)
+
+# Statistiques
+evolution_placebo_Zscore <- placebo_data %>%
+  group_by(DHSYEAR, GROUP) %>%
+  summarise(
+    mean_value = mean(zscore_wealth , na.rm = TRUE),
+    sd_value = sd(zscore_wealth , na.rm = TRUE),
+    n = n(),
+    se = sd_value / sqrt(n),
+    .groups = "drop"
+  )
+
+# Ajout d'un label pour différencier la période pré/ post
+evolution_placebo_Zscore <- evolution_placebo_Zscore %>%
+  mutate(period = ifelse(DHSYEAR < 2008, "Pre-treatment", "Post-treatment"))
+
+# Plot
+ggplot(evolution_placebo_Zscore,aes(x = DHSYEAR, y = mean_value, color = GROUP, group = GROUP)) +
+  geom_point(size = 4) +
+  geom_line(size = 1.2) +
+  geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se),
+                width = 0.2, size = 0.8, alpha = 0.6) +
+  geom_vline(xintercept = 2008, linetype = "dashed", color = "grey", size = 1) + annotate("text", x = 2007.5, y = max(evolution_placebo_Zscore$mean_value) * 0.95,
+    label = "Traitement", angle = 90, vjust = -0.5, size = 4, color = "grey30") +
+  scale_color_manual(
+    values = c("Treatment" = "#D55E00", "Control" = "#0072B2")) +
+  scale_x_continuous(breaks = c(1997, 2008), labels = c("1997", "2008")) +
+  labs( 
+    title = "Placebo test: Wealth Index Mean by group (1997-2008)",
+    subtitle = "Evolution in mean zcore of wealth index by group (1997 vs 2008)",
+    x = "Survey Year",
+    y = "mean wealth index"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, margin = margin(b = 15)),
+    axis.title = element_text(face = "bold"),
+    legend.position = "top",
+    panel.grid.major = element_line(size = 0.3),
+    panel.grid.minor = element_blank()
+  )
+```
+
+## Estimation du modèle DID avec l'outcome principal
 
 3.  Estimation du modèle DID
 
@@ -270,8 +331,7 @@ evolution_main <- model_data %>%
 ggplot(evolution_main, aes(x = factor(DHSYEAR), y = mean_value, color = GROUP, group = GROUP)) +
   geom_point(size = 4) +
   geom_line(size = 1.3) +
-  geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se), 
-                width = 0.2, size = 0.8, alpha = 0.5) + 
+  geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se), width = 0.2, size = 0.8, alpha = 0.5) + 
   geom_text(
     aes(label = sprintf("%.2f", mean_value)),
     vjust = -1,
@@ -301,7 +361,7 @@ ggplot(evolution_main, aes(x = factor(DHSYEAR), y = mean_value, color = GROUP, g
 
 ```
 
-## Graphique
+## Graphique DID 
 
 ```{r}
 
@@ -315,7 +375,7 @@ evolution_main <- model_data %>%
     se = sd_value / sqrt(n),
     .groups = "drop"
   ) %>%
-  mutate(period = "Main (2008-2021)")
+  mutate(Period = "Main (2008-2021)")
 
 
 # Dataset placebo
@@ -332,21 +392,18 @@ evolution_placebo <- placebo_data %>%
 
 
 # Combined the two datasets 
-evolution_combined <- bind_rows(evolution_main, evolution_placebo)
-
-evolution_combined <- evolution_combined %>%
+evolution_combined <- bind_rows(evolution_main, evolution_placebo) %>%
   mutate(GroupPeriod = paste(GROUP, Period, sep = "_"))
 
 # Plot
 ggplot(evolution_combined, 
        aes(x = factor(DHSYEAR), 
            y = mean_value, 
-           group = interaction(GROUP, Period))) +
-  geom_point(aes(color = GROUP, shape = Period), size = 3.5) +
-  geom_line(aes(color = GROUP, linetype = Period, group = interaction(GROUP, Period)), size = 1.3) +
+           group = interaction(GROUP, Period), color = GROUP)) +
+  geom_point(aes(shape = Period), size = 3.5) +
+  geom_line(aes(linetype = Period), size = 1.3) +
   geom_errorbar(aes(ymin = mean_value - 1.96 * se, 
-                    ymax = mean_value + 1.96 * se,
-                    color = GROUP),
+                    ymax = mean_value + 1.96 * se),
                 width = 0.2, size = 0.8, alpha = 0.5) +
   geom_text(aes(label = sprintf("%.2f", mean_value)),
              vjust = -1, size = 4, color = "black") +
@@ -377,3 +434,200 @@ ggplot(evolution_combined,
   )
   
 ```
+
+## Estimation du modèle DID avec l'outcome secondaire 
+```{r}
+#---------------------------------------------
+#DID Estimation with controls (2008-2021)
+#--------------------------------------------
+# Treatment period: 2008-2021
+model_data_zscore <- data_all %>%
+  filter(DHSYEAR %in% c(2008,2021)) %>%
+  mutate(
+    treated = ifelse(GROUP == "Treatment", 1, 0),
+    post = ifelse(DHSYEAR == 2021, 1, 0)
+  ) %>%
+  filter(!if_any(c("zscore_wealth", "treated", "post"), is.na)) %>%
+  
+  # Add control variables 
+  mutate(
+    sex_head = as.factor(hv219),
+    age_head = hv220,
+    forest_cover_rate = treecover_area_2000,
+    slope = slope_2000,
+    elevation = elevation_2000,
+    population_count = population_count_2000,
+    accessibility = traveltime_2000_2000,
+    spei_wc_2019 = spei_wc_2019,
+    spei_wc_2020 = spei_wc_2020,
+    spei_wc_2021 = spei_wc_2021
+  )
+# Main DID regression with robust standard errors per cluster
+did_2008_2021 <- lm(
+  zscore_wealth  ~ treated * post + sex_head + age_head + 
+    forest_cover_rate + slope + elevation + 
+    population_count + accessibility + 
+    spei_wc_2019 + spei_wc_2020 + spei_wc_2021, 
+  data = model_data )
+
+
+summary(did_2008_2021)
+
+#-------------------------------------------------
+#Erreurs standards robustes intra-cluster (hv001)
+#-------------------------------------------------
+
+cluster_se <- function(model, cluster) {
+  # Extraction des observations utilisées dans le modèle 
+  cluster <- cluster[as.numeric(rownames(model$model))]
+  
+  # Calcul des quantiles nécessaires 
+  M <- length(unique(cluster)) # nombre de clusters 
+  N <- length(cluster)         # nombre d'observations
+  K <- model$rank              # nombre de paramètres estimés
+  
+  # Correction de variance 
+  dfc <- (M/ (M-1) * (N-1) / (N-K))
+  
+  # Calcul des scores agrégés au niveau des clusters
+  uj <- apply(estfun(model), 2, function(x) tapply(x, cluster, sum))
+  
+  # Matrice de variance-covariance clusterisée
+  vcovCL <- dfc * sandwich(model, meat = crossprod(uj)/N)
+  
+  
+  return(vcovCL)
+}
+  
+# Application aux résultats DID
+if("hv001" %in% names(model_data)){
+  cl_vcov <- cluster_se(did_2008_2021, model_data$hv001)
+  cluster_results <- coeftest(did_2008_2021, vcov. = cl_vcov)
+  
+  
+  print(cluster_results)
+
+} else {
+  summary(did_2008_2021)
+}
+
+# Coefficient presentation
+tidy(did_2008_2021)
+
+# Plot 
+evolution_main_zscore <- model_data %>%
+  group_by(DHSYEAR, GROUP) %>%
+  summarise(
+    mean_value = mean(zscore_wealth, na.rm = FALSE),
+    sd_value = sd(zscore_wealth, na.rm = FALSE),
+    n = n(),
+    se = sd_value / sqrt(n),
+    .groups = "drop"
+  )
+
+ggplot(evolution_main_zscore, aes(x = factor(DHSYEAR), y = mean_value, color = GROUP, group = GROUP)) +
+  geom_point(size = 4) +
+  geom_line(size = 1.3) +
+  geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se), width = 0.2, size = 0.8, alpha = 0.5) + 
+  geom_text(
+    aes(label = sprintf("%.2f", mean_value)),
+    vjust = -1,
+    size = 4.5,
+    color = "black"
+  ) +
+  scale_color_manual(
+    values = c("Treatment" = "#D55E00", "Control" = "#0072B2"),
+    name = "Group"
+  ) +
+  scale_y_continuous(
+    trans = pseudo_log_trans(base = 10),
+    name = "Mean zscore of Wealth Index (z_score_wealth)"
+  ) +
+  labs(
+    title = "Evolution of Wealth Index by Group (2008-2021)",
+    x = "Survey Year"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+    axis.title = element_text(face = "bold"),
+    legend.position = "top",
+    panel.grid.major = element_line(size = 0.3),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+## Graphique DID 
+
+```{r}
+
+# Dataset principal
+evolution_main_zscore <- model_data %>%
+  group_by(DHSYEAR, GROUP) %>%
+  summarise(
+    mean_value = mean(zscore_wealth, na.rm = TRUE),
+    sd_value = sd(zscore_wealth, na.rm = TRUE),
+    n = n(),
+    se = sd_value / sqrt(n),
+    .groups = "drop"
+  ) %>%
+  mutate(Period = "Main (2008-2021)")
+
+
+# Dataset placebo
+evolution_placebo_zscore <- placebo_data %>%
+  group_by(DHSYEAR, GROUP) %>%
+  summarise(
+    mean_value = mean(zscore_wealth, na.rm = TRUE),
+    sd_value = sd(zscore_wealth, na.rm = TRUE),
+    n = n(),
+    se = sd_value / sqrt(n),
+    .groups = "drop"
+  ) %>%
+  mutate(Period = "Placebo (1997-2008)")
+
+
+# Combined the two datasets 
+evolution_combined <- bind_rows(evolution_main_zscore, evolution_placebo_zscore) %>%
+  mutate(GroupPeriod = paste(GROUP, Period, sep = "_"))
+
+# Plot
+ggplot(evolution_combined, 
+       aes(x = factor(DHSYEAR), 
+           y = mean_value, 
+           group = interaction(GROUP, Period), color = GROUP)) +
+  geom_point(aes(shape = Period), size = 3.5) +
+  geom_line(aes(linetype = Period), size = 1.3) +
+  geom_errorbar(aes(ymin = mean_value - 1.96 * se, 
+                    ymax = mean_value + 1.96 * se),
+                width = 0.2, size = 0.8, alpha = 0.5) +
+  geom_text(aes(label = sprintf("%.2f", mean_value)),
+             vjust = -1, size = 4, color = "black") +
+  scale_color_manual(
+    values = c("Treatment" = "#D55E00", "Control" = "#0072B2"),
+    name = "Group"
+  ) +
+  scale_linetype_manual( 
+    values = c("Main (2008-2021)" = "solid",
+               "Placebo (1997-2008)" = "dashed"),
+    name = "Period"
+  ) +
+  scale_y_continuous(
+    trans = pseudo_log_trans(base = 10),
+    name = "Mean zscore of Wealth Index (zscore_wealth)"
+  ) +
+  labs(
+    title = "Z-score Evolution: Main DID vs Placebo",
+    x = "Survey Year"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+    axis.title = element_text(face = "bold"),
+    legend.position = "top",
+    panel.grid.major = element_line(size = 0.3),
+    panel.grid.minor = element_blank()
+  )
+```
+
