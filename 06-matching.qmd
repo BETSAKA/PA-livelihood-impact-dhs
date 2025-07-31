@@ -653,7 +653,7 @@ bal_after_2021 <- bal.tab(matching_result_2021)
 print(bal_after_2021)
 
 # Création d'un format long
-matched_data_2008 <- match.data(matching_result_2021)
+matched_data_2021 <- match.data(matching_result_2021)
 
 qq_2021 <- matched_data_2021 %>% 
   pivot_longer(
