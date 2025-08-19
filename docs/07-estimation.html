@@ -681,32 +681,32 @@ lm(formula = wealth_centile_rural_simple ~ treated * post + sex_head +
     data = model_data)
 
 Residuals:
-   Min     1Q Median     3Q    Max 
--70.75 -19.75   0.49  18.80  73.03 
+    Min      1Q  Median      3Q     Max 
+-70.762 -19.737   0.543  18.821  73.053 
 
 Coefficients: (2 not defined because of singularities)
                     Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept)        6.545e+01  1.741e+00  37.587  &lt; 2e-16 ***
-treated           -2.545e+00  6.367e-01  -3.997 6.48e-05 ***
+(Intercept)        6.567e+01  1.747e+00  37.596  &lt; 2e-16 ***
+treated           -2.702e+00  6.404e-01  -4.219 2.49e-05 ***
 post                      NA         NA      NA       NA    
-sex_head2         -5.064e+00  7.363e-01  -6.877 6.69e-12 ***
-age_head           1.044e-01  1.989e-02   5.247 1.59e-07 ***
-forest_cover_rate  7.488e-05  5.196e-05   1.441  0.14964    
-slope              4.121e-01  9.260e-02   4.450 8.72e-06 ***
-elevation          1.062e-02  8.527e-04  12.454  &lt; 2e-16 ***
-population_count   5.406e-02  1.053e-02   5.132 2.95e-07 ***
-accessibility     -1.658e-02  2.550e-03  -6.502 8.51e-11 ***
-spei_wc_2019      -2.951e-01  1.081e+00  -0.273  0.78487    
-spei_wc_2020      -4.080e+00  1.247e+00  -3.272  0.00107 ** 
-spei_wc_2021       2.380e+01  6.873e-01  34.631  &lt; 2e-16 ***
+sex_head2         -5.067e+00  7.363e-01  -6.882 6.43e-12 ***
+age_head           1.043e-01  1.989e-02   5.244 1.62e-07 ***
+forest_cover_rate  7.122e-05  5.192e-05   1.372    0.170    
+slope              4.097e-01  9.259e-02   4.425 9.78e-06 ***
+elevation          1.061e-02  8.522e-04  12.447  &lt; 2e-16 ***
+population_count   5.327e-02  1.054e-02   5.056 4.41e-07 ***
+accessibility     -1.643e-02  2.551e-03  -6.443 1.25e-10 ***
+spei_wc_2019      -4.693e-01  1.087e+00  -0.432    0.666    
+spei_wc_2020      -4.098e+00  1.245e+00  -3.291    0.001 ** 
+spei_wc_2021       2.385e+01  6.877e-01  34.688  &lt; 2e-16 ***
 treated:post              NA         NA      NA       NA    
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 Residual standard error: 25.1 on 6650 degrees of freedom
   (4838 observations effacées parce que manquantes)
-Multiple R-squared:  0.1944,    Adjusted R-squared:  0.1931 
-F-statistic: 145.9 on 11 and 6650 DF,  p-value: &lt; 2.2e-16</code></pre>
+Multiple R-squared:  0.1946,    Adjusted R-squared:  0.1933 
+F-statistic: 146.1 on 11 and 6650 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -753,18 +753,18 @@ F-statistic: 145.9 on 11 and 6650 DF,  p-value: &lt; 2.2e-16</code></pre>
 t test of coefficients:
 
                      Estimate  Std. Error t value  Pr(&gt;|t|)    
-(Intercept)        6.5455e+01  6.2015e+00 10.5546 &lt; 2.2e-16 ***
-treated           -2.5448e+00  2.2175e+00 -1.1476 0.2511794    
-sex_head2         -5.0635e+00  8.6062e-01 -5.8836 4.209e-09 ***
-age_head           1.0437e-01  2.1242e-02  4.9136 9.158e-07 ***
-forest_cover_rate  7.4879e-05  1.7801e-04  0.4206 0.6740244    
-slope              4.1209e-01  3.1417e-01  1.3117 0.1896814    
-elevation          1.0619e-02  2.7987e-03  3.7942 0.0001494 ***
-population_count   5.4060e-02  3.5638e-02  1.5169 0.1293365    
-accessibility     -1.6577e-02  9.9909e-03 -1.6592 0.0971296 .  
-spei_wc_2019      -2.9509e-01  3.3985e+00 -0.0868 0.9308105    
-spei_wc_2020      -4.0801e+00  4.9245e+00 -0.8285 0.4074034    
-spei_wc_2021       2.3801e+01  2.7049e+00  8.7993 &lt; 2.2e-16 ***
+(Intercept)        6.5670e+01  6.2261e+00 10.5475 &lt; 2.2e-16 ***
+treated           -2.7016e+00  2.2268e+00 -1.2132 0.2250902    
+sex_head2         -5.0671e+00  8.6059e-01 -5.8880 4.100e-09 ***
+age_head           1.0431e-01  2.1249e-02  4.9088 9.383e-07 ***
+forest_cover_rate  7.1219e-05  1.7737e-04  0.4015 0.6880460    
+slope              4.0974e-01  3.1434e-01  1.3035 0.1924480    
+elevation          1.0608e-02  2.7948e-03  3.7956 0.0001486 ***
+population_count   5.3274e-02  3.5669e-02  1.4936 0.1353371    
+accessibility     -1.6434e-02  9.9756e-03 -1.6474 0.0995250 .  
+spei_wc_2019      -4.6930e-01  3.4340e+00 -0.1367 0.8913002    
+spei_wc_2020      -4.0976e+00  4.9020e+00 -0.8359 0.4032419    
+spei_wc_2021       2.3854e+01  2.7027e+00  8.8260 &lt; 2.2e-16 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -777,19 +777,19 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <pre><code># A tibble: 14 × 5
    term                estimate  std.error statistic    p.value
    &lt;chr&gt;                  &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;
- 1 (Intercept)       65.5        1.74         37.6    1.56e-280
- 2 treated           -2.54       0.637        -4.00   6.48e-  5
+ 1 (Intercept)       65.7        1.75         37.6    1.17e-280
+ 2 treated           -2.70       0.640        -4.22   2.49e-  5
  3 post              NA         NA            NA     NA        
- 4 sex_head2         -5.06       0.736        -6.88   6.69e- 12
- 5 age_head           0.104      0.0199        5.25   1.59e-  7
- 6 forest_cover_rate  0.0000749  0.0000520     1.44   1.50e-  1
- 7 slope              0.412      0.0926        4.45   8.72e-  6
- 8 elevation          0.0106     0.000853     12.5    3.27e- 35
- 9 population_count   0.0541     0.0105        5.13   2.95e-  7
-10 accessibility     -0.0166     0.00255      -6.50   8.51e- 11
-11 spei_wc_2019      -0.295      1.08         -0.273  7.85e-  1
-12 spei_wc_2020      -4.08       1.25         -3.27   1.07e-  3
-13 spei_wc_2021      23.8        0.687        34.6    9.21e-242
+ 4 sex_head2         -5.07       0.736        -6.88   6.43e- 12
+ 5 age_head           0.104      0.0199        5.24   1.62e-  7
+ 6 forest_cover_rate  0.0000712  0.0000519     1.37   1.70e-  1
+ 7 slope              0.410      0.0926        4.43   9.78e-  6
+ 8 elevation          0.0106     0.000852     12.4    3.57e- 35
+ 9 population_count   0.0533     0.0105        5.06   4.41e-  7
+10 accessibility     -0.0164     0.00255      -6.44   1.25e- 10
+11 spei_wc_2019      -0.469      1.09         -0.432  6.66e-  1
+12 spei_wc_2020      -4.10       1.25         -3.29   1.00e-  3
+13 spei_wc_2021      23.9        0.688        34.7    1.75e-242
 14 treated:post      NA         NA            NA     NA        </code></pre>
 </div>
 <details class="code-fold">
@@ -978,31 +978,31 @@ lm(formula = zscore_wealth ~ treated * post + sex_head + age_head +
 
 Residuals:
     Min      1Q  Median      3Q     Max 
--0.8780 -0.4402 -0.0835  0.3148  3.2997 
+-0.8774 -0.4403 -0.0839  0.3146  3.2991 
 
 Coefficients: (2 not defined because of singularities)
                     Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept)        7.481e-01  3.923e-02  19.070  &lt; 2e-16 ***
-treated            5.285e-03  1.434e-02   0.368  0.71254    
+(Intercept)        7.483e-01  3.936e-02  19.013  &lt; 2e-16 ***
+treated            4.242e-03  1.443e-02   0.294  0.76874    
 post                      NA         NA      NA       NA    
-sex_head2         -5.344e-02  1.659e-02  -3.221  0.00128 ** 
-age_head           2.003e-03  4.481e-04   4.469 7.99e-06 ***
-forest_cover_rate -6.834e-07  1.171e-06  -0.584  0.55937    
-slope              1.759e-03  2.086e-03   0.843  0.39920    
-elevation         -9.007e-06  1.921e-05  -0.469  0.63915    
-population_count   7.998e-05  2.373e-04   0.337  0.73608    
-accessibility     -7.667e-06  5.743e-05  -0.133  0.89381    
-spei_wc_2019       2.249e-02  2.435e-02   0.924  0.35570    
-spei_wc_2020      -6.277e-03  2.809e-02  -0.223  0.82318    
-spei_wc_2021       1.020e-02  1.548e-02   0.659  0.50998    
+sex_head2         -5.344e-02  1.659e-02  -3.222  0.00128 ** 
+age_head           2.002e-03  4.481e-04   4.468 8.02e-06 ***
+forest_cover_rate -6.729e-07  1.170e-06  -0.575  0.56519    
+slope              1.764e-03  2.086e-03   0.846  0.39785    
+elevation         -8.889e-06  1.920e-05  -0.463  0.64344    
+population_count   8.071e-05  2.374e-04   0.340  0.73391    
+accessibility     -7.665e-06  5.747e-05  -0.133  0.89389    
+spei_wc_2019       2.229e-02  2.450e-02   0.910  0.36303    
+spei_wc_2020      -5.911e-03  2.805e-02  -0.211  0.83312    
+spei_wc_2021       1.017e-02  1.549e-02   0.656  0.51163    
 treated:post              NA         NA      NA       NA    
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-Residual standard error: 0.5654 on 6650 degrees of freedom
+Residual standard error: 0.5655 on 6650 degrees of freedom
   (4838 observations effacées parce que manquantes)
-Multiple R-squared:  0.004287,  Adjusted R-squared:  0.00264 
-F-statistic: 2.603 on 11 and 6650 DF,  p-value: 0.002626</code></pre>
+Multiple R-squared:  0.00428,   Adjusted R-squared:  0.002633 
+F-statistic: 2.599 on 11 and 6650 DF,  p-value: 0.002673</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -1049,18 +1049,18 @@ F-statistic: 2.603 on 11 and 6650 DF,  p-value: 0.002626</code></pre>
 t test of coefficients:
 
                      Estimate  Std. Error t value  Pr(&gt;|t|)    
-(Intercept)        7.4814e-01  2.7101e-02 27.6061 &lt; 2.2e-16 ***
-treated            5.2847e-03  6.4033e-03  0.8253  0.409230    
-sex_head2         -5.3437e-02  1.6264e-02 -3.2856  0.001023 ** 
-age_head           2.0027e-03  4.7125e-04  4.2498 2.169e-05 ***
-forest_cover_rate -6.8344e-07  6.0500e-07 -1.1296  0.258665    
-slope              1.7588e-03  9.3899e-04  1.8731  0.061100 .  
-elevation         -9.0068e-06  8.1092e-06 -1.1107  0.266741    
-population_count   7.9984e-05  9.7615e-05  0.8194  0.412597    
-accessibility     -7.6669e-06  2.6525e-05 -0.2890  0.772554    
-spei_wc_2019       2.2492e-02  1.2436e-02  1.8087  0.070550 .  
-spei_wc_2020      -6.2769e-03  1.2893e-02 -0.4869  0.626379    
-spei_wc_2021       1.0202e-02  7.2391e-03  1.4092  0.158811    
+(Intercept)        7.4826e-01  2.6970e-02 27.7444 &lt; 2.2e-16 ***
+treated            4.2422e-03  6.2016e-03  0.6840  0.493975    
+sex_head2         -5.3441e-02  1.6264e-02 -3.2858  0.001022 ** 
+age_head           2.0023e-03  4.7118e-04  4.2494 2.173e-05 ***
+forest_cover_rate -6.7286e-07  6.0666e-07 -1.1091  0.267412    
+slope              1.7638e-03  9.3714e-04  1.8821  0.059865 .  
+elevation         -8.8888e-06  8.1167e-06 -1.0951  0.273506    
+population_count   8.0710e-05  9.7328e-05  0.8293  0.406985    
+accessibility     -7.6651e-06  2.6437e-05 -0.2899  0.771876    
+spei_wc_2019       2.2289e-02  1.2271e-02  1.8164  0.069354 .  
+spei_wc_2020      -5.9109e-03  1.2913e-02 -0.4578  0.647147    
+spei_wc_2021       1.0169e-02  7.2436e-03  1.4039  0.160385    
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -1073,19 +1073,19 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <pre><code># A tibble: 14 × 5
    term                  estimate   std.error statistic   p.value
    &lt;chr&gt;                    &lt;dbl&gt;       &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
- 1 (Intercept)        0.748        0.0392        19.1    5.54e-79
- 2 treated            0.00528      0.0143         0.368  7.13e- 1
+ 1 (Intercept)        0.748        0.0394        19.0    1.56e-78
+ 2 treated            0.00424      0.0144         0.294  7.69e- 1
  3 post              NA           NA             NA     NA       
  4 sex_head2         -0.0534       0.0166        -3.22   1.28e- 3
- 5 age_head           0.00200      0.000448       4.47   7.99e- 6
- 6 forest_cover_rate -0.000000683  0.00000117    -0.584  5.59e- 1
- 7 slope              0.00176      0.00209        0.843  3.99e- 1
- 8 elevation         -0.00000901   0.0000192     -0.469  6.39e- 1
- 9 population_count   0.0000800    0.000237       0.337  7.36e- 1
-10 accessibility     -0.00000767   0.0000574     -0.133  8.94e- 1
-11 spei_wc_2019       0.0225       0.0244         0.924  3.56e- 1
-12 spei_wc_2020      -0.00628      0.0281        -0.223  8.23e- 1
-13 spei_wc_2021       0.0102       0.0155         0.659  5.10e- 1
+ 5 age_head           0.00200      0.000448       4.47   8.02e- 6
+ 6 forest_cover_rate -0.000000673  0.00000117    -0.575  5.65e- 1
+ 7 slope              0.00176      0.00209        0.846  3.98e- 1
+ 8 elevation         -0.00000889   0.0000192     -0.463  6.43e- 1
+ 9 population_count   0.0000807    0.000237       0.340  7.34e- 1
+10 accessibility     -0.00000767   0.0000575     -0.133  8.94e- 1
+11 spei_wc_2019       0.0223       0.0245         0.910  3.63e- 1
+12 spei_wc_2020      -0.00591      0.0281        -0.211  8.33e- 1
+13 spei_wc_2021       0.0102       0.0155         0.656  5.12e- 1
 14 treated:post      NA           NA             NA     NA       </code></pre>
 </div>
 <details class="code-fold">
@@ -1202,7 +1202,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb27-54"><a href="#cb27-54" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"Mean zscore of Wealth Index (zscore_wealth)"</span></span>
 <span id="cb27-55"><a href="#cb27-55" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb27-56"><a href="#cb27-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb27-57"><a href="#cb27-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Zscore of Weath Index Evolution: Main DID vs Placebo"</span>,</span>
+<span id="cb27-57"><a href="#cb27-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Z-score Evolution: Main DID vs Placebo"</span>,</span>
 <span id="cb27-58"><a href="#cb27-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Survey Year"</span></span>
 <span id="cb27-59"><a href="#cb27-59" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb27-60"><a href="#cb27-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
