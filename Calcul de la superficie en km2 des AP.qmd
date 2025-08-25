@@ -1,0 +1,69 @@
+---
+title: "Calcul de la superficie en Km² des AP"
+author: "Iriana Razafimahenina"
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+Ce document présente le calcul de la superficie de chaque aire protégée. En effet, dans le manuel fourni par WDPA, REP_AREA est décrit comme la superficie en Km2 des aires terrestres. Mais une autre colonne est aussi présente dont on ignore le détail, nommé "AREA_KM2". D'où, le calcul de la superficie des aires protégées de la base de WDPA pour savoir si la superficie calculée manuellement se rapproche plus de REP_AREA ou de AREA_KM2.
+
+```{r}
+# Librairies utilisées 
+library(wdpar)
+library(tidyverse) #Manipulation et visualisation des données
+library(sf) #Analyse des données spatiales
+library(tmap) #Analyse cartographique
+library(gt) #Mise en forme des tableaux 
+library(geodata) # Pour avoir le contour de Madagascar
+library(writexl) # Pour faire une sortie sous Excel
+library(units)
+```
+
+Nous allons tout d'abord charger les données de WDPA. Nous nettoyons ensuite ces donnéespour supprimer les doublons ou les polygones invalides qui peuvent exister dans la base, et ne garder que les aires officiellement désignées. 
+
+```{r}
+# Chargement des données 
+wdpa <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
+  wdpa_clean() |> 
+  filter(STATUS == "Designated") %>%
+  mutate(MARINE = recode(MARINE,
+                         "terrestrial" = "Terrestre",
+                         "marine" = "Marine",
+                         "partial" = "Mixte"))
+```
+
+Selon la méthodologie fournie par Protected Planet, la surface de chaque polygone est caclculée en km² à l'aide du calcul de l'aire géodésique dans le WGS84. 
+
+
+```{r}
+
+# Vérifier le CRS actuel 
+st_crs(wdpa)
+
+# Calcul superficie en km²
+sf_use_s2(TRUE)
+wdpa$calc_area_km2 <- as.numeric(st_area(wdpa)) / 1e6
+```
+
+Nous comparons maintenant la superficie calculée avec celui de REP_AREA et AREA_KM2
+
+
+```{r}
+# Comparaison avec REP_AREA et AREA_km2
+wdpa <- wdpa %>%
+  mutate(
+    diff_rep_area = calc_area_km2 - REP_AREA,
+    diff_area_km2 = calc_area_km2 - AREA_KM2
+  )
+
+# Créer un tableau contenant que les noms et les superficies des aires protégées 
+wdpa_table <- wdpa %>%
+  mutate(
+    diff_rep_area = calc_area_km2 - REP_AREA,
+    diff_area_km2 = calc_area_km2 - AREA_KM2
+  ) %>%
+  select(ORIG_NAME, calc_area_km2, REP_AREA, AREA_KM2, diff_rep_area, diff_area_km2)
+```
+
+D'après ces résultats, il se trouve que AREA_KM2 ressemble plus à la superficie de chaque aire protégée en Km². 
