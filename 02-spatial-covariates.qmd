@@ -1,0 +1,260 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Spatial covariates
+
+## Introduction
+
+Ce document vise à charger les données géophysiques des ménages à l'aide du package R mapme.biodiversity (<https://mapme-initiative.github.io/mapme.biodiversity/index.html>) @görgen2022. Ce package va automatiser la récupération de données volumineuses au format raster et leur traitement pour produire une série d'indicateurs appliqués à des polygones.
+
+## Données DHS
+
+Avant le chargement des données des clusters GPS, nous définissons les systèmes de coordonnées. Les coordonnées GPS sont fournies dans le système de référence géographique WGS 84 (EPSG: 4326). Toutefois, pour effectuer des calculs précis de distances ou de surfaces, nous utilisons le système de projection officiel de Madagascar, qui est le Laborde (EPSG: 29702). On travaille en 4326 puis on le transforme en 29702 lorsque les opérations métriques sont nécessaires. Après le chargement des données, certains clusters n'ont pas de coordonnées valides (0,0). On les retire pour éviter des erreurs dans les calculs géospatiaux. On regroupe ensuite les clusters de l'année 1997, 2008 et 2021 dans un seul objet spatial pour faciliter les opérations ultérieures. Puis, on applique un buffer zone de 10 km autour de chaque cluster, qui serviront à extraire les données géophysiques et à analyser les expositions à certaines zones.
+
+```{r}
+#| fig-cap: "Buffer de 10 km autour des clusters DHS à Madagascar "
+
+# if (packageVersion("mapme.biodiversity") < "0.9.4") {
+#   remotes::install_github("mapme-initiative/mapme.biodiversity")
+# }
+
+
+library(tidyverse) #Manipulation et visualisation des données
+library(sf) #Analyse des données spatiales
+library(tmap) #Analyse cartographique
+library(labelled) # Manipulation des labels
+library(mapme.biodiversity)
+library(progressr) # Pour avoir des barres de progression
+library(tictoc) # Pour minuter le temps d'exécution
+library(future) # Pour permettre du calcul parallèle
+
+
+# Systèmes de coordonnées de référence 
+standard_crs <- 4326
+mdg_crs <- 29702 
+
+# On charge les données
+gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp")
+gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp") 
+gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
+
+# On retire les cluster dont les coordonnées spatials sont nulles
+gps_1997 <- filter(gps_1997_initial, LONGNUM != 0 | LATNUM != 0) 
+gps_2008 <- filter(gps_2008_initial, LONGNUM != 0 | LATNUM != 0) 
+gps_2021 <- filter(gps_2021_initial, LONGNUM != 0 | LATNUM != 0)
+
+gps_all <- bind_rows(gps_1997, gps_2008, gps_2021)
+
+# On crée les buffers
+buffer_all <- gps_all %>%
+  st_transform(mdg_crs) %>% # projection dans le CRS malgache
+  st_buffer(dist = 10000) %>% # 10 km
+  st_transform(standard_crs) # Retour en WGS 84
+
+# tmap_mode("view")
+# tm_shape(buffer_all) +
+#   tm_polygons() +
+#   tm_facets("DHSYEAR")
+```
+
+# Chargement des données géophysiques des ménages
+
+Nous allons charger et extraire les données sur les données géophysiques des ménages qui serviront de variables d'appariement et de variables de contrôle pour l'analyse. Ces covariables sont des covariables succeptibles d'influencer le traitement (aires protégées créées à proximité du ménage) et le résultat (wealth index et inégalité des ménages):
+
+-   Le couvert forestier en 2000 @hansen2013 (Hansen et al.2013)
+
+-   La pente et l'altitude @nasajpl2020 (NASA SRTM)
+
+-   La densité de population en 2000 @worldpop2018 (Worldpop)
+
+-   L'accessibilité en 2000 @uchida2011 (JRC, Uchida et Nelson 2011)
+
+-   Les données worldclim @vicente-serrano2010 (Vicente-Serrano, Beguería, et López-Moreno 2010)
+
+On définit notre environnement de travail pour automatiser le téléchargement et le stockage des données spatiales à l'aide de mapme.biodiversity. Nous utilisons la fonction get_resources () pour cela en démarrant un chronomètre avec le package tictoc pour mesurer le temps d'exécution du bloc de code.
+
+```{r}
+# Définir le chemin relatif pour ton répertoire local
+outdir <- "data/raw/mapme"
+dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+mapme_options(outdir = outdir, verbose = TRUE)
+
+
+# Couvert forestier
+tic()
+with_progress({
+  buffer_all <- buffer_all  %>% 
+    get_resources(get_gfw_treecover())
+})
+toc()
+
+# Perte de couvert
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% 
+  get_resources(get_gfw_lossyear()) 
+})
+toc()
+
+# NASA SRTM
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% 
+  get_resources(get_nasa_srtm()) 
+})
+toc()
+
+# Worldpop 2000
+#tic()
+#with_progress({
+  #buffer_all <- buffer_all %>% 
+  #get_resources(get_worldpop(years = 2000)) 
+#})
+#toc()
+  
+# Accesibility
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% 
+  get_resources(get_accessibility_2000()) 
+})
+toc()
+
+# Maximum temperatures
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% get_resources(
+    get_worldclim_max_temperature(years = 1980:2021, resolution = "2.5m")
+  )
+})
+toc()
+
+# Minimum temperatures
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% get_resources(
+    get_worldclim_min_temperature(years = 1980:2021, resolution = "2.5m")
+  )
+})
+toc()
+
+# Precipitations
+tic()
+with_progress({
+  buffer_all <- buffer_all %>% get_resources(
+    get_worldclim_precipitation(years = 1980:2021, resolution = "2.5m")
+  )
+})
+toc()
+```
+
+# Calcul des indicateurs
+
+Nous appliquons la fonction calc_indicators() du package pour calculer les indicateurs environnementaux avec un buffer zone de 10 km autour des clusters.
+
+```{r}
+
+if (file.exists("data/derived/spatial_covars.rds")) {
+  cat("Le fichier spatial_covars.rds existe déjà")
+} else {
+  cat("Fichier introuvable, début du traitement...\n")
+  
+  # Créer un plan pour paralléliser les calculs
+  plan(sequential)
+  plan(multisession, workers = 4)
+  
+  
+  
+  # Maximum temperatures
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_temperature_max_wc(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 11984.55 sec elapsed
+  
+  # Minimum temperatures
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+         calc_temperature_min_wc( engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 12588.37 sec | 9660.17 sec elapsed 
+  
+  
+  # Precipitations
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_precipitation_wc(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 17857.13 sec | 8883.61 sec elapsed 
+  
+  
+  # Forest cover rate in 2000
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_treecover_area(years = 2000, min_size = 1, min_cover = 10)
+      )
+  })
+  toc()   # 548.69 sec | 2519.61 sec elapsed
+  
+  # slope 
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_slope(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 365.87 sec | 2557.28 sec elapsed    
+  
+  # Elevation
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_elevation(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 283.51 sec | 2672.57 sec elapsed  
+  
+  # Population density
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_population_count(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 83.55 sec | 1877.78 sec elapsed
+  
+  # Accessibility
+  tic()
+  with_progress({
+    buffer_all <- buffer_all %>%
+      calc_indicators(
+        calc_traveltime_2000(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 87.63 sec | 2594.06 sec elapsed   
+  
+  # Enregistrement des données 
+  write_rds(buffer_all, "data/derived/spatial_covars.rds")
+  cat("Données enregistrées dans vspatial covars ds")
+}
+
+```
+
+Nous obtenons un dataframe contenant le couvert forestier en 2000, la pente et l'altitude, la densité de population, l'accessibilité, la température maximale et minimale, ainsi que la précipitation.

@@ -1,0 +1,147 @@
+# Sensitivity tests
+
+# Tests de robustesse
+
+## Test de sensibilité aux tailles de buffer
+
+### Test pour une distance de 5 km
+
+-   Création d'un buffer de 5 km autour des aires protégées
+-   Réassignation des traitements
+-   Matching
+-   Test d'équilibre
+-   DID
+-   Test de robustesse
+
+### Test pour une distance de 15km
+
+-   Création d'un buffer de 15 km autour des aires protégées Matching DID Test de robustesse
+-   Réassignation des traitements
+-   Matching
+-   Test d'équilibre
+-   DID
+-   Test de robustesse
+
+## Test pour l'hypothèse multiple
+
+La méthode "False Directory Rate" de Benjamini-Hochberg sera appliqué aux hypothèses H2 et H3 pour corriger le problème des tests multiples.
+
+## Analyse de sensibilité de Rosenbaum
+
+Vérification de la robustesse des résultats issus du matching face à un éventuel biais non observé en testant différentes valeurs de Γ, afin d'évaluer dans quelle mesure la présence d'un biais caché pourraient influencer les conclusions de l'analyse
+
+## Effets hétérogènes
+
+Estimation des effets hétérogènes en introduisant des interactions entre le traitement et les différentes variables différenciatrices dans un modèle de double DID pour explorer les effets différenciés des aires protégées sur les ménages en fonction des caractéristiques socio-démographiques et environnementales
+
+Caractéristiques socio-démographiques et environnementales:
+
+-   Sexe et âge du chef de ménage
+
+-   Conditions environnementales (Pluviométrie, sécheresse)
+
+-   Type de gouvernance des aires protégées (strictes (statuts IUCN I-IV) vs multi-usages ( statuts IUCN V-VI))
+
+-   Distance aux aires protégées (5km, 10 km, 15 km) -\> même analyse que test de robustess? si oui, enlver de cette partie
+
+## Impact sur l'inégalité intra-communautaire
+
+-   Inégalité intra-communautaire (Z-score standardisée du wealth index)
+
+## Pseudo Panel
+
+-   Construction de cohorte de ménage
+
+-   Estimation d'un modèle à effet fixe pour corriger les biais liées aux variables non observés
+
+-   Pondérer les observations en fonction de la taille des cohortes
+
+# Appendix
+
+## Statistical power
+
+-   Estimation de la puissance statistique pour détecter un effet d'au moins 7.5 centiles dans l'indice de richesse entre les groupes
+
+-   EStimation de la probabilité à un seuil de puissance fixée à 0.8 avec un seuil de signification fixée à 0.05
+
+-   **Mobilisation des données MIS 2011, MIS 2013 et MIS 2016 si la puissance statistique est insuffisante**
+
+Analyse de sensibilité ==\> à voir
+
+Tests de robustesse
+
+Test de sensibilité aux tailles de buffer
+
+Test pour une distance de 5 km
+
+Création d'un buffer de 5 km autour des aires protégées
+
+Réassignation des traitements
+
+Matching
+
+Test d'équilibre
+
+DID
+
+Test de robustesse
+
+Test pour une distance de 15km
+
+Création d'un buffer de 15 km autour des aires protégées Matching DID Test de robustesse
+
+Réassignation des traitements
+
+Matching
+
+Test d'équilibre
+
+DID
+
+Test de robustesse
+
+Test pour l'hypothèse multiple
+
+La méthode "False Directory Rate" de Benjamini-Hochberg sera appliqué aux hypothèses H2 et H3 pour corriger le problème des tests multiples.
+
+Analyse de sensibilité de Rosenbaum
+
+Vérification de la robustesse des résultats issus du matching face à un éventuel biais non observé en testant différentes valeurs de Γ, afin d'évaluer dans quelle mesure la présence d'un biais caché pourraient influencer les conclusions de l'analyse
+
+Effets hétérogènes
+
+Estimation des effets hétérogènes en introduisant des interactions entre le traitement et les différentes variables différenciatrices dans un modèle de double DID pour explorer les effets différenciés des aires protégées sur les ménages en fonction des caractéristiques socio-démographiques et environnementales
+
+Caractéristiques socio-démographiques et environnementales:
+
+Sexe et âge du chef de ménage
+
+Conditions environnementales (Pluviométrie, sécheresse)
+
+Type de gouvernance des aires protégées (strictes (statuts IUCN I-IV) vs multi-usages ( statuts IUCN V-VI))
+
+Distance aux aires protégées (5km, 10 km, 15 km) -\> même analyse que test de robustess? si oui, enlver de cette partie
+
+Impact sur l'inégalité intra-communautaire
+
+Inégalité intra-communautaire (Z-score standardisée du wealth index)
+
+Pseudo Panel
+
+Construction de cohorte de ménage
+
+Estimation d'un modèle à effet fixe pour corriger les biais liées aux variables non observés
+
+Pondérer les observations en fonction de la taille des cohortes
+
+Appendix
+
+Statistical power
+
+Estimation de la puissance statistique pour détecter un effet d'au moins 7.5 centiles dans l'indice de richesse entre les groupes
+
+EStimation de la probabilité à un seuil de puissance fixée à 0.8 avec un seuil de signification fixée à 0.05
+
+Mobilisation des données MIS 2011, MIS 2013 et MIS 2016 si la puissance statistique est insuffisante
+
+Analyse de sensibilité ==\> à voir

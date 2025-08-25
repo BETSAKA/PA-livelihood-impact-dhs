@@ -1,0 +1,256 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Standardized Precipitation Evapotranspiration Calculation
+
+## Objectif
+
+Ce document vise à calculer l'indice Standardized Precipitation Evapotranspiration Index (SPEI), une des variables de contrôle intégrées dans l'analyse. L'ajout de cette variable permet de réduire la variabilité inexpliquée du modèle et estimer plus précisément l'effet du traitement. Nous calculons l'indice à partir d'une référence à long terme de 1981 à 2021, en utilisant les données mensuelles de précipitation, de température minimale et maximale provenant de Worlclim. Le calcul du SPEI est effectué en plusieurs étapes en utilisant la méthode de Hargreaves ( Modified-Hargreaves methods) définie par Droogers et Allen @2002 pour estimer l'évapotranspiration potentielle (PET), puis en intégrant ce calcul dans un indice global de sécheresse.
+
+## Méthode
+
+Nous avons chargé le dataframe contenant les données sur la précipitation, la température minimale et la température maximale pour chaque clusters. A partir des coordonnées géométriques de chaque clusters, nous calculons la latitude, qui nous servira de base de calcul pour estimer l'évapotranspiration potentielle (PET). Le calcul de la latitude garantira que l'estimation du PET est spécifique aux conditions géographiques locales. Nous récupérons ensuite les séries temporelles mensuelles des variables climatiques de chaque cluster: température minimale (tmin), température maximale (tmax), précipitation (prec). A travers la formule de Hargreaves, nous estimons le PET et le water balance (c'est-à-dire la différence entre la précipitation et le PET). Le water balance est converti en série temporelle, à partir de laquelle l'indice SPEI est estimé sur une échelle de 12 mois, en utilisant une période de référence de 1981 à 2021. Pour une analyse plus globale, on agrège les résultats à l'échelle annuelle en calculant la moyenne annuelle des valeurs de SPEI par année pour chaque cluster.
+
+## Calcul de SPEI mensuel
+
+On extrait la première ligne du dataframe pour calculer le SPEI mensuel sur un seul cluster. L'analyse d'un seul cluster permet de valider les étapes du calcul, mais aussi d'appréhender la structure des données et les résultats.
+
+```{r}
+
+library(SPEI) # Calcul de l'indice SPEI
+library(tidyverse) # Manipulation et visualisation des données
+library(sf) # Analyse des données spatiales
+library(tmap) # Analyse cartographique
+library(labelled) # Manipulation des labels
+library(tibbletime) # Manipulation des données temporelles 
+library(zoo) # Manipulation des données temporelles 
+library(readr) # 
+library(ggplot2) # visualisation
+
+# Load data 
+spatial_covars <- read_rds("data/derived/spatial_covars.rds")
+
+# Latitude calculation
+spatial_covars_spei <- spatial_covars %>% 
+  mutate(
+    lat = st_coordinates (st_centroid(geometry))[,2])
+  
+# Extract the first cluster's climate time series
+row1 <- spatial_covars_spei [1,]
+
+# Extract vectors 
+tmin <- row1$temperature_min_wc[[1]]$value
+tmax <- row1$temperature_max_wc[[1]]$value
+prec <- row1$precipitation_wc[[1]]$value
+dates <- row1$temperature_min_wc[[1]]$datetime
+lat <- row1$LATNUM
+
+
+# Compute reference evapotranspiration (PET) using modified Hargreaves (Droogers & Allen)
+pet <- hargreaves(Tmin = tmin, Tmax = tmax, Pre = prec, lat = lat)
+
+# Compute water balance
+wb <- prec - pet
+
+# Turn to time series
+wb_ts <- ts(wb, start = c(year(min(dates)), month(min(dates))), frequency = 12)
+
+# Compute SPEI 
+spei_obj <- spei(wb_ts, 
+                 scale = 12,
+                 ref.start = c(1981,1),
+                 ref.end = c(2021,12))
+
+# Turn into tibble
+spei_tbl <- tibble(
+  datetime = dates, 
+  spei = as.numeric(spei_obj$fitted)
+) %>%
+  filter(datetime >= as.Date("1981-01-01") & datetime <= as.Date("2021-12-31")) %>%
+  mutate(year = year(datetime)) %>%
+  group_by(year) %>%
+  summarise(
+    spei_mean = mean(spei, na.rm = TRUE)
+  )
+
+# Ajout des indicateurs de sécheresse--------------
+# Identifier les années en sécheresse (SPEI <-1)
+spei_tbl <- spei_tbl %>%
+  mutate(is_drought = spei_mean < -1)
+
+# Identifier les séquences consécutives 
+rle_drought <- rle(spei_tbl$is_drought)
+group_ids <- rep(seq_along(rle_drought$lengths), rle_drought$lengths)
+
+spei_tbl <- spei_tbl %>%
+  mutate(group_id = group_ids) %>%
+  group_by(group_id) %>%
+  mutate(
+    drought_duration = if (first(is_drought)) n() else 0,
+    drought_duration = if(first(is_drought)) abs(sum(spei_mean)) else 0 
+  ) %>%
+  ungroup()
+
+# Afficher la fréquence globale des sécheresses 
+drought_frequency <- spei_tbl %>%
+  filter(drought_duration > 0) %>%
+  distinct(group_id) %>%
+  nrow()
+
+# Mise à l’échelle pour affichage sur second axe
+max_dur <- max(spei_tbl$drought_duration, na.rm = TRUE)
+max_spei <- max(abs(spei_tbl$spei_mean), na.rm = TRUE)
+
+spei_tbl <- spei_tbl %>%
+  mutate(drought_duration_scaled = drought_duration / max_dur * max_spei)
+
+# Plot
+ggplot(spei_tbl, aes(x = year)) + 
+  # Durée de sécheresse
+  geom_col(aes(y = drought_duration_scaled), fill = "yellow", alpha = 0.3, width = 0.8)  +
+  # Moyenne SPEI 
+  geom_line(aes(y = spei_mean), color = "blue", linewidth = 1) + 
+  geom_point(aes(y = spei_mean), color = "red", size = 2) +
+  # Intensité de la sécheresse 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +  
+  annotate("text", x = min(spei_tbl$year) + 1, y = 2.5, hjust = 0,
+           label = paste("Fréquence des sécheresses :", drought_frequency),
+           color = "black", size = 4.5, fontface = "bold") +
+  scale_size_continuous(name = "Intensité", range = c(1,6)) +
+  labs(
+    title = "Annual variation of the SPEI index for one cluster in the period 1981-2021",
+    subtitle = "Duration, Intensity, frequency",
+    x = "Year",
+    y = "SPEI index / Duration"
+  ) + 
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14),
+    plot.subtitle = element_text(hjust = 0.5, size = 11),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10),
+    legend.position = "right"
+  )
+
+
+
+
+```
+
+Le graphique illustre l'évolution annuelle de l'indice SPEI moyen pour un cluster géographique entre 1981 et 2021. La courbe bleue représente la tendance annuelle du SPEI moyen, mettant en exergue les variations interannuelles du climat dans la zone étudiée. Les points rouges indiquent les valeurs du SPEI moyen pour chaque année. La ligne horizontale noire en pointillées, placées à y = 0, sert de référence pour les conditions climatiques neutres.
+
+On observe qu'entre 1980 et 2000, la majorité des années a un SPEI supérieur à 0, correspondant à des conditions normales ou légèrement humides, avec peu d'épisodes de sécheresse significative selon la classification de Mckee et al @1993. En revanche, à partir des années 2004, on obtient des SPEI inférieur à 0, marquant une augmentation de la fréquence des épisodes de sécheresse. En 2017, le SPEI a une valeur particulièrement basse (SPEI = -2.40012658), qui d'après la classification de Vicente-Serrano et al. @2010 caractérise une sécheresse très sévère.
+
+Nous appliquons la même procédure pour l'ensemble des clusters étudiés.
+
+```{r}
+# SPEI for all clusters 
+spatial_covars_spei <- spatial_covars %>%
+  mutate(
+    spei_wc = pmap(
+      list(tmin = temperature_min_wc,
+           tmax = temperature_max_wc,
+           prec = precipitation_wc,
+           lat = lat),
+      function(tmin, tmax, prec, lat) {
+        data_tmin <- data.frame(date = tmin$datetime, tmin = tmin$value)
+        data_tmax <- data.frame(date = tmax$datetime, tmax = tmax$value)
+        data_prec <- data.frame(date = prec$datetime, prec = prec$value)
+        
+        # Merge
+        data_merged <- reduce(list(data_tmin, data_tmax, data_prec), merge, by = "date")
+        
+        # Delete lines with NA
+        data_clean <- na.omit(data_merged)
+        
+        # If cleaned data are insufficient, return NA 
+        if (nrow(data_clean) < 12) {
+          return(tibble(datetime = data_merged$date, spei = NA_real_))
+        }
+        
+        # Extract clean columns
+        tmin_synced <- data_clean$tmin
+        tmax_synced <- data_clean$tmax
+        prec_synced <- data_clean$prec
+        dates_synced <- data_clean$date
+        
+        # PET Calculation
+        pet <- hargreaves(
+          Tmin = tmin_synced,
+          Tmax = tmax_synced,
+          Pre = prec_synced,
+          lat = lat
+        )
+        
+        wb <- prec_synced - pet
+        
+        wb_ts <- ts(wb, start = c(year(min(dates_synced)), month(min(dates_synced))), frequency = 12)
+        
+        spei_obj <- spei(wb_ts, 
+                         scale = 12, 
+                         ref.start = c(1981,1),
+                         ref.end = c(2021,12))
+        
+        # Result
+        tibble(datetime = dates_synced, spei = as.numeric(spei_obj$fitted)) %>%
+          filter(datetime >= as.Date("1981-01-01") & datetime <= as.Date("2021-12-31")) %>%
+          mutate(year = year(datetime)) %>%
+          group_by(year) %>%
+          summarise(
+            spei_mean = mean(spei, na.rm = TRUE)
+          )
+        
+      }
+    )
+  )
+# Turn into tibble
+spei_df <- spatial_covars_spei %>%
+  select(DHSCLUST, spei_wc) %>%
+  unnest(cols = c(spei_wc))
+
+# Plot
+ggplot(spei_df, aes(x = year, y = spei_mean, group = DHSCLUST)) + 
+  geom_line(alpha = 0.4, color = "blue")+
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") + 
+  labs(
+    title = "Annual SPEI index by cluster in period 1981-2021",
+    x = "Year",
+    y = "SPEI mean"
+  ) + 
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 10)
+  )
+
+```
+
+Chaque ligne bleue correspond à un groupe de ménages différent. On constate que ces lignes ne se superposent pas parfaitement, ce qui suggère que les conditions d'humidité varient d'une région à l'autre. Un indice SPEI positif indique des périodes plus humides, tandis qu'un indice SPEI négatif correspond à des périodes plus sèches. Cela montre que, même si les ménages sont regroupés, ils n'ont pas vécu les mêmes conditions climatiques. On observe néanmoins des baisses significatives de l'indice SPEI, notamment des épisodes de sécheresse très sévère en 1992 et entre 2017 et 2020.
+
+## Transformation de la colonne spei_wc en format wide
+
+```{r}
+
+# Converting spei_wc to wide format
+spatial_covars_spei <- spatial_covars_spei %>%
+  mutate(
+    spei_wc = lapply(spei_wc, function(df){
+      df %>%
+        mutate(
+          datetime = as.Date(paste0(year, "-01-01")),
+          variable = "spei_scale12_mean",
+          unit = "annual", 
+          value = spei_mean 
+        ) %>%
+        select(datetime, variable, unit, value, everything()) %>%
+        select(-year, -spei_mean)
+    })
+  )
+# Registration 
+spatial_covars_spei <- as.data.frame(spatial_covars_spei)
+write_rds(x = spatial_covars_spei, file = "data/derived/spatial_covars_spei.rds")
+```

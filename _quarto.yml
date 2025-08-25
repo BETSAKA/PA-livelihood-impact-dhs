@@ -1,0 +1,39 @@
+project:
+  type: book
+  output-dir: docs
+
+book:
+  site-url: https://betsaka.github.io/PA-livelihood-impact-dhs/
+  title: "Replication package"
+  subtitle: "Impact des aires protégées sur les conditions de vie"
+  author: "Iriana, Holy, Ingrid, Florent"
+  repo-url: https://github.com/BETSAKA/PA-livelihood-impact-dhs
+  date: "01/05/2025"
+  chapters:
+    - index.qmd
+    - part: "Data preparation"
+      chapters: 
+        - 01-treatment-assignation.qmd
+        - 02-spatial-covariates.qmd
+        - 02bis-spei-calculation.qmd
+        - 03-wealth-index.qmd
+        - 04-variable-consolidation.qmd
+    - part: "Data analysis"
+      chapters:
+        - 05-descriptive.qmd
+        - 06-matching.qmd
+        - 07-estimation.qmd
+        - 08-sensitivity-checks.qmd
+    - 09-conclusion.qmd
+    - 10-references.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme: cosmo
+    code-fold: true
+
+execute:
+  warning: false
+  error: false

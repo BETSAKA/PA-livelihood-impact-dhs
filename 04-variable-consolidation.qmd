@@ -1,0 +1,252 @@
+---
+output: html_document
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+# Consolidation
+
+## Objectif
+
+L'objectif de ce document est de combiner les clusters de 1997, 2008 et 2021 avec leurs caractéristiques géophysiques et leur variable de résultat respectif dans un seul dataframe.
+
+## Méthodes
+
+Les fichiers contenant les données du Household Recode (HR) pour les années 1997, 2008 et 2021, fournis par DHS, sont d'abord chargés. Pour chaque année, on sélectionne que les variables nécessaires pour l'analyse, à savoir les identifiants des ménages (hv001 et hv002) et les wealth index. On fusionne ces données avec les données géophysiques des ménages, permettant ainsi de constituer un seul dataframe consolidé pour chaque année.
+
+## Sélection des variables nécessaires
+
+```{r}
+library(tidyverse)
+library(sf)
+library(haven)
+
+# Load data 
+spatial_covars_spei <- readRDS("data/derived/spatial_covars_spei.rds") 
+
+# Sélectionner les variables nécessaires dans les données géophysiques des ménages 
+all_covars <- spatial_covars_spei %>%
+  select(DHSYEAR, DHSCLUST, URBAN_RURA, treecover_area, slope, elevation, population_count, traveltime_2000, spei_wc)
+
+all_class <- read.csv("data/derived/cluster_treatment_classification.csv") # clusters group classification 
+```
+
+Nous obtenons un tableau contenant que 9 variables dont l'identifiant de nos clusters et les variables utilisées dans l'analyse.
+
+## Final dataframe 1997
+
+Nous avons sélectionné dans le HR de 1997 les identifiants des clusters et l'âge et le sexe du chef des ménages, puis l'avons fusionné avec le fichier contenant les wealth index (wealth_centile_rural_weighted et wealth_centile_rural_simple), ainsi que les données géophysiques des ménages. Nous obtenons un dataframe composé de 14 variables.
+
+```{r}
+
+# Load data 1997
+hh_1997_rural <- read_rds("data/derived/hh_1997_rural.rds") # wealth index centile
+hr_1997 <- read_dta("data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA")
+
+# Variable selection in hr_1997
+hr_1997_selected <- hr_1997 %>%
+  dplyr:: select(
+    hv001, hv002,hv219, hv220
+  )
+
+# Merge dataframe with hh_1997_rural et hr_1997_selected
+hr_1997_final <- hh_1997_rural %>%
+  left_join(hr_1997_selected, by = c("hv001", "hv002")) %>%
+  left_join(
+    all_covars %>%
+      filter(DHSYEAR == 1997) %>% select(-DHSYEAR), by = c("hv001" = "DHSCLUST")
+  ) %>%
+  left_join(
+    all_class %>% 
+      filter(DHSYEAR == 1997) %>% select(-DHSYEAR), by = c("hv001" = "DHSCLUST")) %>%
+  mutate(DHSYEAR = 1997) %>%
+  relocate(DHSYEAR, .before = everything())
+
+# Imbriquer les données 
+vars_to_nest <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000","spei_wc")
+
+df_long_1997 <- hr_1997_final %>% 
+  pivot_longer(
+    cols = all_of(vars_to_nest),
+    names_to = "indicator", 
+    values_to = "data") %>% 
+  unnest(data) %>%
+  filter(indicator != "spei_wc" | lubridate::year(datetime) %in% 1995:1997) %>%
+  mutate(year_indicator = paste0(indicator, "_", year(datetime))) %>%
+  select(hv001, hv002, year_indicator, value)
+
+df_wide_1997 <- df_long_1997 %>%
+  pivot_wider(
+    names_from = year_indicator,
+    values_from = value, 
+    names_glue = "{year_indicator}"
+  )  %>%
+  group_by(hv001, hv002) %>% 
+  summarise(across(everything(), ~mean(., na.rm = TRUE)), .groups = "drop")
+
+
+# Joindre avec le dataframe de base 
+df_base_1997 <- hr_1997_final %>% 
+  select(-all_of(vars_to_nest)) %>%
+  distinct(hv001, hv002, .keep_all = TRUE)
+
+hr_1997_final <- df_base_1997 %>%
+  left_join(df_wide_1997, by = c("hv001", "hv002"))
+
+```
+
+## Final dataframe 2008
+
+Nous avons sélectionné dans le HR de 2008 les identifiants des clusters, l'âge et le sexe du chef du ménage et le wealth index factor, puis le fusionné avec le fichier contenant le wealth index en centile (wealth_centile_rural_weighted, wealth_centile_rural_simple) et les données géophysiques des ménages. Nous obtenons un dataframe composé de 14 variables pour 2008.
+
+```{r}
+
+# Load data 
+hh_2008_rural <- read_rds("data/derived/hh_2008_rural.rds") # wealth index factor rural 2008
+hr_2008 <- read_dta("data/raw/dhs/DHS_2008/MDHR51DT/MDHR51FL.DTA")
+
+# Variable selection in hr_2008 
+hr_2008_selected <- hr_2008 %>%
+  dplyr:: select(
+    hv001, hv002, hv219, hv220
+  )
+
+# Merge dataframe with hh_2008_rural et hr_2008
+hr_2008_final <- hh_2008_rural %>%
+  left_join(hr_2008_selected, by = c("hv001", "hv002")) %>%
+  left_join(
+    all_covars %>% filter(DHSYEAR == 2008) %>% select(-DHSYEAR),
+    by = c("hv001" = "DHSCLUST")
+  ) %>%
+  left_join(
+    all_class %>%
+      filter(DHSYEAR == 2008) %>% select(-DHSYEAR), by = c("hv001" = "DHSCLUST")
+  ) %>%
+  mutate(DHSYEAR = 2008) %>%
+  relocate(DHSYEAR, .before = everything())
+
+# Imbriquer les données 
+vars_to_nest <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000","spei_wc")
+
+df_long_2008 <- hr_2008_final %>% 
+  pivot_longer(
+    cols = all_of(vars_to_nest),
+    names_to = "indicator", 
+    values_to = "data") %>% 
+  unnest(data) %>%
+  filter(indicator != "spei_wc" | lubridate::year(datetime) %in% 2006:2008) %>%
+  mutate(year_indicator = paste0(indicator, "_", year(datetime))) %>%
+  select(hv001, hv002, year_indicator, value)
+
+df_wide_2008 <- df_long_2008 %>%
+  pivot_wider(
+    names_from = year_indicator,
+    values_from = value, 
+    names_glue = "{year_indicator}"
+  )  %>%
+  group_by(hv001, hv002) %>% 
+  summarise(across(everything(), ~mean(., na.rm = TRUE)), .groups = "drop")
+
+
+# Joindre avec le dataframe de base 
+df_base_2008 <- hr_2008_final %>% 
+  select(-all_of(vars_to_nest)) %>%
+  distinct(hv001, hv002, .keep_all = TRUE)
+
+hr_2008_final <- df_base_2008 %>%
+  left_join(df_wide_2008, by = c("hv001", "hv002")) 
+
+```
+
+## Consolidated Dataset 2021
+
+Nous avons sélectionné les identifiants des ménages, l'âge et le sex du chef de ménage et les wealth index. Puis, nous l'avons fusionné avec le dataframe contenant les données géophysiques des ménages. Aucune fusion supplémentaire n'est nécessaire, car les informations relatives au wealth index sont déjà présentes dans le fichier household recode fourni par DHS pour l'année 2021 .
+
+```{r}
+
+# Load data 
+hr_2021 <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA")
+hh_2021_rural <- read_rds("data/derived/hh_2021_rural.rds")
+
+# Select the variables required in 2021
+hr_2021_selected <- hr_2021 %>%
+  dplyr:: select(
+    hv001, hv002, hv219, hv220
+  )
+
+hr_2021_final <- hh_2021_rural %>%
+  left_join(hr_2021_selected, by = c("hv001", "hv002")) %>%
+  left_join(
+    all_covars %>% filter(DHSYEAR == 2021)%>% select(-DHSYEAR),
+    by = c("hv001" = "DHSCLUST")
+  ) %>%
+  left_join(
+    all_class %>%
+      filter(DHSYEAR == 2021) %>% select(-DHSYEAR), by = c("hv001" = "DHSCLUST")
+  ) %>%
+  mutate(DHSYEAR = 2021) %>%
+  relocate(DHSYEAR, .before = everything())
+
+# Imbriquer les données 
+vars_to_nest <- c("treecover_area", "slope", "elevation", "population_count", "traveltime_2000","spei_wc")
+
+df_long_2021 <- hr_2021_final %>%
+  select(hv001, hv002, all_of(vars_to_nest)) %>%
+  pivot_longer(
+    cols = all_of(vars_to_nest),
+    names_to = "indicator", 
+    values_to = "data") %>% 
+  unnest(data) %>%
+  filter(indicator != "spei_wc" | lubridate::year(datetime) %in% 2019:2021) %>%
+  mutate(
+    year = lubridate::year(datetime),
+    year_indicator = paste0(indicator, "_", year))
+
+df_wide_2021 <- df_long_2021 %>%
+  pivot_wider(
+    names_from = year_indicator,
+    values_from = value, 
+    names_glue = "{year_indicator}"
+  )  %>%
+  group_by(hv001, hv002) %>% 
+  summarise(across(everything(), ~mean(., na.rm = TRUE)), .groups = "drop")
+
+
+# Joindre avec le dataframe de base 
+df_base_2021 <- hr_2021_final %>%
+  select(-any_of(vars_to_nest)) %>%
+  distinct(hv001, hv002, .keep_all = TRUE)
+
+hr_2021_final <- df_base_2021 %>%
+  left_join(df_wide_2021, by = c("hv001", "hv002")) %>%
+  select(-indicator, -variable, -unit, -datetime, -year)
+
+```
+
+## Registration
+
+Nous enregistrons les données combinées dans un fichier rds pour une usage ultérieure. Chaque jeux de données est composé de 14 variables.
+
+```{r}
+
+# Les données combinées contenant des colonnes avec des dataframes 
+write_rds(hr_1997_selected, "data/derived/hr_1997_selected.rds")
+  cat("Données enregistrées") # 1997
+  
+write_rds(hr_2008_selected, "data/derived/hr_2008_selected.rds")
+  cat("Données enregistrées") # 2008
+  
+write_rds(hr_2021_selected, "data/derived/hr_2021_selected.rds")
+  cat("Données enregistrées") # 2021
+
+# Données finales 
+write_rds(hr_1997_final, "data/derived/hr_1997_final.rds")
+  cat("Données enregistrées") # 1997
+  
+write_rds(hr_2008_final, "data/derived/hr_2008_final.rds")
+  cat("Données enregistrées") # 2008
+  
+write_rds(hr_2021_final , "data/derived/hr_2021_final.rds")
+  cat("Données enregistrées") # 2021  
+```

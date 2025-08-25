@@ -1,0 +1,65 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+# Descriptive statistics
+
+## Objectif 
+
+```{r}
+
+library(tidyverse) #Manipulation et visualisation des données
+library(writexl) # Pour faire une sortie sous Excel
+library(psych)
+library(knitr)
+
+# On charge les données
+sapm_before_2008 <- read.csv("data/derived/sapm_before_2008.csv") 
+
+sapm_from_2008 <- read.csv("data/derived/sapm_from_2008.csv")
+
+# Fonction utilitaire pour produire les statistiques d'une période
+get_descriptive_stats <- function(data, periode_label) {
+  stats <- describe(data$REP_AREA)[, c("n", "mean", "sd", "median", "min", "max")]
+  
+  min_name <- data %>%
+    filter(REP_AREA == min(REP_AREA, na.rm = TRUE)) %>%
+    pull(ORIG_NAME) %>%
+    unique() %>%
+    paste(collapse = "; ")
+  
+  max_name <- data %>%
+    filter(REP_AREA == max(REP_AREA, na.rm = TRUE)) %>%
+    pull(ORIG_NAME) %>%
+    unique() %>%
+    paste(collapse = "; ")
+  
+  stats %>%
+    as_tibble() %>%
+    mutate(
+      periode = periode_label,
+      aire_min = min_name,
+      aire_max = max_name
+    )
+}
+
+# Appliquer la fonction aux deux périodes
+desc_before <- get_descriptive_stats(sapm_before_2008, "Before 2008")
+desc_from   <- get_descriptive_stats(sapm_from_2008, "From 2008")
+
+
+# Fusion des deux tableaux
+desc_combined <- rbind(desc_before, desc_from %>%
+  select(periode, n, mean, sd, median, min, aire_min, max, aire_max))
+
+
+# Affichage du tableau 
+kable(desc_combined, digits = 2, caption = "Statistiques descriptives des aires protégées (REP_AREA)")
+
+# Enregistrement du tableau
+write_csv(desc_combined, "data/derived/tableau_descriptive.csv")
+
+
+```
+

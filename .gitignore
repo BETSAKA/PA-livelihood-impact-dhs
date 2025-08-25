@@ -3,6 +3,7 @@
 .RData
 .Ruserdata
 
+
 # Fichiers LaTeX temporaires
 *.aux
 *.log
@@ -11,4 +12,14 @@
 *.bcf
 *.blg
 *.run.xml
+
+# Ignorer données et outputs
 data/*
+old/*
+derived/*
+test*
+/.quarto/
+
+
+TODO
+

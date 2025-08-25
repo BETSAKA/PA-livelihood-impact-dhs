@@ -1,0 +1,11 @@
+---
+bibliography: references.bib
+---
+
+# Introduction
+
+> Par commodité, on écrit pour l'instant en français, mais on traduira au moment de la finalisation.
+
+L'analyse ici est décrite dans un PAP
+
+Ce travaille utilise mapme.biodiversity [@mapme.biodiversity].
