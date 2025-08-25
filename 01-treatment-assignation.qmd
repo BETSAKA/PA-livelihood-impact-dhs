@@ -82,7 +82,7 @@ Les données de SAPM sont codées en EPSG 9001, que l'on transforme en 4326 pour
 
 library(wdpar)
 
-sapm <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
+wdpa <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
   wdpa_clean() |> 
   filter(STATUS == "Designated") %>%
   mutate(MARINE = recode(MARINE,
@@ -170,7 +170,7 @@ tm_shape(sapm_terrestre) +
 ```
 
 ::: callout-warning
-On a un poblème avec les unités pour les surfaces dans la carte.
+On a un problème avec les unités pour les surfaces dans la carte.
 :::
 
 ## Création de buffer pour les AP avant et après 2008
