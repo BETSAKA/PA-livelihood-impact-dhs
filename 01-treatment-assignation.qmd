@@ -78,8 +78,6 @@ Les données utilisées sont les données du Système des Aires Protégées à M
 Les données de SAPM sont codées en EPSG 9001, que l'on transforme en 4326 pour uniformiser les coordonnées GPS que nous utilisons. Nous le visualisons par la suite à travers une carte.
 
 ```{r}
-#| fig-cap: "Aires protégées de Madagascar"
-
 library(wdpar)
 
 wdpa <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
@@ -156,7 +154,6 @@ Nous commençons par charger les limites administratives nationales de Madagasca
 On garde que les éléments de SAPM qui sont contenu à l'intérieur des aires protégées de Madagascar.
 
 ```{r}
-#| fig-cap: "Aires protégées terrestres de Madagascar"
 
 # Load boundary
 contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
