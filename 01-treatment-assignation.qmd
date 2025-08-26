@@ -24,6 +24,7 @@ Avant de charger les données GPS de 1997, 2008, 2021, nous précisons les coord
 #| fig-cap: "Grappes d'enquêtes DHS par rapport aux AP existantes en 2008"
 
 library(tidyverse) #Manipulation et visualisation des données
+library(haven)
 library(sf) #Analyse des données spatiales
 library(tmap) #Analyse cartographique
 library(gt) #Mise en forme des tableaux 
@@ -47,9 +48,7 @@ tmap_mode("view")
 bind_rows(gps_1997_initial, gps_2008_initial, gps_2021_initial) |> 
   tm_shape() + 
   tm_dots() +
-  tm_facets("DHSYEAR")
-  
-
+  tm_facets("DHSYEAR") 
 ```
 
 Nous obtenons une carte distincte pour chaque année d'enquête. Sur chaque carte figure des points, dans laquelle chaque point représente un cluster d'enquête, correspondant aux coordonnées GPS fournies par DHS.
@@ -165,7 +164,7 @@ contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
   st_set_crs(standard_crs)
 
 # Intersection des SAPM avec la limite de Madagascar
-sapm_terrestre <- sapm %>% 
+wdpa_terrestre <- wdpa %>% 
   st_transform(crs = standard_crs) %>%
   st_make_valid()%>%
   st_intersection(contour_mada)%>%
@@ -175,13 +174,13 @@ sapm_terrestre <- sapm %>%
 
 tm_shape(contour_mada) +
   tm_borders() +
-tm_shape(sapm_terrestre) +
+tm_shape(wdpa_terrestre) +
   tm_polygons(fill =  "green", 
               id = "ORIG_NAME",
               popup.vars = c("Superficie terrestre (ha)" = "REP_AREA")) +
   tm_scalebar(position = c("left", "bottom")) + 
   tmap_options(check_and_fix = TRUE) +
-  tm_title("Aires protégées terrestres de Madagascar") +
+  tm_title("Aires protégées terrestres de Madagascar</b><br/>Source: WDPA, 2024") +
   tm_layout(legend.outside = TRUE)
 ```
 
@@ -196,21 +195,21 @@ On travaille toujours avec les portions terrestres des AP.
 Pour analyser l'impact des aires protégées selon leur période de création, on spécifie les aires protégées créées avant 2008 et à partir de 2008. On applique ensuite une zone tampon de 10 km autour de chaque groupe d'aires protégées. Chaque groupe a été reprojeté dans le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702) pour les calculs de distances. Nous créons ensuite une carte pour visualiser les aires protégées et leurs zones d'influence.
 
 ```{r}
-#| fig-cap: "Aires protégées du SAPM par période de création"
+#| fig-cap: "Aires protégées du WDPA par période de création"
 
 # Buffer de 10 km
 buffer_dist <- 10000 
 
 # Spécification des aires protégées avant 2008
-sapm_before_2008 <- sapm_terrestre %>%
+wdpa_before_2008 <- wdpa_terrestre %>%
   filter(STATUS_YR < 2008)
 
 # Spécification des aires protégées après 2008
-sapm_from_2008 <- sapm_terrestre %>%
+wdpa_from_2008 <- wdpa_terrestre %>%
   filter(STATUS_YR >= 2008)
 
 # Créer des buffers de 10 km autour des AP
-buffer_10km_before_2008 <- sapm_before_2008 %>%
+buffer_10km_before_2008 <- wdpa_before_2008 %>%
   st_transform(mdg_crs) %>%
   st_buffer(dist = buffer_dist) %>%
   st_make_valid() %>%
@@ -219,7 +218,7 @@ buffer_10km_before_2008 <- sapm_before_2008 %>%
   st_make_valid() %>%
   st_transform(standard_crs)
 
-buffer_10km_from_2008 <- sapm_from_2008  %>%
+buffer_10km_from_2008 <- wdpa_from_2008  %>%
   st_transform(mdg_crs) %>%
   st_buffer(dist = buffer_dist) %>% 
   st_make_valid() %>%
@@ -229,7 +228,7 @@ buffer_10km_from_2008 <- sapm_from_2008  %>%
   st_transform(standard_crs)
 
 # Visualisation des cartes 
-tm_shape(sapm_before_2008) +
+tm_shape(wdpa_before_2008) +
 tm_polygons(fill = "blue", 
             col =  "black", 
             fill_alpha = 0.5) +
@@ -237,12 +236,12 @@ tm_shape(buffer_10km_from_2008) +
 tm_borders(col = "darkgreen", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
 tm_shape(buffer_10km_before_2008) +
 tm_borders(col = "blue", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
-tm_shape(sapm_from_2008) +
+tm_shape(wdpa_from_2008) +
 tm_polygons(fill = "darkgreen", 
             col = "black", 
             fill_alpha = 0.5) +
 tm_add_legend(type = "polygons", fill = c("blue", "darkgreen"), labels = c("avant 2008", "après 2008")) +
-  tm_title("Aires protégées du SAPM par période de création") +
+  tm_title("Aires protégées du WDPA par période de création") +
   tm_layout(
     legend.outside = TRUE, 
     legend.position = c("left", "top"),
@@ -260,7 +259,7 @@ On agrège les données pour chaque groupe, en calculant le nombre total d'aires
 # Definition de la fonction
 pivot_year <- 2008
 
-summary_table <- sapm_terrestre %>%
+summary_table <- wdpa_terrestre %>%
   st_drop_geometry() %>%
   mutate(
     Creation_Period = case_when(
@@ -350,12 +349,12 @@ tm_shape(buffer_10km_from_2008) +
              lwd = 2, 
              lty = "dashed", 
              fill.legend = tm_legend_hide()) +
-  tm_shape(sapm_from_2008) +
+  tm_shape(wdpa_from_2008) +
   tm_polygons(fill = "green", 
               fill_alpha = 0.5,
               col = "black", 
               fill.legend = tm_legend(title = "à partir de 2008", position = tm_pos_in("right", "top"))) +
-  tm_shape(sapm_before_2008) +
+  tm_shape(wdpa_before_2008) +
   tm_polygons(fill = "darkgreen", 
               fill_alpha = 0.5, 
               col =  "black", 
@@ -383,11 +382,216 @@ tm_shape(buffer_10km_from_2008) +
 Nous produisons un tableau récapitulatif du nombre de grappes d'enquête classées dans chaque groupe pour les années 1997, 2008 et 2021. Afin de faciliter le comptage et la transformation en tableau, nous supprimons les données spatiales pour ne conserver que les informations attributaires (année d'enquête "DHSYEAR" et groupe de classification "groupe").
 
 ```{r}
-stats_class <- gps_all_class %>%
-  st_drop_geometry() %>%
-  group_by(`Année` = DHSYEAR, `Groupe` = groupe) %>%
-  summarise(n = n()) %>%
-  pivot_wider(names_from = "Année", values_from = "n")
+# Function to read DHS data for the specified year and identifier
+load_dhs_data <- function(dhs_folder, year, identifier) {
+  folder_pattern <- paste0(".*", year, ".*", identifier)
+  
+  matching_folder <- list.dirs(dhs_folder, full.names = TRUE, recursive = TRUE) %>%
+    keep(~ str_detect(.x, folder_pattern))
+  
+  if (length(matching_folder) == 0) {
+    stop("No folder found for the specified year and identifier.")
+  }
+  
+  if (identifier == "GE") {
+    file_pattern <- "\\.shp$"
+    data_loader <- function(file) st_read(file, quiet = TRUE)
+  } else {
+    file_pattern <- "\\.[Dd][Tt][Aa]$"
+    data_loader <- read_dta
+  }
+  
+  target_file <- list.files(matching_folder, pattern = file_pattern, full.names = TRUE)
+  
+  if (length(target_file) == 0) {
+    stop("No valid file found in the folder.")
+  }
+  
+  data <- data_loader(target_file)
+  
+  return(data)
+}
+
+dhs_folder <- "data/raw/dhs"
+
+# Load geographic data for 2021 and 2008
+gps_2021 <- load_dhs_data(dhs_folder, 2021, "GE")
+gps_2008 <- load_dhs_data(dhs_folder, 2008, "GE")
+
+# Identify treatment survey clusters --------------------------
+
+# Identifier les grappes proches des AP ----------------------------------
+
+find_nearby_gps <- function(gps_data, wdpa_data, distance_km, creation_year, after = TRUE) {
+  if (after) {
+    selected_pas <- wdpa_data %>% filter(STATUS_YR >= creation_year)
+  } else {
+    selected_pas <- wdpa_data %>% filter(STATUS_YR < creation_year)
+  }
+  
+  selected_pas <- selected_pas %>% st_make_valid()
+  
+  gps_data <- st_transform(gps_data, st_crs(selected_pas))
+  
+  buffered_pas <- st_buffer(selected_pas, dist = distance_km * 1000) %>% st_make_valid()
+  
+  merged_buffer <- st_union(buffered_pas) %>% st_make_valid()
+  
+  nearby_gps <- gps_data %>%
+    mutate(nearby_pa = st_within(geometry, merged_buffer, sparse = FALSE)[, 1])
+  return(nearby_gps)
+}
+
+# Identifier les groupes de traitement et d'exclusion
+treatment_clusters_2021 <- find_nearby_gps(gps_2021, wdpa, 10, 2008, after = TRUE)
+exclusion_clusters_2021 <- find_nearby_gps(gps_2021, wdpa, 10, 2008, after = FALSE)
+
+treatment_clusters_2008 <- find_nearby_gps(gps_2008, wdpa, 10, 2008, after = TRUE)
+exclusion_clusters_2008 <- find_nearby_gps(gps_2008, wdpa, 10, 2008, after = FALSE)
+
+# Load household data -------------------------------------------------------
+
+household_2021 <- load_dhs_data(dhs_folder, 2021, "HR")
+household_2008 <- load_dhs_data(dhs_folder, 2008, "HR")
+
+# Function to calculate clusters and households for different categories  ---------------------------
+clusters_and_households <- function(gps_data, hr_data, treatment_clusters, exclusion_clusters, year) {
+  clusters_treatment <- treatment_clusters %>% 
+    filter(nearby_pa) %>% 
+    pull(DHSCLUST)
+  clusters_exclusion <- exclusion_clusters %>% 
+    filter(nearby_pa) %>% 
+    pull(DHSCLUST)
+  clusters_control <- gps_data %>%
+    filter(!DHSCLUST %in% c(clusters_treatment, clusters_exclusion)) %>%
+    pull(DHSCLUST)
+  
+  total_clusters <- nrow(gps_data)
+  total_households <- nrow(hr_data)
+  
+  households_treatment <- hr_data %>%
+    filter(hv001 %in% clusters_treatment) %>%
+    nrow()
+  
+  households_exclusion <- hr_data %>%
+    filter(hv001 %in% clusters_exclusion) %>%
+    nrow()
+  
+  households_control <- hr_data %>%
+    filter(hv001 %in% clusters_control) %>%
+    nrow()
+  
+  tibble(
+    année = year,
+    `Grappes traitement` = length(clusters_treatment),
+    `Ménages traitement` = households_treatment,
+    `Grappes exclusion` = length(clusters_exclusion),
+    `Ménages exclusion` = households_exclusion,
+    `Grappes contrôle` = length(clusters_control),
+    `Ménages contrôle` = households_control,
+    `Total des grappes` = total_clusters,
+    `Total des ménages` = total_households
+  )
+}
+
+# Calculate results for all observations
+results_all <- list(
+  clusters_and_households(gps_2021, household_2021, treatment_clusters_2021, exclusion_clusters_2021, 2021),
+  clusters_and_households(gps_2008, household_2008, treatment_clusters_2008, exclusion_clusters_2008, 2008)
+) %>%
+  bind_rows()
+
+# Calculate results for rural households only
+results_rural <- list(
+  clusters_and_households(
+    gps_2021 %>% filter(URBAN_RURA == "R"),
+    household_2021 %>% filter(hv025 == 2),
+    treatment_clusters_2021 %>% filter(URBAN_RURA == "R"),
+    exclusion_clusters_2021 %>% filter(URBAN_RURA == "R"),
+    2021
+  ),
+  clusters_and_households(
+    gps_2008 %>% filter(URBAN_RURA == "R"),
+    household_2008 %>% filter(hv025 == 2),
+    treatment_clusters_2008 %>% filter(URBAN_RURA == "R"),
+    exclusion_clusters_2008 %>% filter(URBAN_RURA == "R"),
+    2008
+  )
+) %>%
+  bind_rows()
+
+# Add a column for categorization before selecting the columns
+combined_results <- bind_rows(
+  results_all %>% mutate(Type = "Toutes observations"),
+  results_rural %>% mutate(Type = "Zones rurales")  # Change label to "Zones rurales"
+)
+
+# Display the results using gt with improved layout and row groups
+gt_table <- gt(combined_results) %>%
+  tab_header(
+    title = "Nombre de grappes et de ménages d'enquêtes DHS classés selon leur proximité avec des aires protégées"
+  ) %>%
+  cols_label(
+    année = "Année",
+    `Grappes traitement` = "Traitement",
+    `Grappes exclusion` = "Exclusion",
+    `Grappes contrôle` = "Contrôle",
+    `Total des grappes` = "Total",
+    `Ménages traitement` = "Traitement",
+    `Ménages exclusion` = "Exclusion",
+    `Ménages contrôle` = "Contrôle",
+    `Total des ménages` = "Total"
+  ) %>%
+  tab_spanner(
+    label = "Grappes",
+    columns = c(`Grappes traitement`, `Grappes exclusion`, `Grappes contrôle`, `Total des grappes`)
+  ) %>%
+  tab_spanner(
+    label = "Ménages",
+    columns = c(`Ménages traitement`, `Ménages exclusion`, `Ménages contrôle`, `Total des ménages`)
+  ) %>%
+  fmt_number(
+    columns = c(`Grappes traitement`, `Grappes exclusion`, `Grappes contrôle`, `Total des grappes`,
+                `Ménages traitement`, `Ménages exclusion`, `Ménages contrôle`, `Total des ménages`),
+    decimals = 0,
+    use_seps = TRUE,
+    sep_mark = " ",
+    dec_mark = ","
+  ) %>%
+  fmt_number(
+    columns = "année",
+    decimals = 0,
+    use_seps = FALSE
+  ) %>%
+  cols_align(
+    align = "center",
+    columns = everything()
+  ) %>%
+  cols_width(
+    `Total des ménages` ~ px(150)
+  ) %>%
+  tab_options(
+    table.width = pct(100)
+  ) %>%
+  tab_footnote(
+    footnote = md("**Traitement**: Observations situées à moins de 10 km des AP créées à partir de 2008. **Exclusion**: Observations situées à moins de 10 km des AP créées avant 2008. **Contrôle**: Autres observations."),
+    locations = cells_title(groups = "title")
+  ) %>%
+  tab_row_group(
+    label = "Toutes observations",
+    rows = Type == "Toutes observations"
+  ) %>%
+  tab_row_group(
+    label = "Zones rurales",
+    rows = Type == "Zones rurales"  # Ensure consistency with the new label
+  ) %>%
+  cols_hide(
+    columns = "Type"  # Hide the Type column after using it for row grouping
+  )
+
+# Display the formatted gt table
+gt_table
+
 ```
 
 ## Enregistrement des variables classifiées
@@ -398,7 +602,7 @@ Les informations essentielles sur la classification des grappes d'enquête sont 
 all_class <- gps_all_class %>%
   select(DHSYEAR, DHSCLUST, GROUP = groupe)
 
-write_csv(sapm_before_2008, "data/derived/sapm_before_2008.csv")
-write_csv(sapm_from_2008, "data/derived/sapm_from_2008.csv")
+write_csv(wdpa_before_2008, "data/derived/wdpa_before_2008.csv")
+write_csv(wdpa_from_2008, "data/derived/wdpa_from_2008.csv")
 write_csv(all_class, "data/derived/cluster_treatment_classification.csv")
 ```
