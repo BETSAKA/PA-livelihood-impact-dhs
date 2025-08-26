@@ -129,16 +129,25 @@ leaflet_map %>%
 On peut aussi générer un format tabulaire pour visualiser les données.
 
 ```{r}
-sapm_tb <- sapm %>%
+
+# Tableau complet
+wdpa_tb <- wdpa %>%
   st_drop_geometry()
 
 dir.create("derived")
 
-write_xlsx(sapm_tb, "data/derived/WDPA_WDOECM_Jul2025_Public_MDG.xlsx")
+write_xlsx(wdpa_tb, "data/derived/WDPA_WDOECM_Jul2025_Public_MDG.xlsx")
 
-sapm %>%
+wdpa %>%
   DT::datatable()
 
+# Tableau personnalisé 
+wdpa_tb_sel <- wdpa_tb %>%
+  select(WDPAID, ORIG_NAME, DESIG, DESIG_TYPE, IUCN_CAT, MARINE, REP_AREA, STATUS, STATUS_YR, GOV_TYPE, OWN_TYPE, MANG_AUTH, VERIF, GEOMETRY_TYPE, AREA_KM2)
+
+write_xlsx(wdpa_tb_sel, "data/derived/WDPA_selection_MDG.xlsx")
+
+DT::datatable(wdpa_tb_sel)
 ```
 
 ## Sélection des parties terrestres des AP
