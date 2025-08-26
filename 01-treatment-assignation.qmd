@@ -30,6 +30,7 @@ library(gt) #Mise en forme des tableaux
 library(geodata) # Pour avoir le contour de Madagascar
 library(writexl) # Pour faire une sortie sous Excel
 library(units)
+library(leaflet) # Pour faire une cartographie interactive
 
 # Systèmes de coordonnées de référence 
 standard_crs <- 4326
@@ -98,7 +99,7 @@ contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
 # Visualisation
 tmap_mode("view")
 
-tm_shape(sapm) +
+map <- tm_shape(wdpa) +
   tm_polygons(
     fill = "MARINE",
     fill.scale = tm_scale(
@@ -115,8 +116,14 @@ tm_shape(sapm) +
     col = "black",
     lwd = 0.5) +
   tm_scalebar(position = c("left", "bottom")) + 
-  tm_title("Aires protégées de Madagascar\nSource : WDPA, 2024") + 
   tm_layout(legend.outside = TRUE)
+
+# Convertir la carte tmap en utilisant Leaflet pour personnaliser la carte interactive
+leaflet_map <- tmap_leaflet(map)
+
+# Ajouter un titre et une source 
+leaflet_map %>% 
+  addControl("<b> Aires protégées de Madagascar</b><br/>Source: WDPA, 2024", position = "topright")
 ```
 
 On peut aussi générer un format tabulaire pour visualiser les données.
