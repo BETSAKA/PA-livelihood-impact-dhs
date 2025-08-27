@@ -196,7 +196,7 @@ wdpa_terrestre_mod <- wdpa_terrestre %>%
   mutate(STATUS_YR = ifelse(WDPAID == 555697871, 2015, STATUS_YR))
 
 # Sauvegarder le shapefile modifié 
-st_write(wdpa_terrestre_mod, "data/derived/wdpa_terrestre_mod.shp")
+st_write(wdpa_terrestre_mod, "data/derived/wdpa_terrestre_mod.shp", delete_layer = TRUE)
 
 ```
 
