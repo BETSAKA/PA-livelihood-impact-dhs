@@ -3,9 +3,12 @@ output: html_document
 editor_options: 
   chunk_output_type: console
 ---
+
 # Descriptive statistics
 
-## Objectif 
+## Objectif
+
+## Statistiques descriptive des aires protégées
 
 ```{r}
 
@@ -45,21 +48,175 @@ get_descriptive_stats <- function(data, periode_label) {
 }
 
 # Appliquer la fonction aux deux périodes
-desc_before <- get_descriptive_stats(sapm_before_2008, "Before 2008")
-desc_from   <- get_descriptive_stats(sapm_from_2008, "From 2008")
+desc_AP_before <- get_descriptive_stats(sapm_before_2008, "Before 2008")
+desc_AP_from   <- get_descriptive_stats(sapm_from_2008, "From 2008")
 
 
 # Fusion des deux tableaux
-desc_combined <- rbind(desc_before, desc_from %>%
+desc_AP_combined <- rbind(desc_AP_before, desc_AP_from %>%
   select(periode, n, mean, sd, median, min, aire_min, max, aire_max))
 
 
 # Affichage du tableau 
-kable(desc_combined, digits = 2, caption = "Statistiques descriptives des aires protégées (REP_AREA)")
+kable(desc_AP_combined, digits = 2, caption = "Statistiques descriptives des aires protégées (REP_AREA)")
 
 # Enregistrement du tableau
-write_csv(desc_combined, "data/derived/tableau_descriptive.csv")
+write_csv(desc_AP_combined, "data/derived/tableau_descriptive.csv")
 
 
 ```
 
+## Statistiques descriptives du wealth index et du z-score du wealth index
+
+### Année 1997
+
+```{r}
+# On charge les données
+hh_1997_rural <- readRDS("data/derived/hh_1997_rural.rds")
+
+# Sélection des colonnes d'intérêt
+vars <- c("wealth_centile_rural_simple", "zscore_wealth")
+
+# Créer le tableau descriptif
+desc_1997 <- hh_1997_rural %>%
+  summarise(
+    n_centile = sum(!is.na(wealth_centile_rural_simple)),
+    mean_centile = mean(wealth_centile_rural_simple, na.rm = TRUE),
+    sd_centile = sd(wealth_centile_rural_simple, na.rm = TRUE),
+    median_centile = median(wealth_centile_rural_simple, na.rm = TRUE),
+    min_centile = min(wealth_centile_rural_simple, na.rm = TRUE),
+    max_centile = max(wealth_centile_rural_simple, na.rm = TRUE),
+    
+    n_zscore = sum(!is.na(zscore_wealth)),
+    mean_zscore = mean(zscore_wealth, na.rm = TRUE),
+    sd_zscore = sd(zscore_wealth, na.rm = TRUE),
+    median_zscore = median(zscore_wealth, na.rm = TRUE),
+    min_zscore = min(zscore_wealth, na.rm = TRUE),
+    max_zscore = max(zscore_wealth, na.rm = TRUE)
+  ) %>%
+  # Transformer en format long
+  pivot_longer(
+    everything(),
+    names_to = c("stat", "variable"),
+    names_sep = "_"
+  ) %>%
+  pivot_wider(
+    names_from = stat,
+    values_from = value
+  ) %>%
+  # Optionnel : renommer les variables pour un tableau plus lisible
+  mutate(
+    variable = case_when(
+      variable == "centile" ~ "Wealth index en Centile",
+      variable == "zscore" ~ "Z-score wealth index",
+      TRUE ~ variable
+    )
+  )
+
+# Affichage du tableau
+kable(desc_1997, digits = 2, caption = "Statistiques descriptives des variables de richesse rurale (1997)")
+
+# Export vers Excel
+write_xlsx(desc_1997, "data/derived/descriptive_wealth_rural_1997.xlsx")
+
+```
+
+### Année 2008
+
+```{r}
+# On charge les données
+hh_2008_rural <- readRDS("data/derived/hh_2008_rural.rds")
+
+# Créer le tableau descriptif
+desc_2008 <- hh_2008_rural %>%
+  summarise(
+    n_centile = sum(!is.na(wealth_centile_rural_simple)),
+    mean_centile = mean(wealth_centile_rural_simple, na.rm = TRUE),
+    sd_centile = sd(wealth_centile_rural_simple, na.rm = TRUE),
+    median_centile = median(wealth_centile_rural_simple, na.rm = TRUE),
+    min_centile = min(wealth_centile_rural_simple, na.rm = TRUE),
+    max_centile = max(wealth_centile_rural_simple, na.rm = TRUE),
+    
+    n_zscore = sum(!is.na(zscore_wealth)),
+    mean_zscore = mean(zscore_wealth, na.rm = TRUE),
+    sd_zscore = sd(zscore_wealth, na.rm = TRUE),
+    median_zscore = median(zscore_wealth, na.rm = TRUE),
+    min_zscore = min(zscore_wealth, na.rm = TRUE),
+    max_zscore = max(zscore_wealth, na.rm = TRUE)
+  ) %>%
+  # Transformer en format long
+  pivot_longer(
+    everything(),
+    names_to = c("stat", "variable"),
+    names_sep = "_"
+  ) %>%
+  pivot_wider(
+    names_from = stat,
+    values_from = value
+  ) %>%
+  # Optionnel : renommer les variables pour un tableau plus lisible
+  mutate(
+    variable = case_when(
+      variable == "centile" ~ "Wealth index en Centile",
+      variable == "zscore" ~ "Z-score wealth index",
+      TRUE ~ variable
+    )
+  )
+
+# Affichage du tableau
+kable(desc_2008, digits = 2, caption = "Statistiques descriptives des variables de richesse rurale (2008)")
+
+# Export vers Excel
+write_xlsx(desc_2008, "data/derived/descriptive_wealth_rural_2008.xlsx")
+
+```
+
+### Année 2021
+
+```{r}
+# On charge les données
+hh_2021_rural <- readRDS("data/derived/hh_2021_rural.rds")
+
+# Créer le tableau descriptif
+desc_2021 <- hh_2021_rural %>%
+  summarise(
+    n_centile = sum(!is.na(wealth_centile_rural_simple)),
+    mean_centile = mean(wealth_centile_rural_simple, na.rm = TRUE),
+    sd_centile = sd(wealth_centile_rural_simple, na.rm = TRUE),
+    median_centile = median(wealth_centile_rural_simple, na.rm = TRUE),
+    min_centile = min(wealth_centile_rural_simple, na.rm = TRUE),
+    max_centile = max(wealth_centile_rural_simple, na.rm = TRUE),
+    
+    n_zscore = sum(!is.na(zscore_wealth)),
+    mean_zscore = mean(zscore_wealth, na.rm = TRUE),
+    sd_zscore = sd(zscore_wealth, na.rm = TRUE),
+    median_zscore = median(zscore_wealth, na.rm = TRUE),
+    min_zscore = min(zscore_wealth, na.rm = TRUE),
+    max_zscore = max(zscore_wealth, na.rm = TRUE)
+  ) %>%
+  # Transformer en format long
+  pivot_longer(
+    everything(),
+    names_to = c("stat", "variable"),
+    names_sep = "_"
+  ) %>%
+  pivot_wider(
+    names_from = stat,
+    values_from = value
+  ) %>%
+  # Optionnel : renommer les variables pour un tableau plus lisible
+  mutate(
+    variable = case_when(
+      variable == "centile" ~ "Wealth index en Centile",
+      variable == "zscore" ~ "Z-score wealth index",
+      TRUE ~ variable
+    )
+  )
+
+# Affichage du tableau
+kable(desc_2021, digits = 2, caption = "Statistiques descriptives des variables de richesse rurale (2021)")
+
+# Export vers Excel
+write_xlsx(desc_2021, "data/derived/descriptive_wealth_rural_2021.xlsx")
+
+```
