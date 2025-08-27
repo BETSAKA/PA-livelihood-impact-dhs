@@ -32,6 +32,7 @@ library(geodata) # Pour avoir le contour de Madagascar
 library(writexl) # Pour faire une sortie sous Excel
 library(units)
 library(leaflet) # Pour faire une cartographie interactive
+library(readxl)
 
 # Systèmes de coordonnées de référence 
 standard_crs <- 4326
@@ -179,11 +180,27 @@ tm_shape(wdpa_terrestre) +
   tmap_options(check_and_fix = TRUE) +
   tm_title("Aires protégées terrestres de Madagascar</b><br/>Source: WDPA, 2024") +
   tm_layout(legend.outside = TRUE)
+
 ```
 
 ::: callout-warning
 On a un problème avec les unités pour les surfaces dans la carte.
 :::
+
+En examinant la base de donnée, nous avons constaté qu'il manquait la date de création de l'une des aires protégées. Nous allons donc ajouter l'année de création de l'aire protégée Complexe des aires protégées Ambohimirahavavy Marivorahona, créée par le décret 2015-782 du 28 avril 2015 [@goodman2018].
+
+```{r}
+# Ajout de la date de création du complexe des aires protégées Ambohimirahavavy Marivorahona 
+
+wdpa_terrestre <- wdpa_terrestre %>%
+  mutate(STATUS_YR = ifelse(WDPAID == 555697871, 2015, STATUS_YR))
+
+# Sauvegarder le shapefile modifié 
+st_write(wdpa_terrestre, "data/derived/wdpa_terrestre_mod.shp")
+
+```
+
+## 
 
 ## Création de buffer pour les AP avant et après 2008
 
@@ -198,11 +215,11 @@ Pour analyser l'impact des aires protégées selon leur période de création, o
 buffer_dist <- 10000 
 
 # Spécification des aires protégées avant 2008
-wdpa_before_2008 <- wdpa_terrestre %>%
+wdpa_before_2008 <- wdpa_terrestre_mod %>%
   filter(STATUS_YR < 2008)
 
 # Spécification des aires protégées après 2008
-wdpa_from_2008 <- wdpa_terrestre %>%
+wdpa_from_2008 <- wdpa_terrestre_mod %>%
   filter(STATUS_YR >= 2008)
 
 # Créer des buffers de 10 km autour des AP
