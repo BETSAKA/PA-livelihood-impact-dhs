@@ -192,15 +192,13 @@ En examinant la base de donnée, nous avons constaté qu'il manquait la date de 
 ```{r}
 # Ajout de la date de création du complexe des aires protégées Ambohimirahavavy Marivorahona 
 
-wdpa_terrestre <- wdpa_terrestre %>%
+wdpa_terrestre_mod <- wdpa_terrestre %>%
   mutate(STATUS_YR = ifelse(WDPAID == 555697871, 2015, STATUS_YR))
 
 # Sauvegarder le shapefile modifié 
-st_write(wdpa_terrestre, "data/derived/wdpa_terrestre_mod.shp")
+st_write(wdpa_terrestre_mod, "data/derived/wdpa_terrestre_mod.shp")
 
 ```
-
-## 
 
 ## Création de buffer pour les AP avant et après 2008
 
@@ -273,7 +271,7 @@ On agrège les données pour chaque groupe, en calculant le nombre total d'aires
 # Definition de la fonction
 pivot_year <- 2008
 
-summary_table <- wdpa_terrestre %>%
+summary_table <- wdpa_terrestre_mod %>%
   st_drop_geometry() %>%
   mutate(
     Creation_Period = case_when(
