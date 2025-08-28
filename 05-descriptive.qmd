@@ -63,7 +63,31 @@ kable(desc_AP_combined, digits = 2, caption = "Statistiques descriptives des air
 # Enregistrement du tableau
 write_csv(desc_AP_combined, "data/derived/tableau_descriptive.csv")
 
+# Fonction pour produire les 10 plus petites aires protégées
+get_top_small_aires <- function(df_input, periode_label, top_n = 10) {
+  df_input %>%
+    arrange(REP_AREA) %>%
+    slice_head(n = top_n) %>%
+    mutate(
+      rank_number = row_number(),
+      periode = periode_label
+    ) %>% 
+    select(rank_number, ORIG_NAME, REP_AREA) 
+}
 
+# Appliquer aux deux périodes
+top10_before_2008 <- get_top_small_aires(sapm_before_2008, "Before 2008")
+top10_from_2008  <- get_top_small_aires(sapm_from_2008, "From 2008")
+
+# Fusionner les tableaux
+top10_combined <- bind_rows(top10_before_2008, top10_from_2008)
+
+# Affichage
+kable(top10_combined, digits = 2,
+      caption = "Statistiques descriptives des aires protégées (REP_AREA) avec top 10 plus petites")
+
+# Enregistrement du tableau
+write_csv(desc_AP_combined, "data/derived/tableau_descriptive.csv")
 ```
 
 ## Statistiques descriptives du wealth index et du z-score du wealth index
