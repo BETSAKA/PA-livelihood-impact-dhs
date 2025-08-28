@@ -1305,6 +1305,75 @@ hh_2008_rural <- add_zscore_by_cluster(hh_2008_rural, "wealth_centile_rural_simp
 hh_2021_rural <- add_zscore_by_cluster(hh_2021_rural, "wealth_centile_rural_simple", "hv001")
 ```
 
+Nous allons créer 3 cartes montrant le z-score de chaque cluster
+
+```{r}
+# Fonction pour préparer les données clusterisées avec z-score
+prepare_clusters_z <- function(hh_data, gps_data, year) {
+  
+  # Moyenne du z-score par cluster
+  hh_summary <- hh_data %>%
+    group_by(hv001) %>%
+    summarise(
+      wealth_zscore = mean(zscore_wealth, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # Fusion avec coordonnées GPS
+  clusters <- gps_data %>%
+    rename(hv001 = DHSCLUST) %>%
+    left_join(hh_summary, by = "hv001") %>%
+    mutate(year = year) %>%
+    st_transform(crs = st_crs(contour_mada))
+  
+  return(clusters)
+}
+
+# Préparer les clusters pour chaque vague
+clusters_1997_zscore <- prepare_clusters_z(hh_1997_rural, gps_1997, 1997)
+clusters_2008_zscore <- prepare_clusters_z(hh_2008_rural, gps_2008, 2008)
+clusters_2021_zscore <- prepare_clusters_z(hh_2021_rural, gps_2021, 2021)
+
+# Définir une échelle commune pour toutes les années
+z_range <- range(
+  clusters_1997_zscore$wealth_zscore,
+  clusters_2008_zscore$wealth_zscore,
+  clusters_2021_zscore$wealth_zscore,
+  na.rm = TRUE
+)
+
+# Fonction pour créer la carte interactive
+make_map_z <- function(cluster_data, year, value_range, point_size = 0.6) {
+  tm_shape(contour_mada) +
+    tm_polygons(col = "lightgrey", border.col = "white") +
+    tm_shape(cluster_data) +
+    tm_symbols(
+      fill = "wealth_zscore",
+      size = point_size,
+      shape = 21,
+      col = "black",
+      fill.scale = tm_scale(values = "plasma", limits = value_range),
+      fill.legend = tm_legend(
+        title = "Wealth (z-score)",
+        title.size = 1.2,
+        text.size = 1
+      )
+    ) +
+    tm_title(as.character(year), size = 1.2)
+}
+
+# Créer les cartes
+tm1 <- make_map_z(clusters_1997_zscore, 1997, z_range)
+tm2 <- make_map_z(clusters_2008_zscore, 2008, z_range)
+tm3 <- make_map_z(clusters_2021_zscore, 2021, z_range)
+
+# Mode interactif et affichage côte à côte
+tmap_mode("view")
+tmap_arrange(tm1, tm2, tm3, ncol = 3)
+```
+
+
+
 Registration 
 
 ```{r}
