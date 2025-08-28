@@ -104,7 +104,7 @@ desc_1997 <- hh_1997_rural %>%
     names_from = stat,
     values_from = value
   ) %>%
-  # Optionnel : renommer les variables pour un tableau plus lisible
+  # Renommer les variables
   mutate(
     variable = case_when(
       variable == "centile" ~ "Wealth index en Centile",
@@ -154,7 +154,7 @@ desc_2008 <- hh_2008_rural %>%
     names_from = stat,
     values_from = value
   ) %>%
-  # Optionnel : renommer les variables pour un tableau plus lisible
+  # Renommer les variables 
   mutate(
     variable = case_when(
       variable == "centile" ~ "Wealth index en Centile",
@@ -204,7 +204,7 @@ desc_2021 <- hh_2021_rural %>%
     names_from = stat,
     values_from = value
   ) %>%
-  # Optionnel : renommer les variables pour un tableau plus lisible
+  # Renommer les variables
   mutate(
     variable = case_when(
       variable == "centile" ~ "Wealth index en Centile",
@@ -219,4 +219,51 @@ kable(desc_2021, digits = 2, caption = "Statistiques descriptives des variables 
 # Export vers Excel
 write_xlsx(desc_2021, "data/derived/descriptive_wealth_rural_2021.xlsx")
 
+```
+
+## Statistiques descriptives des variables utilisées dans le modèle
+
+```{r}
+library(tidyverse)
+library(sf)
+library(haven)
+
+# Load data 
+hr_1997_final <- readRDS("data/derived/hr_1997_final.rds")
+
+hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
+  
+hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
+
+# Sélection des colonnes d'intérêt
+vars_ut <- c("treecover_area_2000", "slope_2000", "elevation_2000", "population_count_2000", "traveltime_2000_2000", "spei_wc_1995", "spei_wc_1996", "spei_wc_1997", "spei_wc_2006", "spei_wc_2007", "spei_wc_2008","spei_wc_2019", "spei_wc_2020", "spei_wc_2021" )
+
+# Fonction pour statistiques descriptives robustes
+calc_descr_stats <- function(df, vars) {
+  vars_exist <- intersect(vars, names(df))       # colonnes existantes
+  df_num <- df %>% select(all_of(vars_exist)) %>% select(where(is.numeric))
+  
+  if (ncol(df_num) == 0) return(NULL)           # si aucune colonne numérique
+  
+  data.frame(
+    Variable = names(df_num),
+    N        = sapply(df_num, function(x) sum(!is.na(x))),
+    Mean     = sapply(df_num, function(x) mean(x, na.rm = TRUE)),
+    SD       = sapply(df_num, function(x) sd(x, na.rm = TRUE)),
+    Min      = sapply(df_num, function(x) min(x, na.rm = TRUE)),
+    Median   = sapply(df_num, function(x) median(x, na.rm = TRUE)),
+    Max      = sapply(df_num, function(x) max(x, na.rm = TRUE))
+  )
+}
+
+# Calculer pour chaque dataframe
+descr_1997 <- calc_descr_stats(hr_1997_final, vars_ut) %>% mutate(Year = 1997)
+descr_2008 <- calc_descr_stats(hr_2008_final, vars_ut) %>% mutate(Year = 2008)
+descr_2021 <- calc_descr_stats(hr_2021_final, vars_ut) %>% mutate(Year = 2021)
+
+# Combiner dans un seul tableau
+descr_stats_vars <- bind_rows(descr_1997, descr_2008, descr_2021)
+
+# Affichage
+descr_stats_vars 
 ```
