@@ -1185,6 +1185,90 @@ hh_2021_rural <- add_centile_survey(hh_2021_rural,
   mutate(wealth_centile_rural_simple = ntile(wealth_index_rural, 100))
 ```
 
+Nous créons une carte montrant les wealth index de chaque clusters par chaque vague d'enquête. 
+
+```{r}
+library(sf)
+library(geodata)
+library(dplyr)
+library(sf)
+library(tmap)
+
+# Systèmes de coordonnées de référence 
+standard_crs <- 4326
+
+# Charger les shapefiles DHS et les reprojeter
+gps_1997 <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp") 
+gps_2008 <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp")
+gps_2021 <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
+
+# Charger le contour de Madagascar
+contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
+  st_as_sf() %>%
+  st_transform(standard_crs)
+
+# Fonction pour préparer les données clusterisées
+prepare_clusters <- function(hh_data, gps_data, year) {
+  
+  # Calculer les moyennes au niveau cluster
+  hh_summary <- hh_data %>%
+    group_by(hv001) %>%
+    summarise(
+      wealth_centile_weighted = mean(wealth_centile_rural_weighted, na.rm = TRUE),
+      wealth_centile_simple   = mean(wealth_centile_rural_simple, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # Harmoniser et fusionner avec les coordonnées GPS
+  clusters <- gps_data %>%
+    rename(hv001 = DHSCLUST) %>%
+    left_join(hh_summary, by = "hv001") %>%
+    mutate(year = year) %>%
+    st_transform(crs = st_crs(contour_mada))  # S'assurer que tout est dans le même CRS
+  
+  return(clusters)
+}
+
+# Créer les jeux de clusters
+clusters_1997 <- prepare_clusters(hh_1997_rural, gps_1997, 1997)
+clusters_2008 <- prepare_clusters(hh_2008_rural, gps_2008, 2008)
+clusters_2021 <- prepare_clusters(hh_2021_rural, gps_2021, 2021)
+
+# Définir une échelle commune pour toutes les années
+value_range <- range(
+  clusters_1997$wealth_centile_weighted,
+  clusters_2008$wealth_centile_weighted,
+  clusters_2021$wealth_centile_weighted,
+  na.rm = TRUE
+)
+
+# Créer les cartes interactives
+make_map <- function(cluster_data, year, value_range) {
+  tm_shape(contour_mada) +
+    tm_polygons(col = "lightgrey", border.col = "white") +
+    tm_shape(cluster_data) +
+    tm_symbols(
+  fill = "wealth_centile_weighted",
+  size = 0.5, 
+  fill.scale = tm_scale(values = "plasma", limits = value_range),
+  fill.legend = tm_legend(title = "Wealth (pondéré)", title.size = 1.2, text.size = 1)
+) +
+    tm_title(as.character(year))
+}
+
+# Créer les cartes
+tm1 <- make_map(clusters_1997, 1997, value_range)
+tm2 <- make_map(clusters_2008, 2008, value_range)
+tm3 <- make_map(clusters_2021, 2021, value_range)
+
+# Mode interactif
+tmap_mode("view")
+
+# Affichage côte à côte
+tmap_arrange(tm1, tm2, tm3, ncol = 3)
+```
+
+
 ## Secondary outcome variable Calculation: inequality of household living standards
 
 ```{r}
