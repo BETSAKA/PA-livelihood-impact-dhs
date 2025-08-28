@@ -1064,7 +1064,8 @@ ggplot(comparison, aes(x = dhs_factor, y = r_pca_loading)) +
 
 The graph compares the PCA loadings provided by DHS with the reproduced loadings generated through our reconstruction of the wealth index for the 1997 Madagascar survey. Each point represents a variable used in the wealth index calculation, with the x-axis displaying the DHS-provided loadings and the y-axis showing the reproduced loadings. The alignment of points along the regression line indicates a very strong correspondence between the two sets of loadings, validating our reconstruction methodology.
 
-```{rdhs_1997_corr_loadings}
+```{r}
+# dhs_1997_corr_loadings--------
 
 # Calculate and print the correlation
 correlation <- cor.test(comparison$dhs_factor, comparison$r_pca_loading, use = "complete.obs")
