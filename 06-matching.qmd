@@ -314,6 +314,8 @@ df_all_sf |>
 
 ```
 
+## Carte des contrôles et des traités appariés des périodes d'étude
+
 ## Checking covariate balance
 
 Les modèles d'appariement reposent sur l'hypothèse que les distributions des covariables sont similaires entre les groupes de traitement et de contrôle, rendant cruciale l'évaluation de l'équilibre des covariables. La validité des estimations dépend directement de la qualité de cet équilibre, d'où l'importance de réaliser des tests pour le mesurer. On effectue donc un test d'équilibre des covariables en deux étapes: un test avant appariement et un test après appariement.
