@@ -1,0 +1,148 @@
+
+cf. dans IRD_Drive\BETSAKA_MADAGASCAR\Données\Enquêtes ménages\DHS Madagascar\DHS_documentation
+
+POUR DHS III (1997)
+
+HW1 Age in months of the child is calculated from the country month code of the date of
+interview less the century month code of the date of birth of the child.
+
+HW2 Weight in kilograms. There is one implied decimal place in the weight (decimal points
+are not included in the data file).  To produce the weight in kilograms divide by 10.
+
+HW3 Height in centimeters. There is one implied decimal place in the height (decimal points
+are not included in the data file).  To produce the height in centimeters divide by 10.
+Height is supposed to be the recumbent length for children less than 24 months old and
+the standing height for children born 24 or more months prior to the interview.
+
+HW4 Height for Age percentile.
+HW5 Height for Age standard deviations from the reference median.
+HW6 Height for Age percent of reference median.
+HW7 Weight for Age percentile.
+HW8 Weight for Age standard deviations from the reference median.
+HW9 Weight for Age percent of reference median.
+HW10 Weight for Height percentile.
+HW11 Weight for Height standard deviations from the reference median.
+HW12 Weight for Height percent of reference median.
+
+The measures above were calculated using the CDC Standard Deviation-derived Growth
+Reference Curves derived from the NCHS/FELS/CDC Reference Population. The
+measures are presented with two implied decimal places (no decimal points are included
+in the data file).  To produce the actual measure, divide the variable by 100.  If either
+the weight or the height of the child is missing then all of the above measures are set to
+the missing code 9999 or 99999.  If either the height or the weight is outside of the
+acceptable range for the calculation of these measures then all of the above measures
+is set to code 9998 or 99998.
+
+DHS V (1997)
+
+HW1 Age in months of the child is calculated from the country month code of the date of 
+interview less the century month code of the date of birth of the child. 
+
+ 
+
+HW2 Weight in kilograms. There is one implied decimal place in the weight (decimal points 
+are not included in the data file).  To produce the weight in kilograms divide HW2 by 
+10. 
+
+ 
+
+HW3 Height in centimeters. There is one implied decimal place in the height (decimal points 
+are not included in the data file).  To produce the height in centimeters divide HW3 by 
+10.  Height is supposed to be the recumbent length for children less than 24 months old 
+and the standing height for children born 24 or more months prior to the interview. 
+
+ 
+
+HW4 Height for Age percentile. 
+HW5 Height for Age standard deviations from the reference median. 
+HW6 Height for Age percent of reference median. 
+HW7 Weight for Age percentile. 
+HW8 Weight for Age standard deviations from the reference median. 
+HW9 Weight for Age percent of reference median. 
+HW10 Weight for Height percentile. 
+HW11 Weight for Height standard deviations from the reference median. 
+HW12 Weight for Height percent of reference median. 
+
+ 
+
+The measures above were calculated using the CDC Standard Deviation-derived Growth 
+Reference Curves derived from the NCHS/FELS/CDC Reference Population. The 
+measures are presented with two implied decimal places (no decimal points are included 
+in the data file).  To produce the actual measure, divide the variable by 100.  If either the 
+weight or the height of the child is missing then all of the above measures are set to the 
+missing code 9999 or 99999. If either the height or the weight is outside of the 
+acceptable range for the calculation of these measures then all of the above measures is 
+set to code 9998 or 99998.
+
+HW70 Height for age standard deviation (according to WHO) 
+HW71 Weight for age standard deviation (according to WHO) 
+HW72 Weight for height standard deviations (according to WHO) 
+HW73 BMI standard deviations (according to WHO) 
+
+ 
+
+The measures above were calculated using the new Child Growth Standards released by 
+the World Health Organization on April 27 2006.  The new Standards are the result of an 
+intensive study initiated by WHO in 1997 to develop a new international standard for 
+assessing the physical growth nutritional status and motor development in all children 
+from birth to age five. WHO and its principal partner, the United Nations University, 
+undertook a Multi-centre Growth Reference Study which is a community-based, multi-
+country projects involving more than eight thousand children from Brazil, Ghana, India, 
+Norway, Oman, and the United States of America.   The measures are presented with 
+two implied decimal places (no decimal points are included in the data file).  To produce 
+the actual measure, divide the variable by 100.  If either the weight or the height of the 
+child is missing then all of the above measures are set to the missing code 9999 or 
+99999.  If either the height or the weight is outside of the acceptable range for the 
+calculation of these measures then all of the above measures is set to code 9998 or 
+99998.
+
+DHS 7 (2021)
+
+HW1 Age in months of the child is calculated from the country month code of the date of 
+interview less the century month code of the date of birth of the child. 
+BASE: All children born 0-59 months prior to the survey and alive with information 
+from the household questionnaire (B19(HWIDX) < 60 and (B5(HWIDX = 1). 
+Height and Weight 
+HW2 Weight in kilograms. There is one implied decimal place in the weight (decimal points 
+are not included in the data file).  To produce the weight in kilograms divide HW2 by 
+10. 
+HW3 Height in centimeters. There is one implied decimal place in the height (decimal points 
+are not included in the data file).  To produce the height in centimeters divide HW3 by 
+10. Height is supposed to be the recumbent length for children less than 24 months old
+and the standing height for children born 24 or more months prior to the interview.
+HW4 Height for Age percentile 
+HW5 Height for Age standard deviations from the reference median 
+HW6 Height for Age percent of reference median 
+HW7 Weight for Age percentile 
+HW8 Weight for Age standard deviations from the reference median 
+HW9 Weight for Age percent of reference median 
+HW10 Weight for Height percentile 
+HW11 Weight for Height standard deviations from the reference median 
+HW12 Weight for Height percent of reference median 
+The measures above were calculated using the CDC Standard Deviation-derived Growth 
+Reference Curves derived from the NCHS/FELS/CDC Reference Population. The 
+measures are presented with two implied decimal places (no decimal points are included 
+in the data file).  To produce the actual measure, divide the variable by 100.  If either the 
+weight or the height of the child is missing then all of the above measures are set to the 
+missing code 9999 or 99999. If either the height or the weight is outside of the
+acceptable range for the calculation of these measures then all of the above measures is 
+set to code 9998 or 99998. 
+
+HW70 Height for age standard deviation (according to WHO) 
+HW71 Weight for age standard deviation (according to WHO) 
+HW72 Weight for height standard deviations (according to WHO) 
+HW73 BMI standard deviations (according to WHO) 
+The measures above were calculated using the new Child Growth Standards released by 
+the World Health Organization on April 27 2006.  The new Standards are the result of an 
+intensive study initiated by WHO in 1997 to develop a new international standard for 
+assessing the physical growth nutritional status and motor development in all children 
+from birth to age five. WHO and its principal partner, the United Nations University, 
+undertook a Multi-centre Growth Reference Study which is a community-based, multi-
+country projects involving more than eight thousand children from Brazil, Ghana, India, 
+Norway, Oman, and the United States of America.   The measures are presented with 
+two implied decimal places (no decimal points are included in the data file).  To produce 
+the actual measure, divide the variable by 100.  If either the weight or the height of the 
+child is missing then all of the above measures are set to the missing code 9999 or 
+99999.  If either the height or the weight is outside of the acceptable range for the 
+calculation of these measures then all of the above measures is set to code 9998 or 
+99998. 
