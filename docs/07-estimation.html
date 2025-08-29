@@ -335,20 +335,37 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co">#data_matched_2008$hv220 &lt;- as.numeric(as_factor(data_matched_2008$hv220))</span></span>
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co">#data_matched_2021$hv220 &lt;- as.numeric(as_factor(data_matched_2021$hv220))</span></span>
 <span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge the three waves</span></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>data_all <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(data_matched_1997, data_matched_2008, data_matched_2021)</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Treatment period---------------</span></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>data_all <span class="ot">&lt;-</span> data_all <span class="sc">%&gt;%</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">period_DID =</span> <span class="fu">case_when</span>(</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>      DHSYEAR <span class="sc">==</span> <span class="dv">1997</span> <span class="sc">~</span> <span class="dv">0</span>,           <span class="co"># 0 indique le Pre-treatment </span></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>      DHSYEAR <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2008</span>,<span class="dv">2021</span>) <span class="sc">~</span> <span class="dv">1</span>  <span class="co"># 1 indique le Post-treatment </span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>pre_treatment <span class="ot">&lt;-</span> data_all <span class="sc">%&gt;%</span> <span class="fu">filter</span>(period_DID <span class="sc">==</span> <span class="dv">0</span>)</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>post_treatment <span class="ot">&lt;-</span> data_all <span class="sc">%&gt;%</span> <span class="fu">filter</span>(period_DID <span class="sc">==</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Renommer les noms des spei du dataframe de 2008 et 2021</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>data_matched_2008 <span class="ot">&lt;-</span> data_matched_2008 <span class="sc">%&gt;%</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">'spei_wc_n-2'</span> <span class="ot">=</span> spei_wc_2006,</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">'speiwc_n-1'</span> <span class="ot">=</span> spei_wc_2007,</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">'spei_wc_n'</span> <span class="ot">=</span> spei_wc_2008</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>data_matched_2021 <span class="ot">&lt;-</span> data_matched_2021 <span class="sc">%&gt;%</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    <span class="st">'spei_wc_n-2'</span> <span class="ot">=</span> spei_wc_2019,</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    <span class="st">'speiwc_n-1'</span> <span class="ot">=</span> spei_wc_2020,</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="st">'spei_wc_n'</span> <span class="ot">=</span> spei_wc_2021</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge the three waves</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>data_all <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(data_matched_1997, data_matched_2008, data_matched_2021)</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="co"># Treatment period---------------</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>data_all <span class="ot">&lt;-</span> data_all <span class="sc">%&gt;%</span></span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">period_DID =</span> <span class="fu">case_when</span>(</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>      DHSYEAR <span class="sc">==</span> <span class="dv">1997</span> <span class="sc">~</span> <span class="dv">0</span>,           <span class="co"># 0 indique le Pre-treatment </span></span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>      DHSYEAR <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2008</span>,<span class="dv">2021</span>) <span class="sc">~</span> <span class="dv">1</span>  <span class="co"># 1 indique le Post-treatment </span></span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>pre_treatment <span class="ot">&lt;-</span> data_all <span class="sc">%&gt;%</span> <span class="fu">filter</span>(period_DID <span class="sc">==</span> <span class="dv">0</span>)</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>post_treatment <span class="ot">&lt;-</span> data_all <span class="sc">%&gt;%</span> <span class="fu">filter</span>(period_DID <span class="sc">==</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Nous obtenons 1 930 observations pour le pre_treatment et 11 500 observations pour la période de post_treatment.</p>
@@ -637,76 +654,73 @@ F-statistic: 0.4392 on 6 and 1922 DF,  p-value: 0.8529</code></pre>
 <span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sandwich)</span>
 <span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lmtest)</span>
 <span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Treatment period: 2008-2021</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>model_data <span class="ot">&lt;-</span> data_all <span class="sc">%&gt;%</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DHSYEAR <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2008</span>,<span class="dv">2021</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">treated =</span> <span class="fu">ifelse</span>(GROUP <span class="sc">==</span> <span class="st">"Treatment"</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">post =</span> <span class="fu">ifelse</span>(DHSYEAR <span class="sc">==</span> <span class="dv">2021</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">if_any</span>(<span class="fu">c</span>(<span class="st">"wealth_centile_rural_simple"</span>, <span class="st">"treated"</span>, <span class="st">"post"</span>), is.na)) <span class="sc">%&gt;%</span></span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add control variables </span></span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">sex_head =</span> <span class="fu">as.factor</span>(hv219),</span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">age_head =</span> hv220,</span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">forest_cover_rate =</span> treecover_area_2000,</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">slope =</span> slope_2000,</span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">elevation =</span> elevation_2000,</span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">population_count =</span> population_count_2000,</span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">accessibility =</span> traveltime_2000_2000,</span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">spei_wc_2019 =</span> spei_wc_2019,</span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">spei_wc_2020 =</span> spei_wc_2020,</span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">spei_wc_2021 =</span> spei_wc_2021</span>
-<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Main DID regression with robust standard errors per cluster</span></span>
-<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>did_2008_2021 <span class="ot">&lt;-</span> <span class="fu">lm</span>(</span>
-<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>  wealth_centile_rural_simple  <span class="sc">~</span> treated <span class="sc">*</span> post <span class="sc">+</span> sex_head <span class="sc">+</span> age_head <span class="sc">+</span> </span>
-<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>    forest_cover_rate <span class="sc">+</span> slope <span class="sc">+</span> elevation <span class="sc">+</span> </span>
-<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>    population_count <span class="sc">+</span> accessibility <span class="sc">+</span> </span>
-<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>    spei_wc_2019 <span class="sc">+</span> spei_wc_2020 <span class="sc">+</span> spei_wc_2021, </span>
-<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> model_data )</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Treatment period: 2008-2021</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>model_data <span class="ot">&lt;-</span> data_all <span class="sc">%&gt;%</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DHSYEAR <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2008</span>,<span class="dv">2021</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">treated =</span> <span class="fu">ifelse</span>(GROUP <span class="sc">==</span> <span class="st">"Treatment"</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">post =</span> <span class="fu">ifelse</span>(DHSYEAR <span class="sc">==</span> <span class="dv">2021</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">if_any</span>(<span class="fu">c</span>(<span class="st">"wealth_centile_rural_simple"</span>, <span class="st">"treated"</span>, <span class="st">"post"</span>), is.na)) <span class="sc">%&gt;%</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add control variables </span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">sex_head =</span> <span class="fu">as.factor</span>(hv219),</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">age_head =</span> hv220,</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">forest_cover_rate =</span> treecover_area_2000,</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">slope =</span> slope_2000,</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">elevation =</span> elevation_2000,</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">population_count =</span> population_count_2000,</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">accessibility =</span> traveltime_2000_2000,</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">spei_wc_n-2</span><span class="st">`</span> <span class="ot">=</span> <span class="st">`</span><span class="at">spei_wc_n-2</span><span class="st">`</span>,</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">speiwc_n-1</span><span class="st">`</span> <span class="ot">=</span> <span class="st">`</span><span class="at">speiwc_n-1</span><span class="st">`</span>,</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">spei_wc_n =</span>spei_wc_n</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Main DID regression with robust standard errors per cluster</span></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>did_2008_2021 <span class="ot">&lt;-</span> <span class="fu">lm</span>(</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>  wealth_centile_rural_simple  <span class="sc">~</span> treated <span class="sc">*</span> post <span class="sc">+</span> sex_head <span class="sc">+</span> age_head <span class="sc">+</span> </span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>    forest_cover_rate <span class="sc">+</span> slope <span class="sc">+</span> elevation <span class="sc">+</span> </span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>    population_count <span class="sc">+</span> accessibility <span class="sc">+</span> </span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">spei_wc_n-2</span><span class="st">`</span> <span class="sc">+</span> <span class="st">`</span><span class="at">spei_wc_n-2</span><span class="st">`</span> <span class="sc">+</span> <span class="st">`</span><span class="at">spei_wc_n</span><span class="st">`</span>, </span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> model_data )</span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(did_2008_2021)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(did_2008_2021)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:
 lm(formula = wealth_centile_rural_simple ~ treated * post + sex_head + 
     age_head + forest_cover_rate + slope + elevation + population_count + 
-    accessibility + spei_wc_2019 + spei_wc_2020 + spei_wc_2021, 
+    accessibility + `spei_wc_n-2` + `spei_wc_n-2` + spei_wc_n, 
     data = model_data)
 
 Residuals:
     Min      1Q  Median      3Q     Max 
--70.762 -19.737   0.543  18.821  73.053 
+-68.079 -20.987  -0.699  20.360  68.981 
 
-Coefficients: (2 not defined because of singularities)
+Coefficients:
                     Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept)        6.567e+01  1.747e+00  37.596  &lt; 2e-16 ***
-treated           -2.702e+00  6.404e-01  -4.219 2.49e-05 ***
-post                      NA         NA      NA       NA    
-sex_head2         -5.067e+00  7.363e-01  -6.882 6.43e-12 ***
-age_head           1.043e-01  1.989e-02   5.244 1.62e-07 ***
-forest_cover_rate  7.122e-05  5.192e-05   1.372    0.170    
-slope              4.097e-01  9.259e-02   4.425 9.78e-06 ***
-elevation          1.061e-02  8.522e-04  12.447  &lt; 2e-16 ***
-population_count   5.327e-02  1.054e-02   5.056 4.41e-07 ***
-accessibility     -1.643e-02  2.551e-03  -6.443 1.25e-10 ***
-spei_wc_2019      -4.693e-01  1.087e+00  -0.432    0.666    
-spei_wc_2020      -4.098e+00  1.245e+00  -3.291    0.001 ** 
-spei_wc_2021       2.385e+01  6.877e-01  34.688  &lt; 2e-16 ***
-treated:post              NA         NA      NA       NA    
+(Intercept)        3.091e+01  1.167e+00  26.476  &lt; 2e-16 ***
+treated            2.265e+00  7.558e-01   2.996 0.002738 ** 
+post               2.367e+01  1.073e+00  22.064  &lt; 2e-16 ***
+sex_head2         -3.739e+00  5.910e-01  -6.326 2.61e-10 ***
+age_head           6.534e-02  1.577e-02   4.142 3.46e-05 ***
+forest_cover_rate  2.135e-04  3.724e-05   5.735 1.00e-08 ***
+slope             -2.859e-01  7.596e-02  -3.764 0.000168 ***
+elevation          1.187e-02  6.740e-04  17.609  &lt; 2e-16 ***
+population_count   1.181e-01  8.373e-03  14.104  &lt; 2e-16 ***
+accessibility      3.494e-03  2.000e-03   1.747 0.080616 .  
+`spei_wc_n-2`     -6.739e+00  9.126e-01  -7.384 1.64e-13 ***
+spei_wc_n          1.721e+01  6.052e-01  28.436  &lt; 2e-16 ***
+treated:post      -5.288e+00  1.003e+00  -5.270 1.39e-07 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-Residual standard error: 25.1 on 6650 degrees of freedom
-  (4838 observations effacées parce que manquantes)
-Multiple R-squared:  0.1946,    Adjusted R-squared:  0.1933 
-F-statistic: 146.1 on 11 and 6650 DF,  p-value: &lt; 2.2e-16</code></pre>
+Residual standard error: 26.19 on 11487 degrees of freedom
+Multiple R-squared:  0.1265,    Adjusted R-squared:  0.1256 
+F-statistic: 138.7 on 12 and 11487 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -753,18 +767,19 @@ F-statistic: 146.1 on 11 and 6650 DF,  p-value: &lt; 2.2e-16</code></pre>
 t test of coefficients:
 
                      Estimate  Std. Error t value  Pr(&gt;|t|)    
-(Intercept)        6.5670e+01  6.2261e+00 10.5475 &lt; 2.2e-16 ***
-treated           -2.7016e+00  2.2268e+00 -1.2132 0.2250902    
-sex_head2         -5.0671e+00  8.6059e-01 -5.8880 4.100e-09 ***
-age_head           1.0431e-01  2.1249e-02  4.9088 9.383e-07 ***
-forest_cover_rate  7.1219e-05  1.7737e-04  0.4015 0.6880460    
-slope              4.0974e-01  3.1434e-01  1.3035 0.1924480    
-elevation          1.0608e-02  2.7948e-03  3.7956 0.0001486 ***
-population_count   5.3274e-02  3.5669e-02  1.4936 0.1353371    
-accessibility     -1.6434e-02  9.9756e-03 -1.6474 0.0995250 .  
-spei_wc_2019      -4.6930e-01  3.4340e+00 -0.1367 0.8913002    
-spei_wc_2020      -4.0976e+00  4.9020e+00 -0.8359 0.4032419    
-spei_wc_2021       2.3854e+01  2.7027e+00  8.8260 &lt; 2.2e-16 ***
+(Intercept)       30.90853460  3.84357097  8.0416 9.734e-16 ***
+treated            2.26467435  2.92870623  0.7733 0.4393798    
+post              23.67442761  3.96066873  5.9774 2.335e-09 ***
+sex_head2         -3.73857387  0.66956438 -5.5836 2.410e-08 ***
+age_head           0.06533998  0.01721894  3.7947 0.0001486 ***
+forest_cover_rate  0.00021354  0.00014566  1.4660 0.1426794    
+slope             -0.28594548  0.27025815 -1.0580 0.2900568    
+elevation          0.01186762  0.00224739  5.2806 1.311e-07 ***
+population_count   0.11810161  0.03199917  3.6908 0.0002246 ***
+accessibility      0.00349404  0.00709927  0.4922 0.6226092    
+`spei_wc_n-2`     -6.73881743  2.99213769 -2.2522 0.0243300 *  
+spei_wc_n         17.21033448  2.10452794  8.1778 3.195e-16 ***
+treated:post      -5.28765675  3.66216722 -1.4439 0.1488056    
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -774,23 +789,22 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tidy</span>(did_2008_2021)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 14 × 5
-   term                estimate  std.error statistic    p.value
-   &lt;chr&gt;                  &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;
- 1 (Intercept)       65.7        1.75         37.6    1.17e-280
- 2 treated           -2.70       0.640        -4.22   2.49e-  5
- 3 post              NA         NA            NA     NA        
- 4 sex_head2         -5.07       0.736        -6.88   6.43e- 12
- 5 age_head           0.104      0.0199        5.24   1.62e-  7
- 6 forest_cover_rate  0.0000712  0.0000519     1.37   1.70e-  1
- 7 slope              0.410      0.0926        4.43   9.78e-  6
- 8 elevation          0.0106     0.000852     12.4    3.57e- 35
- 9 population_count   0.0533     0.0105        5.06   4.41e-  7
-10 accessibility     -0.0164     0.00255      -6.44   1.25e- 10
-11 spei_wc_2019      -0.469      1.09         -0.432  6.66e-  1
-12 spei_wc_2020      -4.10       1.25         -3.29   1.00e-  3
-13 spei_wc_2021      23.9        0.688        34.7    1.75e-242
-14 treated:post      NA         NA            NA     NA        </code></pre>
+<pre><code># A tibble: 13 × 5
+   term               estimate std.error statistic   p.value
+   &lt;chr&gt;                 &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+ 1 (Intercept)       30.9      1.17          26.5  5.48e-150
+ 2 treated            2.26     0.756          3.00 2.74e-  3
+ 3 post              23.7      1.07          22.1  1.09e-105
+ 4 sex_head2         -3.74     0.591         -6.33 2.61e- 10
+ 5 age_head           0.0653   0.0158         4.14 3.46e-  5
+ 6 forest_cover_rate  0.000214 0.0000372      5.73 1.00e-  8
+ 7 slope             -0.286    0.0760        -3.76 1.68e-  4
+ 8 elevation          0.0119   0.000674      17.6  1.67e- 68
+ 9 population_count   0.118    0.00837       14.1  8.44e- 45
+10 accessibility      0.00349  0.00200        1.75 8.06e-  2
+11 `spei_wc_n-2`     -6.74     0.913         -7.38 1.64e- 13
+12 spei_wc_n         17.2      0.605         28.4  6.03e-172
+13 treated:post      -5.29     1.00          -5.27 1.39e-  7</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -953,16 +967,16 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">elevation =</span> elevation_2000,</span>
 <span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">population_count =</span> population_count_2000,</span>
 <span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">accessibility =</span> traveltime_2000_2000,</span>
-<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">spei_wc_2019 =</span> spei_wc_2019,</span>
-<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">spei_wc_2020 =</span> spei_wc_2020,</span>
-<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">spei_wc_2021 =</span> spei_wc_2021</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">spei_wc_n-2</span><span class="st">`</span> <span class="ot">=</span> <span class="st">`</span><span class="at">spei_wc_n-2</span><span class="st">`</span>,</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">speiwc_n-1</span><span class="st">`</span> <span class="ot">=</span> <span class="st">`</span><span class="at">speiwc_n-1</span><span class="st">`</span>,</span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">spei_wc_n =</span> spei_wc_n</span>
 <span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Main DID regression with robust standard errors per cluster</span></span>
 <span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>did_2008_2021 <span class="ot">&lt;-</span> <span class="fu">lm</span>(</span>
 <span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>  zscore_wealth  <span class="sc">~</span> treated <span class="sc">*</span> post <span class="sc">+</span> sex_head <span class="sc">+</span> age_head <span class="sc">+</span> </span>
 <span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>    forest_cover_rate <span class="sc">+</span> slope <span class="sc">+</span> elevation <span class="sc">+</span> </span>
 <span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>    population_count <span class="sc">+</span> accessibility <span class="sc">+</span> </span>
-<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>    spei_wc_2019 <span class="sc">+</span> spei_wc_2020 <span class="sc">+</span> spei_wc_2021, </span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">spei_wc_n-2</span><span class="st">`</span> <span class="sc">+</span> <span class="st">`</span><span class="at">speiwc_n-1</span><span class="st">`</span> <span class="sc">+</span> spei_wc_n, </span>
 <span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> model_data )</span>
 <span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a></span>
@@ -973,36 +987,35 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 Call:
 lm(formula = zscore_wealth ~ treated * post + sex_head + age_head + 
     forest_cover_rate + slope + elevation + population_count + 
-    accessibility + spei_wc_2019 + spei_wc_2020 + spei_wc_2021, 
+    accessibility + `spei_wc_n-2` + `speiwc_n-1` + spei_wc_n, 
     data = model_data)
 
 Residuals:
     Min      1Q  Median      3Q     Max 
--0.8774 -0.4403 -0.0839  0.3146  3.2991 
+-0.8692 -0.4379 -0.0890  0.3173  3.7488 
 
-Coefficients: (2 not defined because of singularities)
+Coefficients:
                     Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept)        7.483e-01  3.936e-02  19.013  &lt; 2e-16 ***
-treated            4.242e-03  1.443e-02   0.294  0.76874    
-post                      NA         NA      NA       NA    
-sex_head2         -5.344e-02  1.659e-02  -3.222  0.00128 ** 
-age_head           2.002e-03  4.481e-04   4.468 8.02e-06 ***
-forest_cover_rate -6.729e-07  1.170e-06  -0.575  0.56519    
-slope              1.764e-03  2.086e-03   0.846  0.39785    
-elevation         -8.889e-06  1.920e-05  -0.463  0.64344    
-population_count   8.071e-05  2.374e-04   0.340  0.73391    
-accessibility     -7.665e-06  5.747e-05  -0.133  0.89389    
-spei_wc_2019       2.229e-02  2.450e-02   0.910  0.36303    
-spei_wc_2020      -5.911e-03  2.805e-02  -0.211  0.83312    
-spei_wc_2021       1.017e-02  1.549e-02   0.656  0.51163    
-treated:post              NA         NA      NA       NA    
+(Intercept)        7.362e-01  2.533e-02  29.062  &lt; 2e-16 ***
+treated            1.002e-02  1.645e-02   0.609  0.54263    
+post               1.480e-02  2.398e-02   0.617  0.53712    
+sex_head2         -3.859e-02  1.278e-02  -3.019  0.00254 ** 
+age_head           1.518e-03  3.412e-04   4.449 8.72e-06 ***
+forest_cover_rate -6.081e-07  8.260e-07  -0.736  0.46158    
+slope              8.053e-04  1.647e-03   0.489  0.62494    
+elevation         -3.011e-06  1.458e-05  -0.207  0.83639    
+population_count   2.021e-05  1.812e-04   0.112  0.91121    
+accessibility      3.581e-05  4.333e-05   0.826  0.40862    
+`spei_wc_n-2`      9.861e-03  2.026e-02   0.487  0.62645    
+`speiwc_n-1`      -9.482e-03  1.233e-02  -0.769  0.44184    
+spei_wc_n          3.017e-03  1.407e-02   0.214  0.83027    
+treated:post      -7.470e-03  2.185e-02  -0.342  0.73240    
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-Residual standard error: 0.5655 on 6650 degrees of freedom
-  (4838 observations effacées parce que manquantes)
-Multiple R-squared:  0.00428,   Adjusted R-squared:  0.002633 
-F-statistic: 2.599 on 11 and 6650 DF,  p-value: 0.002673</code></pre>
+Residual standard error: 0.5666 on 11486 degrees of freedom
+Multiple R-squared:  0.002448,  Adjusted R-squared:  0.001319 
+F-statistic: 2.168 on 13 and 11486 DF,  p-value: 0.008586</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -1049,18 +1062,20 @@ F-statistic: 2.599 on 11 and 6650 DF,  p-value: 0.002673</code></pre>
 t test of coefficients:
 
                      Estimate  Std. Error t value  Pr(&gt;|t|)    
-(Intercept)        7.4826e-01  2.6970e-02 27.7444 &lt; 2.2e-16 ***
-treated            4.2422e-03  6.2016e-03  0.6840  0.493975    
-sex_head2         -5.3441e-02  1.6264e-02 -3.2858  0.001022 ** 
-age_head           2.0023e-03  4.7118e-04  4.2494 2.173e-05 ***
-forest_cover_rate -6.7286e-07  6.0666e-07 -1.1091  0.267412    
-slope              1.7638e-03  9.3714e-04  1.8821  0.059865 .  
-elevation         -8.8888e-06  8.1167e-06 -1.0951  0.273506    
-population_count   8.0710e-05  9.7328e-05  0.8293  0.406985    
-accessibility     -7.6651e-06  2.6437e-05 -0.2899  0.771876    
-spei_wc_2019       2.2289e-02  1.2271e-02  1.8164  0.069354 .  
-spei_wc_2020      -5.9109e-03  1.2913e-02 -0.4578  0.647147    
-spei_wc_2021       1.0169e-02  7.2436e-03  1.4039  0.160385    
+(Intercept)        7.3619e-01  2.1428e-02 34.3564 &lt; 2.2e-16 ***
+treated            1.0018e-02  9.7617e-03  1.0262  0.304799    
+post               1.4801e-02  1.1538e-02  1.2828  0.199602    
+sex_head2         -3.8594e-02  1.2580e-02 -3.0678  0.002161 ** 
+age_head           1.5180e-03  3.7847e-04  4.0108  6.09e-05 ***
+forest_cover_rate -6.0813e-07  4.4295e-07 -1.3729  0.169804    
+slope              8.0533e-04  7.8735e-04  1.0228  0.306411    
+elevation         -3.0109e-06  6.3975e-06 -0.4706  0.637908    
+population_count   2.0209e-05  9.4074e-05  0.2148  0.829909    
+accessibility      3.5809e-05  2.3802e-05  1.5045  0.132490    
+`spei_wc_n-2`      9.8610e-03  1.1043e-02  0.8930  0.371880    
+`speiwc_n-1`      -9.4820e-03  8.2345e-03 -1.1515  0.249552    
+spei_wc_n          3.0171e-03  6.5824e-03  0.4584  0.646707    
+treated:post      -7.4701e-03  1.1968e-02 -0.6242  0.532520    
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -1073,20 +1088,20 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <pre><code># A tibble: 14 × 5
    term                  estimate   std.error statistic   p.value
    &lt;chr&gt;                    &lt;dbl&gt;       &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
- 1 (Intercept)        0.748        0.0394        19.0    1.56e-78
- 2 treated            0.00424      0.0144         0.294  7.69e- 1
- 3 post              NA           NA             NA     NA       
- 4 sex_head2         -0.0534       0.0166        -3.22   1.28e- 3
- 5 age_head           0.00200      0.000448       4.47   8.02e- 6
- 6 forest_cover_rate -0.000000673  0.00000117    -0.575  5.65e- 1
- 7 slope              0.00176      0.00209        0.846  3.98e- 1
- 8 elevation         -0.00000889   0.0000192     -0.463  6.43e- 1
- 9 population_count   0.0000807    0.000237       0.340  7.34e- 1
-10 accessibility     -0.00000767   0.0000575     -0.133  8.94e- 1
-11 spei_wc_2019       0.0223       0.0245         0.910  3.63e- 1
-12 spei_wc_2020      -0.00591      0.0281        -0.211  8.33e- 1
-13 spei_wc_2021       0.0102       0.0155         0.656  5.12e- 1
-14 treated:post      NA           NA             NA     NA       </code></pre>
+ 1 (Intercept)        0.736       0.0253         29.1   3.05e-179
+ 2 treated            0.0100      0.0165          0.609 5.43e-  1
+ 3 post               0.0148      0.0240          0.617 5.37e-  1
+ 4 sex_head2         -0.0386      0.0128         -3.02  2.54e-  3
+ 5 age_head           0.00152     0.000341        4.45  8.72e-  6
+ 6 forest_cover_rate -0.000000608 0.000000826    -0.736 4.62e-  1
+ 7 slope              0.000805    0.00165         0.489 6.25e-  1
+ 8 elevation         -0.00000301  0.0000146      -0.207 8.36e-  1
+ 9 population_count   0.0000202   0.000181        0.112 9.11e-  1
+10 accessibility      0.0000358   0.0000433       0.826 4.09e-  1
+11 `spei_wc_n-2`      0.00986     0.0203          0.487 6.26e-  1
+12 `speiwc_n-1`      -0.00948     0.0123         -0.769 4.42e-  1
+13 spei_wc_n          0.00302     0.0141          0.214 8.30e-  1
+14 treated:post      -0.00747     0.0218         -0.342 7.32e-  1</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
