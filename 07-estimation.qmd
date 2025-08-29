@@ -14,13 +14,13 @@ Le document présente l'estimation en double différence des groupes de traiteme
 
 Nous débutons notre analyse par la définition des périodes de traitement. Puis nous créons un groupe de traitement placebo basé sur les ménages de 1997. Ce placebo est utilisé pour tester l'hypothèse des tendances parallèles, . Après la vérification de la validité de l'hypothèse, nous effectuons une estimation pour le groupe placebo (1997-2008) puis une autre estimation pour la période de 2008-2021.
 
-## Definition of treatment periods
+## Definition of treatment periods // TITRE A REVOIR
 
-La période de pré-traitement sera les aires protégées créées entre 1997 et 2008. Le post-traitement sera les aires protégées créées entre 2008 et 2021.
+La période de pré-traitement sera la période de 1997 à 2008. La période de post-traitement la période 2008 et 2021. Le groupe de traitement ce sont les ménages vivant à moins de 10km des aires protégées créées entre 2008 et 2021. Le groupe de contrôle ce sont les ménages vivant à plus de 10km des aires protégées crées jusqu'en 2021.
+Les ménages vivant à moins de 10km d'une aire protégée créée avant 2008 seront exclus de l'analyse.
+L'estimation d'impact consiste à comparer l'évolution du niveau de vie du groupe de traitement et du groupe de contrôle entre 2008 et 2021. Si une différence significative apparaît, on considérera que la création des aires protégées a eu un impact sur les conditions de vie des riverains, sous réserve que le test placebo soit concluant.
+Le test placebo consiste à comparer l'évolution du niveau de vie du même groupe de traitement et du même groupe de contrôle entre 1997 et 2008. Si les conditions de vie évoluent parallèlement dans ces deux groupes, alors on considérera le test placebo comme concluant.
 
--   Période de pré-traitement: Aires protégées crées entre 1997 et 2008 (34 AP créées sur 23 939 km²)
-
--   Période de post-traitement: Aires protégées crées entre 2008 et 2021 (102 AP créées sur 50 856 km²)
 
 ```{r}
 # Treatment periods definition--------------------------------
@@ -57,19 +57,26 @@ data_matched_2021 <- data_matched_2021 %>%
 #data_matched_2021$hv220 <- as.numeric(as_factor(data_matched_2021$hv220))
 
 # Renommer les noms des spei du dataframe de 2008 et 2021
+data_matched_1997 <- data_matched_1997 %>%
+  rename(
+    spei_wc_n_2 = spei_wc_1995,
+    spei_wc_n_1 = spei_wc_1996,
+    spei_wc_n = spei_wc_1997
+  )
+
 data_matched_2008 <- data_matched_2008 %>%
   rename(
-    'spei_wc_n-2' = spei_wc_2006,
-    'speiwc_n-1' = spei_wc_2007,
-    'spei_wc_n' = spei_wc_2008
+    spei_wc_n_2 = spei_wc_2006,
+    spei_wc_n_1 = spei_wc_2007,
+    spei_wc_n = spei_wc_2008
   )
 
 
 data_matched_2021 <- data_matched_2021 %>%
   rename(
-    'spei_wc_n-2' = spei_wc_2019,
-    'speiwc_n-1' = spei_wc_2020,
-    'spei_wc_n' = spei_wc_2021
+    spei_wc_n_2 = spei_wc_2019,
+    spei_wc_n_1 = spei_wc_2020,
+    spei_wc_n = spei_wc_2021
   )
 
 
@@ -80,20 +87,21 @@ data_all <- bind_rows(data_matched_1997, data_matched_2008, data_matched_2021)
 data_all <- data_all %>%
   mutate(
     period_DID = case_when(
-      DHSYEAR == 1997 ~ 0,           # 0 indique le Pre-treatment 
-      DHSYEAR %in% c(2008,2021) ~ 1  # 1 indique le Post-treatment 
+      DHSYEAR == 1997 ~ -1, 
+      DHSYEAR == 2008 ~ 0,
+      DHSYEAR == 2021 ~ 1 
     )
   )
 
-pre_treatment <- data_all %>% filter(period_DID == 0)
-post_treatment <- data_all %>% filter(period_DID == 1)
+pre_treatment <- data_all %>% filter(period_DID <= 0)
+post_treatment <- data_all %>% filter(period_DID >= 0)
 ```
 
-Nous obtenons 1 930 observations pour le pre_treatment et 11 500 observations pour la période de post_treatment.
+Nous obtenons 4 838 observations pour le pre_treatment et 11 500 observations pour la période de post_treatment.
 
 ## Testing the parallel trends hypothesis 
 
-La méthode de double différence repose sur des hypothèses de tendances parallèlles. Pour tester la validité de cette hypothèse, nous construisons un groupe de traitement et de contrôle placebo basé sur les ménages ruraux enquêtés en 1997. Le groupe de traitement placebo comprend ceux qui vivent dans une zone située dans ou à moins de 10 km d'une aire protégée créée entre 2008 et 2021, et le groupe de contrôle placebo est composé de ceux qui leur sont appariés. Ce test placebo a pour but de vérifier si les deux groupes suivaient des tendances similaires avant l'introduction du traitement. Si un effet est observé pendant la période placebo, cela pourrait indiquer que les tendances pré-traitement n'étaient pas parallèles, remettant en question la validité de l'estimation DID. Il faut donc que le résultat de ce test soit nul ou statistiquement non significatif pour renforcer l'idée que les zones traitées et non traitées évoluaient de manière similaire avant la mise en place des aires protégées étudiées sur la période 2008-2021.
+La méthode de double différence repose sur des hypothèses de tendances parallèlles. Pour tester la validité de cette hypothèse, nous construisons un groupe de traitement et de contrôle placebo basé sur les ménages ruraux enquêtés en 1997 et en 2008. Le groupe de traitement placebo comprend ceux qui vivent dans une zone située dans ou à moins de 10 km d'une aire protégée créée entre 2008 et 2021, et le groupe de contrôle placebo est composé de ceux vivant loin de toute aire protégée et qui leur sont appariés. Ce test placebo a pour but de vérifier si les deux groupes suivaient des tendances similaires avant l'introduction du traitement. Si un effet est observé pendant la période placebo, cela pourrait indiquer que les tendances pré-traitement n'étaient pas parallèles, remettant en question la validité de l'estimation DID. Il faut donc que le résultat de ce test soit nul ou statistiquement non significatif pour renforcer l'idée que les zones traitées et non traitées évoluaient de manière similaire avant la mise en place des aires protégées étudiées sur la période 2008-2021.
 
 Nous allons appliquer pour le test deux outcomes dont le wealth index et le z-score du wealth index.
 
@@ -125,20 +133,24 @@ placebo_data <- placebo_data %>%
     elevation = elevation_2000,
     population_count = population_count_2000,
     accessibility = traveltime_2000_2000,
-    spei_wc_1995 = spei_wc_1995,
-    spei_wc_1996 = spei_wc_1996,
-    spei_wc_1997 = spei_wc_1997
+    spei_wc_n_2,
+    spei_wc_n_1,
+    spei_wc_n
   )
 
 # Estimation
-did_placebo <- lm(wealth_centile_rural_simple ~ placebo_treated + post + placebo_treated:post + spei_wc_1995 +  spei_wc_1996 + spei_wc_1997 + hv219 + hv220, data = placebo_data)
-summary(did_placebo)
 
+
+did_placebo_wi <- lm(wealth_centile_rural_simple ~ placebo_treated + post + 
+                       placebo_treated:post + spei_wc_n_2 +  spei_wc_n_1 + 
+                       spei_wc_n + hv219 + hv220, data = placebo_data)
+
+summary(did_placebo_wi)
 # Coefficient presentation
-tidy(did_placebo)
+tidy(did_placebo_wi)
 
 # Statistiques
-evolution_placebo <- placebo_data %>%
+evolution_placebo_wi <- placebo_data %>%
   group_by(DHSYEAR, GROUP) %>%
   summarise(
     mean_value = mean(wealth_centile_rural_simple , na.rm = TRUE),
@@ -149,16 +161,18 @@ evolution_placebo <- placebo_data %>%
   )
 
 # Ajout d'un label pour différencier la période pré/ post
-evolution_placebo <- evolution_placebo %>%
+evolution_placebo_wi <- evolution_placebo_wi %>%
   mutate(period = ifelse(DHSYEAR < 2008, "Pre-treatment", "Post-treatment"))
 
 # Plot
-ggplot(evolution_placebo,aes(x = DHSYEAR, y = mean_value, color = GROUP, group = GROUP)) +
-  geom_point(size = 4) +
+ggplot(evolution_placebo_wi, 
+       aes(x = DHSYEAR, y = mean_value, color = GROUP, group = GROUP)) +
+  geom_point(size = 4) + 
   geom_line(size = 1.2) +
   geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se),
                 width = 0.2, size = 0.8, alpha = 0.6) +
-  geom_vline(xintercept = 2008, linetype = "dashed", color = "grey", size = 1) + annotate("text", x = 2007.5, y = max(evolution_placebo$mean_value) * 0.95,
+  geom_vline(xintercept = 2008, linetype = "dashed", color = "grey", size = 1) + 
+  annotate("text", x = 2007.5, y = max(evolution_placebo_wi$mean_value) * 0.95,
     label = "Traitement", angle = 90, vjust = -0.5, size = 4, color = "grey30") +
   scale_color_manual(
     values = c("Treatment" = "#D55E00", "Control" = "#0072B2")) +
@@ -186,18 +200,20 @@ Le graphique présente les moyennes de l'indice de richesse (wealth_centile_rura
 
 ```{r}
 #--------------------------------------------------
-# Test Placebo sur 1997-2008 with outcome = wealth index 
+# Test Placebo sur 1997-2008 with outcome = z-score
 #--------------------------------------------------
 
 # Estimation
-did_placebo <- lm(zscore_wealth ~ placebo_treated + post + placebo_treated:post + spei_wc_1995 +  spei_wc_1996 + spei_wc_1997 + hv219 + hv220, data = placebo_data)
-summary(did_placebo)
+did_placebo_zs <- lm(zscore_wealth ~ placebo_treated + post + placebo_treated:post + 
+                    spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220, 
+                  data = placebo_data)
+summary(did_placebo_zs)
 
 # Coefficient presentation
-tidy(did_placebo)
+tidy(did_placebo_zs)
 
 # Statistiques
-evolution_placebo_Zscore <- placebo_data %>%
+evolution_placebo_zs <- placebo_data %>%
   group_by(DHSYEAR, GROUP) %>%
   summarise(
     mean_value = mean(zscore_wealth , na.rm = TRUE),
@@ -208,16 +224,17 @@ evolution_placebo_Zscore <- placebo_data %>%
   )
 
 # Ajout d'un label pour différencier la période pré/ post
-evolution_placebo_Zscore <- evolution_placebo_Zscore %>%
+evolution_placebo_zs <- evolution_placebo_zs %>%
   mutate(period = ifelse(DHSYEAR < 2008, "Pre-treatment", "Post-treatment"))
 
 # Plot
-ggplot(evolution_placebo_Zscore,aes(x = DHSYEAR, y = mean_value, color = GROUP, group = GROUP)) +
+ggplot(evolution_placebo_zs,
+       aes(x = DHSYEAR, y = mean_value, color = GROUP, group = GROUP)) +
   geom_point(size = 4) +
   geom_line(size = 1.2) +
   geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se),
                 width = 0.2, size = 0.8, alpha = 0.6) +
-  geom_vline(xintercept = 2008, linetype = "dashed", color = "grey", size = 1) + annotate("text", x = 2007.5, y = max(evolution_placebo_Zscore$mean_value) * 0.95,
+  geom_vline(xintercept = 2008, linetype = "dashed", color = "grey", size = 1) + annotate("text", x = 2007.5, y = max(evolution_placebo_zs$mean_value) * 0.95,
     label = "Traitement", angle = 90, vjust = -0.5, size = 4, color = "grey30") +
   scale_color_manual(
     values = c("Treatment" = "#D55E00", "Control" = "#0072B2")) +
@@ -252,7 +269,7 @@ ggplot(evolution_placebo_Zscore,aes(x = DHSYEAR, y = mean_value, color = GROUP, 
 ```{r}
 
 #---------------------------------------------
-#DID Estimation with controls (2008-2021)
+# DID Estimation with controls (2008-2021)
 #--------------------------------------------
 
 library(sandwich)
@@ -260,7 +277,7 @@ library(lmtest)
 
 # Treatment period: 2008-2021
 model_data <- data_all %>%
-  filter(DHSYEAR %in% c(2008,2021)) %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
   mutate(
     treated = ifelse(GROUP == "Treatment", 1, 0),
     post = ifelse(DHSYEAR == 2021, 1, 0)
@@ -276,9 +293,9 @@ model_data <- data_all %>%
     elevation = elevation_2000,
     population_count = population_count_2000,
     accessibility = traveltime_2000_2000,
-    `spei_wc_n-2` = `spei_wc_n-2`,
-    `speiwc_n-1` = `speiwc_n-1`,
-    spei_wc_n =spei_wc_n
+    `spei_wc_n_2`,
+    `spei_wc_n_1`,
+    spei_wc_n
   )
 
 # Main DID regression with robust standard errors per cluster
@@ -286,7 +303,7 @@ did_2008_2021 <- lm(
   wealth_centile_rural_simple  ~ treated * post + sex_head + age_head + 
     forest_cover_rate + slope + elevation + 
     population_count + accessibility + 
-    `spei_wc_n-2` + `spei_wc_n-2` + `spei_wc_n`, 
+    `spei_wc_n_2` + `spei_wc_n_1` + `spei_wc_n`, 
   data = model_data )
 
 
@@ -452,9 +469,10 @@ ggplot(evolution_combined,
 ```
 
 ## Estimation du modèle DID avec l'outcome secondaire 
+
 ```{r}
 #---------------------------------------------
-#DID Estimation with controls (2008-2021)
+# DID Estimation with controls for z score (2008-2021)
 #--------------------------------------------
 # Treatment period: 2008-2021
 model_data_zscore <- data_all %>%
@@ -474,16 +492,16 @@ model_data_zscore <- data_all %>%
     elevation = elevation_2000,
     population_count = population_count_2000,
     accessibility = traveltime_2000_2000,
-    `spei_wc_n-2` = `spei_wc_n-2`,
-    `speiwc_n-1` = `speiwc_n-1`,
-    spei_wc_n = spei_wc_n
+    `spei_wc_n_2`,
+    `spei_wc_n_1`,
+    spei_wc_n
   )
 # Main DID regression with robust standard errors per cluster
 did_2008_2021 <- lm(
   zscore_wealth  ~ treated * post + sex_head + age_head + 
     forest_cover_rate + slope + elevation + 
     population_count + accessibility + 
-    `spei_wc_n-2` + `speiwc_n-1` + spei_wc_n, 
+    `spei_wc_n_2` + `spei_wc_n_1` + spei_wc_n, 
   data = model_data )
 
 
