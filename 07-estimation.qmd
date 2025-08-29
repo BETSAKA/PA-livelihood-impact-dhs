@@ -56,6 +56,23 @@ data_matched_2021 <- data_matched_2021 %>%
 #data_matched_2008$hv220 <- as.numeric(as_factor(data_matched_2008$hv220))
 #data_matched_2021$hv220 <- as.numeric(as_factor(data_matched_2021$hv220))
 
+# Renommer les noms des spei du dataframe de 2008 et 2021
+data_matched_2008 <- data_matched_2008 %>%
+  rename(
+    'spei_wc_n-2' = spei_wc_2006,
+    'speiwc_n-1' = spei_wc_2007,
+    'spei_wc_n' = spei_wc_2008
+  )
+
+
+data_matched_2021 <- data_matched_2021 %>%
+  rename(
+    'spei_wc_n-2' = spei_wc_2019,
+    'speiwc_n-1' = spei_wc_2020,
+    'spei_wc_n' = spei_wc_2021
+  )
+
+
 # Merge the three waves
 data_all <- bind_rows(data_matched_1997, data_matched_2008, data_matched_2021)
 
@@ -241,7 +258,6 @@ ggplot(evolution_placebo_Zscore,aes(x = DHSYEAR, y = mean_value, color = GROUP, 
 library(sandwich)
 library(lmtest)
 
-
 # Treatment period: 2008-2021
 model_data <- data_all %>%
   filter(DHSYEAR %in% c(2008,2021)) %>%
@@ -260,9 +276,9 @@ model_data <- data_all %>%
     elevation = elevation_2000,
     population_count = population_count_2000,
     accessibility = traveltime_2000_2000,
-    spei_wc_2019 = spei_wc_2019,
-    spei_wc_2020 = spei_wc_2020,
-    spei_wc_2021 = spei_wc_2021
+    `spei_wc_n-2` = `spei_wc_n-2`,
+    `speiwc_n-1` = `speiwc_n-1`,
+    spei_wc_n =spei_wc_n
   )
 
 # Main DID regression with robust standard errors per cluster
@@ -270,7 +286,7 @@ did_2008_2021 <- lm(
   wealth_centile_rural_simple  ~ treated * post + sex_head + age_head + 
     forest_cover_rate + slope + elevation + 
     population_count + accessibility + 
-    spei_wc_2019 + spei_wc_2020 + spei_wc_2021, 
+    `spei_wc_n-2` + `spei_wc_n-2` + `spei_wc_n`, 
   data = model_data )
 
 
@@ -458,16 +474,16 @@ model_data_zscore <- data_all %>%
     elevation = elevation_2000,
     population_count = population_count_2000,
     accessibility = traveltime_2000_2000,
-    spei_wc_2019 = spei_wc_2019,
-    spei_wc_2020 = spei_wc_2020,
-    spei_wc_2021 = spei_wc_2021
+    `spei_wc_n-2` = `spei_wc_n-2`,
+    `speiwc_n-1` = `speiwc_n-1`,
+    spei_wc_n = spei_wc_n
   )
 # Main DID regression with robust standard errors per cluster
 did_2008_2021 <- lm(
   zscore_wealth  ~ treated * post + sex_head + age_head + 
     forest_cover_rate + slope + elevation + 
     population_count + accessibility + 
-    spei_wc_2019 + spei_wc_2020 + spei_wc_2021, 
+    `spei_wc_n-2` + `speiwc_n-1` + spei_wc_n, 
   data = model_data )
 
 
