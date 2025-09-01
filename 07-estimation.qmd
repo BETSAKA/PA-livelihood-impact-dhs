@@ -12,15 +12,11 @@ Le document présente l'estimation en double différence des groupes de traiteme
 
 ## Methods
 
-Nous débutons notre analyse par la définition des périodes de traitement. Puis nous créons un groupe de traitement placebo basé sur les ménages de 1997. Ce placebo est utilisé pour tester l'hypothèse des tendances parallèles, . Après la vérification de la validité de l'hypothèse, nous effectuons une estimation pour le groupe placebo (1997-2008) puis une autre estimation pour la période de 2008-2021.
+Nous débutons notre analyse par la préparation des données en chargeant les données utilisées ainsi qu'en définissant les périodes de traitement. Puis nous créons un groupe de traitement placebo basé sur les ménages de 1997. Ce placebo est utilisé pour tester l'hypothèse des tendances parallèles, . Après la vérification de la validité de l'hypothèse, nous effectuons une estimation pour le groupe placebo (1997-2008) puis une autre estimation pour la période de 2008-2021.
 
-## Definition of treatment periods // TITRE A REVOIR
+## Préparation des données
 
-La période de pré-traitement sera la période de 1997 à 2008. La période de post-traitement la période 2008 et 2021. Le groupe de traitement ce sont les ménages vivant à moins de 10km des aires protégées créées entre 2008 et 2021. Le groupe de contrôle ce sont les ménages vivant à plus de 10km des aires protégées crées jusqu'en 2021.
-Les ménages vivant à moins de 10km d'une aire protégée créée avant 2008 seront exclus de l'analyse.
-L'estimation d'impact consiste à comparer l'évolution du niveau de vie du groupe de traitement et du groupe de contrôle entre 2008 et 2021. Si une différence significative apparaît, on considérera que la création des aires protégées a eu un impact sur les conditions de vie des riverains, sous réserve que le test placebo soit concluant.
-Le test placebo consiste à comparer l'évolution du niveau de vie du même groupe de traitement et du même groupe de contrôle entre 1997 et 2008. Si les conditions de vie évoluent parallèlement dans ces deux groupes, alors on considérera le test placebo comme concluant.
-
+La période de pré-traitement sera la période de 1997 à 2008. La période de post-traitement sera la période 2008 et 2021. Le groupe de traitement sont les ménages vivant à moins de 10km des aires protégées créées entre 2008 et 2021. Le groupe de contrôle sont les ménages vivant à plus de 10km des aires protégées créées jusqu'en 2021. Les ménages vivant à moins de 10km d'une aire protégée créée avant 2008 seront exclus de l'analyse. L'estimation d'impact consiste à comparer l'évolution du niveau de vie du groupe de traitement et du groupe de contrôle entre 2008 et 2021. Si une différence significative apparaît, on considérera que la création des aires protégées a eu un impact sur les conditions de vie des riverains, sous réserve que le test placebo soit concluant. Le test placebo consiste à comparer l'évolution du niveau de vie du même groupe de traitement et du même groupe de contrôle entre 1997 et 2008. Si les conditions de vie évoluent parallèlement dans ces deux groupes, alors on considèrera le test placebo comme concluant.
 
 ```{r}
 # Treatment periods definition--------------------------------
@@ -30,39 +26,28 @@ Le test placebo consiste à comparer l'évolution du niveau de vie du même grou
 
 # Library
 library(did)
-library(tidyverse) #Manipulation et visualisation des données
-library(tmap) #Analyse cartographique 
-library(ggplot2) #Figure
+library(tidyverse) 
+library(tmap)  
+library(ggplot2) 
 library(sf)
-library(gt) #Mise en forme des tableaux 
+library(gt) 
 library(MatchIt)
 library(haven)
+library(stargazer)
 
 # Load data 
 data_matched_1997 <- read_rds("data/derived/data_matched_1997.rds")
 data_matched_2008 <- read_rds("data/derived/data_matched_2008.rds")
 data_matched_2021 <- read_rds("data/derived/data_matched_2021.rds")
 
-# Add year in each dataset
-data_matched_1997 <- data_matched_1997 %>%
-  mutate(year = 1997)
-data_matched_2008 <- data_matched_2008 %>%
-  mutate(year = 2008)
-data_matched_2021 <- data_matched_2021 %>%
-  mutate(year = 2021)
-
-# Standardization of the hv220 column in each dataframe
-#data_matched_1997$hv220 <- as.numeric(as_factor(data_matched_1997$hv220))
-#data_matched_2008$hv220 <- as.numeric(as_factor(data_matched_2008$hv220))
-#data_matched_2021$hv220 <- as.numeric(as_factor(data_matched_2021$hv220))
-
-# Renommer les noms des spei du dataframe de 2008 et 2021
+# Renommer les noms des spei du dataframe
 data_matched_1997 <- data_matched_1997 %>%
   rename(
     spei_wc_n_2 = spei_wc_1995,
     spei_wc_n_1 = spei_wc_1996,
     spei_wc_n = spei_wc_1997
   )
+
 
 data_matched_2008 <- data_matched_2008 %>%
   rename(
@@ -97,15 +82,11 @@ pre_treatment <- data_all %>% filter(period_DID <= 0)
 post_treatment <- data_all %>% filter(period_DID >= 0)
 ```
 
-Nous obtenons 4 838 observations pour le pre_treatment et 11 500 observations pour la période de post_treatment.
+Nous obtenons 6 768 observations pour le pre_treatment et 11 500 observations pour la période de post_treatment.
 
-## Testing the parallel trends hypothesis 
+## Testing the parallel trends hypothesis
 
-La méthode de double différence repose sur des hypothèses de tendances parallèlles. Pour tester la validité de cette hypothèse, nous construisons un groupe de traitement et de contrôle placebo basé sur les ménages ruraux enquêtés en 1997 et en 2008. Le groupe de traitement placebo comprend ceux qui vivent dans une zone située dans ou à moins de 10 km d'une aire protégée créée entre 2008 et 2021, et le groupe de contrôle placebo est composé de ceux vivant loin de toute aire protégée et qui leur sont appariés. Ce test placebo a pour but de vérifier si les deux groupes suivaient des tendances similaires avant l'introduction du traitement. Si un effet est observé pendant la période placebo, cela pourrait indiquer que les tendances pré-traitement n'étaient pas parallèles, remettant en question la validité de l'estimation DID. Il faut donc que le résultat de ce test soit nul ou statistiquement non significatif pour renforcer l'idée que les zones traitées et non traitées évoluaient de manière similaire avant la mise en place des aires protégées étudiées sur la période 2008-2021.
-
-Nous allons appliquer pour le test deux outcomes dont le wealth index et le z-score du wealth index.
-
-### Test with the principal outcome: Wealth index 
+### Test with the principal outcome: Wealth index
 
 ```{r}
 #--------------------------------------------------
@@ -164,52 +145,24 @@ evolution_placebo_wi <- placebo_data %>%
 evolution_placebo_wi <- evolution_placebo_wi %>%
   mutate(period = ifelse(DHSYEAR < 2008, "Pre-treatment", "Post-treatment"))
 
-# Plot
-ggplot(evolution_placebo_wi, 
-       aes(x = DHSYEAR, y = mean_value, color = GROUP, group = GROUP)) +
-  geom_point(size = 4) + 
-  geom_line(size = 1.2) +
-  geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se),
-                width = 0.2, size = 0.8, alpha = 0.6) +
-  geom_vline(xintercept = 2008, linetype = "dashed", color = "grey", size = 1) + 
-  annotate("text", x = 2007.5, y = max(evolution_placebo_wi$mean_value) * 0.95,
-    label = "Traitement", angle = 90, vjust = -0.5, size = 4, color = "grey30") +
-  scale_color_manual(
-    values = c("Treatment" = "#D55E00", "Control" = "#0072B2")) +
-  scale_x_continuous(breaks = c(1997, 2008), labels = c("1997", "2008")) +
-  labs( 
-    title = "Placebo test: Wealth Index Mean by group (1997-2008)",
-    subtitle = "Evolution in mean wealth index moyen by group (1997 vs 2008)",
-    x = "Survey Year",
-    y = "mean wealth index"
-  ) +
-  theme_minimal(base_size = 16) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
-    plot.subtitle = element_text(hjust = 0.5, size = 14, margin = margin(b = 15)),
-    axis.title = element_text(face = "bold"),
-    legend.position = "top",
-    panel.grid.major = element_line(size = 0.3),
-    panel.grid.minor = element_blank()
-  )
+
 ```
 
 Le graphique présente les moyennes de l'indice de richesse (wealth_centile_rural_simple) pour les groupes de traitement et de contrôles pour les années 1997 et 2008. Le point en orange représente la moyenne de l'indice de richesse pour le groupe de traitement et le point en bleu est celui du groupe de contrôle. En 1997, les deux moyennes sont proches pour les deux groupes dont une valeur de -1.79 pour les groupes de traitement et -1.97 pour les groupes de contrôle. En 2008, les deux moyennes baissent mais restent relativement proches (Groupe de traitement = -2.80 et Groupe de controle = -3.45). D'après ces résultats, il n'y a pas de différence marquée dans l'évolution de la richesse entre les deux groupes sur la période 1997-2008, période où aucune aire protégée n'a été crée pour ces groupes. L'hypothèse des tendances parallèles est donc vérifié.
 
-
-
 # Estimation du modèle DID avec l'outcome principal
 
-##  Estimation du modèle DID
+## Estimation du modèle DID
 
-    -   Estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes pour gérer la dépendance des observations au sein des grappes:
+```         
+-   Estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes pour gérer la dépendance des observations au sein des grappes:
 
-        -   calcul des résidus à partir du modèle de régression
+    -   calcul des résidus à partir du modèle de régression
 
-        -   Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
+    -   Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
+```
 
 ```{r}
-
 #---------------------------------------------
 # DID Estimation with controls (2008-2021)
 #--------------------------------------------
@@ -250,7 +203,9 @@ did_2008_2021 <- lm(
 
 
 summary(did_2008_2021)
+```
 
+```{r}
 #-------------------------------------------------
 #Erreurs standards robustes intra-cluster (hv001)
 #-------------------------------------------------
@@ -278,65 +233,14 @@ cluster_se <- function(model, cluster) {
 }
   
 # Application aux résultats DID
-if("hv001" %in% names(model_data)){
-  cl_vcov <- cluster_se(did_2008_2021, model_data$hv001)
-  cluster_results <- coeftest(did_2008_2021, vcov. = cl_vcov)
-  
+cl_vcov <- cluster_se(did_2008_2021, model_data$hv001)
+cluster_results <- coeftest(did_2008_2021, vcov. = cl_vcov)
   
   print(cluster_results)
-
-} else {
-  summary(did_2008_2021)
-}
-
-# Coefficient presentation
-tidy(did_2008_2021)
-
-# Plot 
-evolution_main <- model_data %>%
-  group_by(DHSYEAR, GROUP) %>%
-  summarise(
-    mean_value = mean(wealth_centile_rural_simple, na.rm = FALSE),
-    sd_value = sd(wealth_centile_rural_simple, na.rm = FALSE),
-    n = n(),
-    se = sd_value / sqrt(n),
-    .groups = "drop"
-  )
-
-ggplot(evolution_main, aes(x = factor(DHSYEAR), y = mean_value, color = GROUP, group = GROUP)) +
-  geom_point(size = 4) +
-  geom_line(size = 1.3) +
-  geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se), width = 0.2, size = 0.8, alpha = 0.5) + 
-  geom_text(
-    aes(label = sprintf("%.2f", mean_value)),
-    vjust = -1,
-    size = 4.5,
-    color = "black"
-  ) +
-  scale_color_manual(
-    values = c("Treatment" = "#D55E00", "Control" = "#0072B2"),
-    name = "Group"
-  ) +
-  scale_y_continuous(
-    trans = pseudo_log_trans(base = 10),
-    name = "Mean Wealth Index (wealth_centile_rural_simple)"
-  ) +
-  labs(
-    title = "Evolution of Wealth Index by Group (2008-2021)",
-    x = "Survey Year"
-  ) +
-  theme_minimal(base_size = 16) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
-    axis.title = element_text(face = "bold"),
-    legend.position = "top",
-    panel.grid.major = element_line(size = 0.3),
-    panel.grid.minor = element_blank()
-  )
-
+# Utiliser stargazert
 ```
 
-## Graphique DID 
+## Graphique DID
 
 ```{r}
 
@@ -410,11 +314,9 @@ ggplot(evolution_combined,
   
 ```
 
-
-
 # Outcome secondaire
 
-### Test with the secondary outcome: Z-score of the Wealth index 
+### Test with the secondary outcome: Z-score of the Wealth index
 
 ```{r}
 #--------------------------------------------------
@@ -474,7 +376,7 @@ ggplot(evolution_placebo_zs,
   )
 ```
 
-## Estimation du modèle DID avec l'outcome secondaire 
+## Estimation du modèle DID avec l'outcome secondaire
 
 ```{r}
 #---------------------------------------------
@@ -554,51 +456,9 @@ if("hv001" %in% names(model_data)){
 # Coefficient presentation
 tidy(did_2008_2021)
 
-# Plot 
-evolution_main_zscore <- model_data %>%
-  group_by(DHSYEAR, GROUP) %>%
-  summarise(
-    mean_value = mean(zscore_wealth, na.rm = FALSE),
-    sd_value = sd(zscore_wealth, na.rm = FALSE),
-    n = n(),
-    se = sd_value / sqrt(n),
-    .groups = "drop"
-  )
-
-ggplot(evolution_main_zscore, aes(x = factor(DHSYEAR), y = mean_value, color = GROUP, group = GROUP)) +
-  geom_point(size = 4) +
-  geom_line(size = 1.3) +
-  geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se), width = 0.2, size = 0.8, alpha = 0.5) + 
-  geom_text(
-    aes(label = sprintf("%.2f", mean_value)),
-    vjust = -1,
-    size = 4.5,
-    color = "black"
-  ) +
-  scale_color_manual(
-    values = c("Treatment" = "#D55E00", "Control" = "#0072B2"),
-    name = "Group"
-  ) +
-  scale_y_continuous(
-    trans = pseudo_log_trans(base = 10),
-    name = "Mean zscore of Wealth Index (z_score_wealth)"
-  ) +
-  labs(
-    title = "Evolution of Wealth Index by Group (2008-2021)",
-    x = "Survey Year"
-  ) +
-  theme_minimal(base_size = 16) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
-    axis.title = element_text(face = "bold"),
-    legend.position = "top",
-    panel.grid.major = element_line(size = 0.3),
-    panel.grid.minor = element_blank()
-  )
-
 ```
 
-## Graphique DID 
+## Graphique DID
 
 ```{r}
 
