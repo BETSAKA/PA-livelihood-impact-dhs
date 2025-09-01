@@ -196,69 +196,11 @@ ggplot(evolution_placebo_wi,
 
 Le graphique présente les moyennes de l'indice de richesse (wealth_centile_rural_simple) pour les groupes de traitement et de contrôles pour les années 1997 et 2008. Le point en orange représente la moyenne de l'indice de richesse pour le groupe de traitement et le point en bleu est celui du groupe de contrôle. En 1997, les deux moyennes sont proches pour les deux groupes dont une valeur de -1.79 pour les groupes de traitement et -1.97 pour les groupes de contrôle. En 2008, les deux moyennes baissent mais restent relativement proches (Groupe de traitement = -2.80 et Groupe de controle = -3.45). D'après ces résultats, il n'y a pas de différence marquée dans l'évolution de la richesse entre les deux groupes sur la période 1997-2008, période où aucune aire protégée n'a été crée pour ces groupes. L'hypothèse des tendances parallèles est donc vérifié.
 
-### Test with the secondary outcome: Z-score of the Wealth index 
 
-```{r}
-#--------------------------------------------------
-# Test Placebo sur 1997-2008 with outcome = z-score
-#--------------------------------------------------
 
-# Estimation
-did_placebo_zs <- lm(zscore_wealth ~ placebo_treated + post + placebo_treated:post + 
-                    spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220, 
-                  data = placebo_data)
-summary(did_placebo_zs)
+# Estimation du modèle DID avec l'outcome principal
 
-# Coefficient presentation
-tidy(did_placebo_zs)
-
-# Statistiques
-evolution_placebo_zs <- placebo_data %>%
-  group_by(DHSYEAR, GROUP) %>%
-  summarise(
-    mean_value = mean(zscore_wealth , na.rm = TRUE),
-    sd_value = sd(zscore_wealth , na.rm = TRUE),
-    n = n(),
-    se = sd_value / sqrt(n),
-    .groups = "drop"
-  )
-
-# Ajout d'un label pour différencier la période pré/ post
-evolution_placebo_zs <- evolution_placebo_zs %>%
-  mutate(period = ifelse(DHSYEAR < 2008, "Pre-treatment", "Post-treatment"))
-
-# Plot
-ggplot(evolution_placebo_zs,
-       aes(x = DHSYEAR, y = mean_value, color = GROUP, group = GROUP)) +
-  geom_point(size = 4) +
-  geom_line(size = 1.2) +
-  geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se),
-                width = 0.2, size = 0.8, alpha = 0.6) +
-  geom_vline(xintercept = 2008, linetype = "dashed", color = "grey", size = 1) + annotate("text", x = 2007.5, y = max(evolution_placebo_zs$mean_value) * 0.95,
-    label = "Traitement", angle = 90, vjust = -0.5, size = 4, color = "grey30") +
-  scale_color_manual(
-    values = c("Treatment" = "#D55E00", "Control" = "#0072B2")) +
-  scale_x_continuous(breaks = c(1997, 2008), labels = c("1997", "2008")) +
-  labs( 
-    title = "Placebo test: Wealth Index Mean by group (1997-2008)",
-    subtitle = "Evolution in mean zcore of wealth index by group (1997 vs 2008)",
-    x = "Survey Year",
-    y = "mean wealth index"
-  ) +
-  theme_minimal(base_size = 16) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
-    plot.subtitle = element_text(hjust = 0.5, size = 14, margin = margin(b = 15)),
-    axis.title = element_text(face = "bold"),
-    legend.position = "top",
-    panel.grid.major = element_line(size = 0.3),
-    panel.grid.minor = element_blank()
-  )
-```
-
-## Estimation du modèle DID avec l'outcome principal
-
-3.  Estimation du modèle DID
+##  Estimation du modèle DID
 
     -   Estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes pour gérer la dépendance des observations au sein des grappes:
 
@@ -468,6 +410,70 @@ ggplot(evolution_combined,
   
 ```
 
+
+
+# Outcome secondaire
+
+### Test with the secondary outcome: Z-score of the Wealth index 
+
+```{r}
+#--------------------------------------------------
+# Test Placebo sur 1997-2008 with outcome = z-score
+#--------------------------------------------------
+
+# Estimation
+did_placebo_zs <- lm(zscore_wealth ~ placebo_treated + post + placebo_treated:post + 
+                    spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220, 
+                  data = placebo_data)
+summary(did_placebo_zs)
+
+# Coefficient presentation
+tidy(did_placebo_zs)
+
+# Statistiques
+evolution_placebo_zs <- placebo_data %>%
+  group_by(DHSYEAR, GROUP) %>%
+  summarise(
+    mean_value = mean(zscore_wealth , na.rm = TRUE),
+    sd_value = sd(zscore_wealth , na.rm = TRUE),
+    n = n(),
+    se = sd_value / sqrt(n),
+    .groups = "drop"
+  )
+
+# Ajout d'un label pour différencier la période pré/ post
+evolution_placebo_zs <- evolution_placebo_zs %>%
+  mutate(period = ifelse(DHSYEAR < 2008, "Pre-treatment", "Post-treatment"))
+
+# Plot
+ggplot(evolution_placebo_zs,
+       aes(x = DHSYEAR, y = mean_value, color = GROUP, group = GROUP)) +
+  geom_point(size = 4) +
+  geom_line(size = 1.2) +
+  geom_errorbar(aes(ymin = mean_value - 1.96 * se, ymax = mean_value + 1.96 * se),
+                width = 0.2, size = 0.8, alpha = 0.6) +
+  geom_vline(xintercept = 2008, linetype = "dashed", color = "grey", size = 1) + annotate("text", x = 2007.5, y = max(evolution_placebo_zs$mean_value) * 0.95,
+    label = "Traitement", angle = 90, vjust = -0.5, size = 4, color = "grey30") +
+  scale_color_manual(
+    values = c("Treatment" = "#D55E00", "Control" = "#0072B2")) +
+  scale_x_continuous(breaks = c(1997, 2008), labels = c("1997", "2008")) +
+  labs( 
+    title = "Placebo test: Wealth Index Mean by group (1997-2008)",
+    subtitle = "Evolution in mean zcore of wealth index by group (1997 vs 2008)",
+    x = "Survey Year",
+    y = "mean wealth index"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 18),
+    plot.subtitle = element_text(hjust = 0.5, size = 14, margin = margin(b = 15)),
+    axis.title = element_text(face = "bold"),
+    legend.position = "top",
+    panel.grid.major = element_line(size = 0.3),
+    panel.grid.minor = element_blank()
+  )
+```
+
 ## Estimation du modèle DID avec l'outcome secondaire 
 
 ```{r}
@@ -664,4 +670,3 @@ ggplot(evolution_combined,
     panel.grid.minor = element_blank()
   )
 ```
-
