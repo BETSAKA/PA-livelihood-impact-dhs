@@ -291,3 +291,22 @@ descr_stats_vars <- bind_rows(descr_1997, descr_2008, descr_2021)
 # Affichage
 descr_stats_vars 
 ```
+
+## Statistiques descriptives (partie estimation)
+
+```{r}
+# Statistiques descriptives 
+evolution_placebo_wi <- placebo_data_wi %>%
+  group_by(DHSYEAR, GROUP) %>%
+  summarise(
+    mean_value = mean(wealth_centile_rural_simple , na.rm = TRUE),
+    sd_value = sd(wealth_centile_rural_simple , na.rm = TRUE),
+    n = n(),
+    se = sd_value / sqrt(n),
+    .groups = "drop"
+  )
+
+# Ajout d'un label pour différencier la période pré/ post
+evolution_placebo_wi <- evolution_placebo_wi %>%
+  mutate(period = ifelse(DHSYEAR < 2008, "Pre-treatment", "Post-treatment"))
+```
