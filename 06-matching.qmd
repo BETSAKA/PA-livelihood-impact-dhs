@@ -51,7 +51,7 @@ X_match <- as.data.frame(st_drop_geometry(matching_1997[, c("treecover_area_2000
 set.seed(123)
 
 if (file.exists("data/derived/gen_match_model_1997.rds")) {
-  matching_result_1997 <- readRDS("data/derived/gen_match_model_1997.rds")
+  gen_match_model_1997 <- readRDS("data/derived/gen_match_model_1997.rds")
 } else {
   cat("Fichier introuvable, début du traitement...\n")
   
@@ -134,7 +134,7 @@ X_match <- as.data.frame(st_drop_geometry(matching_2008[, c("treecover_area_2000
 set.seed(123)
 
 if (file.exists("data/derived/gen_match_model_2008.rds")) {
-  matching_result_2008 <- readRDS("data/derived/gen_match_model_2008.rds")
+  gen_match_model_2008 <- readRDS("data/derived/gen_match_model_2008.rds")
 } else {
   cat("Fichier introuvable, début du traitement...\n")
   
@@ -209,8 +209,8 @@ X_match <- as.data.frame(st_drop_geometry(matching_2021[, c("treecover_area_2000
 set.seed(123)
 
 
-if (file.exists("data/derived/matching_result_2021.rds")) {
-  matching_result_2021 <- readRDS("data/derived/matching_result_2021.rds")
+if (file.exists("data/derived/gen_match_model_2021.rds")) {
+  gen_match_model_2021 <- readRDS("data/derived/gen_match_model_2021.rds")
 } else {
   cat("Fichier introuvable, début du traitement...\n")
   
