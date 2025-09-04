@@ -37,6 +37,8 @@ library(broom)
 library(sandwich)
 library(lmtest)
 
+
+
 # Load data 
 data_matched_1997 <- read_rds("data/derived/data_matched_1997.rds")
 data_matched_2008 <- read_rds("data/derived/data_matched_2008.rds")

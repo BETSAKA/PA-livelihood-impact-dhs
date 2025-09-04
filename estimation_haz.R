@@ -192,3 +192,72 @@ did_callaway_haz <- att_gt(
 
 summary(did_callaway_haz)
 ggdid(did_callaway_haz)
+
+## Essai avec fixest -------------------------------------------
+# remotes::install_github("https://github.com/s3alfisc/fwildclusterboot/")
+# remotes::install_github("https://github.com/lrberge/fixest/")
+library(fixest)
+library(fwildclusterboot)
+library(dplyr)
+library(broom)
+
+did_fit_fixest <- function(d, years, ssc_small = TRUE){
+  dd <- d %>%
+    filter(DHSYEAR %in% years) %>%
+    transmute(
+      DHSYEAR, v001, GROUP,
+      haz,
+      treated = as.integer(GROUP == "Treatment"),
+      post    = as.integer(DHSYEAR == max(years))
+    ) %>%
+    filter(!is.na(haz))
+  
+  m <- feols(haz ~ treated*post, data = dd)
+  
+  # small-sample correction toggle
+  ssc_opt <- if (ssc_small) ssc(adj = TRUE, cluster.adj = TRUE) else ssc()
+  
+  # --- three VCOVs computed separately (avoid etable's multi-vcov path) ---
+  s_hc3 <- summary(m, vcov = "hc3", ssc = ssc_opt)
+  s_c1  <- summary(m, vcov = ~ v001, ssc = ssc_opt)
+  s_tw  <- summary(m, vcov = ~ v001 + DHSYEAR, ssc = ssc_opt)
+  
+  # extract DID row
+  ext <- function(su) {
+    broom::tidy(su) |>
+      filter(term == "treated:post") |>
+      transmute(estimate, std.error, statistic, p.value)
+  }
+  
+  r_hc3 <- ext(s_hc3) |> rename(se_hc3 = std.error,  p_hc3 = p.value,  t_hc3 = statistic)
+  r_c1  <- ext(s_c1)  |> rename(se_cl1 = std.error,  p_cl1 = p.value,  t_cl1 = statistic)
+  r_tw  <- ext(s_tw)  |> rename(se_tw  = std.error,  p_tw  = p.value,  t_tw  = statistic)
+  
+  # wild cluster bootstrap p-value (PSU clusters)
+  wb <- boottest(
+    m,
+    param   = "treated:post",
+    clustid = ~ v001,
+    B       = 9999,
+    type    = "rademacher"
+  )
+  
+  # assemble a single tidy row
+  out <- bind_cols(
+    tibble(period = paste0(min(years), "–", max(years))),
+    r_hc3[, c("estimate", "se_hc3", "t_hc3", "p_hc3")],
+    r_c1[,  c("se_cl1", "t_cl1", "p_cl1")],
+    r_tw[,  c("se_tw",  "t_tw",  "p_tw")],
+    tibble(p_wild = wb$p_val)
+  )
+  
+  list(data = dd, model = m, tidy = out)
+}
+
+# Run
+res_placebo <- did_fit_fixest(dat, c(1997, 2008))
+res_main    <- did_fit_fixest(dat, c(2008, 2021))
+
+# View compact DID rows
+res_placebo$tidy
+res_main$tidy
