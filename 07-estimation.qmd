@@ -86,7 +86,7 @@ pre_treatment <- data_all %>% filter(period_DID <= 0)
 post_treatment <- data_all %>% filter(period_DID >= 0)
 ```
 
-Nous obtenons 6 768 observations pour le pre_treatment et 11 500 observations pour la période de post_treatment.
+Nous obtenons 6 767 observations pour le pre_treatment et 11 500 observations pour la période de post_treatment.
 
 ## Primary outcome: Wealth index
 
@@ -165,7 +165,7 @@ cluster_vcov <- function(mod, cluster) {
 }
   
 # Fonction DID
-did_fit <- function(d, years){
+did_fit_wi <- function(d, years){
   dd <- d %>%
     filter(DHSYEAR %in% years) %>%
     transmute(
@@ -180,28 +180,23 @@ did_fit <- function(d, years){
   m <- lm(wealth_centile_rural_simple ~ treated*post, data = dd)
   vc <- cluster_vcov(m, dd$hv001)
   out <- coeftest(m, vcov.=vc) %>% broom::tidy()
-  list(data=dd, tidy=out)
-}
-did_summary_extract <- function(res, label){
-  res$tidy %>%
-    filter(term=="treated:post") %>%
-    transmute(spec=label, estimate, std.error, statistic, p.value)
+  list(model = m, vcov = vc, data=dd, tidy=out)
 }
 
 # Estimation
-res_placebo <- did_fit(data_all_mod, c(1997, 2008))
-res_main <- did_fit(data_all_mod, c(2008, 2021))
+res_placebo_wi <- did_fit_wi(data_all_mod, c(1997, 2008))
+res_main_wi <- did_fit_wi(data_all_mod, c(2008, 2021))
 
-# Tableau de synthèse
-did_summary <- bind_rows(
-  did_summary_extract(res_placebo, "wealth_centile_rural_simple placebo 1997–2008"),
-  did_summary_extract(res_main,    "wealth_centile_rural_simple main 2008–2021")
-)
-print(did_summary)
+m_placebo_wi <- res_placebo$model
+m_main_wi <- res_main$model
+
+se_placebo_wi <- sqrt(diag(res_placebo_wi$vcov))
+
+se_main_wi <- sqrt(diag(res_main_wi$vcov))
 
 
 # Tableau de l'estimation DID avec erreurs standards par cluster 
-stargazer(m_placebo, m_main,
+stargazer(m_placebo_wi, m_main_wi,
           type = "text",
           se = list(se_placebo, se_main),
           ci = FALSE,
@@ -324,10 +319,6 @@ ggdid(did_callaway_zs)
 ### Intra-cluster standard errors estimation
 
 ```{r}
-#-------------------------------------------------
-#Erreurs standards robustes intra-cluster (hv001)
-#-------------------------------------------------
-
 # Fonction de variance-covariance 
 
 cluster_vcov <- function(mod, cluster) {
@@ -348,7 +339,7 @@ cluster_vcov <- function(mod, cluster) {
 }
   
 # Fonction DID
-did_fit <- function(d, years){
+did_fit_zs <- function(d, years){
   dd <- d %>%
     filter(DHSYEAR %in% years) %>%
     transmute(
@@ -363,35 +354,31 @@ did_fit <- function(d, years){
   m <- lm(zscore_wealth ~ treated*post, data = dd)
   vc <- cluster_vcov(m, dd$hv001)
   out <- coeftest(m, vcov.=vc) %>% broom::tidy()
-  list(data=dd, tidy=out)
-}
-did_summary_extract <- function(res, label){
-  res$tidy %>%
-    filter(term=="treated:post") %>%
-    transmute(spec=label, estimate, std.error, statistic, p.value)
+  list(model = m, vcov = vc, data=dd, tidy=out)
 }
 
 # Estimation
-res_placebo_zs <- did_fit(data_all_mod, c(1997, 2008))
-res_main_zs   <- did_fit(data_all_mod, c(2008, 2021))
+res_placebo_zs <- did_fit_zs(data_all_mod, c(1997, 2008))
+res_main_zs <- did_fit_zs(data_all_mod, c(2008, 2021))
 
-# Tableau de synthèse
-did_summary_zs <- bind_rows(
-  did_summary_extract(res_placebo, "wealth_centile_rural_simple placebo 1997–2008"),
-  did_summary_extract(res_main,    "wealth_centile_rural_simple main 2008–2021")
-)
-print(did_summary_zs)
+m_placebo_zs <- res_placebo$model
+m_main_zs <- res_main$model
+
+se_placebo_zs <- sqrt(diag(res_placebo_zs$vcov))
+
+se_main_zs <- sqrt(diag(res_main_zs$vcov))
 
 
 # Tableau de l'estimation DID avec erreurs standards par cluster 
-stargazer(m_placebo, m_main,
+stargazer(m_placebo_zs, m_main_zs,
           type = "text",
-          se = list(se_placebo, se_main),
+          se = list(se_placebo_zs, se_main_zs),
           ci = FALSE,
           title = "Estimation DID avec erreurs standards robustes cluster",
-          dep.var.labels = "Wealth Centile Rural",
+          dep.var.labels = "zscore_wealth",
           covariate.labels = c("Treatment x Post"),
           star.cutoffs = c(0.05, 0.01, 0.001))
+
 
 ```
 
