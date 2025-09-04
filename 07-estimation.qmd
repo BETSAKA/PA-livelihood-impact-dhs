@@ -110,7 +110,7 @@ data_all_mod <- data_all %>%
 table(data_all_mod$DHSYEAR)
 
 
-# Estimation avec le package did---------
+# Estimation avec le package did
 did_callaway_wi <- att_gt(
   yname = "wealth_centile_rural_simple", 
   tname = "DHSYEAR",
@@ -137,9 +137,15 @@ Les résultats indiquent que, avant le traitement (en 2008), les clusters qui se
 Nous procédons maintenant à l'estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes. Cette estimation permet de gérer la dépendance des observations au sein des grappes. Le but est d'ajuster les erreurs standards en tenant compte des corrélations intra-grappes présentes au sein des groupes par l'échantillonnage de la variable de résultat @abadie2021. Cet ajustement se calcule sur la base des résidus du modèle et d'une estimation de variance intra-cluster. On calcule les résidus à partir du modèle de régression puis on utilise ces résidus pour construire une matrice variance-covariance robuste. La matrice va ajuster la corrélation intra-grappe en tenant compte la structure corporelle des erreurs.
 
 ```{r}
+
+library(stargazer)
+library(dplyr)
+
 #-------------------------------------------------
 #Erreurs standards robustes intra-cluster (hv001)
 #-------------------------------------------------
+
+# Fonction de variance-covariance 
 
 cluster_vcov <- function(mod, cluster) {
   # Extraction des observations utilisées dans le modèle 
@@ -158,7 +164,7 @@ cluster_vcov <- function(mod, cluster) {
   dfc * sandwich(mod, meat = crossprod(uj)/N)
 }
   
-# Application aux résultats DID
+# Fonction DID
 did_fit <- function(d, years){
   dd <- d %>%
     filter(DHSYEAR %in% years) %>%
@@ -169,6 +175,8 @@ did_fit <- function(d, years){
       post = as.integer(DHSYEAR==max(years))
     ) %>%
     filter(!is.na(wealth_centile_rural_simple))
+  
+  
   m <- lm(wealth_centile_rural_simple ~ treated*post, data = dd)
   vc <- cluster_vcov(m, dd$hv001)
   out <- coeftest(m, vcov.=vc) %>% broom::tidy()
@@ -179,7 +187,8 @@ did_summary_extract <- function(res, label){
     filter(term=="treated:post") %>%
     transmute(spec=label, estimate, std.error, statistic, p.value)
 }
-  # Estimation
+
+# Estimation
 res_placebo <- did_fit(data_all_mod, c(1997, 2008))
 res_main    <- did_fit(data_all_mod, c(2008, 2021))
 
@@ -189,6 +198,17 @@ did_summary <- bind_rows(
   did_summary_extract(res_main,    "wealth_centile_rural_simple main 2008–2021")
 )
 print(did_summary)
+
+
+# Tableau de l'estimation DID avec erreurs standards par cluster 
+stargazer(m_placebo, m_main,
+          type = "text",
+          se = list(se_placebo, se_main),
+          ci = FALSE,
+          title = "Estimation DID avec erreurs standards robustes cluster",
+          dep.var.labels = "Wealth Centile Rural",
+          covariate.labels = c("Treatment x Post"),
+          star.cutoffs = c(0.05, 0.01, 0.001))
 
 ```
 
