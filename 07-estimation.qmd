@@ -181,7 +181,7 @@ did_summary_extract <- function(res, label){
 }
   # Estimation
 res_placebo <- did_fit(data_all_mod, c(1997, 2008))
-res_main    <- did_fit(dat_all_mod, c(2008, 2021))
+res_main    <- did_fit(data_all_mod, c(2008, 2021))
 
 # Tableau de synthèse
 did_summary <- bind_rows(
@@ -190,7 +190,6 @@ did_summary <- bind_rows(
 )
 print(did_summary)
 
-# Utiliser stargazert
 ```
 
 ### Graphique DID
