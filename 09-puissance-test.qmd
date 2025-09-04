@@ -1,0 +1,123 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Introduction
+
+## Chargement des données
+
+```{r}
+
+library(tidyverse)
+
+# Cluster classification
+cluster_treatment_classification <- read.csv("data/derived/cluster_treatment_classification.csv")
+
+hr_1997_final <- readRDS("data/derived/hr_1997_final.rds")
+hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
+hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
+
+```
+
+## Calcul de la puissance statistique pour les ménages ruraux
+
+```{r}
+
+library(gt)
+library(lme4)
+library(pwr)
+
+# Extraire les clusters traités en 2021
+treatment_clusters_2021 <- cluster_treatment_classification %>%
+  filter(GROUP == "Treatment", DHSYEAR == 2021) %>%
+  pull(DHSCLUST)
+
+
+# Filtrer hr_2021_final pour tenir compte que les observations traitées 
+household_treatment_2021 <- hr_2021_final %>%
+  filter(hv001 %in% treatment_clusters_2021)
+
+# Function to compute power calculations
+compute_power_stats <- function(data, outcome_var) {
+  # Calculate standard deviation for the specified outcome variable
+  sd_outcome_treatment <- sd(data[[outcome_var]], na.rm=TRUE)
+  
+  # Calculate intra-cluster correlation using a mixed-effects model
+  icc_model <- lmer(as.formula(paste(outcome_var, "~ 1 + (1 | hv001)")), 
+                    data=data, REML=TRUE)
+  
+  # Extract variance components
+  variance_components <- as.data.frame(VarCorr(icc_model)) %>%
+    select(grp, vcov)
+  
+  between_cluster_variance <- variance_components %>%
+    filter(grp == "hv001") %>%
+    pull(vcov)
+  
+  within_cluster_variance <- variance_components %>%
+    filter(grp == "Residual") %>%
+    pull(vcov)
+  
+  # Calculate ICC
+  icc_value <- between_cluster_variance / 
+    (between_cluster_variance + within_cluster_variance)
+  
+  # Parameters for 2021
+  alpha <- 0.05          # Significance level
+  power <- 0.8           # Desired power
+  rho <- icc_value       # Intra-cluster correlation
+  
+  # Sample Sizes
+  treated_2021 <- nrow(data)
+  control_2021 <- nrow(data)
+  clusters_treated_2021 <- length(unique(data$hv001))
+  clusters_control_2021 <- clusters_treated_2021
+  
+  # Design effect calculation
+  design_effect_2021_treated <- 
+    1 + (treated_2021 / clusters_treated_2021 - 1) * rho
+  design_effect_2021_control <- 
+    1 + (control_2021 / clusters_control_2021 - 1) * rho
+  
+  # Effective sample sizes
+  effective_n_2021_treated <- treated_2021 / design_effect_2021_treated
+  effective_n_2021_control <- control_2021 / design_effect_2021_control
+  
+  # Calculate the minimum detectable effect size
+  result <- pwr.t2n.test(
+    n1=effective_n_2021_treated,
+    n2=effective_n_2021_control,
+    sig.level=alpha,
+    power=power
+  )
+  cohens_d <- result$d 
+  
+  # Convert Cohen's d to outcome units
+  mde_in_units <- cohens_d * sd_outcome_treatment
+  
+    # Create a table with the results
+  results_table <- tibble(
+    Métrique=c("ICC", "Écart type ajusté", "d de Cohen", 
+               "MDE en unité de la variable de résultat"),
+    Valeur=c(icc_value, sd_outcome_treatment, cohens_d, mde_in_units)
+  )
+  
+  # Display the results using gt
+  gt(results_table) %>%
+    fmt_number(columns="Valeur",
+               decimals=4) %>%
+    cols_label(Métrique="Métrique",
+               Valeur="Valeur") %>%
+    cols_align(align="center",
+               columns=everything())
+}
+
+# Calculate for all treatment households using hv270 
+compute_power_stats(hr_2021_final, "wealth_centile_rural_simple") %>%
+  tab_header("Puissance statistique pour une analyse incluant ménages urbains 
+             et ruraux") %>%
+  tab_footnote("Variable de résultat = wealth_centile_rural_simple, indice de niveau de vie commun 
+               aux milieux urbains et ruraux.")
+```
