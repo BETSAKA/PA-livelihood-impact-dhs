@@ -10,13 +10,13 @@ editor_options:
 
 Le document présente l'estimation en double différence des groupes de traitement et de contrôle pour la période 2008 à 2021. Le principe est de comparer l'indice de richesse des ménages de contrôle et de traitement à une période antérieure et à une période postérieure à la mise en place des aires protégées.
 
-## Methods
+## Methods // à améliorer
 
-L' analyse débute par une phase de préparation, comprenant l'importation des données et la définition des périodes d'observation. La période de pré-traitement sera la période de 1997 à 2008, et la période de post-traitement sera la période 2008 et 2021. Le groupe de traitement sont les ménages vivant à moins de 10km des aires protégées créées entre 2008 et 2021. Le groupe de contrôle sont les ménages vivant à plus de 10km des aires protégées créées jusqu'en 2021. Les ménages vivant à moins de 10km d'une aire protégée créée avant 2008 seront exclus de l'analyse.
-
-L'estimation d'impact repose sur une approche de difference-in-difference, qui consiste à comparer l'évolution du niveau de vie du groupe de traitement et du groupe de contrôle entre 2008 et 2021. Cette approche repose sur l'hypothèse de tendances parallèles, que nous testons à travers un test placebo. Le test placebo consiste à comparer l'évolution du niveau de vie du même groupe de traitement et du même groupe de contrôle entre 1997 et 2008. Si les conditions de vie évoluent parallèlement dans ces deux groupes, alors on considèrera le test placebo comme concluant. Si une différence significative apparaît, on considèrera que la création des aires protégées a eu un impact sur les conditions de vie des riverains, sous réserve que le test placebo soit concluant.
+L' analyse débute par une phase de préparation, comprenant l'importation des données et la définition des périodes d'observation.
 
 ## Data preparation
+
+La période de pré-traitement sera la période de 1997 à 2008, et la période de post-traitement sera la période 2008 et 2021. Le groupe de traitement sont les ménages vivant à moins de 10km des aires protégées créées entre 2008 et 2021. Le groupe de contrôle sont les ménages vivant à plus de 10km des aires protégées créées jusqu'en 2021. Les ménages vivant à moins de 10km d'une aire protégée créée avant 2008 seront exclus de l'analyse.
 
 ```{r}
 # Treatment periods definition--------------------------------
@@ -34,6 +34,9 @@ library(gt)
 library(MatchIt)
 library(haven)
 library(stargazer)
+library(broom)
+library(sandwich)
+library(lmtest)
 
 # Load data 
 data_matched_1997 <- read_rds("data/derived/data_matched_1997.rds")
@@ -85,9 +88,11 @@ post_treatment <- data_all %>% filter(period_DID >= 0)
 
 Nous obtenons 6 768 observations pour le pre_treatment et 11 500 observations pour la période de post_treatment.
 
-## Testing the parallel trends hypothesis
+## Primary outcome: Wealth index
 
-### Test with the principal outcome: Wealth index
+### DID model estimation
+
+L'estimation d'impact repose sur une approche de difference-in-difference, qui consiste à comparer l'évolution du niveau de vie du groupe de traitement et du groupe de contrôle entre 2008 et 2021. Cette approche repose sur l'hypothèse de tendances parallèles, que nous testons à travers un test placebo. Le test placebo consiste à comparer l'évolution du niveau de vie du même groupe de traitement et du même groupe de contrôle entre 1997 et 2008. Si les conditions de vie évoluent parallèlement dans ces deux groupes, alors on considèrera le test placebo comme concluant. Si une différence significative apparaît, on considèrera que la création des aires protégées a eu un impact sur les conditions de vie des riverains, sous réserve que le test placebo soit concluant.
 
 ```{r}
 
@@ -127,100 +132,72 @@ Nous avons estimé l'effet moyen du traitement (ATT) pour les clusters ruraux si
 
 Les résultats indiquent que, avant le traitement (en 2008), les clusters qui se trouvent près des aires protégées créées en 2021, auraient en moyenne un score de richesse supérieur à celui des clusters éloignés (ATT = 3.02). Après le traitement (2021), le score de richesse des clusters traités reste en moyenne plus élevé que celui du groupe de contrôle (ATT = 4.60). Cependant, pour les deux périodes de traitement, l'intervalle de confiance est large, incluant zéro. Cela indique que l'effet observé n'est pas statistiquement significatif. Ainsi, bien que la tendance suggère un effet positif des aires protégées sur le niveau de richesse des ménages ruraux, les données ne permettent pas de conclure à un impact causal robuste. Néanmoins, l'hypothèse de tendance parallèle est respectée avec un P-value supérieur à 0.05 (0.36634 \> 0.05).
 
-# Estimation du modèle DID avec l'outcome principal
+### Intra-cluster standard errors estimation
 
-```         
--   Estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes pour gérer la dépendance des observations au sein des grappes:
-
-    -   calcul des résidus à partir du modèle de régression
-
-    -   Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
-```
-
-```{r}
-#---------------------------------------------
-# DID Estimation with controls (2008-2021)
-#--------------------------------------------
-
-library(sandwich)
-library(lmtest)
-
-# Treatment period: 2008-2021
-model_data <- data_all %>%
-  filter(DHSYEAR %in% c(2008, 2021)) %>%
-  mutate(
-    treated = ifelse(GROUP == "Treatment", 1, 0),
-    post = ifelse(DHSYEAR == 2021, 1, 0)
-  ) %>%
-  filter(!if_any(c("wealth_centile_rural_simple", "treated", "post"), is.na)) %>%
-  
-  # Add control variables 
-  mutate(
-    sex_head = as.factor(hv219),
-    age_head = hv220,
-    forest_cover_rate = treecover_area_2000,
-    slope = slope_2000,
-    elevation = elevation_2000,
-    population_count = population_count_2000,
-    accessibility = traveltime_2000_2000,
-    `spei_wc_n_2`,
-    `spei_wc_n_1`,
-    spei_wc_n
-  )
-
-# Main DID regression with robust standard errors per cluster
-did_2008_2021 <- lm(
-  wealth_centile_rural_simple  ~ treated * post + sex_head + age_head + 
-    forest_cover_rate + slope + elevation + 
-    population_count + accessibility + 
-    `spei_wc_n_2` + `spei_wc_n_1` + `spei_wc_n`, 
-  data = model_data )
-
-
-summary(did_2008_2021)
-```
+Nous procédons maintenant à l'estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes. Cette estimation permet de gérer la dépendance des observations au sein des grappes. Le but est d'ajuster les erreurs standards en tenant compte des corrélations intra-grappes présentes au sein des groupes par l'échantillonnage de la variable de résultat @abadie2021. Cet ajustement se calcule sur la base des résidus du modèle et d'une estimation de variance intra-cluster. On calcule les résidus à partir du modèle de régression puis on utilise ces résidus pour construire une matrice variance-covariance robuste. La matrice va ajuster la corrélation intra-grappe en tenant compte la structure corporelle des erreurs.
 
 ```{r}
 #-------------------------------------------------
 #Erreurs standards robustes intra-cluster (hv001)
 #-------------------------------------------------
 
-cluster_se <- function(model, cluster) {
+cluster_vcov <- function(mod, cluster) {
   # Extraction des observations utilisées dans le modèle 
-  cluster <- cluster[as.numeric(rownames(model$model))]
+   cl <- cluster[as.integer(rownames(mod$model))]
   
   # Calcul des quantiles nécessaires 
-  M <- length(unique(cluster)) # nombre de clusters 
-  N <- length(cluster)         # nombre d'observations
-  K <- model$rank              # nombre de paramètres estimés
+  M <- dplyr::n_distinct(cl); N <- length(cl); K <- mod$rank
   
   # Correction de variance 
-  dfc <- (M/ (M-1) * (N-1) / (N-K))
+  dfc <- (M/(M-1)) * ((N-1)/(N-K))
   
   # Calcul des scores agrégés au niveau des clusters
-  uj <- apply(estfun(model), 2, function(x) tapply(x, cluster, sum))
+  uj <- apply(estfun(mod), 2, function(x) tapply(x, cl, sum))
   
   # Matrice de variance-covariance clusterisée
-  vcovCL <- dfc * sandwich(model, meat = crossprod(uj)/N)
-  
-  
-  return(vcovCL)
+  dfc * sandwich(mod, meat = crossprod(uj)/N)
 }
   
 # Application aux résultats DID
-cl_vcov <- cluster_se(did_2008_2021, model_data$hv001)
-cluster_results <- coeftest(did_2008_2021, vcov. = cl_vcov)
-  
-  print(cluster_results)
+did_fit <- function(d, years){
+  dd <- d %>%
+    filter(DHSYEAR %in% years) %>%
+    transmute(
+      DHSYEAR, hv001, GROUP,
+      wealth_centile_rural_simple,
+      treated = as.integer(GROUP=="Treatment"),
+      post = as.integer(DHSYEAR==max(years))
+    ) %>%
+    filter(!is.na(wealth_centile_rural_simple))
+  m <- lm(wealth_centile_rural_simple ~ treated*post, data = dd)
+  vc <- cluster_vcov(m, dd$hv001)
+  out <- coeftest(m, vcov.=vc) %>% broom::tidy()
+  list(data=dd, tidy=out)
+}
+did_summary_extract <- function(res, label){
+  res$tidy %>%
+    filter(term=="treated:post") %>%
+    transmute(spec=label, estimate, std.error, statistic, p.value)
+}
+  # Estimation
+res_placebo <- did_fit(data_all_mod, c(1997, 2008))
+res_main    <- did_fit(dat_all_mod, c(2008, 2021))
+
+# Tableau de synthèse
+did_summary <- bind_rows(
+  did_summary_extract(res_placebo, "wealth_centile_rural_simple placebo 1997–2008"),
+  did_summary_extract(res_main,    "wealth_centile_rural_simple main 2008–2021")
+)
+print(did_summary)
+
 # Utiliser stargazert
 ```
 
-## Graphique DID
+### Graphique DID
 
 ```{r}
-
 # Dataset principal
-evolution_main <- model_data %>%
+evolution_placebo <- model_data %>%
   group_by(DHSYEAR, GROUP) %>%
   summarise(
     mean_value = mean(wealth_centile_rural_simple, na.rm = TRUE),
