@@ -31,12 +31,13 @@ library(tmap)
 library(ggplot2) 
 library(sf)
 library(gt) 
-library(MatchIt)
 library(haven)
 library(stargazer)
 library(broom)
 library(sandwich)
 library(lmtest)
+
+
 
 # Load data 
 data_matched_1997 <- read_rds("data/derived/data_matched_1997.rds")
