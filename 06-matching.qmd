@@ -50,17 +50,17 @@ X_match <- as.data.frame(st_drop_geometry(matching_1997[, c("treecover_area_2000
 # Optimum combination search for 1997
 set.seed(123)
 
-if (file.exists("data/derived/gen_match_model_1997.rds")) {
-  gen_match_model_1997 <- readRDS("data/derived/gen_match_model_1997.rds")
+if (file.exists("data/derived/gen_match_model_1997_m2nr.rds")) {
+  gen_match_model_1997_m2nr <- readRDS("data/derived/gen_match_model_1997_m2nr.rds")
 } else {
-  cat("Fichier introuvable, début du traitement...\n")
   
-  gen_match_model_1997 <- GenMatch(
+  gen_match_model_1997_m2nr <- GenMatch(
     Tr = matching_1997$treatment,
     X = X_match,
     BalanceMatrix = X_match,
     estimand = "ATT",
-    M = 1, # 1 appariement pour chaque unité du groupe de traitement
+    M = 2, # 2 appariement pour chaque unité du groupe de traitement
+    replace = FALSE,
     weights = NULL,
     pop.size = 1000, 
     max.generations = 100,
@@ -69,39 +69,42 @@ if (file.exists("data/derived/gen_match_model_1997.rds")) {
     print.level = 1,
     cluster = rep("localhost", 4)
   ) # 15 min 
-  saveRDS(gen_match_model_1997, "data/derived/gen_match_model_1997.rds")
+  saveRDS(gen_match_model_1997_m2nr, "data/derived/gen_match_model_1997_m2nr.rds")
   cat("Modèle GenMatch enregistré. \n")
 }
 
 # Matching with MatchIt for 1997  
-  if (file.exists("data/derived/matching_result_1997.rds")) {
-  matching_result_1997 <- readRDS("data/derived/matching_result_1997.rds")
+  if (file.exists("data/derived/matching_result_1997_m2nr.rds")) {
+  matching_result_1997_m2nr <- readRDS("data/derived/matching_result_1997_m2nr.rds")
 } else {
   cat("Fichier introuvable, début du traitement...\n")
-  matching_result_1997 <- matchit(
+  matching_result_1997_m2nr <- matchit(
     treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
     data = matching_1997,
     method = "genetic",
     distance = "mahalanobis",
-    gen.match = gen_match_model_1997
+    gen.match = gen_match_model_1997_m2nr,
+    ratio = 2,
+    replace = FALSE,
+    caliper = 0.25
   )
   # Registrement
-  saveRDS(matching_result_1997 , "data/derived/matching_result_1997.rds")
+  saveRDS(matching_result_1997_m2nr , "data/derived/matching_result_1997_m2nr.rds")
   cat("Données enregistrées")
 }
 
 # Summary of Balance
-summary(matching_result_1997)
-plot(matching_result_1997)
+summary(matching_result_1997_m2nr)
+plot(matching_result_1997_m2nr)
 
 # Extract matched data for 1997
-data_matched_1997 <- match.data(matching_result_1997)
+data_matched_1997_m2nr <- match.data(matching_result_1997_m2nr)
 
-data_matched_1997 <- data_matched_1997 %>%
+data_matched_1997_m2nr <- data_matched_1997_m2nr %>%
   filter(weights > 0)
-nrow(data_matched_1997)
+nrow(data_matched_1997_m2nr)
 
-saveRDS(data_matched_1997,"data/derived/data_matched_1997.rds" )
+saveRDS(data_matched_1997_m2nr,"data/derived/data_matched_1997_m2nr.rds" )
 ```
 
 Avant le matching, nous comptons 3 505 observations pour l'année 1997. Les groupes traités et contrôles diffèrent fortement en moyenne pour certaines covariables. Il y a plus de traités (avec un moyenne de 22875) qui vivent dans des zones avec plus de couverture que des contrôles (avec une moyenne de 16932). Mais ce sont les contrôles qui vivent le plus à une haute altitude (en moyenne 595 m) que les traités (en moyenne 419 m) et dans des zones plus peuplées. Le déséquilibre est particulièrement fort pour la variable population_count_2000.
@@ -133,17 +136,18 @@ X_match <- as.data.frame(st_drop_geometry(matching_2008[, c("treecover_area_2000
 # Optimum combination search for 2008
 set.seed(123)
 
-if (file.exists("data/derived/gen_match_model_2008.rds")) {
-  gen_match_model_2008 <- readRDS("data/derived/gen_match_model_2008.rds")
+if (file.exists("data/derived/gen_match_model_2008_m2nr.rds")) {
+  gen_match_model_2008_m2nr <- readRDS("data/derived/gen_match_model_2008_m2nr.rds")
 } else {
   cat("Fichier introuvable, début du traitement...\n")
   
-  gen_match_model_2008 <- GenMatch(
+  gen_match_model_2008_m2nr <- GenMatch(
     Tr = matching_2008$treatment,
     X = X_match,
     BalanceMatrix = X_match,
     estimand = "ATT",
-    M = 1, # 1 appariement pour chaque unité du groupe de traitement
+    M = 2, # 2 appariements pour chaque unité du groupe de traitement
+    replace = FALSE,
     weights = NULL,
     pop.size = 1000, 
     max.generations = 100,
@@ -152,21 +156,24 @@ if (file.exists("data/derived/gen_match_model_2008.rds")) {
     print.level = 1,
     cluster = rep("localhost", 4)
   ) # 16 min et 25s 
-  saveRDS(gen_match_model_2008, "data/derived/gen_match_model_2008.rds")
+  saveRDS(gen_match_model_2008_m2nr, "data/derived/gen_match_model_2008_m2nr.rds")
   cat("Modèle GenMatch enregistré. \n")
 }
 
 # Matching with MatchIt for 2008  
-  if (file.exists("data/derived/matching_result_2008.rds")) {
-  matching_result_2008 <- readRDS("data/derived/matching_result_2008.rds")
+  if (file.exists("data/derived/matching_result_2008_m2nr.rds")) {
+  matching_result_2008_m2nr <- readRDS("data/derived/matching_result_2008_m2nr.rds")
 } else {
   cat("Fichier introuvable, début du traitement...\n")
-  matching_result_2008 <- matchit(
+  matching_result_2008_m2nr <- matchit(
     treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
     data = matching_2008,
     method = "genetic",
     distance = "mahalanobis",
-    gen.match = gen_match_model_2008
+    gen.match = gen_match_model_2008_m2nr,
+    ratio = 2,
+    replace = FALSE,
+    caliper = 0.25
   )
   # Registrement
   saveRDS(matching_result_2008 , "data/derived/matching_result_2008.rds")
