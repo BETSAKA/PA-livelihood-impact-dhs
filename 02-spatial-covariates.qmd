@@ -39,14 +39,26 @@ mdg_crs <- 29702
 # On charge les données
 gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp")
 gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp") 
+gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp") 
+gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp") 
+gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp")
 gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
 
-# On retire les cluster dont les coordonnées spatials sont nulles
-gps_1997 <- filter(gps_1997_initial, LONGNUM != 0 | LATNUM != 0) 
-gps_2008 <- filter(gps_2008_initial, LONGNUM != 0 | LATNUM != 0) 
-gps_2021 <- filter(gps_2021_initial, LONGNUM != 0 | LATNUM != 0)
+# Fonction qui vérifie que les coordonnées ne sont pas nulles
+check_coordinates <- function(dhs_gps, country_polygon, negate = FALSE) {
+  dhs_gps %>%
+    filter(LONGNUM != 0 | LATNUM != 0)
+}
 
-gps_all <- bind_rows(gps_1997, gps_2008, gps_2021)
+gps_1997 <- check_coordinates(gps_1997_initial, contour_mada)
+gps_2008 <- check_coordinates(gps_2008_initial, contour_mada)
+gps_2011 <- check_coordinates(gps_2011_initial, contour_mada)
+gps_2013 <- check_coordinates(gps_2013_initial, contour_mada)
+gps_2016 <- check_coordinates(gps_2016_initial, contour_mada)
+gps_2021 <- check_coordinates(gps_2021_initial, contour_mada)
+
+bind_rows(gps_1997_initial, gps_2008_initial, gps_2011_initial,
+          gps_2013_initial,  gps_2016_initial, gps_2021_initial)
 
 # On crée les buffers
 buffer_all <- gps_all %>%
