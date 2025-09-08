@@ -41,15 +41,17 @@ mdg_crs <- 29702
 # On charge les données
 gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp")
 gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp") 
+gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp") 
+gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp") 
+gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp")
 gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
 
 # Set for interactive viewing
 tmap_mode("view")
 
-bind_rows(gps_1997_initial, gps_2008_initial, gps_2021_initial) |> 
-  tm_shape() + 
-  tm_dots() +
-  tm_facets("DHSYEAR") 
+bind_rows(gps_1997_initial, gps_2008_initial, gps_2011_initial,
+          gps_2013_initial,  gps_2016_initial, gps_2021_initial) |>
+  tm_shape() + tm_dots() + tm_facets("DHSYEAR")
 ```
 
 Nous obtenons une carte distincte pour chaque année d'enquête. Sur chaque carte figure des points, dans laquelle chaque point représente un cluster d'enquête, correspondant aux coordonnées GPS fournies par DHS.
@@ -65,9 +67,12 @@ check_coordinates <- function(dhs_gps, country_polygon, negate = FALSE) {
     filter(LONGNUM != 0 | LATNUM != 0)
 }
 
-gps_1997 <- check_coordinates(gps_1997_initial) 
-gps_2008 <- check_coordinates(gps_2008_initial) 
-gps_2021 <- check_coordinates(gps_2021_initial) 
+gps_1997 <- check_coordinates(gps_1997_initial, contour_mada)
+gps_2008 <- check_coordinates(gps_2008_initial, contour_mada)
+gps_2011 <- check_coordinates(gps_2011_initial, contour_mada)
+gps_2013 <- check_coordinates(gps_2013_initial, contour_mada)
+gps_2016 <- check_coordinates(gps_2016_initial, contour_mada)
+gps_2021 <- check_coordinates(gps_2021_initial, contour_mada)
 ```
 
 Les coordonnées GPS de 9 clusters de l'enquête 2008 n'ont pas de coordonnées valides (0,0). Il en manque également un en 1997.
@@ -164,10 +169,14 @@ contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
 # Intersection des SAPM avec la limite de Madagascar
 wdpa_terrestre <- wdpa %>% 
   st_transform(crs = standard_crs) %>%
-  st_make_valid()%>%
-  st_intersection(contour_mada)%>%
+  st_make_valid() %>%
+  st_intersection(contour_mada) %>%
   st_transform(mdg_crs) %>%
-  mutate(`REP_AREA` = as.numeric(st_area(.)) / 10000) %>%
+  mutate(
+    area_m2  = as.numeric(st_area(.)),
+    area_ha  = area_m2 / 1e4,
+    area_km2 = area_m2 / 1e6
+  ) %>%
   st_transform(standard_crs)
 
 tm_shape(contour_mada) +
@@ -271,18 +280,16 @@ On agrège les données pour chaque groupe, en calculant le nombre total d'aires
 # Definition de la fonction
 pivot_year <- 2008
 
-summary_table <- wdpa_terrestre_mod %>%
+summary_table <- wdpa_terrestre %>%
   st_drop_geometry() %>%
-  mutate(
-    Creation_Period = case_when(
-      STATUS_YR < pivot_year ~ paste("Avant", pivot_year),
-      STATUS_YR >= pivot_year ~ paste("A partir de", pivot_year)
-    )) %>%
+  mutate(Creation_Period = if_else(STATUS_YR < pivot_year,
+                                   paste("Avant", pivot_year),
+                                   paste("À partir de", pivot_year))) %>%
   group_by(Creation_Period) %>%
   summarise(
     Count = n(),
-    Area = sum(REP_AREA, na.rm = TRUE) / 100,  # Convert hectares to km²
-    .groups = 'drop'
+    Area_km2 = sum(area_km2, na.rm = TRUE),
+    .groups = "drop"
   )
 
 
@@ -295,10 +302,10 @@ gt_table <- gt(summary_table) %>%
   cols_label(
     Creation_Period = "Période de Création",
     Count = "Nombre d'AP",
-    Area = "Surface"
+    Area_km2 = "Surface km²"
   ) %>%
   fmt_number(
-    columns = c(Count, Area),
+    columns = c(Count, Area_km2),
     decimals = 0
   )
 
@@ -307,46 +314,86 @@ gt_table
 
 ## Classification des clusters
 
-Les grappes d'enquête sont classées selon leur proximité aux aires protégées créées avant 2008 et à partir de 2008. A l'aide de la fonction classify_clusters(), nous catégorisons chaque cluster en trois groupes: traitement, contrôle ou exclu, selon leur localisation par rapport aux aires protégées et leur statut urbain ou rural. Cette classification est appliquée aux clusters de 1997, 2008 et 2021, puis les résultats sont fusionnés. Nous créons ensuite une carte par année d'étude pour visualiser la localisation des aires protégées et la répartition spatiale des clusters selon leur groupe.
+Les grappes d'enquête sont classées selon leur proximité aux aires protégées créées avant 2008 et à partir de 2008. A l'aide de la fonction classify_clusters(), nous catégorisons chaque cluster en trois groupes: traitement, contrôle ou exclu, selon leur localisation par rapport aux aires protégées et leur statut urbain ou rural. Cette classification est appliquée aux clusters de 1997, 2008, 2011, 2013, 2016 et 2021. Parmi les clusters considérés comme "traités", on identifie l'année de création de l'AP, son type et le numéro WDPAID de l'AP en question. Les résultats sont ensuite fusionnés. Nous créons ensuite une carte par année d'étude pour visualiser la localisation des aires protégées et la répartition spatiale des clusters selon leur groupe. On va maintenant identifier, parmi les clusters considérés comme "traités", l'année de création de l'AP, son type et le numéro WDPAID de l'AP en question.
 
 ```{r}
 #| fig-cap: "Grappes d'enquêtes DHS par rapport aux aires protégées existantes"
 
-classify_clusters <- function(cluster_gps, buffer_before, buffer_from,
-                              label_treatment = "Treatment",
-                              label_excluded = "Excluded",
-                              label_control = "Control") {
-  cluster_gps %>%
-    # Identifier le groupe de traitement: ménages proche d'AP créées après 2008
-    mutate(
-      groupe = case_when(
-        st_within(geometry, buffer_from, sparse = FALSE)[, 1] & # SI près AP récente
-          !st_within(geometry, buffer_before, sparse = FALSE)[, 1] & # ET pas près AP ancienne
-          URBAN_RURA == "R" ~ label_treatment, # ET rurale, ALORS traitement
-        st_within(geometry, buffer_before, sparse = FALSE) [,1] | # SI près AP ancienne
-          URBAN_RURA == "U" ~ label_excluded, # OU urbaine, ALORS exclu
-        TRUE ~ label_control # SINON contrôle
+
+classify_clusters_with_pa <- function(cluster_gps,
+                                      buffer_before,   # union of <2008
+                                      wdpa_after,      # polygons >=2008 (no union)
+                                      buffer_dist = 10000,
+                                      label_treat = "Treatment",
+                                      label_excl  = "Excluded",
+                                      label_ctrl  = "Control") {
+
+  # per-PA buffers (keep attrs)
+  wdpa_after_buf <- wdpa_after %>%
+    st_transform(mdg_crs) %>%
+    mutate(geometry = st_buffer(geometry, buffer_dist)) %>%
+    st_transform(standard_crs)
+
+  # flags
+  in_after  <- st_within(cluster_gps, st_union(wdpa_after_buf),  sparse = FALSE)[,1]
+  in_before <- st_within(cluster_gps, buffer_before,            sparse = FALSE)[,1]
+
+  base <- cluster_gps %>%
+    mutate(groupe = case_when(
+      in_after & !in_before & URBAN_RURA == "R" ~ label_treat,
+      in_before | URBAN_RURA == "U"            ~ label_excl,
+      TRUE                                     ~ label_ctrl
+    ))
+
+  # enrich treated with oldest+nearest PA
+  treated_pts <- base %>% filter(groupe == label_treat)
+
+  if (nrow(treated_pts) == 0) return(base)
+
+  cand <- st_join(treated_pts, wdpa_after_buf, join = st_within, left = FALSE) %>%
+  mutate(
+    .idx = match(WDPAID, wdpa_after$WDPAID),
+    dist_km = as.numeric(
+      st_distance(
+        geometry,
+        wdpa_after$geometry[.idx],
+        by_element = TRUE
       )
-    ) 
+    ) / 1000
+  ) %>%
+  select(-.idx)
+
+  best <- cand %>%
+    group_by(DHSCLUST) %>%
+    slice_min(STATUS_YR, with_ties = TRUE) %>%
+    slice_min(dist_km,   with_ties = FALSE) %>%
+    ungroup() %>%
+    st_drop_geometry() %>%
+    select(DHSYEAR, DHSCLUST, WDPAID, STATUS_YR, IUCN_CAT, dist_km)
+
+  base %>% left_join(best, by = c("DHSYEAR","DHSCLUST"))
 }
 
-# On classe pour 1997
-gps_1997_class <- classify_clusters(cluster_gps = gps_1997,
-                                    buffer_before = buffer_10km_before_2008,
-                                    buffer_from = buffer_10km_from_2008)
-
-gps_2008_class <- classify_clusters(cluster_gps = gps_2008,
-                                    buffer_before = buffer_10km_before_2008,
-                                    buffer_from = buffer_10km_from_2008)
-
-gps_2021_class <- classify_clusters(cluster_gps = gps_2021,
-                                    buffer_before = buffer_10km_before_2008,
-                                    buffer_from = buffer_10km_from_2008)
+gps_1997_class <- classify_clusters_with_pa(gps_1997, buffer_10km_before_2008, 
+                                            wdpa_from_2008)
+gps_2008_class <- classify_clusters_with_pa(gps_2008, buffer_10km_before_2008, 
+                                            wdpa_from_2008)
+gps_2011_class <- classify_clusters_with_pa(gps_2011, buffer_10km_before_2008, 
+                                            wdpa_from_2008)
+gps_2013_class <- classify_clusters_with_pa(gps_2013, buffer_10km_before_2008,
+                                            wdpa_from_2008)
+gps_2016_class <- classify_clusters_with_pa(gps_2016, buffer_10km_before_2008,
+                                            wdpa_from_2008)
+gps_2021_class <- classify_clusters_with_pa(gps_2021, buffer_10km_before_2008,
+                                            wdpa_from_2008)
 
 
 gps_all_class <- bind_rows(
   gps_1997_class,
   gps_2008_class,
+  gps_2011_class,
+  gps_2013_class,
+  gps_2016_class,
   gps_2021_class
 )
 
@@ -393,6 +440,73 @@ tm_shape(buffer_10km_from_2008) +
 
 Nous produisons un tableau récapitulatif du nombre de grappes d'enquête classées dans chaque groupe pour les années 1997, 2008 et 2021. Afin de faciliter le comptage et la transformation en tableau, nous supprimons les données spatiales pour ne conserver que les informations attributaires (année d'enquête "DHSYEAR" et groupe de classification "groupe").
 
+
+```{r}
+# Sous-catégories pour le groupe "Traitement" (dépend de DHSYEAR vs STATUS_YR)
+treated_sub_clusters <- gps_all_class %>%
+  st_drop_geometry() %>%
+  filter(groupe == "Treatment") %>%
+  mutate(subcat = case_when(
+    !is.na(STATUS_YR) & DHSYEAR <  STATUS_YR ~ "Avant traitement",
+    !is.na(STATUS_YR) & DHSYEAR >= STATUS_YR ~ "Déjà traités",
+    TRUE ~ NA_character_
+  )) %>%
+  count(DHSYEAR, subcat, name = "n_clusters") %>%
+  pivot_wider(names_from = subcat, values_from = n_clusters, values_fill = 0)
+
+# Ligne "Ensemble" (tous les traités, quel que soit le statut)
+treated_all_clusters <- gps_all_class %>%
+  st_drop_geometry() %>%
+  filter(groupe == "Treatment") %>%
+  count(DHSYEAR, name = "Ensemble")
+
+# Colonnes Contrôles / Exclus
+ctrl_excl_clusters <- gps_all_class %>%
+  st_drop_geometry() %>%
+  filter(groupe %in% c("Control", "Excluded")) %>%
+  mutate(Groupe = recode(groupe, Control = "Contrôles", Excluded = "Exclus")) %>%
+  count(DHSYEAR, Groupe, name = "n") %>%
+  pivot_wider(names_from = Groupe, values_from = n, values_fill = 0)
+
+# Assemblage large (années en lignes)
+tab_wide_clusters <- list(treated_sub_clusters, treated_all_clusters, 
+                          ctrl_excl_clusters) %>%
+  Reduce(function(x, y) full_join(x, y, by = "DHSYEAR"), .) %>%
+  arrange(DHSYEAR) %>%
+  mutate(across(-DHSYEAR, ~replace_na(.x, 0L)))
+
+# Tableau gt : spanner "Traitement" + colonnes Contrôles / Exclus
+gt_table_clusters <- tab_wide_clusters %>%
+  rename(Année = DHSYEAR) %>%
+  gt() %>%
+  tab_header(title = "Nombre de grappes par année d'enquête et par groupe") %>%
+  cols_label(
+    `Avant traitement` = "Avant traitement",
+    `Déjà traités`     = "Déjà traités",
+    Ensemble           = "Ensemble",
+    `Contrôles`        = "Contrôles",
+    `Exclus`           = "Exclus"
+  ) %>%
+  tab_spanner(
+    label = "Traitement",
+    columns = c(`Avant traitement`, `Déjà traités`, Ensemble)
+  ) %>%
+  fmt_number(
+    columns = c(`Avant traitement`, `Déjà traités`, Ensemble, `Contrôles`, `Exclus`),
+    decimals = 0,
+    use_seps = TRUE
+  ) %>%
+  cols_align(align = "center", columns = everything()) %>%
+  tab_footnote(
+    footnote = md("**Avant traitement** : DHSYEAR < STATUS_YR (AP pas encore créée). **Déjà traités** : DHSYEAR ≥ STATUS_YR. **Ensemble** : total des grappes *Traitement*."),
+    locations = cells_title(groups = "title")
+  )
+
+gt_table_clusters
+```
+
+Maintenant avec le nombre de ménages :
+
 ```{r}
 # Function to read DHS data for the specified year and identifier
 load_dhs_data <- function(dhs_folder, year, identifier) {
@@ -426,184 +540,69 @@ load_dhs_data <- function(dhs_folder, year, identifier) {
 
 dhs_folder <- "data/raw/dhs"
 
-# Load geographic data for 2021 and 2008
-gps_2021 <- load_dhs_data(dhs_folder, 2021, "GE")
-gps_2008 <- load_dhs_data(dhs_folder, 2008, "GE")
 
-# Identify treatment survey clusters --------------------------
+# Années disponibles
+years_all <- sort(unique(gps_all_class$DHSYEAR))
 
-# Identifier les grappes proches des AP ----------------------------------
+# Compte ménages (toutes observations) 
+households_counts_all <- map_dfr(years_all, function(y) {
+  # HR de l'année
+  hr <- load_dhs_data(dhs_folder, y, "HR") %>%
+    mutate(DHSYEAR = y)  # pour la jointure avec la classification
 
-find_nearby_gps <- function(gps_data, wdpa_data, distance_km, creation_year, after = TRUE) {
-  if (after) {
-    selected_pas <- wdpa_data %>% filter(STATUS_YR >= creation_year)
-  } else {
-    selected_pas <- wdpa_data %>% filter(STATUS_YR < creation_year)
-  }
-  
-  selected_pas <- selected_pas %>% st_make_valid()
-  
-  gps_data <- st_transform(gps_data, st_crs(selected_pas))
-  
-  buffered_pas <- st_buffer(selected_pas, dist = distance_km * 1000) %>% st_make_valid()
-  
-  merged_buffer <- st_union(buffered_pas) %>% st_make_valid()
-  
-  nearby_gps <- gps_data %>%
-    mutate(nearby_pa = st_within(geometry, merged_buffer, sparse = FALSE)[, 1])
-  return(nearby_gps)
-}
+  # Classification des grappes de l'année
+  cl_y <- gps_all_class %>%
+    st_drop_geometry() %>%
+    filter(DHSYEAR == y) %>%
+    select(DHSYEAR, DHSCLUST, groupe, STATUS_YR)
 
-# Identifier les groupes de traitement et d'exclusion
-treatment_clusters_2021 <- find_nearby_gps(gps_2021, wdpa, 10, 2008, after = TRUE)
-exclusion_clusters_2021 <- find_nearby_gps(gps_2021, wdpa, 10, 2008, after = FALSE)
+  # Jointure ménages <- classification (par cluster hv001)
+  hr_cl <- hr %>%
+    select(DHSYEAR, hv001) %>%
+    left_join(cl_y, by = c("DHSYEAR" = "DHSYEAR", "hv001" = "DHSCLUST"))
 
-treatment_clusters_2008 <- find_nearby_gps(gps_2008, wdpa, 10, 2008, after = TRUE)
-exclusion_clusters_2008 <- find_nearby_gps(gps_2008, wdpa, 10, 2008, after = FALSE)
+  # Comptes par sous-catégories du traitement (DHSYEAR vs STATUS_YR)
+  avant  <- hr_cl %>% filter(groupe == "Treatment", !is.na(STATUS_YR), DHSYEAR <  STATUS_YR) %>% nrow()
+  deja   <- hr_cl %>% filter(groupe == "Treatment", !is.na(STATUS_YR), DHSYEAR >= STATUS_YR) %>% nrow()
+  ens    <- hr_cl %>% filter(groupe == "Treatment") %>% nrow()
+  ctrl   <- hr_cl %>% filter(groupe == "Control")   %>% nrow()
+  excl   <- hr_cl %>% filter(groupe == "Excluded")  %>% nrow()
 
-# Load household data -------------------------------------------------------
-
-household_2021 <- load_dhs_data(dhs_folder, 2021, "HR")
-household_2008 <- load_dhs_data(dhs_folder, 2008, "HR")
-
-# Function to calculate clusters and households for different categories  ---------------------------
-clusters_and_households <- function(gps_data, hr_data, treatment_clusters, exclusion_clusters, year) {
-  clusters_treatment <- treatment_clusters %>% 
-    filter(nearby_pa) %>% 
-    pull(DHSCLUST)
-  clusters_exclusion <- exclusion_clusters %>% 
-    filter(nearby_pa) %>% 
-    pull(DHSCLUST)
-  clusters_control <- gps_data %>%
-    filter(!DHSCLUST %in% c(clusters_treatment, clusters_exclusion)) %>%
-    pull(DHSCLUST)
-  
-  total_clusters <- nrow(gps_data)
-  total_households <- nrow(hr_data)
-  
-  households_treatment <- hr_data %>%
-    filter(hv001 %in% clusters_treatment) %>%
-    nrow()
-  
-  households_exclusion <- hr_data %>%
-    filter(hv001 %in% clusters_exclusion) %>%
-    nrow()
-  
-  households_control <- hr_data %>%
-    filter(hv001 %in% clusters_control) %>%
-    nrow()
-  
   tibble(
-    année = year,
-    `Grappes traitement` = length(clusters_treatment),
-    `Ménages traitement` = households_treatment,
-    `Grappes exclusion` = length(clusters_exclusion),
-    `Ménages exclusion` = households_exclusion,
-    `Grappes contrôle` = length(clusters_control),
-    `Ménages contrôle` = households_control,
-    `Total des grappes` = total_clusters,
-    `Total des ménages` = total_households
+    DHSYEAR = y,
+    `Avant traitement` = avant,
+    `Déjà traités`     = deja,
+    Ensemble           = ens,
+    `Contrôles`        = ctrl,
+    `Exclus`           = excl
   )
-}
+})
 
-# Calculate results for all observations
-results_all <- list(
-  clusters_and_households(gps_2021, household_2021, treatment_clusters_2021, exclusion_clusters_2021, 2021),
-  clusters_and_households(gps_2008, household_2008, treatment_clusters_2008, exclusion_clusters_2008, 2008)
-) %>%
-  bind_rows()
-
-# Calculate results for rural households only
-results_rural <- list(
-  clusters_and_households(
-    gps_2021 %>% filter(URBAN_RURA == "R"),
-    household_2021 %>% filter(hv025 == 2),
-    treatment_clusters_2021 %>% filter(URBAN_RURA == "R"),
-    exclusion_clusters_2021 %>% filter(URBAN_RURA == "R"),
-    2021
-  ),
-  clusters_and_households(
-    gps_2008 %>% filter(URBAN_RURA == "R"),
-    household_2008 %>% filter(hv025 == 2),
-    treatment_clusters_2008 %>% filter(URBAN_RURA == "R"),
-    exclusion_clusters_2008 %>% filter(URBAN_RURA == "R"),
-    2008
-  )
-) %>%
-  bind_rows()
-
-# Add a column for categorization before selecting the columns
-combined_results <- bind_rows(
-  results_all %>% mutate(Type = "Toutes observations"),
-  results_rural %>% mutate(Type = "Zones rurales")  # Change label to "Zones rurales"
-)
-
-# Display the results using gt with improved layout and row groups
-gt_table <- gt(combined_results) %>%
-  tab_header(
-    title = "Nombre de grappes et de ménages d'enquêtes DHS classés selon leur proximité avec des aires protégées"
-  ) %>%
+# Tableau gt (ménages, toutes observations)
+gt_table_menages_all <- households_counts_all %>%
+  rename(Année = DHSYEAR) %>%
+  gt() %>%
+  tab_header(title = "Nombre de ménages par année d'enquête et par groupe") %>%
   cols_label(
-    année = "Année",
-    `Grappes traitement` = "Traitement",
-    `Grappes exclusion` = "Exclusion",
-    `Grappes contrôle` = "Contrôle",
-    `Total des grappes` = "Total",
-    `Ménages traitement` = "Traitement",
-    `Ménages exclusion` = "Exclusion",
-    `Ménages contrôle` = "Contrôle",
-    `Total des ménages` = "Total"
+    `Avant traitement` = "Avant traitement",
+    `Déjà traités`     = "Déjà traités",
+    Ensemble           = "Ensemble",
+    `Contrôles`        = "Contrôles",
+    `Exclus`           = "Exclus"
   ) %>%
   tab_spanner(
-    label = "Grappes",
-    columns = c(`Grappes traitement`, `Grappes exclusion`, `Grappes contrôle`, `Total des grappes`)
-  ) %>%
-  tab_spanner(
-    label = "Ménages",
-    columns = c(`Ménages traitement`, `Ménages exclusion`, `Ménages contrôle`, `Total des ménages`)
+    label = "Traitement",
+    columns = c(`Avant traitement`, `Déjà traités`, Ensemble)
   ) %>%
   fmt_number(
-    columns = c(`Grappes traitement`, `Grappes exclusion`, `Grappes contrôle`, `Total des grappes`,
-                `Ménages traitement`, `Ménages exclusion`, `Ménages contrôle`, `Total des ménages`),
-    decimals = 0,
-    use_seps = TRUE,
-    sep_mark = " ",
-    dec_mark = ","
+    columns = c(`Avant traitement`, `Déjà traités`, Ensemble, `Contrôles`, `Exclus`),
+    decimals = 0, use_seps = TRUE
   ) %>%
-  fmt_number(
-    columns = "année",
-    decimals = 0,
-    use_seps = FALSE
-  ) %>%
-  cols_align(
-    align = "center",
-    columns = everything()
-  ) %>%
-  cols_width(
-    `Total des ménages` ~ px(150)
-  ) %>%
-  tab_options(
-    table.width = pct(100)
-  ) %>%
+  cols_align(align = "center", columns = everything()) %>%
   tab_footnote(
-    footnote = md("**Traitement**: Observations situées à moins de 10 km des AP créées à partir de 2008. **Exclusion**: Observations situées à moins de 10 km des AP créées avant 2008. **Contrôle**: Autres observations."),
-    locations = cells_title(groups = "title")
-  ) %>%
-  tab_row_group(
-    label = "Toutes observations",
-    rows = Type == "Toutes observations"
-  ) %>%
-  tab_row_group(
-    label = "Zones rurales",
-    rows = Type == "Zones rurales"  # Ensure consistency with the new label
-  ) %>%
-  cols_hide(
-    columns = "Type"  # Hide the Type column after using it for row grouping
-  )
+    footnote = md("**Avant traitement** : DHSYEAR < STATUS_YR (AP pas encore créée). **Déjà traités** : DHSYEAR ≥ STATUS_YR. **Ensemble** : total des ménages du groupe *Traitement*."), locations = cells_title(groups = "title"))
 
-# Display the formatted gt table
-gt_table
-
+gt_table_menages_all   
 ```
 
 ## Enregistrement des variables classifiées
@@ -612,9 +611,8 @@ Les informations essentielles sur la classification des grappes d'enquête sont 
 
 ```{r}
 all_class <- gps_all_class %>%
-  select(DHSYEAR, DHSCLUST, GROUP = groupe)
-
-write_csv(wdpa_before_2008, "data/derived/wdpa_before_2008.csv")
-write_csv(wdpa_from_2008, "data/derived/wdpa_from_2008.csv")
+  select(DHSYEAR, DHSCLUST, GROUP = groupe, WDPAID, STATUS_YR, IUCN_CAT, dist_km)
+st_write(wdpa_before_2008, "data/derived/wdpa_before_2008.gpkg", delete_dsn = TRUE)
+st_write(wdpa_from_2008, "data/derived/wdpa_from_2008.gpkg", delete_dsn = TRUE)
 write_csv(all_class, "data/derived/cluster_treatment_classification.csv")
 ```
