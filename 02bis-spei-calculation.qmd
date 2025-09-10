@@ -31,7 +31,7 @@ library(readr) #
 library(ggplot2) # visualisation
 
 # Load data 
-spatial_covars <- read_rds("data/derived/spatial_covars.rds")
+spatial_covars <- read_rds("data/derived/spatial_covars_staggered.rds")
 
 # Latitude calculation
 spatial_covars_spei <- spatial_covars %>% 
@@ -252,5 +252,5 @@ spatial_covars_spei <- spatial_covars_spei %>%
   )
 # Registration 
 spatial_covars_spei <- as.data.frame(spatial_covars_spei)
-write_rds(x = spatial_covars_spei, file = "data/derived/spatial_covars_spei.rds")
+write_rds(x = spatial_covars_spei, file = "data/derived/spatial_covars_spei_staggered.rds")
 ```

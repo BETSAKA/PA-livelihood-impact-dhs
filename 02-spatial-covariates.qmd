@@ -169,8 +169,8 @@ Nous appliquons la fonction calc_indicators() du package pour calculer les indic
 
 ```{r}
 
-if (file.exists("data/derived/spatial_covars.rds")) {
-  cat("Le fichier spatial_covars.rds existe déjà")
+if (file.exists("data/derived/spatial_covars_staggered.rds")) {
+  cat("Le fichier spatial_covars_staggered.rds existe déjà")
 } else {
   cat("Fichier introuvable, début du traitement...\n")
   
@@ -263,8 +263,8 @@ if (file.exists("data/derived/spatial_covars.rds")) {
   toc() # 87.63 sec | 2594.06 sec elapsed   
   
   # Enregistrement des données 
-  write_rds(buffer_all, "data/derived/spatial_covars.rds")
-  cat("Données enregistrées dans vspatial covars ds")
+  write_rds(buffer_all, "data/derived/spatial_covars_staggered.rds")
+  cat("Données enregistrées dans spatial_covars_staggered.rds")
 }
 
 ```
