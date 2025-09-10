@@ -612,7 +612,6 @@ Les informations essentielles sur la classification des grappes d'enquête sont 
 ```{r}
 all_class <- gps_all_class %>%
   select(DHSYEAR, DHSCLUST, GROUP = groupe, WDPAID, STATUS_YR, IUCN_CAT, dist_km)
-st_write(wdpa_before_2008, "data/derived/wdpa_before_2008.gpkg", delete_dsn = TRUE)
-st_write(wdpa_from_2008, "data/derived/wdpa_from_2008.gpkg", delete_dsn = TRUE)
+
 write_csv(all_class, "data/derived/cluster_treatment_classification_staggered.csv")
 ```
