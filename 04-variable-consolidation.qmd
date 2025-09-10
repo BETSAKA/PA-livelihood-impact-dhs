@@ -142,3 +142,20 @@ hr_consolidated <- bind_rows(
 hr_consolidated %>% count(DHSYEAR)
 ```
 
+
+Enregistrement des résultats
+
+```{r}
+# Sauvegardes millésime
+write_rds(hr_1997_final, "data/derived/hr_1997_final.rds")
+write_rds(hr_2008_final, "data/derived/hr_2008_final.rds")
+write_rds(hr_2011_final, "data/derived/hr_2011_final.rds")
+write_rds(hr_2013_final, "data/derived/hr_2013_final.rds")
+write_rds(hr_2016_final, "data/derived/hr_2016_final.rds")
+write_rds(hr_2021_final, "data/derived/hr_2021_final.rds")
+
+# Sauvegarde consolidée
+write_rds(hr_consolidated, "data/derived/hr_consolidated_1997_2008_2011_2013_2016_2021.rds")
+cat("Données enregistrées\n")
+```
+
