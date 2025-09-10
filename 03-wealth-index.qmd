@@ -1274,35 +1274,22 @@ tmap_arrange(tm1, tm2, tm3, ncol = 3)
 
 ```{r}
 
-add_zscore_by_cluster <- function(df, wealth_col, cluster_col, zscore_col = "zscore_wealth") {
-  
-  # Calculer les statistiques par grappe
+add_zscore_from_centile <- function(df, centile_col, cluster_col, zscore_col = "zscore_wealth") {
   stats <- df %>%
     group_by(.data[[cluster_col]]) %>%
-    summarise(
-      mean_wealth = mean(.data[[wealth_col]], na.rm = TRUE),
-      sd_wealth = sd(.data[[wealth_col]], na.rm = TRUE),
-      .groups = "drop"
-    )
-  
-  # Joindre les stats au dataset initial et calculer le z-score
-  df <- df %>%
+    summarise(m = mean(.data[[centile_col]], na.rm = TRUE),
+              s = sd(.data[[centile_col]],   na.rm = TRUE),
+              .groups = "drop")
+  df %>%
     left_join(stats, by = cluster_col) %>%
-    mutate(
-      !!zscore_col := ifelse(
-        !is.na(sd_wealth) & sd_wealth > 0,
-        abs(.data[[wealth_col]] - mean_wealth) / sd_wealth,
-        NA_real_
-      )
-    ) %>%
-    select(-mean_wealth, -sd_wealth) 
-  
-  return(df)
+    mutate(!!zscore_col := ifelse(!is.na(s) & s > 0,
+                                  abs(.data[[centile_col]] - m) / s, NA_real_)) %>%
+    select(-m, -s)
 }
 
-hh_1997_rural <- add_zscore_by_cluster(hh_1997_rural, "wealth_centile_rural_simple", "hv001")
-hh_2008_rural <- add_zscore_by_cluster(hh_2008_rural, "wealth_centile_rural_simple", "hv001")
-hh_2021_rural <- add_zscore_by_cluster(hh_2021_rural, "wealth_centile_rural_simple", "hv001")
+hh_1997_rural <- add_zscore_from_centile(hh_1997_rural, "wealth_centile_rural_weighted", "hv001")
+hh_2008_rural <- add_zscore_from_centile(hh_2008_rural, "wealth_centile_rural_weighted", "hv001")
+hh_2021_rural <- add_zscore_from_centile(hh_2021_rural, "wealth_centile_rural_weighted", "hv001")
 ```
 
 Nous allons créer 3 cartes montrant le z-score de chaque cluster
@@ -1381,5 +1368,12 @@ Registration
 write_rds(hh_1997_rural, "data/derived/hh_1997_rural.rds")
 write_rds(hh_2008_rural, "data/derived/hh_2008_rural.rds")
 write_rds(hh_2021_rural, "data/derived/hh_2021_rural.rds")
+```
+
+On fait la même chose pour 2011, 2013 et 2016 (fichiers R séparés)
+
+```{r}
+source("wealth_index_2011_2013.R")
+source("wealth_index_2016.R")
 ```
 
