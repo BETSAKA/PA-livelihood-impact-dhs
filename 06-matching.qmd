@@ -18,7 +18,7 @@ Nous réalisons le matching à l'aide de la méthode genetic matching, en utilis
 
 Dans un premier temps, nous appliquons la fonction GenMatch() pour identifier la combinaison optimale de poids attribués à chaque covariable, dans le but de maximiser l'équilibre entre le groupe de traitement et de contrôle. Nous obtenons une matrice de poids mais aucune paire n'est encore formée. Dans un second temps, nous utilisons la fonction matchIt(), en intégrant la pondération trouvée auparavant, afin de constituer les paires entre les unités traitées et non traitées.
 
-## Matching for 1997
+## Exécution du matching pour toutes les années
 
 ```{r}
 # Library 
@@ -30,78 +30,169 @@ library(ggplot2) #Figure
 library(rbounds)
 library(rgenoud)
 library(Matching)
+library(progressr)
+library(glue)
+matching_variables <- c(
+  "treecover_area_2000","slope_2000","elevation_2000",
+  "population_count_2000","traveltime_2000_2000"
+)
 
-# Load data 
-hr_1997_final <- readRDS("data/derived/hr_1997_final.rds")
+prep_matching <- function(df_final) {
+  out <- df_final %>%
+    filter(GROUP %in% c("Treatment","Control")) %>%
+    mutate(treatment = if_else(GROUP == "Treatment", 1L, 0L))
+  missing_cols <- setdiff(matching_variables, names(out))
+  if (length(missing_cols) > 0) {
+    message(">> Colonnes manquantes: ", paste(missing_cols, collapse=", "))
+  }
+  out %>% drop_na(all_of(intersect(matching_variables, names(out))))
+}
 
-# Matching variables 
-matching_variables <- c("treecover_area_2000", "slope_2000", "elevation_2000", "population_count_2000", "traveltime_2000_2000")
+# supprimer toute ancienne version pour éviter le masquage
+if (exists("run_matching_year")) rm(run_matching_year)
 
-# Specifying binary variables in the column GROUP
-matching_1997 <- hr_1997_final %>%
-  filter(GROUP %in% c("Treatment", "Control")) %>%
-  mutate(
-    treatment = if_else(GROUP == "Treatment", 1, 0)) %>%
-  drop_na(all_of(matching_variables))
-
-# Generate a matrix for GenMatch 
-X_match <- as.data.frame(st_drop_geometry(matching_1997[, c("treecover_area_2000", "slope_2000", "elevation_2000", "population_count_2000", "traveltime_2000_2000")]))
-
-# Optimum combination search for 1997
-set.seed(123)
-
-if (file.exists("data/derived/gen_match_model_1997.rds")) {
-  matching_result_1997 <- readRDS("data/derived/gen_match_model_1997.rds")
-} else {
-  cat("Fichier introuvable, début du traitement...\n")
+run_matching_year <- function(year, overwrite = list(gen=FALSE, match=FALSE)) {
+  cat("\n=== Matching", year, "===\n")
+  fin_path <- glue("data/derived/hr_{year}_final.rds")
+  if (!file.exists(fin_path)) stop("Fichier introuvable: ", fin_path)
   
-  gen_match_model_1997 <- GenMatch(
-    Tr = matching_1997$treatment,
-    X = X_match,
-    BalanceMatrix = X_match,
-    estimand = "ATT",
-    M = 1, # 1 appariement pour chaque unité du groupe de traitement
-    weights = NULL,
-    pop.size = 1000, 
-    max.generations = 100,
-    wait.generations = 4, 
-    caliper = .25,
-    print.level = 1,
-    cluster = rep("localhost", 4)
-  ) # 15 min 
-  saveRDS(gen_match_model_1997, "data/derived/gen_match_model_1997.rds")
-  cat("Modèle GenMatch enregistré. \n")
+  dat   <- readRDS(fin_path)
+  dat_m <- prep_matching(dat)
+  
+  cat(glue(">> N total={nrow(dat)}, après filtre/NA={nrow(dat_m)}; ",
+           "Traités={sum(dat_m$treatment==1,na.rm=TRUE)}, ",
+           "Contrôles={sum(dat_m$treatment==0,na.rm=TRUE)}\n"))
+  
+  have_all_vars <- all(matching_variables %in% names(dat_m))
+  cat(">> Toutes les covars présentes ? ", have_all_vars, "\n")
+  if (nrow(dat_m) < 5 || !have_all_vars) {
+    warning(glue("Année {year}: données insuffisantes ou variables manquantes — on saute."))
+    return(NULL)
+  }
+  
+  X_match <- dat_m %>%
+    sf::st_drop_geometry() %>%
+    dplyr::select(all_of(matching_variables)) %>%
+    as.data.frame()
+  
+  gen_path         <- glue("data/derived/gen_match_model_{year}.rds")
+  match_path       <- glue("data/derived/matching_result_{year}.rds")
+  matched_out_path <- glue("data/derived/data_matched_{year}.rds")
+  
+  # --- GenMatch ---
+  used_cache_gen <- FALSE
+  t0 <- Sys.time()
+  if (file.exists(gen_path) && !isTRUE(overwrite$gen)) {
+    cat(">> GenMatch: cache trouvé -> lecture\n")
+    gen_model <- readRDS(gen_path)
+    used_cache_gen <- TRUE
+  } else {
+    cat(">> GenMatch: calcul en cours...\n")
+    gen_model <- GenMatch(
+      Tr = dat_m$treatment,
+      X  = X_match,
+      BalanceMatrix = X_match,
+      estimand = "ATT",
+      M = 1,
+      weights = NULL,
+      pop.size = 1000,
+      max.generations = 100,
+      wait.generations = 4,
+      caliper = .25,
+      print.level = 1,
+      cluster = rep("localhost", 4)
+    )
+    saveRDS(gen_model, gen_path)
+  }
+  t_gen <- as.numeric(difftime(Sys.time(), t0, units="mins"))
+  cat(glue(">> GenMatch temps = {round(t_gen,1)} min (cache={used_cache_gen})\n"))
+  
+  # --- matchit() ---
+  used_cache_match <- FALSE
+  t1 <- Sys.time()
+  if (file.exists(match_path) && !isTRUE(overwrite$match)) {
+    cat(">> matchit: cache trouvé → lecture\n")
+    m_out <- readRDS(match_path)
+    used_cache_match <- TRUE
+  } else {
+    cat(">> matchit: calcul en cours...\n")
+    fml <- as.formula(paste("treatment ~", paste(matching_variables, collapse=" + ")))
+    m_out <- matchit(
+      formula   = fml,
+      data      = dat_m,
+      method    = "genetic",
+      distance  = "mahalanobis",
+      gen.match = gen_model
+    )
+    saveRDS(m_out, match_path)
+  }
+  t_match <- as.numeric(difftime(Sys.time(), t1, units="mins"))
+  cat(glue(">> matchit temps = {round(t_match,1)} min (cache={used_cache_match})\n"))
+  
+  matched <- match.data(m_out, data = sf::st_drop_geometry(dat_m)) %>%
+    dplyr::filter(weights > 0)
+  saveRDS(matched, matched_out_path)
+  cat(glue(">> N appariés = {nrow(matched)} (écrit: {matched_out_path})\n"))
 }
 
-# Matching with MatchIt for 1997  
-  if (file.exists("data/derived/matching_result_1997.rds")) {
-  matching_result_1997 <- readRDS("data/derived/matching_result_1997.rds")
-} else {
-  cat("Fichier introuvable, début du traitement...\n")
-  matching_result_1997 <- matchit(
-    treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
-    data = matching_1997,
-    method = "genetic",
-    distance = "mahalanobis",
-    gen.match = gen_match_model_1997
-  )
-  # Registrement
-  saveRDS(matching_result_1997 , "data/derived/matching_result_1997.rds")
-  cat("Données enregistrées")
+need_overwrite <- function(year) {
+  gen_path   <- glue("data/derived/gen_match_model_{year}.rds")
+  match_path <- glue("data/derived/matching_result_{year}.rds")
+  list(gen = !file.exists(gen_path), match = !file.exists(match_path))
 }
+
+# --- Exécution avec progression ---
+yrs <- c(1997, 2008, 2011, 2013, 2016, 2021)
+
+handlers(global = TRUE)
+handlers("txtprogressbar")
+
+
+res_list <- vector("list", length(yrs))
+names(res_list) <- yrs
+
+for (i in seq_along(yrs)) {
+  yr <- yrs[i]
+  ow <- need_overwrite(yr) 
+  cat(glue("\n>> overwrite {yr}: gen={ow$gen}, match={ow$match}\n"))
+  p(sprintf("Start %s", yr))
+  t_all <- Sys.time()
+  res_list[[i]] <- tryCatch(
+    run_matching_year(yr, overwrite = ow),
+    error = function(e) { warning(glue("Year {yr} ERROR: {e$message}")); NULL }
+  )
+  p(sprintf("Done %s (%.1f min)",
+            yr, as.numeric(difftime(Sys.time(), t_all, units="mins"))))
+}
+
+bal_tabs <- purrr::imap(res_list, ~ if (!is.null(.x)) cobalt::bal.tab(.x$m) else NULL)
+saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years.rds")
+readr::write_csv(summary_tbl, "data/derived/matching_runtime_summary.csv")
+```
+
+## Matching for 1997
+
+```{r}
+# Specifying binary variables in the column GROUP
+
+hr_1997_final        <- read_rds("data/derived/hr_1997_final.rds")
+matching_result_1997 <- read_rds("data/derived/matching_result_1997.rds")  
+data_matched_1997    <- read_rds("data/derived/data_matched_1997.rds")  
+
+# -- Rendus inchangés --
+summary(matching_result_1997)
+plot(matching_result_1997)
+
+# n appariés (si tu veux l’afficher)
+nrow(data_matched_1997)
 
 # Summary of Balance
 summary(matching_result_1997)
 plot(matching_result_1997)
 
-# Extract matched data for 1997
-data_matched_1997 <- match.data(matching_result_1997)
-
 data_matched_1997 <- data_matched_1997 %>%
   filter(weights > 0)
 nrow(data_matched_1997)
-
-saveRDS(data_matched_1997,"data/derived/data_matched_1997.rds" )
 ```
 
 Avant le matching, nous comptons 3 505 observations pour l'année 1997. Les groupes traités et contrôles diffèrent fortement en moyenne pour certaines covariables. Il y a plus de traités (avec un moyenne de 22875) qui vivent dans des zones avec plus de couverture que des contrôles (avec une moyenne de 16932). Mais ce sont les contrôles qui vivent le plus à une haute altitude (en moyenne 595 m) que les traités (en moyenne 419 m) et dans des zones plus peuplées. Le déséquilibre est particulièrement fort pour la variable population_count_2000.
@@ -113,72 +204,13 @@ Pour maintenir l'équilibre des covariables, nous obtenons alors 1930 observatio
 ## Matching for 2008
 
 ```{r}
-
-# Load data 
-hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
-
-# Matching variables 
-matching_variables <- c("treecover_area_2000", "slope_2000", "elevation_2000", "population_count_2000", "traveltime_2000_2000")
-
-# Specifying binary variables in the column GROUP
-matching_2008 <- hr_2008_final %>%
-  filter(GROUP %in% c("Treatment", "Control")) %>%
-  mutate(
-    treatment = if_else(GROUP == "Treatment", 1, 0)) %>%
-  drop_na(all_of(matching_variables))
-
-# Generate a matrix for GenMatch 
-X_match <- as.data.frame(st_drop_geometry(matching_2008[, c("treecover_area_2000", "slope_2000", "elevation_2000", "population_count_2000", "traveltime_2000_2000")]))
-
-# Optimum combination search for 2008
-set.seed(123)
-
-if (file.exists("data/derived/gen_match_model_2008.rds")) {
-  matching_result_2008 <- readRDS("data/derived/gen_match_model_2008.rds")
-} else {
-  cat("Fichier introuvable, début du traitement...\n")
-  
-  gen_match_model_2008 <- GenMatch(
-    Tr = matching_2008$treatment,
-    X = X_match,
-    BalanceMatrix = X_match,
-    estimand = "ATT",
-    M = 1, # 1 appariement pour chaque unité du groupe de traitement
-    weights = NULL,
-    pop.size = 1000, 
-    max.generations = 100,
-    wait.generations = 4, 
-    caliper = .25,
-    print.level = 1,
-    cluster = rep("localhost", 4)
-  ) # 16 min et 25s 
-  saveRDS(gen_match_model_2008, "data/derived/gen_match_model_2008.rds")
-  cat("Modèle GenMatch enregistré. \n")
-}
-
-# Matching with MatchIt for 2008  
-  if (file.exists("data/derived/matching_result_2008.rds")) {
-  matching_result_2008 <- readRDS("data/derived/matching_result_2008.rds")
-} else {
-  cat("Fichier introuvable, début du traitement...\n")
-  matching_result_2008 <- matchit(
-    treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
-    data = matching_2008,
-    method = "genetic",
-    distance = "mahalanobis",
-    gen.match = gen_match_model_2008
-  )
-  # Registrement
-  saveRDS(matching_result_2008 , "data/derived/matching_result_2008.rds")
-  cat("Données enregistrées")
-}
+hr_2008_final        <- readRDS("data/derived/hr_2008_final.rds")
+matching_result_2008 <- readRDS("data/derived/matching_result_2008.rds")
+data_matched_2008    <- readRDS("data/derived/data_matched_2008.rds")
 
 # Summary of Balance
 summary(matching_result_2008)
 plot(matching_result_2008)
-
-# Extract matched data for 2008
-data_matched_2008 <- match.data(matching_result_2008)
 
 data_matched_2008 <- data_matched_2008 %>%
   filter(weights > 0)
@@ -192,70 +224,13 @@ Avant le matching pour l'année 2008, nous avons 9 307 groupes de contrôle et 2
 ## Matching for 2021
 
 ```{r}
-# Load data 
-hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
-
-# Specifying binary variables in the column GROUP
-matching_2021 <- hr_2021_final %>%
-  filter(GROUP %in% c("Treatment", "Control")) %>%
-  mutate(
-    treatment = if_else(GROUP == "Treatment", 1, 0)) %>%
-  drop_na(all_of(matching_variables))
-
-# Generate a matrix for GenMatch 
-X_match <- as.data.frame(st_drop_geometry(matching_2021[, c("treecover_area_2000", "slope_2000", "elevation_2000", "population_count_2000", "traveltime_2000_2000")]))
-
-# Optimum combination search for 2021
-set.seed(123)
-
-
-if (file.exists("data/derived/matching_result_2021.rds")) {
-  matching_result_2021 <- readRDS("data/derived/matching_result_2021.rds")
-} else {
-  cat("Fichier introuvable, début du traitement...\n")
-  
-  gen_match_model_2021 <- GenMatch(
-    Tr = matching_2021$treatment,
-    X = X_match,
-    BalanceMatrix = X_match,
-    estimand = "ATT",
-    M = 1, # 1 appariement pour chaque unité du groupe de traitement
-    weights = NULL,
-    pop.size = 1000, 
-    max.generations = 100,
-    wait.generations = 4, 
-    caliper = .25,
-    print.level = 1,
-    cluster = rep("localhost", 4)
-  ) # 20 min 
-  saveRDS(gen_match_model_2021, "data/derived/gen_match_model_2021.rds")
-  cat("Modèle GenMatch enregistré. \n")
-}
-
-# Matching with MatchIt for 2021  
-  if (file.exists("data/derived/matching_result_2021.rds")) {
-  matching_result_2021 <- readRDS("data/derived/matching_result_2021.rds")
-} else {
-  cat("Fichier introuvable, début du traitement...\n")
-  
-  matching_result_2021 <- matchit(
-    treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
-    data = matching_2021,
-    method = "genetic",
-    distance = "mahalanobis",
-    gen.match = gen_match_model_2021
-  )
-  # Registrement
-  saveRDS(matching_result_2021 , "data/derived/matching_result_2021.rds")
-  cat("Données enregistrées")
-}
+hr_2021_final        <- readRDS("data/derived/hr_2021_final.rds")
+matching_result_2021 <- readRDS("data/derived/matching_result_2021.rds")
+data_matched_2021    <- readRDS("data/derived/data_matched_2021.rds")
 
 # Summary of Balance
 summary(matching_result_2021)
 plot(matching_result_2021)
-
-# Extract matched data for 2021
-data_matched_2021 <- match.data(matching_result_2021)
 
 data_matched_2021 <- data_matched_2021 %>%
   filter(weights > 0)
