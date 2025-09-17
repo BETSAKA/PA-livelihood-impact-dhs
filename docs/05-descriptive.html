@@ -248,6 +248,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#objectif" id="toc-objectif" class="nav-link active" data-scroll-target="#objectif"><span class="header-section-number">7.1</span> Objectif</a></li>
+  <li><a href="#statistiques-descriptive-des-aires-protégées" id="toc-statistiques-descriptive-des-aires-protégées" class="nav-link" data-scroll-target="#statistiques-descriptive-des-aires-protégées"><span class="header-section-number">7.2</span> Statistiques descriptive des aires protégées</a></li>
+  <li><a href="#statistiques-descriptives-du-wealth-index-et-du-z-score-du-wealth-index" id="toc-statistiques-descriptives-du-wealth-index-et-du-z-score-du-wealth-index" class="nav-link" data-scroll-target="#statistiques-descriptives-du-wealth-index-et-du-z-score-du-wealth-index"><span class="header-section-number">7.3</span> Statistiques descriptives du wealth index et du z-score du wealth index</a>
+  <ul class="collapse">
+  <li><a href="#année-1997" id="toc-année-1997" class="nav-link" data-scroll-target="#année-1997"><span class="header-section-number">7.3.1</span> Année 1997</a></li>
+  <li><a href="#année-2008" id="toc-année-2008" class="nav-link" data-scroll-target="#année-2008"><span class="header-section-number">7.3.2</span> Année 2008</a></li>
+  <li><a href="#année-2021" id="toc-année-2021" class="nav-link" data-scroll-target="#année-2021"><span class="header-section-number">7.3.3</span> Année 2021</a></li>
+  </ul></li>
+  <li><a href="#statistiques-descriptives-des-variables-utilisées-dans-le-modèle" id="toc-statistiques-descriptives-des-variables-utilisées-dans-le-modèle" class="nav-link" data-scroll-target="#statistiques-descriptives-des-variables-utilisées-dans-le-modèle"><span class="header-section-number">7.4</span> Statistiques descriptives des variables utilisées dans le modèle</a></li>
   </ul>
 </nav>
     </div>
@@ -275,6 +283,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="objectif" class="level2" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="objectif"><span class="header-section-number">7.1</span> Objectif</h2>
+</section>
+<section id="statistiques-descriptive-des-aires-protégées" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="statistiques-descriptive-des-aires-protégées"><span class="header-section-number">7.2</span> Statistiques descriptive des aires protégées</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -314,17 +325,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Appliquer la fonction aux deux périodes</span></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>desc_before <span class="ot">&lt;-</span> <span class="fu">get_descriptive_stats</span>(sapm_before_2008, <span class="st">"Before 2008"</span>)</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>desc_from   <span class="ot">&lt;-</span> <span class="fu">get_descriptive_stats</span>(sapm_from_2008, <span class="st">"From 2008"</span>)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>desc_AP_before <span class="ot">&lt;-</span> <span class="fu">get_descriptive_stats</span>(sapm_before_2008, <span class="st">"Before 2008"</span>)</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>desc_AP_from   <span class="ot">&lt;-</span> <span class="fu">get_descriptive_stats</span>(sapm_from_2008, <span class="st">"From 2008"</span>)</span>
 <span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Fusion des deux tableaux</span></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>desc_combined <span class="ot">&lt;-</span> <span class="fu">rbind</span>(desc_before, desc_from <span class="sc">%&gt;%</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>desc_AP_combined <span class="ot">&lt;-</span> <span class="fu">rbind</span>(desc_AP_before, desc_AP_from <span class="sc">%&gt;%</span></span>
 <span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(periode, n, mean, sd, median, min, aire_min, max, aire_max))</span>
 <span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Affichage du tableau </span></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(desc_combined, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">caption =</span> <span class="st">"Statistiques descriptives des aires protégées (REP_AREA)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(desc_AP_combined, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">caption =</span> <span class="st">"Statistiques descriptives des aires protégées (REP_AREA)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -382,8 +393,553 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Enregistrement du tableau</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(desc_combined, <span class="st">"data/derived/tableau_descriptive.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(desc_AP_combined, <span class="st">"data/derived/tableau_descriptive.csv"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Fonction pour produire les 10 plus petites aires protégées</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>get_top_small_aires <span class="ot">&lt;-</span> <span class="cf">function</span>(df_input, periode_label, <span class="at">top_n =</span> <span class="dv">10</span>) {</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  df_input <span class="sc">%&gt;%</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(REP_AREA) <span class="sc">%&gt;%</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_head</span>(<span class="at">n =</span> top_n) <span class="sc">%&gt;%</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">rank_number =</span> <span class="fu">row_number</span>(),</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">periode =</span> periode_label</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(rank_number, ORIG_NAME, REP_AREA) </span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Appliquer aux deux périodes</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>top10_before_2008 <span class="ot">&lt;-</span> <span class="fu">get_top_small_aires</span>(sapm_before_2008, <span class="st">"Before 2008"</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>top10_from_2008  <span class="ot">&lt;-</span> <span class="fu">get_top_small_aires</span>(sapm_from_2008, <span class="st">"From 2008"</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Fusionner les tableaux</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>top10_combined <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(top10_before_2008, top10_from_2008)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Affichage</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(top10_combined, <span class="at">digits =</span> <span class="dv">2</span>,</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption =</span> <span class="st">"Statistiques descriptives des aires protégées (REP_AREA) avec top 10 plus petites"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Statistiques descriptives des aires protégées (REP_AREA) avec top 10 plus petites</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">rank_number</th>
+<th style="text-align: left;">ORIG_NAME</th>
+<th style="text-align: right;">REP_AREA</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Parc de Tsarasaotra</td>
+<td style="text-align: right;">14.26</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Betampona</td>
+<td style="text-align: right;">2240.65</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">Parc national Tsimanampesotse</td>
+<td style="text-align: right;">3944.84</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Bora</td>
+<td style="text-align: right;">4007.18</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">Beza Mahafaly</td>
+<td style="text-align: right;">4147.30</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">Ivohibe</td>
+<td style="text-align: right;">4472.71</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: left;">Ambohitantely</td>
+<td style="text-align: right;">4926.33</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: left;">Maningoza</td>
+<td style="text-align: right;">6002.13</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: left;">Manombo</td>
+<td style="text-align: right;">6587.56</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">Torotorofotsy</td>
+<td style="text-align: right;">9753.58</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Nosy Antsoha</td>
+<td style="text-align: right;">7.02</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Rivière Nosivolo</td>
+<td style="text-align: right;">10.85</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">Nosy Tanihely</td>
+<td style="text-align: right;">16.25</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Andreba</td>
+<td style="text-align: right;">35.27</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">Complexe des Zones Humides de Bemanevika</td>
+<td style="text-align: right;">47.42</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">Analabe-Betanatanana</td>
+<td style="text-align: right;">51.36</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: left;">Soariake</td>
+<td style="text-align: right;">69.25</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: left;">Zones Humides Ankarafantsika (CLSA)</td>
+<td style="text-align: right;">80.37</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: left;">Ampanganandehibe-Behasina</td>
+<td style="text-align: right;">81.39</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">Ampotaka Ankorabe</td>
+<td style="text-align: right;">87.99</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Enregistrement du tableau</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(desc_AP_combined, <span class="st">"data/derived/tableau_descriptive.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="statistiques-descriptives-du-wealth-index-et-du-z-score-du-wealth-index" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="statistiques-descriptives-du-wealth-index-et-du-z-score-du-wealth-index"><span class="header-section-number">7.3</span> Statistiques descriptives du wealth index et du z-score du wealth index</h2>
+<section id="année-1997" class="level3" data-number="7.3.1">
+<h3 data-number="7.3.1" class="anchored" data-anchor-id="année-1997"><span class="header-section-number">7.3.1</span> Année 1997</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># On charge les données</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>hh_1997_rural <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"data/derived/hh_1997_rural.rds"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Sélection des colonnes d'intérêt</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"wealth_centile_rural_simple"</span>, <span class="st">"zscore_wealth"</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Créer le tableau descriptif</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>desc_1997 <span class="ot">&lt;-</span> hh_1997_rural <span class="sc">%&gt;%</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_centile =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(wealth_centile_rural_simple)),</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_centile =</span> <span class="fu">mean</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_centile =</span> <span class="fu">sd</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_centile =</span> <span class="fu">median</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_centile =</span> <span class="fu">min</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_centile =</span> <span class="fu">max</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_zscore =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(zscore_wealth)),</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_zscore =</span> <span class="fu">mean</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_zscore =</span> <span class="fu">sd</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_zscore =</span> <span class="fu">median</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_zscore =</span> <span class="fu">min</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_zscore =</span> <span class="fu">max</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transformer en format long</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">everything</span>(),</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="fu">c</span>(<span class="st">"stat"</span>, <span class="st">"variable"</span>),</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_sep =</span> <span class="st">"_"</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_from =</span> stat,</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_from =</span> value</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Renommer les variables</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">variable =</span> <span class="fu">case_when</span>(</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>      variable <span class="sc">==</span> <span class="st">"centile"</span> <span class="sc">~</span> <span class="st">"Wealth index en Centile"</span>,</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>      variable <span class="sc">==</span> <span class="st">"zscore"</span> <span class="sc">~</span> <span class="st">"Z-score wealth index"</span>,</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> variable</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Affichage du tableau</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(desc_1997, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">caption =</span> <span class="st">"Statistiques descriptives des variables de richesse rurale (1997)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Statistiques descriptives des variables de richesse rurale (1997)</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">variable</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">mean</th>
+<th style="text-align: right;">sd</th>
+<th style="text-align: right;">median</th>
+<th style="text-align: right;">min</th>
+<th style="text-align: right;">max</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Wealth index en Centile</td>
+<td style="text-align: right;">5124</td>
+<td style="text-align: right;">50.32</td>
+<td style="text-align: right;">28.92</td>
+<td style="text-align: right;">50.00</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Z-score wealth index</td>
+<td style="text-align: right;">5124</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0.57</td>
+<td style="text-align: right;">0.71</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4.66</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Export vers Excel</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_xlsx</span>(desc_1997, <span class="st">"data/derived/descriptive_wealth_rural_1997.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="année-2008" class="level3" data-number="7.3.2">
+<h3 data-number="7.3.2" class="anchored" data-anchor-id="année-2008"><span class="header-section-number">7.3.2</span> Année 2008</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># On charge les données</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>hh_2008_rural <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"data/derived/hh_2008_rural.rds"</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Créer le tableau descriptif</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>desc_2008 <span class="ot">&lt;-</span> hh_2008_rural <span class="sc">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_centile =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(wealth_centile_rural_simple)),</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_centile =</span> <span class="fu">mean</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_centile =</span> <span class="fu">sd</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_centile =</span> <span class="fu">median</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_centile =</span> <span class="fu">min</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_centile =</span> <span class="fu">max</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_zscore =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(zscore_wealth)),</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_zscore =</span> <span class="fu">mean</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_zscore =</span> <span class="fu">sd</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_zscore =</span> <span class="fu">median</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_zscore =</span> <span class="fu">min</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_zscore =</span> <span class="fu">max</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transformer en format long</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">everything</span>(),</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="fu">c</span>(<span class="st">"stat"</span>, <span class="st">"variable"</span>),</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_sep =</span> <span class="st">"_"</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_from =</span> stat,</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_from =</span> value</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Renommer les variables </span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">variable =</span> <span class="fu">case_when</span>(</span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>      variable <span class="sc">==</span> <span class="st">"centile"</span> <span class="sc">~</span> <span class="st">"Wealth index en Centile"</span>,</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>      variable <span class="sc">==</span> <span class="st">"zscore"</span> <span class="sc">~</span> <span class="st">"Z-score wealth index"</span>,</span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> variable</span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Affichage du tableau</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(desc_2008, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">caption =</span> <span class="st">"Statistiques descriptives des variables de richesse rurale (2008)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Statistiques descriptives des variables de richesse rurale (2008)</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">variable</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">mean</th>
+<th style="text-align: right;">sd</th>
+<th style="text-align: right;">median</th>
+<th style="text-align: right;">min</th>
+<th style="text-align: right;">max</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Wealth index en Centile</td>
+<td style="text-align: right;">13364</td>
+<td style="text-align: right;">50.41</td>
+<td style="text-align: right;">28.85</td>
+<td style="text-align: right;">50.0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Z-score wealth index</td>
+<td style="text-align: right;">13364</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0.58</td>
+<td style="text-align: right;">0.7</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4.85</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Export vers Excel</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_xlsx</span>(desc_2008, <span class="st">"data/derived/descriptive_wealth_rural_2008.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="année-2021" class="level3" data-number="7.3.3">
+<h3 data-number="7.3.3" class="anchored" data-anchor-id="année-2021"><span class="header-section-number">7.3.3</span> Année 2021</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># On charge les données</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>hh_2021_rural <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"data/derived/hh_2021_rural.rds"</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Créer le tableau descriptif</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>desc_2021 <span class="ot">&lt;-</span> hh_2021_rural <span class="sc">%&gt;%</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_centile =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(wealth_centile_rural_simple)),</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_centile =</span> <span class="fu">mean</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_centile =</span> <span class="fu">sd</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_centile =</span> <span class="fu">median</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_centile =</span> <span class="fu">min</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_centile =</span> <span class="fu">max</span>(wealth_centile_rural_simple, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_zscore =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(zscore_wealth)),</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_zscore =</span> <span class="fu">mean</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_zscore =</span> <span class="fu">sd</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_zscore =</span> <span class="fu">median</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_zscore =</span> <span class="fu">min</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_zscore =</span> <span class="fu">max</span>(zscore_wealth, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Transformer en format long</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">everything</span>(),</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="fu">c</span>(<span class="st">"stat"</span>, <span class="st">"variable"</span>),</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_sep =</span> <span class="st">"_"</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_from =</span> stat,</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_from =</span> value</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Renommer les variables</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">variable =</span> <span class="fu">case_when</span>(</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>      variable <span class="sc">==</span> <span class="st">"centile"</span> <span class="sc">~</span> <span class="st">"Wealth index en Centile"</span>,</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>      variable <span class="sc">==</span> <span class="st">"zscore"</span> <span class="sc">~</span> <span class="st">"Z-score wealth index"</span>,</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> variable</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Affichage du tableau</span></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(desc_2021, <span class="at">digits =</span> <span class="dv">2</span>, <span class="at">caption =</span> <span class="st">"Statistiques descriptives des variables de richesse rurale (2021)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Statistiques descriptives des variables de richesse rurale (2021)</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">variable</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">mean</th>
+<th style="text-align: right;">sd</th>
+<th style="text-align: right;">median</th>
+<th style="text-align: right;">min</th>
+<th style="text-align: right;">max</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Wealth index en Centile</td>
+<td style="text-align: right;">15364</td>
+<td style="text-align: right;">50.43</td>
+<td style="text-align: right;">28.85</td>
+<td style="text-align: right;">50.00</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Z-score wealth index</td>
+<td style="text-align: right;">15364</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0.57</td>
+<td style="text-align: right;">0.72</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">4.27</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Export vers Excel</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_xlsx</span>(desc_2021, <span class="st">"data/derived/descriptive_wealth_rural_2021.xlsx"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+</section>
+<section id="statistiques-descriptives-des-variables-utilisées-dans-le-modèle" class="level2" data-number="7.4">
+<h2 data-number="7.4" class="anchored" data-anchor-id="statistiques-descriptives-des-variables-utilisées-dans-le-modèle"><span class="header-section-number">7.4</span> Statistiques descriptives des variables utilisées dans le modèle</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(haven)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data </span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>hr_1997_final <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"data/derived/hr_1997_final.rds"</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>hr_2008_final <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"data/derived/hr_2008_final.rds"</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>hr_2021_final <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"data/derived/hr_2021_final.rds"</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Sélection des colonnes d'intérêt</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>vars_ut <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"treecover_area_2000"</span>, <span class="st">"slope_2000"</span>, <span class="st">"elevation_2000"</span>, <span class="st">"population_count_2000"</span>, <span class="st">"traveltime_2000_2000"</span>, <span class="st">"spei_wc_1995"</span>, <span class="st">"spei_wc_1996"</span>, <span class="st">"spei_wc_1997"</span>, <span class="st">"spei_wc_2006"</span>, <span class="st">"spei_wc_2007"</span>, <span class="st">"spei_wc_2008"</span>,<span class="st">"spei_wc_2019"</span>, <span class="st">"spei_wc_2020"</span>, <span class="st">"spei_wc_2021"</span> )</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Fonction pour statistiques descriptives robustes</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>calc_descr_stats <span class="ot">&lt;-</span> <span class="cf">function</span>(df, vars) {</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  vars_exist <span class="ot">&lt;-</span> <span class="fu">intersect</span>(vars, <span class="fu">names</span>(df))       <span class="co"># colonnes existantes</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  df_num <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">all_of</span>(vars_exist)) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">where</span>(is.numeric))</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">ncol</span>(df_num) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="cn">NULL</span>)           <span class="co"># si aucune colonne numérique</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">Variable =</span> <span class="fu">names</span>(df_num),</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">N        =</span> <span class="fu">sapply</span>(df_num, <span class="cf">function</span>(x) <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(x))),</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">Mean     =</span> <span class="fu">sapply</span>(df_num, <span class="cf">function</span>(x) <span class="fu">mean</span>(x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">SD       =</span> <span class="fu">sapply</span>(df_num, <span class="cf">function</span>(x) <span class="fu">sd</span>(x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">Min      =</span> <span class="fu">sapply</span>(df_num, <span class="cf">function</span>(x) <span class="fu">min</span>(x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">Median   =</span> <span class="fu">sapply</span>(df_num, <span class="cf">function</span>(x) <span class="fu">median</span>(x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">Max      =</span> <span class="fu">sapply</span>(df_num, <span class="cf">function</span>(x) <span class="fu">max</span>(x, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculer pour chaque dataframe</span></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>descr_1997 <span class="ot">&lt;-</span> <span class="fu">calc_descr_stats</span>(hr_1997_final, vars_ut) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">Year =</span> <span class="dv">1997</span>)</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>descr_2008 <span class="ot">&lt;-</span> <span class="fu">calc_descr_stats</span>(hr_2008_final, vars_ut) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">Year =</span> <span class="dv">2008</span>)</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>descr_2021 <span class="ot">&lt;-</span> <span class="fu">calc_descr_stats</span>(hr_2021_final, vars_ut) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">Year =</span> <span class="dv">2021</span>)</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Combiner dans un seul tableau</span></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>descr_stats_vars <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(descr_1997, descr_2008, descr_2021)</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Affichage</span></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>descr_stats_vars </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                        Variable     N          Mean
+treecover_area_2000...1      treecover_area_2000  5124  1.851993e+04
+slope_2000...2                        slope_2000  5124  8.247142e+00
+elevation_2000...3                elevation_2000  5124  5.588559e+02
+population_count_2000...4  population_count_2000  5124  1.061353e+02
+traveltime_2000_2000...5    traveltime_2000_2000  5124  2.476129e+02
+spei_wc_1995                        spei_wc_1995  5124 -5.561012e-02
+spei_wc_1996                        spei_wc_1996  5124  8.693436e-01
+spei_wc_1997                        spei_wc_1997  5124 -1.913800e-01
+treecover_area_2000...9      treecover_area_2000 13181  1.660883e+04
+slope_2000...10                       slope_2000 13181  7.942842e+00
+elevation_2000...11               elevation_2000 13181  5.971794e+02
+population_count_2000...12 population_count_2000 13181  7.729916e+01
+traveltime_2000_2000...13   traveltime_2000_2000 13181  2.320937e+02
+spei_wc_2006                        spei_wc_2006 13181  1.819688e-01
+spei_wc_2007                        spei_wc_2007 13181  5.865858e-02
+spei_wc_2008                        spei_wc_2008 13181  1.832056e-01
+treecover_area_2000...17     treecover_area_2000 15364  1.666635e+04
+slope_2000...18                       slope_2000 15364  8.023112e+00
+elevation_2000...19               elevation_2000 15364  6.023783e+02
+population_count_2000...20 population_count_2000 15364  8.868101e+01
+traveltime_2000_2000...21   traveltime_2000_2000 15364  2.381664e+02
+spei_wc_2019                        spei_wc_2019 15364 -1.871704e-01
+spei_wc_2020                        spei_wc_2020 15364 -8.501920e-02
+spei_wc_2021                        spei_wc_2021 15364 -1.180235e+00
+                                     SD          Min        Median          Max
+treecover_area_2000...1    1.011462e+04 1300.4985303  1.844314e+04 3.156622e+04
+slope_2000...2             4.498664e+00    1.4451159  8.084897e+00 1.929708e+01
+elevation_2000...3         5.394243e+02    3.0131631  3.147425e+02 1.966773e+03
+population_count_2000...4  3.231874e+02    1.7907253  3.309392e+01 2.199750e+03
+traveltime_2000_2000...5   1.907659e+02   14.1185567  2.048747e+02 1.287918e+03
+spei_wc_1995               4.779245e-01   -1.1833773 -5.555545e-02 1.244284e+00
+spei_wc_1996               6.995845e-01   -0.4415102  1.074188e+00 1.820413e+00
+spei_wc_1997               6.083942e-01   -1.3525589 -1.004531e-01 1.449460e+00
+treecover_area_2000...9    1.026213e+04  327.5594873  1.547459e+04 3.156603e+04
+slope_2000...10            4.393777e+00    0.9039506  7.590601e+00 2.041394e+01
+elevation_2000...11        5.303743e+02    2.9265126  4.353461e+02 1.835090e+03
+population_count_2000...12 2.489257e+02    1.3733021  2.765233e+01 2.650081e+03
+traveltime_2000_2000...13  1.438855e+02   12.3126615  2.047688e+02 1.311446e+03
+spei_wc_2006               1.575009e-01   -0.2957631  1.950792e-01 5.438691e-01
+spei_wc_2007               4.537454e-01   -2.1975491  1.542153e-01 4.984255e-01
+spei_wc_2008               1.845039e-01   -0.4568123  2.050563e-01 5.011877e-01
+treecover_area_2000...17   1.019278e+04   80.0598753  1.523613e+04 3.154590e+04
+slope_2000...18            4.433577e+00    0.9947058  7.795004e+00 2.084361e+01
+elevation_2000...19        5.194360e+02    5.6071981  4.601742e+02 2.006922e+03
+population_count_2000...20 3.041958e+02    0.4082430  2.415665e+01 2.748209e+03
+traveltime_2000_2000...21  1.548081e+02   13.8549223  2.121785e+02 1.567831e+03
+spei_wc_2019               2.992705e-01   -1.1807502 -2.404551e-01 6.693055e-01
+spei_wc_2020               3.044984e-01   -0.7883200 -1.135140e-01 7.382271e-01
+spei_wc_2021               4.817304e-01   -1.9140388 -1.252073e+00 4.284587e-02
+                           Year
+treecover_area_2000...1    1997
+slope_2000...2             1997
+elevation_2000...3         1997
+population_count_2000...4  1997
+traveltime_2000_2000...5   1997
+spei_wc_1995               1997
+spei_wc_1996               1997
+spei_wc_1997               1997
+treecover_area_2000...9    2008
+slope_2000...10            2008
+elevation_2000...11        2008
+population_count_2000...12 2008
+traveltime_2000_2000...13  2008
+spei_wc_2006               2008
+spei_wc_2007               2008
+spei_wc_2008               2008
+treecover_area_2000...17   2021
+slope_2000...18            2021
+elevation_2000...19        2021
+population_count_2000...20 2021
+traveltime_2000_2000...21  2021
+spei_wc_2019               2021
+spei_wc_2020               2021
+spei_wc_2021               2021</code></pre>
+</div>
 </div>
 
 
