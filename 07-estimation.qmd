@@ -36,45 +36,40 @@ library(stargazer)
 library(broom)
 library(sandwich)
 library(lmtest)
-
+library(fixest)
 
 
 # Load data 
-data_matched_1997 <- read_rds("data/derived/data_matched_1997.rds")
-data_matched_2008 <- read_rds("data/derived/data_matched_2008.rds")
-data_matched_2021 <- read_rds("data/derived/data_matched_2021.rds")
+d97 <- read_rds("data/derived/data_matched_1997.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_1995,
+         spei_wc_n_1 = spei_wc_1996,
+         spei_wc_n = spei_wc_1997) %>%
+  mutate(hv220 = zap_labels(hv220))
 
-# Renommer les noms des spei du dataframe
-data_matched_1997 <- data_matched_1997 %>%
-  rename(
-    spei_wc_n_2 = spei_wc_1995,
-    spei_wc_n_1 = spei_wc_1996,
-    spei_wc_n = spei_wc_1997
-  )
+d08 <- read_rds("data/derived/data_matched_2008.rds") %>%
+ rename(spei_wc_n_2 = spei_wc_2006,
+         spei_wc_n_1 = spei_wc_2007,
+         spei_wc_n = spei_wc_2008) %>%
+  mutate(hv220 = zap_labels(hv220))
 
-
-data_matched_2008 <- data_matched_2008 %>%
-  rename(
-    spei_wc_n_2 = spei_wc_2006,
-    spei_wc_n_1 = spei_wc_2007,
-    spei_wc_n = spei_wc_2008
-  )
-
-
-data_matched_2021 <- data_matched_2021 %>%
-  rename(
-    spei_wc_n_2 = spei_wc_2019,
-    spei_wc_n_1 = spei_wc_2020,
-    spei_wc_n = spei_wc_2021
-  )
+d21 <- read_rds("data/derived/data_matched_2021.rds") %>%
+rename(spei_wc_n_2 = spei_wc_2019,
+         spei_wc_n_1 = spei_wc_2020,
+         spei_wc_n = spei_wc_2021) %>%
+  mutate(hv220 = zap_labels(hv220))
 
 # Merge the three waves
-data_all <- bind_rows(data_matched_1997, data_matched_2008, data_matched_2021) %>%
+data_all <- bind_rows(d97, d08, d21) %>%
+  # keep only Treatment/Control
+  filter(GROUP %in% c("Treatment", "Control")) %>%
+  # treatment indicator
+  mutate(treat = as.integer(GROUP == "Treatment"),
+         weights = hv005 / 1e6 * weights) %>%
   drop_na()
 
 
 # Treatment period---------------
-data_all <- data_all %>%
+dat <- data_all %>%
   mutate(
     period_DID = case_when(
       DHSYEAR == 1997 ~ -1, 
@@ -83,8 +78,8 @@ data_all <- data_all %>%
     )
   )
 
-pre_treatment <- data_all %>% filter(period_DID <= 0)
-post_treatment <- data_all %>% filter(period_DID >= 0)
+pre_treatment <- dat %>% filter(period_DID <= 0)
+post_treatment <- dat %>% filter(period_DID >= 0)
 ```
 
 Nous obtenons 6 767 observations pour le pre_treatment et 11 500 observations pour la période de post_treatment.
@@ -100,7 +95,7 @@ L'estimation d'impact repose sur une approche de difference-in-difference, qui c
 library(scales) 
 
 # Préparation des données 
-data_all_mod <- data_all %>% 
+dat_mod <- dat %>% 
   mutate( id = paste0(DHSYEAR, hv005),
           id = as.numeric(id),
           group_recode = case_when(GROUP == "Treatment" ~ 2021,
@@ -108,10 +103,11 @@ data_all_mod <- data_all %>%
                                    GROUP == "Excluded" ~ 1997))
 
 # Vérification  
-table(data_all_mod$DHSYEAR)
+table(dat_mod$DHSYEAR)
 
 
-# Estimation avec le package did
+# DID placebo----------------------------------------
+# Estimation avec package did
 did_callaway_wi <- att_gt(
   yname = "wealth_centile_rural_simple", 
   tname = "DHSYEAR",
@@ -120,8 +116,10 @@ did_callaway_wi <- att_gt(
   xformla = ~ spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220,
   control_group = "nevertreated",
   weightsname = "weights",
-  data = data_all_mod,
-  panel = FALSE, 
+  data = dat_mod,
+  panel = FALSE,
+  bstrap = TRUE,
+  clustervars = "hv001"
 )
 
 summary(did_callaway_wi)
@@ -146,66 +144,97 @@ library(dplyr)
 #Erreurs standards robustes intra-cluster (hv001)
 #-------------------------------------------------
 
-# Fonction de variance-covariance 
+# Estimation DID placebo avec package fixest 
+pre <- dat %>% 
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(post = as.integer(DHSYEAR == 2008),
+         treat_post  = treat * post)
 
-cluster_vcov <- function(mod, cluster) {
-  # Extraction des observations utilisées dans le modèle 
-   cl <- cluster[as.integer(rownames(mod$model))]
-  
-  # Calcul des quantiles nécessaires 
-  M <- dplyr::n_distinct(cl); N <- length(cl); K <- mod$rank
-  
-  # Correction de variance 
-  dfc <- (M/(M-1)) * ((N-1)/(N-K))
-  
-  # Calcul des scores agrégés au niveau des clusters
-  uj <- apply(estfun(mod), 2, function(x) tapply(x, cl, sum))
-  
-  # Matrice de variance-covariance clusterisée
-  dfc * sandwich(mod, meat = crossprod(uj)/N)
-}
-  
-# Fonction DID
-did_fit_wi <- function(d, years){
-  dd <- d %>%
-    filter(DHSYEAR %in% years) %>%
-    transmute(
-      DHSYEAR, hv001, GROUP,
-      wealth_centile_rural_simple,
-      treated = as.integer(GROUP=="Treatment"),
-      post = as.integer(DHSYEAR==max(years))
-    ) %>%
-    filter(!is.na(wealth_centile_rural_simple))
-  
-  
-  m <- lm(wealth_centile_rural_simple ~ treated*post, data = dd)
-  vc <- cluster_vcov(m, dd$hv001)
-  out <- coeftest(m, vcov.=vc) %>% broom::tidy()
-  list(model = m, vcov = vc, data=dd, tidy=out)
+f_pre <- wealth_centile_rural_simple ~ treat + post + treat_post +
+  spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+
+m_pre <- feols(f_pre, data = pre, weights = ~ weights, cluster = ~ hv001)
+
+# DID traitement
+main <- dat %>% 
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(post = as.integer(DHSYEAR == 2021),
+         treat_post = treat * post)
+
+f_main <- wealth_centile_rural_simple ~ treat + post + treat_post +
+  spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+
+m_main <- feols(f_main, data = main, weights = ~ weights, cluster = ~ hv001)
+
+etable(m_pre, m_main, vcov = list(~ hv001))
+
+# extract DID row from a fixest summary
+did_row <- function(model, year_post, vc = ~ hv001, term = "treat_post") {
+  summary(model, vcov = vc) %>%
+    broom::tidy() %>%
+    filter(term == !!term) %>%
+    transmute(year = year_post,
+              estimate = estimate,
+              se = std.error)
 }
 
-# Estimation
-res_placebo_wi <- did_fit_wi(data_all_mod, c(1997, 2008))
-res_main_wi <- did_fit_wi(data_all_mod, c(2008, 2021))
+did_df <- bind_rows(did_row(m_pre,  year_post = 2008),
+                    did_row(m_main, year_post = 2021)) %>%
+  mutate(period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
+                         levels = c("1997–2008", "2008–2021")),
+         lo = estimate - 1.96 * se,
+         hi = estimate + 1.96 * se)
 
-m_placebo_wi <- res_placebo$model
-m_main_wi <- res_main$model
+# plot
+ggplot(did_df, aes(x = year, y = estimate, group = 1)) +
+  geom_hline(yintercept = 0, linewidth = 0.6, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.4, linewidth = 0.7) +
+  geom_point(size = 3) +
+ # geom_line(linewidth = 0.7, alpha = 0.8) +
+  scale_x_continuous(breaks = c(2008, 2021)) +
+  labs(
+    x = "Year (post period of each contrast)",
+    y = "DID coefficient on Wealth index centile",
+    title = "DID effect over time with PSU-clustered 95% CIs",
+    subtitle = 
+      "Points at 2008 (placebo 1997–2008) and 2021 (treatment estimate 2008–2021)"
+  ) 
+```
 
-se_placebo_wi <- sqrt(diag(res_placebo_wi$vcov))
+### Test pre-trend 
 
-se_main_wi <- sqrt(diag(res_main_wi$vcov))
+```{r}
+library(pretrends)
 
+# Extraire les effets estimés par période 
+beta <- did_callaway_wi$att
 
-# Tableau de l'estimation DID avec erreurs standards par cluster 
-stargazer(m_placebo_wi, m_main_wi,
-          type = "text",
-          se = list(se_placebo, se_main),
-          ci = FALSE,
-          title = "Estimation DID avec erreurs standards robustes cluster",
-          dep.var.labels = "Wealth Centile Rural",
-          covariate.labels = c("Treatment x Post"),
-          star.cutoffs = c(0.05, 0.01, 0.001))
+# Erreurs standard 
+se <- did_callaway_wi$se
 
+# Matrice de variance-covariance diagonale
+sigma <- diag(se^2)
+tVec <- did_callaway_wi$t
+referencePeriod <- 2008
+
+# Plot 
+plot_PT <- data.frame(
+  tVec = tVec,
+  beta = beta, 
+  se = se
+)
+
+ggplot(plot_PT, aes(x = tVec, y = beta)) +
+  geom_point(size = 3, color = "blue") +
+  geom_line(color = "blue") +
+  geom_errorbar(aes(ymin = beta - 1.96*se, ymax = beta + 1.96*se), width = 0.1, color = "gray") + 
+  geom_vline(xintercept = referencePeriod, linetype = "dashed", color = "red") +
+  theme_minimal() +
+  labs(
+    x = "Année",
+    y = "Effet moyen sur le traitement (ATT)",
+    title = "Pré-trends et Post-trends"
+  )
 ```
 
 ### Graphique DID
@@ -320,67 +349,7 @@ ggdid(did_callaway_zs)
 ### Intra-cluster standard errors estimation
 
 ```{r}
-# Fonction de variance-covariance 
-
-cluster_vcov <- function(mod, cluster) {
-  # Extraction des observations utilisées dans le modèle 
-   cl <- cluster[as.integer(rownames(mod$model))]
-  
-  # Calcul des quantiles nécessaires 
-  M <- dplyr::n_distinct(cl); N <- length(cl); K <- mod$rank
-  
-  # Correction de variance 
-  dfc <- (M/(M-1)) * ((N-1)/(N-K))
-  
-  # Calcul des scores agrégés au niveau des clusters
-  uj <- apply(estfun(mod), 2, function(x) tapply(x, cl, sum))
-  
-  # Matrice de variance-covariance clusterisée
-  dfc * sandwich(mod, meat = crossprod(uj)/N)
-}
-  
-# Fonction DID
-did_fit_zs <- function(d, years){
-  dd <- d %>%
-    filter(DHSYEAR %in% years) %>%
-    transmute(
-      DHSYEAR, hv001, GROUP,
-      zscore_wealth,
-      treated = as.integer(GROUP=="Treatment"),
-      post = as.integer(DHSYEAR==max(years))
-    ) %>%
-    filter(!is.na(zscore_wealth))
-  
-  
-  m <- lm(zscore_wealth ~ treated*post, data = dd)
-  vc <- cluster_vcov(m, dd$hv001)
-  out <- coeftest(m, vcov.=vc) %>% broom::tidy()
-  list(model = m, vcov = vc, data=dd, tidy=out)
-}
-
-# Estimation
-res_placebo_zs <- did_fit_zs(data_all_mod, c(1997, 2008))
-res_main_zs <- did_fit_zs(data_all_mod, c(2008, 2021))
-
-m_placebo_zs <- res_placebo$model
-m_main_zs <- res_main$model
-
-se_placebo_zs <- sqrt(diag(res_placebo_zs$vcov))
-
-se_main_zs <- sqrt(diag(res_main_zs$vcov))
-
-
-# Tableau de l'estimation DID avec erreurs standards par cluster 
-stargazer(m_placebo_zs, m_main_zs,
-          type = "text",
-          se = list(se_placebo_zs, se_main_zs),
-          ci = FALSE,
-          title = "Estimation DID avec erreurs standards robustes cluster",
-          dep.var.labels = "zscore_wealth",
-          covariate.labels = c("Treatment x Post"),
-          star.cutoffs = c(0.05, 0.01, 0.001))
-
-
+# Fonction DID avec fixest 
 ```
 
 ## Graphique DID
