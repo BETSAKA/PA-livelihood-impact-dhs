@@ -136,7 +136,7 @@ hh21_rur <- rural_centiles(hh21) %>%
   add_zscore_from_centile("wealth_centile_rural_weighted", "hv001")
 
 # Write
-write_rds(hh97_rur, "data/derived/hh_1997_rural_simpler.rds"
+write_rds(hh97_rur, "data/derived/hh_1997_rural_simpler.rds")
 write_rds(hh08_rur, "data/derived/hh_2008_rural_simpler.rds")
 write_rds(hh21_rur, "data/derived/hh_2021_rural_simpler.rds")
 write_rds(hh16_rur, "data/derived/hh_2016_rural_simpler.rds")
