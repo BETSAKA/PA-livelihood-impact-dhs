@@ -22,7 +22,7 @@ book:
       chapters:
         - 05-descriptive.qmd
         - 06-matching.qmd
-        - 07-estimation.qmd
+        - 07-estimation_staggered.qmd
         - 08-sensitivity-checks.qmd
         - 09-puissance-test.qmd
     - 10-conclusion.qmd

@@ -40,4 +40,9 @@ les distributions avant et après matching)
 - utilisation des outcomes 
 - Calculer les différences moyennes des variables d'intérêt entre les groupes appariés
 
+-   Estimation du modèle DID en utilisant des erreurs standards robustes aux corrélations intra-grappes pour gérer la dépendance des observations au sein des grappes:
+
+    -   calcul des résidus à partir du modèle de régression
+
+    -   Utilisation des résidus calculés pour construire une matrice variance-covariance robuste, qui va ajuster la corrélation intra-grappe
 8) 
