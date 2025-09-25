@@ -1738,6 +1738,9 @@ standard_crs <- 4326
 # Charger les shapefiles DHS et les reprojeter
 gps_1997 <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp") 
 gps_2008 <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp")
+gps_2011 <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp")
+gps_2013 <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp")
+gps_2016 <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp")
 gps_2021 <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
 
 # Charger le contour de Madagascar
@@ -1770,12 +1773,18 @@ prepare_clusters <- function(hh_data, gps_data, year) {
 # Créer les jeux de clusters
 clusters_1997 <- prepare_clusters(hh_1997_rural, gps_1997, 1997)
 clusters_2008 <- prepare_clusters(hh_2008_rural, gps_2008, 2008)
+clusters_2011 <- prepare_clusters(hh_2011_rural, gps_2011, 2011)
+clusters_2013 <- prepare_clusters(hh_2013_rural, gps_2013, 2013)
+clusters_2016 <- prepare_clusters(hh_2016_rural, gps_2016, 2016)
 clusters_2021 <- prepare_clusters(hh_2021_rural, gps_2021, 2021)
 
 # Définir une échelle commune pour toutes les années
 value_range <- range(
   clusters_1997$wealth_centile_weighted,
   clusters_2008$wealth_centile_weighted,
+  clusters_2011$wealth_centile_weighted,
+  clusters_2013$wealth_centile_weighted,
+  clusters_2016$wealth_centile_weighted,
   clusters_2021$wealth_centile_weighted,
   na.rm = TRUE
 )
@@ -1797,13 +1806,16 @@ make_map <- function(cluster_data, year, value_range) {
 # Créer les cartes
 tm1 <- make_map(clusters_1997, 1997, value_range)
 tm2 <- make_map(clusters_2008, 2008, value_range)
-tm3 <- make_map(clusters_2021, 2021, value_range)
+tm3 <- make_map(clusters_2011, 2011, value_range)
+tm4 <- make_map(clusters_2013, 2013, value_range)
+tm5 <- make_map(clusters_2016, 2016, value_range)
+tm6 <- make_map(clusters_2021, 2021, value_range)
 
 # Mode interactif
 tmap_mode("view")
 
 # Affichage côte à côte
-tmap_arrange(tm1, tm2, tm3, ncol = 3)
+tmap_arrange(tm1, tm2, tm3, tm4, tm5, tm6, ncol = 3)
 ```
 
 
@@ -1859,12 +1871,18 @@ prepare_clusters_z <- function(hh_data, gps_data, year) {
 # Préparer les clusters pour chaque vague
 clusters_1997_zscore <- prepare_clusters_z(hh_1997_rural, gps_1997, 1997)
 clusters_2008_zscore <- prepare_clusters_z(hh_2008_rural, gps_2008, 2008)
+clusters_2011_zscore <- prepare_clusters_z(hh_2011_rural, gps_2011, 2011)
+clusters_2013_zscore <- prepare_clusters_z(hh_2013_rural, gps_2013, 2013)
+clusters_2016_zscore <- prepare_clusters_z(hh_2016_rural, gps_2016, 2016)
 clusters_2021_zscore <- prepare_clusters_z(hh_2021_rural, gps_2021, 2021)
 
 # Définir une échelle commune pour toutes les années
 z_range <- range(
   clusters_1997_zscore$wealth_zscore,
   clusters_2008_zscore$wealth_zscore,
+  clusters_2011_zscore$wealth_zscore,
+  clusters_2013_zscore$wealth_zscore,
+  clusters_2016_zscore$wealth_zscore,
   clusters_2021_zscore$wealth_zscore,
   na.rm = TRUE
 )
@@ -1892,11 +1910,14 @@ make_map_z <- function(cluster_data, year, value_range, point_size = 0.6) {
 # Créer les cartes
 tm1 <- make_map_z(clusters_1997_zscore, 1997, z_range)
 tm2 <- make_map_z(clusters_2008_zscore, 2008, z_range)
-tm3 <- make_map_z(clusters_2021_zscore, 2021, z_range)
+tm3 <- make_map_z(clusters_2011_zscore, 2011, z_range)
+tm4 <- make_map_z(clusters_2013_zscore, 2013, z_range)
+tm5 <- make_map_z(clusters_2016_zscore, 2016, z_range)
+tm6 <- make_map_z(clusters_2021_zscore, 2021, z_range)
 
 # Mode interactif et affichage côte à côte
 tmap_mode("view")
-tmap_arrange(tm1, tm2, tm3, ncol = 3)
+tmap_arrange(tm1, tm2, tm3, tm4, tm5, tm6, ncol = 3)
 ```
 
 Registration 
