@@ -33,8 +33,7 @@ pre <- dat %>%
   mutate(post = as.integer(DHSYEAR == 2008),
          treat_post  = treat * post)
 
-f_pre <- wealth_centile_rural_simple ~ treat + post + treat_post +
-  spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+f_pre <- wealth_centile_rural_simple ~ treat + post + treat_post 
 
 m_pre <- feols(f_pre, data = pre, weights = ~ weights, cluster = ~ hv001)
 
@@ -44,8 +43,7 @@ main <- dat %>%
   mutate(post = as.integer(DHSYEAR == 2021),
          treat_post = treat * post)
 
-f_main <- wealth_centile_rural_simple ~ treat + post + treat_post +
-  spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+f_main <- wealth_centile_rural_simple ~ treat + post + treat_post 
 
 m_main <- feols(f_main, data = main, weights = ~ weights, cluster = ~ hv001)
 
@@ -127,8 +125,7 @@ cic_res <- CiC(
   data = dat_2per,
   panel = FALSE, # repeated cross-sections
   se = TRUE, iters = 200, # bootstrap
-  probs = seq(0.05, 0.95, 0.05),
-  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+  probs = seq(0.05, 0.95, 0.05)
 )
 
 summary(cic_res)
@@ -150,8 +147,7 @@ cic_pre <- CiC(
   data = dat_placebo,
   panel = FALSE, # repeated cross-sections
   se = TRUE, iters = 200, # bootstrap
-  probs = seq(0.05, 0.95, 0.05),
-  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+  probs = seq(0.05, 0.95, 0.05)
 )
 
 summary(cic_pre)
