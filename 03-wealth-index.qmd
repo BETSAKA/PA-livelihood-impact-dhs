@@ -1304,6 +1304,22 @@ hh_2016_rec <- hh_2016_rec %>%
     )
   )
 
+# add_centile_survey
+library(survey)
+
+add_centile_survey <- function(df, value_col, weight_col = "hv005", cluster_col = "hv001", new_col = "centile") {
+  val <- rlang::sym(value_col); wgt <- rlang::sym(weight_col)
+  df <- df %>% mutate(.weight_survey = if (weight_col == "hv005") !!wgt / 1e6 else !!wgt)
+  design <- svydesign(ids = as.formula(paste0("~", cluster_col)), weights = ~.weight_survey, data = df)
+  thresholds <- svyquantile(as.formula(paste0("~", value_col)), design,
+                            quantiles = seq(0.01, 1, 0.01), ci = FALSE, na.rm = TRUE)
+  thresholds <- as.numeric(thresholds[[1]]) + seq_along(thresholds[[1]]) * 1e-10
+  df[[new_col]] <- cut(df[[value_col]], breaks = c(-Inf, thresholds),
+                       labels = 1:100, include.lowest = TRUE, right = TRUE) |> as.integer()
+  df
+}
+
+
 hh_2016_rural <- hh_2016_rec %>%
   filter(hv025 == 2) %>%
   select(hv001, hv002, hv005, hv025, wealth_index_rural) %>%
