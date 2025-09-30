@@ -613,4 +613,7 @@ all_class <- gps_all_class %>%
   select(DHSYEAR, DHSCLUST, GROUP = groupe, WDPAID, STATUS_YR, IUCN_CAT, dist_km)
 
 write_csv(all_class, "data/derived/cluster_treatment_classification_staggered.csv")
+
+write_csv(wdpa_before_2008, "data/derived/wdpa_before_2008.csv")
+write_csv(wdpa_from_2008, "data/derived/wdpa_from_2008.csv")
 ```
