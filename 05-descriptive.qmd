@@ -16,11 +16,12 @@ library(tidyverse) #Manipulation et visualisation des données
 library(writexl) # Pour faire une sortie sous Excel
 library(psych)
 library(knitr)
+library(sf)
 
 # On charge les données
-sapm_before_2008 <- read.csv("data/derived/sapm_before_2008.csv") 
+wdpa_before_2008 <- st_read("data/derived/wdpa_before_2008.csv") 
 
-sapm_from_2008 <- read.csv("data/derived/sapm_from_2008.csv")
+wdpa_from_2008 <- read.csv("data/derived/wdpa_from_2008.csv")
 
 # Fonction utilitaire pour produire les statistiques d'une période
 get_descriptive_stats <- function(data, periode_label) {
@@ -48,8 +49,8 @@ get_descriptive_stats <- function(data, periode_label) {
 }
 
 # Appliquer la fonction aux deux périodes
-desc_AP_before <- get_descriptive_stats(sapm_before_2008, "Before 2008")
-desc_AP_from   <- get_descriptive_stats(sapm_from_2008, "From 2008")
+desc_AP_before <- get_descriptive_stats(wdpa_before_2008, "Before 2008")
+desc_AP_from   <- get_descriptive_stats(wdpa_from_2008, "From 2008")
 
 
 # Fusion des deux tableaux
@@ -76,8 +77,8 @@ get_top_small_aires <- function(df_input, periode_label, top_n = 10) {
 }
 
 # Appliquer aux deux périodes
-top10_before_2008 <- get_top_small_aires(sapm_before_2008, "Before 2008")
-top10_from_2008  <- get_top_small_aires(sapm_from_2008, "From 2008")
+top10_before_2008 <- get_top_small_aires(wdpa_before_2008, "Before 2008")
+top10_from_2008  <- get_top_small_aires(wdpa_from_2008, "From 2008")
 
 # Fusionner les tableaux
 top10_combined <- bind_rows(top10_before_2008, top10_from_2008)
