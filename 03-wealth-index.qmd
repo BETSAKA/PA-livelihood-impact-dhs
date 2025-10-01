@@ -58,6 +58,7 @@ library(haven)
 library(labelled)
 library(psych)
 library(readxl)
+library(survey)
 ```
 
 ## Reproducing DHS 2021
@@ -1307,6 +1308,7 @@ hh_2016_rec <- hh_2016_rec %>%
 # add_centile_survey
 library(survey)
 
+
 add_centile_survey <- function(df, value_col, weight_col = "hv005", cluster_col = "hv001", new_col = "centile") {
   val <- rlang::sym(value_col); wgt <- rlang::sym(weight_col)
   df <- df %>% mutate(.weight_survey = if (weight_col == "hv005") !!wgt / 1e6 else !!wgt)
@@ -1441,7 +1443,7 @@ tibble(
 On calcule pour 2011 et 2013.
 
 ```{r}
-library(survey)
+
 # Utilitaires
 
 perform_pca <- function(data, vars) {

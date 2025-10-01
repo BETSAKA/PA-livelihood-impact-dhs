@@ -11,12 +11,16 @@ editor_options:
 ```{r}
 
 library(tidyverse)
+library(gt)
+library(lme4)
+library(pwr)
+library(fixest)
 
 # Cluster classification
 cluster_treatment_classification <- read.csv("data/derived/cluster_treatment_classification.csv")
 
 hr_1997_final <- readRDS("data/derived/hr_1997_final.rds")
-hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
+hr_2008_final <- readRDS( bn;"data/derived/hr_2008_final.rds")
 hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
 
 ```
@@ -25,9 +29,6 @@ hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
 
 ```{r}
 
-library(gt)
-library(lme4)
-library(pwr)
 
 # Extraire les clusters traités en 2021
 treatment_clusters_2021 <- cluster_treatment_classification %>%
