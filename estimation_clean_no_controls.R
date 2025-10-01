@@ -33,8 +33,7 @@ pre <- dat %>%
   mutate(post = as.integer(DHSYEAR == 2008),
          treat_post  = treat * post)
 
-f_pre <- wealth_centile_rural_simple ~ treat + post + treat_post +
-  spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+f_pre <- wealth_centile_rural_simple ~ treat + post + treat_post 
 
 m_pre <- feols(f_pre, data = pre, weights = ~ weights, cluster = ~ hv001)
 
@@ -44,8 +43,7 @@ main <- dat %>%
   mutate(post = as.integer(DHSYEAR == 2021),
          treat_post = treat * post)
 
-f_main <- wealth_centile_rural_simple ~ treat + post + treat_post +
-  spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+f_main <- wealth_centile_rural_simple ~ treat + post + treat_post 
 
 m_main <- feols(f_main, data = main, weights = ~ weights, cluster = ~ hv001)
 
@@ -108,3 +106,53 @@ ggplot(did_df, aes(x = year, y = estimate, group = 1)) +
 #     subtitle = 
 #       "Points at 2008 (placebo 1997–2008) and 2021 (treatment estimate 2008–2021)"
 #   )
+
+
+# Testing Quantile treatment effects --------------------------------------
+library(qte)
+
+# Avec CiC -------------------
+
+## Traitement
+
+dat_2per <- dat %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(treat = as.integer(GROUP == "Treatment"))
+
+cic_res <- CiC(
+  formla = wealth_centile_rural_simple ~ treat,
+  t = 2021, tmin1 = 2008, tname = "DHSYEAR",
+  data = dat_2per,
+  panel = FALSE, # repeated cross-sections
+  se = TRUE, iters = 200, # bootstrap
+  probs = seq(0.05, 0.95, 0.05)
+)
+
+summary(cic_res)
+ggqte(cic_res) + labs(x="Quantiles", y="QTET", title="CiC QTET: 2008-2021")
+
+## placebo
+
+## Placebo: 1997 -> 2008
+dat_placebo <- dat %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(treat = as.integer(GROUP == "Treatment"))
+
+# (Optional) sanity check:
+# with(dat_placebo, table(DHSYEAR, treat))
+
+cic_pre <- CiC(
+  formla = wealth_centile_rural_simple ~ treat,
+  t = 2008, tmin1 = 1997, tname = "DHSYEAR",
+  data = dat_placebo,
+  panel = FALSE, # repeated cross-sections
+  se = TRUE, iters = 200, # bootstrap
+  probs = seq(0.05, 0.95, 0.05)
+)
+
+summary(cic_pre)
+
+ggqte(cic_pre) +
+  labs(x = "Quantiles", y = "QTET",
+       title = "Placebo CiC QTET: 1997-2008")
+
