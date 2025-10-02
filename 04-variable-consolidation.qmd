@@ -33,13 +33,13 @@ all_class <- read.csv("data/derived/cluster_treatment_classification_staggered.c
 vars_to_nest <- c("treecover_area", "slope", "elevation",
                   "population_count", "traveltime_2000", "spei_wc")
 
-build_year <- function(year,
-                       hr_path,
+build_year <- function(hr_object,
+                       year,
                        hh_rural_path,
                        spei_years = (year-2):year) {
 
   # Charger HR (identifiants + variables chef) et HH_rural (centiles/zscore déjà calculés)
-  hr <- read_dta(hr_path) %>%
+  hr <- hr_object %>%
     dplyr::select(hv001, hv002, hv219, hv220)
   
   hh_rural <- read_rds(hh_rural_path) # contient hv001/hv002 + wealth_* déjà prêts
@@ -86,47 +86,44 @@ build_year <- function(year,
 
 # Application
 
-hr_1997_final <- build_year(
-  year = 1997,
-  hr_path = "data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA",
-  hh_rural_path = "data/derived/hh_1997_rural_simpler.rds",
-  spei_years = 1995:1997
-)
+hr_1997_final <- read_dta("data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA") %>%
+  build_year(year = 1997,
+             hh_rural_path = "data/derived/hh_1997_rural_simpler.rds",
+             spei_years = 1995:1997)
 
-hr_2008_final <- build_year(
-  year = 2008,
-  hr_path = "data/raw/dhs/DHS_2008/MDHR51DT/MDHR51FL.DTA",
-  hh_rural_path = "data/derived/hh_2008_rural_simpler.rds",
-  spei_years = 2006:2008
-)
+hr_2008_final <- read_dta("data/raw/dhs/DHS_2008/MDHR51DT/MDHR51FL.DTA") %>%
+  build_year(year = 2008,
+             hh_rural_path = "data/derived/hh_2008_rural_simpler.rds",
+             spei_years = 2006:2008)
 
-hr_2011_final <- build_year(
-  year = 2011,
-  hr_path = "data/raw/dhs/DHS_2011/MDHR61DT/MDHR61FL.DTA",
-  hh_rural_path = "data/derived/hh_2011_rural_simpler.rds",
-  spei_years = 2009:2011
-)
+hr_2011_final <- read_dta("data/raw/dhs/DHS_2011/MDHR61DT/MDHR61FL.DTA") %>%
+  build_year(year = 2011,
+             hh_rural_path = "data/derived/hh_2011_rural_simpler.rds",
+             spei_years = 2009:2011)
 
-hr_2013_final <- build_year(
-  year = 2013,
-  hr_path = "data/raw/dhs/DHS_2013/MDHR6ADT/MDHR6AFL.DTA",
+hr_2013_final <- read_dta("data/raw/dhs/DHS_2013/MDHR6ADT/MDHR6AFL.DTA") %>%
+  build_year(year = 2013,
   hh_rural_path = "data/derived/hh_2013_rural_simpler.rds",
-  spei_years = 2011:2013
-)
+  spei_years = 2011:2013)
 
-hr_2016_final <- build_year(
-  year = 2016,
-  hr_path = "data/raw/dhs/DHS_2016/MDHR71DT/MDHR71FL.DTA",
+hr_2016_final <- read_dta("data/raw/dhs/DHS_2016/MDHR71DT/MDHR71FL.DTA") %>%
+  build_year(year = 2016,
   hh_rural_path = "data/derived/hh_2016_rural_simpler.rds",
-  spei_years = 2014:2016
-)
+  spei_years = 2014:2016)
 
-hr_2021_final <- build_year(
-  year = 2021,
-  hr_path = "data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA",
+hr_2021_final <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA") %>%
+  build_year(year = 2021,
   hh_rural_path = "data/derived/hh_2021_rural_simpler.rds",
-  spei_years = 2019:2021
-)
+  spei_years = 2019:2021)
+
+hr_2018_final <- read_spss("data/raw/mics/2018/SPSS datasets/hh.sav") %>%
+  select(hv001 = HH1,# cluter number, 
+         hv002 = HH2,# household number, 
+         hv219 = HHSEX,# sex of hhh: 1: Masculin, 2: féminin
+         hv220 = HHAGE) %>%# age of hhh: 
+  build_year(year = 2018,
+             hh_rural_path = "data/derived/hh_2021_rural_simpler.rds",
+             spei_years = 2016:2018)
 
 # Consolidation
 
