@@ -154,19 +154,18 @@ for (i in seq_along(yrs)) {
   yr <- yrs[i]
   ow <- need_overwrite(yr) 
   cat(glue("\n>> overwrite {yr}: gen={ow$gen}, match={ow$match}\n"))
-  p(sprintf("Start %s", yr))
+  cat(sprintf("Start %s", yr))
   t_all <- Sys.time()
   res_list[[i]] <- tryCatch(
     run_matching_year(yr, overwrite = ow),
     error = function(e) { warning(glue("Year {yr} ERROR: {e$message}")); NULL }
   )
-  p(sprintf("Done %s (%.1f min)",
+  cat(sprintf("Done %s (%.1f min)",
             yr, as.numeric(difftime(Sys.time(), t_all, units="mins"))))
 }
 
 bal_tabs <- purrr::imap(res_list, ~ if (!is.null(.x)) cobalt::bal.tab(.x$m) else NULL)
 saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years.rds")
-readr::write_csv(summary_tbl, "data/derived/matching_runtime_summary.csv")
 ```
 
 ## Matching for 1997
@@ -311,7 +310,12 @@ library(halfmoon)
 library(cobalt)
 
 
+
 # Balance before matching
+matching_1997 <- readRDS("data/derived/hr_1997_final.rds") %>%
+  filter(GROUP %in% c("Treatment", "Control")) %>%
+  mutate(treatment = if_else(GROUP == "Treatment", 1, 0))
+
 bal_before_1997 <- bal.tab(
   treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
   data = matching_1997,
@@ -447,6 +451,10 @@ library(cobalt)
 
 
 # Balance before matching
+matching_2008 <- readRDS("data/derived/hr_2008_final.rds") %>%
+  filter(GROUP %in% c("Treatment", "Control")) %>%
+  mutate(treatment = if_else(GROUP == "Treatment", 1, 0))
+
 bal_before_2008 <- bal.tab(
   treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
   data = matching_2008,
@@ -575,6 +583,10 @@ Sur les graphiques, on peut voir que les points s'écartent légèrement de la l
 
 ```{r}
 # Balance before matching
+matching_2021 <- readRDS("data/derived/hr_2021_final.rds") %>%
+  filter(GROUP %in% c("Treatment", "Control")) %>%
+  mutate(treatment = if_else(GROUP == "Treatment", 1, 0))
+
 bal_before_2021 <- bal.tab(
   treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
   data = matching_2021,

@@ -559,28 +559,39 @@ years_all <- sort(unique(gps_all_class$DHSYEAR))
 
 # Compte ménages (toutes observations) 
 households_counts_all <- map_dfr(years_all, function(y) {
-  # HR de l'année
-  hr <- load_dhs_data(dhs_folder, y, "HR") %>%
-    mutate(DHSYEAR = y)  # pour la jointure avec la classification
+  
+  # Load data depending on year
+  if (y == 2018) {
+    hr <- read_spss("data/raw/mics/2018/SPSS datasets/hh.sav") %>%
+      transmute(
+        hv001 = HH1,
+        hv002 = HH2,
+        DHSYEAR = y
+      )
+  } else {
+    hr <- load_dhs_data(dhs_folder, y, "HR") %>%
+      mutate(DHSYEAR = y) %>%
+      select(hv001, hv002, DHSYEAR)
+  }
 
-  # Classification des grappes de l'année
+  # Load classification for the same year
   cl_y <- gps_all_class %>%
     st_drop_geometry() %>%
     filter(DHSYEAR == y) %>%
     select(DHSYEAR, DHSCLUST, groupe, STATUS_YR)
 
-  # Jointure ménages <- classification (par cluster hv001)
+  # Join household data with classification
   hr_cl <- hr %>%
-    select(DHSYEAR, hv001) %>%
     left_join(cl_y, by = c("DHSYEAR" = "DHSYEAR", "hv001" = "DHSCLUST"))
 
-  # Comptes par sous-catégories du traitement (DHSYEAR vs STATUS_YR)
-  avant  <- hr_cl %>% filter(groupe == "Treatment", !is.na(STATUS_YR), DHSYEAR <  STATUS_YR) %>% nrow()
-  deja   <- hr_cl %>% filter(groupe == "Treatment", !is.na(STATUS_YR), DHSYEAR >= STATUS_YR) %>% nrow()
-  ens    <- hr_cl %>% filter(groupe == "Treatment") %>% nrow()
-  ctrl   <- hr_cl %>% filter(groupe == "Control")   %>% nrow()
-  excl   <- hr_cl %>% filter(groupe == "Excluded")  %>% nrow()
+  # Compute treatment/control/excluded breakdown
+  avant <- hr_cl %>% filter(groupe == "Treatment", !is.na(STATUS_YR), DHSYEAR <  STATUS_YR) %>% nrow()
+  deja  <- hr_cl %>% filter(groupe == "Treatment", !is.na(STATUS_YR), DHSYEAR >= STATUS_YR) %>% nrow()
+  ens   <- hr_cl %>% filter(groupe == "Treatment") %>% nrow()
+  ctrl  <- hr_cl %>% filter(groupe == "Control")   %>% nrow()
+  excl  <- hr_cl %>% filter(groupe == "Excluded")  %>% nrow()
 
+  # Return row for this year
   tibble(
     DHSYEAR = y,
     `Avant traitement` = avant,

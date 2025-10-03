@@ -81,7 +81,7 @@ d21 <- read_rds("data/derived/data_matched_2021.rds") %>%
          hv220 = zap_labels(hv220))
 
 # Préparation des données
-dat <- bind_rows(d97, d08, d11, d13, d16, d18, d21) %>%
+dat <- bind_rows(d97, d08, d18, d21) %>%
   filter(GROUP %in% c("Treatment","Control")) %>%
   mutate(
     hv219   = factor(hv219, levels = c(1,2), labels = c("Homme","Femme")), # sexe (cat.)
@@ -92,12 +92,22 @@ dat <- bind_rows(d97, d08, d11, d13, d16, d18, d21) %>%
     id      = row_number(),
     # Map des années de statut -> première année d'observation post (treatment_phase)
     treatment_phase = case_when(
+      GROUP == "Control" ~ 0,
+      STATUS_YR == 2009 ~ 2011,
       STATUS_YR == 2010 ~ 2011,
       STATUS_YR == 2012 ~ 2013,
       STATUS_YR == 2015 ~ 2016,
       STATUS_YR == 2017 ~ 2018,
       is.na(STATUS_YR)  ~ 0,
       TRUE               ~ STATUS_YR
+    )
+  ) %>%
+  mutate(
+    treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
+    rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
+    rel_year_binned = case_when(
+      is.infinite(rel_year) ~ Inf,
+      TRUE ~ pmax(pmin(rel_year, 5), -5)
     )
   )
 
@@ -173,14 +183,6 @@ Nota bene : Afin de stabiliser les estimations de l’event-study, nous avons ap
 # did2s (Gardner) : statique + event-study--------------------------------
 library(did2s)
 
-dat3 <- dat %>%
-  mutate(
-    treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
-    rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
-    # Binning prudent pour stabilité (-5..5)
-    rel_year_binned = pmax(pmin(rel_year, 5), -5)
-  )
-
 # -- Statique (traitement "on/off")
 did2s_static <- did2s(
   data        = dat3,
@@ -195,10 +197,10 @@ etable(did2s_static, headers = "did2s statique")
 
 # -- Event-study (avec binning -5..5, ref = -1 et never-treated)
 did2s_es <- did2s(
-  data        = dat3,
+  data        = dat,
   yname       = yvar,
   first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage= ~ i(rel_year_binned, ref = c(-1, Inf)),
+  second_stage= ~ i(rel_year_binned),
   treatment   = "treat_on",
   cluster_var = "hv001",
   weights     = "w_all"
