@@ -45,13 +45,23 @@ gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp")
 gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp") 
 gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp")
 gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
+gps_2018_initial <- st_read("data/raw/mics/2018/GPS Datasets/MadagascarMICS2018GPS.shp")  %>%
+  select(DHSYEAR = SVYYEARS,
+         DHSCLUST = HH1,
+         URBAN_RURA = HH6,
+         LATNUM = LATITUDE,
+         LONGNUM = LONGITUDE) %>%
+  mutate(URBAN_RURA = case_when(
+    URBAN_RURA == "Urban" ~ "U",
+    URBAN_RURA == "Rural" ~ "R",
+    .default = NA_character_
+  ))
 
-# Set for interactive viewing
 tmap_mode("view")
-
 bind_rows(gps_1997_initial, gps_2008_initial, gps_2011_initial,
-          gps_2013_initial,  gps_2016_initial, gps_2021_initial) |>
+          gps_2013_initial,  gps_2016_initial, gps_2018_initial, gps_2021_initial) %>%
   tm_shape() + tm_dots() + tm_facets("DHSYEAR")
+
 ```
 
 Nous obtenons une carte distincte pour chaque année d'enquête. Sur chaque carte figure des points, dans laquelle chaque point représente un cluster d'enquête, correspondant aux coordonnées GPS fournies par DHS.
@@ -72,6 +82,7 @@ gps_2008 <- check_coordinates(gps_2008_initial, contour_mada)
 gps_2011 <- check_coordinates(gps_2011_initial, contour_mada)
 gps_2013 <- check_coordinates(gps_2013_initial, contour_mada)
 gps_2016 <- check_coordinates(gps_2016_initial, contour_mada)
+gps_2018 <- check_coordinates(gps_2018_initial, contour_mada)
 gps_2021 <- check_coordinates(gps_2021_initial, contour_mada)
 ```
 
@@ -386,6 +397,8 @@ gps_2013_class <- classify_clusters_with_pa(gps_2013, buffer_10km_before_2008,
                                             wdpa_from_2008)
 gps_2016_class <- classify_clusters_with_pa(gps_2016, buffer_10km_before_2008,
                                             wdpa_from_2008)
+gps_2018_class <- classify_clusters_with_pa(gps_2018, buffer_10km_before_2008,
+                                            wdpa_from_2008)
 gps_2021_class <- classify_clusters_with_pa(gps_2021, buffer_10km_before_2008,
                                             wdpa_from_2008)
 
@@ -396,6 +409,7 @@ gps_all_class <- bind_rows(
   gps_2011_class,
   gps_2013_class,
   gps_2016_class,
+  gps_2018_class,
   gps_2021_class
 )
 

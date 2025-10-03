@@ -66,6 +66,13 @@ d16 <- read_rds("data/derived/data_matched_2016.rds") %>%
   mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
+d18 <- read_rds("data/derived/data_matched_2018.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2016,
+         spei_wc_n_1 = spei_wc_2017,
+         spei_wc_n   = spei_wc_2018) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
 d21 <- read_rds("data/derived/data_matched_2021.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2019,
          spei_wc_n_1 = spei_wc_2020,
