@@ -43,6 +43,17 @@ gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp")
 gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp") 
 gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp")
 gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
+gps_2018_initial <- st_read("data/raw/mics/2018/GPS Datasets/MadagascarMICS2018GPS.shp")  %>%
+  select(DHSYEAR = SVYYEARS,
+         DHSCLUST = HH1,
+         URBAN_RURA = HH6,
+         LATNUM = LATITUDE,
+         LONGNUM = LONGITUDE) %>%
+  mutate(URBAN_RURA = case_when(
+    URBAN_RURA == "Urban" ~ "U",
+    URBAN_RURA == "Rural" ~ "R",
+    .default = NA_character_
+  ))
 
 # Fonction qui vérifie que les coordonnées ne sont pas nulles
 check_coordinates <- function(dhs_gps, country_polygon, negate = FALSE) {
@@ -55,10 +66,11 @@ gps_2008 <- check_coordinates(gps_2008_initial, contour_mada)
 gps_2011 <- check_coordinates(gps_2011_initial, contour_mada)
 gps_2013 <- check_coordinates(gps_2013_initial, contour_mada)
 gps_2016 <- check_coordinates(gps_2016_initial, contour_mada)
+gps_2018 <- check_coordinates(gps_2018_initial, contour_mada)
 gps_2021 <- check_coordinates(gps_2021_initial, contour_mada)
 
-gps_all <- bind_rows(gps_1997_initial, gps_2008_initial, gps_2011_initial,
-          gps_2013_initial,  gps_2016_initial, gps_2021_initial)
+gps_all <- bind_rows(gps_1997, gps_2008, gps_2011, gps_2013,  gps_2016, gps_2018,
+          gps_2021)
 
 # On crée les buffers
 buffer_all <- gps_all %>%
@@ -121,10 +133,10 @@ toc()
 
 # Worldpop 2000
 #tic()
-#with_progress({
-  #buffer_all <- buffer_all %>% 
-  #get_resources(get_worldpop(years = 2000)) 
-#})
+with_progress({
+  buffer_all <- buffer_all %>%
+    get_resources(get_worldpop(years = 2000))
+})
 #toc()
   
 # Accesibility
