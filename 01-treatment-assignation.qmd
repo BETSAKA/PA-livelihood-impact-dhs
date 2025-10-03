@@ -165,8 +165,9 @@ contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
   st_as_sf() %>%
   st_set_crs(standard_crs)
 
-# Intersection des SAPM avec la limite de Madagascar
+# Intersection des AP de WDPA avec la limite de Madagascar
 wdpa_terrestre <- wdpa %>% 
+  filter(MARINE == "Terrestre") %>%
   st_transform(crs = standard_crs) %>%
   st_make_valid() %>%
   st_intersection(contour_mada) %>%
