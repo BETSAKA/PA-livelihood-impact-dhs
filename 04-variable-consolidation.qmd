@@ -116,15 +116,6 @@ hr_2021_final <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA") %>%
   hh_rural_path = "data/derived/hh_2021_rural_simpler.rds",
   spei_years = 2019:2021)
 
-hr_2018_final <- read_spss("data/raw/mics/2018/SPSS datasets/hh.sav") %>%
-  select(hv001 = HH1,# cluter number, 
-         hv002 = HH2,# household number, 
-         hv219 = HHSEX,# sex of hhh: 1: Masculin, 2: féminin
-         hv220 = HHAGE) %>%# age of hhh: 
-  build_year(year = 2018,
-             hh_rural_path = "data/derived/hh_2021_rural_simpler.rds",
-             spei_years = 2016:2018)
-
 # Consolidation
 
 hr_consolidated <- bind_rows(
@@ -133,7 +124,6 @@ hr_consolidated <- bind_rows(
   hr_2011_final,
   hr_2013_final,
   hr_2016_final,
-  hr_2018_final,
   hr_2021_final
 )
 
@@ -150,7 +140,6 @@ write_rds(hr_2008_final, "data/derived/hr_2008_final.rds")
 write_rds(hr_2011_final, "data/derived/hr_2011_final.rds")
 write_rds(hr_2013_final, "data/derived/hr_2013_final.rds")
 write_rds(hr_2016_final, "data/derived/hr_2016_final.rds")
-write_rds(hr_2018_final, "data/derived/hr_2018_final.rds")
 write_rds(hr_2021_final, "data/derived/hr_2021_final.rds")
 
 # Sauvegarde consolidée
