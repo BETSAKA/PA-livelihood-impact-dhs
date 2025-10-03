@@ -133,6 +133,7 @@ hr_consolidated <- bind_rows(
   hr_2011_final,
   hr_2013_final,
   hr_2016_final,
+  hr_2018_final,
   hr_2021_final
 )
 
@@ -149,6 +150,7 @@ write_rds(hr_2008_final, "data/derived/hr_2008_final.rds")
 write_rds(hr_2011_final, "data/derived/hr_2011_final.rds")
 write_rds(hr_2013_final, "data/derived/hr_2013_final.rds")
 write_rds(hr_2016_final, "data/derived/hr_2016_final.rds")
+write_rds(hr_2018_final, "data/derived/hr_2018_final.rds")
 write_rds(hr_2021_final, "data/derived/hr_2021_final.rds")
 
 # Sauvegarde consolidée
