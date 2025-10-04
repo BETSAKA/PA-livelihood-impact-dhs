@@ -150,6 +150,9 @@ handlers("txtprogressbar")
 res_list <- vector("list", length(yrs))
 names(res_list) <- yrs
 
+with_progress({
+  p <- progressor(along = yrs)
+
 for (i in seq_along(yrs)) {
   yr <- yrs[i]
   ow <- need_overwrite(yr) 
@@ -163,6 +166,7 @@ for (i in seq_along(yrs)) {
   p(sprintf("Done %s (%.1f min)",
             yr, as.numeric(difftime(Sys.time(), t_all, units="mins"))))
 }
+})
 
 bal_tabs <- purrr::imap(res_list, ~ if (!is.null(.x)) cobalt::bal.tab(.x$m) else NULL)
 saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years.rds")
