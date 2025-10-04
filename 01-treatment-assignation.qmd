@@ -8,31 +8,31 @@ editor_options:
 
 ## Objectifs
 
-Nous classons les clusters d'enquêtes DHS (1997, 2008 et 2021) par rapport à leur distance aux aires protégées et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
+Nous classons les clusters d'enquêtes DHS (1997, 2008, 2011, 2013, 2016 et 2021) par rapport à leur distance aux aires protégées et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
 
 -   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
 
--   [Groupe de contrôle]{.underline}: Ménages localisées dans les clusters à plus de 10 km des aires protégées dans les zones rurales
+-   [Groupe de contrôle]{.underline}: Ménages localisées dans les clusters à plus de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
 
 -   [Groupe à exclure]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aire protégées créées avant 2008 et dans la zone urbaine
 
 ## Chargement des coordonnées GPS des clusters d'enquête
 
-Avant de charger les données GPS de 1997, 2008, 2021, nous précisons les coordonnées GPS utilisées. Les coordonnées GPS, comme la plupart des données ouvertes distribuées sur Internet, sont en WGS 84 (codé EPSG : 4326). Nos données sont aussi traitées en 4326. Toutefois, uniquement pour le calcul des surfaces ou des distances, on va utiliser le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702). Une fois les données chargées, on fusionne les trois jeux de données en un seul puis visualisés sur une carte.
+Avant de charger les données GPS de 1997, 2008, 2011, 2013, 2016 et 2021, nous précisons les coordonnées GPS utilisées. Les coordonnées GPS, comme la plupart des données ouvertes distribuées sur Internet, sont en WGS 84 (codé EPSG : 4326). Nos données sont aussi traitées en 4326. Toutefois, uniquement pour le calcul des surfaces ou des distances, on va utiliser le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702). Une fois les données chargées, on fusionne les trois jeux de données en un seul puis visualisés sur une carte.
 
 ```{r}
 #| fig-cap: "Grappes d'enquêtes DHS par rapport aux AP existantes en 2008"
 
 library(tidyverse) #Manipulation et visualisation des données
-library(haven)
+library(haven) # Importer et exporter des données issues de Stata, SPSS ou SAS
 library(sf) #Analyse des données spatiales
 library(tmap) #Analyse cartographique
 library(gt) #Mise en forme des tableaux 
 library(geodata) # Pour avoir le contour de Madagascar
 library(writexl) # Pour faire une sortie sous Excel
-library(units)
+library(units) # Unités de mesure pour les vecteurs R
 library(leaflet) # Pour faire une cartographie interactive
-library(readxl)
+library(readxl) # Lecture des fichiers excel
 
 # Systèmes de coordonnées de référence 
 standard_crs <- 4326
@@ -74,13 +74,13 @@ gps_2016 <- check_coordinates(gps_2016_initial, contour_mada)
 gps_2021 <- check_coordinates(gps_2021_initial, contour_mada)
 ```
 
-Les coordonnées GPS de 9 clusters de l'enquête 2008 n'ont pas de coordonnées valides (0,0). Il en manque également un en 1997.
+Les coordonnées GPS de neuf clusters de l'enquête 2008 présentent des coordonnées GPS invalides (0,0). Un cluster de l'année 1997 et 2011 présente également des coordonnées GPS invalides..
 
 ## Chargement des données AP
 
-Les données utilisées sont les données du Système des Aires Protégées à Madgascar (SAPM) obtenues auprès du Service de la Gouvernance des Aires Protégées (SGAP) du Ministère de l'Environnement et de Développement Durable de Madagascar (MEDD). La vérification des dates de création des aires protégées est actuellement en cours. En attendant, nous utilisons la version officielle de 2017, sur laquelle on a corrigé des anomalies topologiques.
+Afin de disposer de données actualisées sur les aires protégées, nous avons triangulé les données relatives aux aires protégées avec d'autres sources notamment celles du Service de la Gouvernance des Aires Protégées (SGAP) du Ministère de l'Environnement et de Développement Durable de Madagascar (MEDD)", les décrets officiels et la documentation des gestionnaires des aires protégées. Les données de World Database on Protected Areas (WDPA) restent néanmoins la plus complète.
 
-Les données de SAPM sont codées en EPSG 9001, que l'on transforme en 4326 pour uniformiser les coordonnées GPS que nous utilisons. Nous le visualisons par la suite à travers une carte.
+On charge et nettoie le jeu de données des aires protégées, en ne gardant que celles dont le statut est officiellement désigné et en distinguant les zones terrestres, marines et mixtes. On ajoute le contour du pays pour situer ces aires dans l'espace. On crée ensuite une carte interactive pour visualiser ces aires protégées selon leur type, leurs noms et leurs superficies.
 
 ```{r}
 library(wdpar)
@@ -154,9 +154,9 @@ DT::datatable(wdpa_tb_sel)
 
 ## Sélection des parties terrestres des AP
 
-Nous commençons par charger les limites administratives nationales de Madagascar, dont on attribue un système de coordonnées 4326. Ces limites sont ensuite croisées avec les aires protégées de SAPM pour extraire uniquement les zones terrestres situées à l'intérieur du pays. Après la transformation au coordonnées de Laborde (29702), nous calculons la superficie de chaque aire protégée terrestre, et visualiser le tout sur une carte.
+On récupère les limites administratives nationales de Madagascar, dont on attribue un système de coordonnées 4326. Ces limites sont ensuite croisées avec les aires protégées de WDPA pour extraire uniquement les zones terrestres situées à l'intérieur du pays. Après la transformation au coordonnées de Laborde (29702), nous calculons la superficie de chaque aire protégée terrestre, et visualiser le tout sur une carte.
 
-On garde que les éléments de SAPM qui sont contenu à l'intérieur des aires protégées de Madagascar.
+Seules les aires protégées de la WDPA contenues dans les frontières nationales de Madagascar sont conservées.
 
 ```{r}
 
@@ -165,8 +165,9 @@ contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
   st_as_sf() %>%
   st_set_crs(standard_crs)
 
-# Intersection des SAPM avec la limite de Madagascar
+# Intersection des AP de WDPA avec la limite de Madagascar
 wdpa_terrestre <- wdpa %>% 
+  filter(MARINE == "Terrestre") %>%
   st_transform(crs = standard_crs) %>%
   st_make_valid() %>%
   st_intersection(contour_mada) %>%
@@ -194,6 +195,8 @@ tm_shape(wdpa_terrestre) +
 ::: callout-warning
 On a un problème avec les unités pour les surfaces dans la carte.
 :::
+
+## Ajout de la date de création manquante des aires protégées
 
 En examinant la base de donnée, nous avons constaté qu'il manquait la date de création de l'une des aires protégées. Nous allons donc ajouter l'année de création de l'aire protégée Complexe des aires protégées Ambohimirahavavy Marivorahona, créée par le décret 2015-782 du 28 avril 2015 [@goodman2018].
 
