@@ -8,7 +8,7 @@ book:
   subtitle: "Impact des aires protégées sur les conditions de vie"
   author: "Iriana, Holy, Ingrid, Florent"
   repo-url: https://github.com/BETSAKA/PA-livelihood-impact-dhs
-  date: "01/05/2025"
+  date: "03/10/2025"
   chapters:
     - index.qmd
     - part: "Data preparation"

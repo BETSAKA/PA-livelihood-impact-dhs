@@ -89,6 +89,8 @@ Nous allons charger et extraire les données sur les données géophysiques des 
 On définit notre environnement de travail pour automatiser le téléchargement et le stockage des données spatiales à l'aide de mapme.biodiversity. Nous utilisons la fonction get_resources () pour cela en démarrant un chronomètre avec le package tictoc pour mesurer le temps d'exécution du bloc de code.
 
 ```{r}
+#| eval: false
+
 # Définir le chemin relatif pour ton répertoire local
 outdir <- "data/raw/mapme"
 dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
