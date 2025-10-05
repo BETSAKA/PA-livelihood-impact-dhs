@@ -253,20 +253,34 @@ convert_labelled <- function(df) {
 # Chargement des données appariées 
 data_matched_1997 <- readRDS("data/derived/data_matched_1997.rds") |> convert_labelled ()
 data_matched_2008 <- readRDS("data/derived/data_matched_2008.rds") |> convert_labelled()
+data_matched_2011 <- readRDS("data/derived/data_matched_2011.rds") |> convert_labelled()
+data_matched_2013 <- readRDS("data/derived/data_matched_2013.rds") |> convert_labelled()
+data_matched_2016 <- readRDS("data/derived/data_matched_2016.rds") |> convert_labelled()
 data_matched_2021 <- readRDS("data/derived/data_matched_2021.rds") |> convert_labelled()
 
+# Uniformiser hv025 de 2013 avec ceux des autres 
+data_matched_2013$hv025 <- "rural"
+
 # Fusion des dataframes appariés 
-df_all <- bind_rows(data_matched_1997, data_matched_2008, data_matched_2021)
+df_all <- bind_rows(data_matched_1997, data_matched_2008, data_matched_2011, data_matched_2013, data_matched_2016, data_matched_2021)
 
 # Ajout des coordonnées GPS
 gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp")
 gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp") 
+gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp")
+gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp")
+gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp")
 gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
 
 # Fusion des données GPS 
 gps_data <- bind_rows(
   gps_1997_initial %>% st_drop_geometry(),
   gps_2008_initial %>% st_drop_geometry(),
+  gps_2011_initial %>% 
+st_drop_geometry(),
+  gps_2013_initial %>%    
+st_drop_geometry(),
+  gps_2016_initial %>% st_drop_geometry(),
   gps_2021_initial %>% st_drop_geometry()
 )
 
@@ -303,7 +317,7 @@ Pour effectuer le test avant l'appariement, on détermine les déséquilibres in
 
 Le test après appariement sera un test visuel de la qualité du matching en comparant la distribution de chaque covariable à partir d'un plot. La méthode graphique offre une vue d'ensemble de la distribution des covariables. Le graphique facilite ainsi l'identification des déséquilibres à différents niveaux de la distribution. Lorsque les points Q-Q plot se situent près de la diagonale, le quantile des deux distributions sont similaires, signalant ainsi un bon équilibre
 
-### Balance test for 1997
+### Balance test
 
 #### Balance test before matching
 
@@ -311,55 +325,61 @@ Le test après appariement sera un test visuel de la qualité du matching en com
 library(halfmoon)
 library(cobalt)
 
-
-# Balance before matching
-matching_1997 <- readRDS("data/derived/hr_1997_final.rds") %>%
-  filter(GROUP %in% c("Treatment", "Control")) %>%
-  mutate(treatment = if_else(GROUP == "Treatment", 1, 0))
-
-bal_before_1997 <- bal.tab(
-  treatment ~ treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000,
-  data = matching_1997,
-  estimand = "ATT",
-  un = TRUE, # Inclusion des covariables non appariées 
-  abs = TRUE
-)
-
-print(bal_before_1997)
-
-# Balance plot before matching
-matching_before_1997 <- matching_1997 %>%
-  pivot_longer(
-    cols = all_of(matching_variables),
-    names_to = "variable",
-    values_to = "value"
+check_balance_before <- function(df, year, matching_vars, save_plot = FLASE, plot_dir = "plots"){
+  data <- df %>%
+    filter(GROUP %in% c("Treatment", "Control")) %>%
+    mutate(treatment = if_else(GROUP == "Treatment", 1, 0))
+  
+  formula <- as.formula(
+    paste("treatment ~", paste(matching_vars, collapse = "+"))
   )
   
-
-ggplot(matching_before_1997, aes(x = value, fill = GROUP)) +
-  geom_mirror_histogram(alpha = 0.5) +
-  facet_wrap(~variable, scales = "free") +
-  scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
-  labs(
-    tittle = "Covariate Distribution before matching (1997)",
-    x = "Valeur de la covariable",
-    y = "Densité",
-    fill = "Group"
-  ) +
-  theme_minimal()
-
-
-  ggplot(matching_before_1997, aes(x = value, fill = GROUP)) +
+  bal_before <- bal.tab(
+    formula,
+    data = data,
+    estimand = "ATT",
+    un = TRUE,
+    abs = TRUE
+  )
+  
+  print(bal_before)
+  
+  # Graphique
+  data_long <- data %>%
+    pivot_longer(
+      cols = all_of(matching_variables),
+      names_to = "variable",
+      values_to = "value"
+    )
+  
+  density_plot <- ggplot(data_long, aes(x = value, fill = GROUP)) +
     geom_density(alpha = 0.5, color = "black", linewidth = 0.7, adjust = 0.7) +
-    facet_wrap(~variable, scales = "free") +
+    facet_wrap(~variable, scales = "free") + 
     scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
     labs(
-      title = "Covariate distribution before matching (1997)",
+      title = paste("Covariate distribution before matching(", year, ")", sep = ""),
       x = "Valeur de la covariable",
       y = "Densité",
       fill = "Group"
-    ) +
+    ) + 
     theme_minimal()
+print(density_plot)
+
+return(list(
+  data= data,
+  bal_before,
+  density_plot = plot
+))
+}
+
+# 1997
+res_1997 <- check_balance_before(data_matched_1997, 1997, matching_variables)
+res_2008 <- check_balance_before(data_matched_2008, 2008, matching_variables)
+res_2011 <- check_balance_before(data_matched_2011, 2011, matching_variables)
+res_2013 <- check_balance_before(data_matched_2013, 2013, matching_variables)
+res_2016 <- check_balance_before(data_matched_2016, 2016, matching_variables)
+res_2021 <- check_balance_before(data_matched_2021, 2021, matching_variables)
+
 ```
 
 D'après le balance measures, aucune variable n'est bien équilibrée entre les deux groupes. Deux variables (treecover_area_2000 et population_count_2000) ont des déséquilibres majeurs (SMD \> 0.6).
