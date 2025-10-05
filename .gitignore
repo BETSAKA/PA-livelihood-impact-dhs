@@ -23,3 +23,5 @@ test*
 
 TODO
 *.rds
+
+**/*.quarto_ipynb

@@ -25,6 +25,9 @@ wdpa_from_2008 <- read.csv("data/derived/wdpa_from_2008.csv")
 
 # Fonction utilitaire pour produire les statistiques d'une période
 get_descriptive_stats <- function(data, periode_label) {
+  data <- data %>%
+  mutate(REP_AREA = as.numeric(REP_AREA))
+  
   stats <- describe(data$REP_AREA)[, c("n", "mean", "sd", "median", "min", "max")]
   
   min_name <- data %>%
@@ -67,6 +70,7 @@ write_csv(desc_AP_combined, "data/derived/tableau_descriptive.csv")
 # Fonction pour produire les 10 plus petites aires protégées
 get_top_small_aires <- function(df_input, periode_label, top_n = 10) {
   df_input %>%
+    mutate(REP_AREA = as.numeric(REP_AREA)) %>%
     arrange(REP_AREA) %>%
     slice_head(n = top_n) %>%
     mutate(
@@ -97,7 +101,7 @@ write_csv(desc_AP_combined, "data/derived/tableau_descriptive.csv")
 
 ```{r}
 # On charge les données
-hh_1997_rural <- readRDS("data/derived/hh_1997_rural.rds")
+hh_1997_rural <- readRDS("data/derived/hh_1997_rural_simpler.rds")
 
 # Sélection des colonnes d'intérêt
 vars <- c("wealth_centile_rural_simple", "zscore_wealth")
@@ -150,7 +154,7 @@ write_xlsx(desc_1997, "data/derived/descriptive_wealth_rural_1997.xlsx")
 
 ```{r}
 # On charge les données
-hh_2008_rural <- readRDS("data/derived/hh_2008_rural.rds")
+hh_2008_rural <- readRDS("data/derived/hh_2008_rural_simpler.rds")
 
 # Créer le tableau descriptif
 desc_2008 <- hh_2008_rural %>%
@@ -200,7 +204,7 @@ write_xlsx(desc_2008, "data/derived/descriptive_wealth_rural_2008.xlsx")
 
 ```{r}
 # On charge les données
-hh_2021_rural <- readRDS("data/derived/hh_2021_rural.rds")
+hh_2021_rural <- readRDS("data/derived/hh_2021_rural_simpler.rds")
 
 # Créer le tableau descriptif
 desc_2021 <- hh_2021_rural %>%
@@ -296,6 +300,10 @@ descr_stats_vars
 ## Statistiques descriptives (partie estimation)
 
 ```{r}
+#| eval: false
+
+# ATTENTION placebo_data_wi n'existe pas : on n'exécute pas ce bloc
+
 # Statistiques descriptives 
 evolution_placebo_wi <- placebo_data_wi %>%
   group_by(DHSYEAR, GROUP) %>%

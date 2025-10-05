@@ -245,7 +245,7 @@ yvar <- "zscore_wealth"
 # did2s (Gardner) : statique + event-study--------------------------------
 # -- Statique (traitement "on/off")
 did2s_static <- did2s(
-  data        = dat3,
+  data        = dat,
   yname       = yvar,
   first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
   second_stage= ~ i(treat_on, ref = FALSE),
@@ -257,7 +257,7 @@ etable(did2s_static, headers = "did2s statique")
 
 # -- Event-study (avec binning -5..5, ref = -1 et never-treated)
 did2s_es <- did2s(
-  data        = dat3,
+  data        = dat,
   yname       = yvar,
   first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
   second_stage= ~ i(rel_year_binned, ref = c(-1, Inf)),

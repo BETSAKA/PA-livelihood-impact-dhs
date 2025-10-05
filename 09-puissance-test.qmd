@@ -17,10 +17,10 @@ library(pwr)
 library(fixest)
 
 # Cluster classification
-cluster_treatment_classification <- read.csv("data/derived/cluster_treatment_classification.csv")
+cluster_treatment_classification <- read.csv("data/derived/cluster_treatment_classification_staggered.csv")
 
 hr_1997_final <- readRDS("data/derived/hr_1997_final.rds")
-hr_2008_final <- readRDS( bn;"data/derived/hr_2008_final.rds")
+hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
 hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
 
 ```
