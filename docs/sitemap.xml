@@ -1,55 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/03-wealth-index.html</loc>
-    <lastmod>2025-08-28T11:48:44.299Z</lastmod>
-  </url>
-  <url>
-    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/06-matching.html</loc>
-    <lastmod>2025-07-22T09:39:01.109Z</lastmod>
-  </url>
-  <url>
-    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/02bis-spei-calculation.html</loc>
-    <lastmod>2025-07-21T13:12:20.146Z</lastmod>
+    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/03-wealth-index-simplified.html</loc>
+    <lastmod>2025-10-04T11:03:30.680Z</lastmod>
   </url>
   <url>
     <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/04-variable-consolidation.html</loc>
-    <lastmod>2025-07-21T17:01:52.655Z</lastmod>
+    <lastmod>2025-10-04T11:03:30.680Z</lastmod>
+  </url>
+  <url>
+    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/06-matching.html</loc>
+    <lastmod>2025-10-04T20:02:07.760Z</lastmod>
   </url>
   <url>
     <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/05-descriptive.html</loc>
-    <lastmod>2025-07-16T07:21:53.445Z</lastmod>
-  </url>
-  <url>
-    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/02-spatial-covariates.html</loc>
-    <lastmod>2025-07-22T05:52:22.566Z</lastmod>
-  </url>
-  <url>
-    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/08-sensitivity-checks.html</loc>
-    <lastmod>2025-07-30T13:04:01.400Z</lastmod>
-  </url>
-  <url>
-    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/07-estimation.html</loc>
-    <lastmod>2025-08-29T08:18:42.982Z</lastmod>
-  </url>
-  <url>
-    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/01-treatment-assignation.html</loc>
-    <lastmod>2025-08-26T13:11:47.816Z</lastmod>
-  </url>
-  <url>
-    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/index.html</loc>
-    <lastmod>2025-08-25T09:38:50.520Z</lastmod>
-  </url>
-  <url>
-    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/09-conclusion.html</loc>
-    <lastmod>2025-08-25T09:38:49.950Z</lastmod>
-  </url>
-  <url>
-    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/10-references.html</loc>
-    <lastmod>2025-08-25T09:38:49.950Z</lastmod>
+    <lastmod>2025-10-05T07:56:25.247Z</lastmod>
   </url>
   <url>
     <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/07-estimation_staggered.html</loc>
-    <lastmod>2025-09-16T14:10:18.490Z</lastmod>
+    <lastmod>2025-10-05T08:00:35.093Z</lastmod>
+  </url>
+  <url>
+    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/09-puissance-test.html</loc>
+    <lastmod>2025-10-05T09:59:07.402Z</lastmod>
+  </url>
+  <url>
+    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/10-conclusion.html</loc>
+    <lastmod>2025-10-03T19:17:32.041Z</lastmod>
+  </url>
+  <url>
+    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/11-references.html</loc>
+    <lastmod>2025-10-03T19:17:32.041Z</lastmod>
+  </url>
+  <url>
+    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/01-treatment-assignation.html</loc>
+    <lastmod>2025-10-05T19:38:47.312Z</lastmod>
   </url>
 </urlset>
