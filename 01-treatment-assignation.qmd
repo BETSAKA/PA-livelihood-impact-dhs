@@ -6,8 +6,6 @@ editor_options:
 
 # Treatment assignation
 
-## Objectifs
-
 Nous classons les clusters d'enquêtes DHS (1997, 2008, 2011, 2013, 2016 et 2021) par rapport à leur distance aux aires protégées et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
 
 -   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
