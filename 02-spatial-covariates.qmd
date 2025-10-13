@@ -6,8 +6,6 @@ editor_options:
 
 # Spatial covariates
 
-## Introduction
-
 Ce document vise à charger les données géophysiques des ménages à l'aide du package R mapme.biodiversity (<https://mapme-initiative.github.io/mapme.biodiversity/index.html>) @görgen2022. Ce package va automatiser la récupération de données volumineuses au format raster et leur traitement pour produire une série d'indicateurs appliqués à des polygones.
 
 ## Données DHS
