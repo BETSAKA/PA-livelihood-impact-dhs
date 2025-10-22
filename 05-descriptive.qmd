@@ -6,17 +6,18 @@ editor_options:
 
 # Descriptive statistics
 
-## Objectif
+Cette section vise à effectuer l'analyse descriptive de l'étude.
 
 ## Statistiques descriptive des aires protégées
 
 ```{r}
 
-library(tidyverse) #Manipulation et visualisation des données
+library(tidyverse) # Manipulation et visualisation des données
 library(writexl) # Pour faire une sortie sous Excel
-library(psych)
-library(knitr)
-library(sf)
+library(psych) # Pour des analyses statistiques descriptives et psychométrique 
+library(knitr) # génération de rapports dynamiques 
+library(sf) # Analyse spatiale
+library(readr)
 
 # On charge les données
 wdpa_before_2008 <- st_read("data/derived/wdpa_before_2008.csv") 
@@ -25,16 +26,18 @@ wdpa_from_2008 <- read.csv("data/derived/wdpa_from_2008.csv")
 
 # Fonction utilitaire pour produire les statistiques d'une période
 get_descriptive_stats <- function(data, periode_label) {
-  stats <- describe(data$REP_AREA)[, c("n", "mean", "sd", "median", "min", "max")]
+  rep_area_num <- as.numeric(data$REP_AREA)
+  
+  stats <- psych::describe(rep_area_num)[, c("n", "mean", "sd", "median", "min", "max")]
   
   min_name <- data %>%
-    filter(REP_AREA == min(REP_AREA, na.rm = TRUE)) %>%
+    filter(rep_area_num == min(rep_area_num, na.rm = TRUE)) %>%
     pull(ORIG_NAME) %>%
     unique() %>%
     paste(collapse = "; ")
   
   max_name <- data %>%
-    filter(REP_AREA == max(REP_AREA, na.rm = TRUE)) %>%
+    filter(rep_area_num == max(rep_area_num, na.rm = TRUE)) %>%
     pull(ORIG_NAME) %>%
     unique() %>%
     paste(collapse = "; ")
@@ -54,26 +57,27 @@ desc_AP_from   <- get_descriptive_stats(wdpa_from_2008, "From 2008")
 
 
 # Fusion des deux tableaux
-desc_AP_combined <- rbind(desc_AP_before, desc_AP_from %>%
-  select(periode, n, mean, sd, median, min, aire_min, max, aire_max))
-
+desc_AP_combined <- bind_rows(desc_AP_before, desc_AP_from) %>%
+  arrange(mean) %>%
+  select(periode, n, mean, sd, median, min, aire_min, max, aire_max)
 
 # Affichage du tableau 
 kable(desc_AP_combined, digits = 2, caption = "Statistiques descriptives des aires protégées (REP_AREA)")
 
 # Enregistrement du tableau
-write_csv(desc_AP_combined, "data/derived/tableau_descriptive.csv")
+write_csv(desc_AP_combined, "data/derived/tableau_descriptive des aires protégée.csv")
 
 # Fonction pour produire les 10 plus petites aires protégées
-get_top_small_aires <- function(df_input, periode_label, top_n = 10) {
-  df_input %>%
+get_top_small_aires <- function(df, periode, top_n = 10) {
+  df %>%
+    mutate(REP_AREA = as.numeric(REP_AREA)) %>%
     arrange(REP_AREA) %>%
     slice_head(n = top_n) %>%
     mutate(
       rank_number = row_number(),
-      periode = periode_label
+      periode = periode
     ) %>% 
-    select(rank_number, ORIG_NAME, REP_AREA) 
+    select(rank_number, ORIG_NAME, REP_AREA, periode) 
 }
 
 # Appliquer aux deux périodes
@@ -88,161 +92,77 @@ kable(top10_combined, digits = 2,
       caption = "Statistiques descriptives des aires protégées (REP_AREA) avec top 10 plus petites")
 
 # Enregistrement du tableau
-write_csv(desc_AP_combined, "data/derived/tableau_descriptive.csv")
+write_csv(desc_AP_combined, "data/derived/tableau_descriptive_AP.csv")
 ```
 
 ## Statistiques descriptives du wealth index et du z-score du wealth index
 
-### Année 1997
-
 ```{r}
-# On charge les données
-hh_1997_rural <- readRDS("data/derived/hh_1997_rural.rds")
+make_desc_wealth <- function(year){
+  
+  file_path <- paste0("data/derived/hh_", year, "_rural_simpler.rds")
+  hh_data <- readRDS(file_path)
+  
+  # Wealth index en centile
+  desc_centile <- hh_data %>%
+    summarise(
+      n_centile = sum(!is.na(wealth_centile_rural_simple)),
+      mean_centile = mean(wealth_centile_rural_simple, na.rm = TRUE),
+      sd_centile = sd(wealth_centile_rural_simple, na.rm = TRUE),
+      median_centile = median(wealth_centile_rural_simple, na.rm = TRUE),
+      min_centile = min(wealth_centile_rural_simple, na.rm = TRUE),
+      max_centile = max(wealth_centile_rural_simple, na.rm = TRUE)
+    ) %>%
+    mutate(
+      year = year,
+      variable = "Wealth index en centile"
+    ) %>%
+    select(year, variable, everything())
+  
+  # Z-score Wealth index 
+  desc_zscore <- hh_data %>%
+    summarise(
+      n_zscore = sum(!is.na(zscore_wealth)),
+      mean_zscore = mean(zscore_wealth, na.rm = TRUE),
+      sd_zscore = sd(zscore_wealth, na.rm = TRUE),
+      median_zscore = median(zscore_wealth, na.rm = TRUE),
+      min_zscore = min(zscore_wealth, na.rm = TRUE),
+      max_zscore = max(zscore_wealth, na.rm = TRUE)
+    ) %>%
+    mutate(
+      year = year,
+      variable = "Z-score wealth index"
+      ) %>%
+    select(year, variable, everything())
+  
+  list(centile = desc_centile, zscore = desc_zscore)
+}
 
-# Sélection des colonnes d'intérêt
-vars <- c("wealth_centile_rural_simple", "zscore_wealth")
+years <- c(1997, 2008, 2011, 2013, 2016, 2021)
 
-# Créer le tableau descriptif
-desc_1997 <- hh_1997_rural %>%
-  summarise(
-    n_centile = sum(!is.na(wealth_centile_rural_simple)),
-    mean_centile = mean(wealth_centile_rural_simple, na.rm = TRUE),
-    sd_centile = sd(wealth_centile_rural_simple, na.rm = TRUE),
-    median_centile = median(wealth_centile_rural_simple, na.rm = TRUE),
-    min_centile = min(wealth_centile_rural_simple, na.rm = TRUE),
-    max_centile = max(wealth_centile_rural_simple, na.rm = TRUE),
-    
-    n_zscore = sum(!is.na(zscore_wealth)),
-    mean_zscore = mean(zscore_wealth, na.rm = TRUE),
-    sd_zscore = sd(zscore_wealth, na.rm = TRUE),
-    median_zscore = median(zscore_wealth, na.rm = TRUE),
-    min_zscore = min(zscore_wealth, na.rm = TRUE),
-    max_zscore = max(zscore_wealth, na.rm = TRUE)
-  ) %>%
-  # Transformer en format long
-  pivot_longer(
-    everything(),
-    names_to = c("stat", "variable"),
-    names_sep = "_"
-  ) %>%
-  pivot_wider(
-    names_from = stat,
-    values_from = value
-  ) %>%
-  # Renommer les variables
-  mutate(
-    variable = case_when(
-      variable == "centile" ~ "Wealth index en Centile",
-      variable == "zscore" ~ "Z-score wealth index",
-      TRUE ~ variable
-    )
-  )
+desc_list <- map(years, make_desc_wealth)
 
-# Affichage du tableau
-kable(desc_1997, digits = 2, caption = "Statistiques descriptives des variables de richesse rurale (1997)")
+desc_centile_all <- map_dfr(desc_list, "centile") %>%
+  mutate(across(where(is.numeric), ~round(.x, 2)))
 
-# Export vers Excel
-write_xlsx(desc_1997, "data/derived/descriptive_wealth_rural_1997.xlsx")
+desc_zscore_all <- map_dfr(desc_list, "zscore")%>%
+  mutate(across(where(is.numeric), ~round(.x, 2)))
 
-```
+write_xlsx(
+  list(
+    "wealth_index_centile" = desc_centile_all, 
+    "zscore_wealth_index" = desc_zscore_all
+  ),
+  "data/derived/descriptive_wealth_rural.xlsx"
+)
 
-### Année 2008
+kable(
+  desc_centile_all,
+  caption = "Statistiques descriptives - wealth index rural en centile", digits = 2)
 
-```{r}
-# On charge les données
-hh_2008_rural <- readRDS("data/derived/hh_2008_rural.rds")
-
-# Créer le tableau descriptif
-desc_2008 <- hh_2008_rural %>%
-  summarise(
-    n_centile = sum(!is.na(wealth_centile_rural_simple)),
-    mean_centile = mean(wealth_centile_rural_simple, na.rm = TRUE),
-    sd_centile = sd(wealth_centile_rural_simple, na.rm = TRUE),
-    median_centile = median(wealth_centile_rural_simple, na.rm = TRUE),
-    min_centile = min(wealth_centile_rural_simple, na.rm = TRUE),
-    max_centile = max(wealth_centile_rural_simple, na.rm = TRUE),
-    
-    n_zscore = sum(!is.na(zscore_wealth)),
-    mean_zscore = mean(zscore_wealth, na.rm = TRUE),
-    sd_zscore = sd(zscore_wealth, na.rm = TRUE),
-    median_zscore = median(zscore_wealth, na.rm = TRUE),
-    min_zscore = min(zscore_wealth, na.rm = TRUE),
-    max_zscore = max(zscore_wealth, na.rm = TRUE)
-  ) %>%
-  # Transformer en format long
-  pivot_longer(
-    everything(),
-    names_to = c("stat", "variable"),
-    names_sep = "_"
-  ) %>%
-  pivot_wider(
-    names_from = stat,
-    values_from = value
-  ) %>%
-  # Renommer les variables 
-  mutate(
-    variable = case_when(
-      variable == "centile" ~ "Wealth index en Centile",
-      variable == "zscore" ~ "Z-score wealth index",
-      TRUE ~ variable
-    )
-  )
-
-# Affichage du tableau
-kable(desc_2008, digits = 2, caption = "Statistiques descriptives des variables de richesse rurale (2008)")
-
-# Export vers Excel
-write_xlsx(desc_2008, "data/derived/descriptive_wealth_rural_2008.xlsx")
-
-```
-
-### Année 2021
-
-```{r}
-# On charge les données
-hh_2021_rural <- readRDS("data/derived/hh_2021_rural.rds")
-
-# Créer le tableau descriptif
-desc_2021 <- hh_2021_rural %>%
-  summarise(
-    n_centile = sum(!is.na(wealth_centile_rural_simple)),
-    mean_centile = mean(wealth_centile_rural_simple, na.rm = TRUE),
-    sd_centile = sd(wealth_centile_rural_simple, na.rm = TRUE),
-    median_centile = median(wealth_centile_rural_simple, na.rm = TRUE),
-    min_centile = min(wealth_centile_rural_simple, na.rm = TRUE),
-    max_centile = max(wealth_centile_rural_simple, na.rm = TRUE),
-    
-    n_zscore = sum(!is.na(zscore_wealth)),
-    mean_zscore = mean(zscore_wealth, na.rm = TRUE),
-    sd_zscore = sd(zscore_wealth, na.rm = TRUE),
-    median_zscore = median(zscore_wealth, na.rm = TRUE),
-    min_zscore = min(zscore_wealth, na.rm = TRUE),
-    max_zscore = max(zscore_wealth, na.rm = TRUE)
-  ) %>%
-  # Transformer en format long
-  pivot_longer(
-    everything(),
-    names_to = c("stat", "variable"),
-    names_sep = "_"
-  ) %>%
-  pivot_wider(
-    names_from = stat,
-    values_from = value
-  ) %>%
-  # Renommer les variables
-  mutate(
-    variable = case_when(
-      variable == "centile" ~ "Wealth index en Centile",
-      variable == "zscore" ~ "Z-score wealth index",
-      TRUE ~ variable
-    )
-  )
-
-# Affichage du tableau
-kable(desc_2021, digits = 2, caption = "Statistiques descriptives des variables de richesse rurale (2021)")
-
-# Export vers Excel
-write_xlsx(desc_2021, "data/derived/descriptive_wealth_rural_2021.xlsx")
+kable(
+  desc_zscore_all,
+  caption = "Statistiques descriptives - zscore wealth index", digits = 2)
 
 ```
 
@@ -257,6 +177,12 @@ library(haven)
 hr_1997_final <- readRDS("data/derived/hr_1997_final.rds")
 
 hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
+
+hr_2011_final <- readRDS("data/derived/hr_2011_final.rds")
+
+hr_2013_final <- readRDS("data/derived/hr_2013_final.rds")
+
+hr_2016_final <- readRDS("data/derived/hr_2016_final.rds")
   
 hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
 
@@ -264,33 +190,102 @@ hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
 vars_ut <- c("treecover_area_2000", "slope_2000", "elevation_2000", "population_count_2000", "traveltime_2000_2000", "spei_wc_1995", "spei_wc_1996", "spei_wc_1997", "spei_wc_2006", "spei_wc_2007", "spei_wc_2008","spei_wc_2019", "spei_wc_2020", "spei_wc_2021" )
 
 # Fonction pour statistiques descriptives robustes
-calc_descr_stats <- function(df, vars) {
-  vars_exist <- intersect(vars, names(df))       # colonnes existantes
-  df_num <- df %>% select(all_of(vars_exist)) %>% select(where(is.numeric))
+calc_descr_stats <- function(df, vars, year) {
+  df_num <- df %>% 
+    select(any_of(vars)) %>% select(where(is.numeric))
   
-  if (ncol(df_num) == 0) return(NULL)           # si aucune colonne numérique
+  if (ncol(df_num) == 0) return(NULL)       
   
-  data.frame(
-    Variable = names(df_num),
-    N        = sapply(df_num, function(x) sum(!is.na(x))),
-    Mean     = sapply(df_num, function(x) mean(x, na.rm = TRUE)),
-    SD       = sapply(df_num, function(x) sd(x, na.rm = TRUE)),
-    Min      = sapply(df_num, function(x) min(x, na.rm = TRUE)),
-    Median   = sapply(df_num, function(x) median(x, na.rm = TRUE)),
-    Max      = sapply(df_num, function(x) max(x, na.rm = TRUE))
-  )
+  df_num %>%
+    summarise(across(
+      everything(),
+      list(
+        n = ~sum(!is.na(.)),
+        mean = ~mean(., na.rm = TRUE),
+        sd = ~sd(., na.rm = TRUE),
+        min = ~min(., na.rm = TRUE),
+        median = ~median(., na.rm = TRUE),
+        max = ~max(., na.rm = TRUE)
+      ),
+      .names = "{.col}_{.fn}"
+    )) %>%
+    pivot_longer(
+      everything(),
+      names_to = c("Variable", ".value"),
+      names_sep = "_"
+    ) %>%
+    mutate(Year = year)
 }
 
-# Calculer pour chaque dataframe
-descr_1997 <- calc_descr_stats(hr_1997_final, vars_ut) %>% mutate(Year = 1997)
-descr_2008 <- calc_descr_stats(hr_2008_final, vars_ut) %>% mutate(Year = 2008)
-descr_2021 <- calc_descr_stats(hr_2021_final, vars_ut) %>% mutate(Year = 2021)
+years <- c(1997, 2008, 2011, 2013, 2016, 2021)
+data_list <- lapply(years, function(yr){
+  readRDS(glue::glue("data/derived/hr_{yr}_final.rds"))
+})
 
-# Combiner dans un seul tableau
-descr_stats_vars <- bind_rows(descr_1997, descr_2008, descr_2021)
 
-# Affichage
-descr_stats_vars 
+descr_stats_vars <- map2_dfr(data_list, years, calc_descr_stats, vars = vars_ut)
+
+descr_stats_vars
+    
+```
+
+## Statistiques descriptives (partie matching)
+
+Nous créons une fonction pour automatiser la création d'un résumé statistique pour chaque année.
+
+```{r}
+# Load data 
+years <- c(1997, 2008, 2011, 2013, 2016, 2021)
+
+summary_matched <- function(year){
+  file_path <- paste0("data/derived/data_matched_", year, ".rds")
+df <- readRDS(file_path)
+  
+df %>%
+  summarise(across(
+    where(is.numeric),
+    list(
+      n = ~sum(!is.na(.)),
+        mean = ~mean(., na.rm = TRUE),
+        sd = ~sd(., na.rm = TRUE),
+        min = ~min(., na.rm = TRUE),
+        median = ~median(., na.rm = TRUE),
+        max = ~max(., na.rm = TRUE)
+    ),
+      .names = "{.col}_{.fn}"
+    )) %>%
+    pivot_longer(
+      cols = everything(),
+      names_to = c("Variable", "Stat"),
+      names_sep = "_",
+      values_to = "Value"
+    ) %>%
+  pivot_wider(names_from = Stat, values_from = Value) %>%
+  mutate(Year = year, .before = 1)
+}
+
+descr_stats_match <- map_dfr(years, summary_matched)
+
+descr_stats_match
+                             
+```
+
+### Matching for 2008
+
+```{r}
+hr_2008_final        <- readRDS("data/derived/hr_2008_final.rds")
+matching_result_2008 <- readRDS("data/derived/matching_result_2008.rds")
+data_matched_2008    <- readRDS("data/derived/data_matched_2008.rds")
+
+# Summary of Balance
+summary(matching_result_2008)
+plot(matching_result_2008)
+
+data_matched_2008 <- data_matched_2008 %>%
+  filter(weights > 0)
+nrow(data_matched_2008)
+
+saveRDS(data_matched_2008,"data/derived/data_matched_2008.rds" )
 ```
 
 ## Statistiques descriptives (partie estimation)
@@ -310,4 +305,31 @@ evolution_placebo_wi <- placebo_data_wi %>%
 # Ajout d'un label pour différencier la période pré/ post
 evolution_placebo_wi <- evolution_placebo_wi %>%
   mutate(period = ifelse(DHSYEAR < 2008, "Pre-treatment", "Post-treatment"))
+```
+
+Avant le matching pour l'année 2008, nous avons 9 307 groupes de contrôle et 2 419 groupes de traitement sur les 15 364 observations. Nous remarquons que les groupes sont très différents sur la plupart des variables utilisées, surtout sur la variable treecover_area_2000 et population_count_2000. Après le matching, la majorité des variables sont en équilibres sauf pour la variable population_count_2000. Cette variable a une ration de variance très bas indiquant une forte hétérogénéité. Nous obtenons alors 4 838 groupes appariés, avec un total de 13 405 observations.
+
+## Matching for 2021
+
+```{r}
+hr_2021_final        <- readRDS("data/derived/hr_2021_final.rds")
+matching_result_2021 <- readRDS("data/derived/matching_result_2021.rds")
+data_matched_2021    <- readRDS("data/derived/data_matched_2021.rds")
+
+# Summary of Balance
+summary(matching_result_2021)
+plot(matching_result_2021)
+
+data_matched_2021 <- data_matched_2021 %>%
+  filter(weights > 0)
+nrow(data_matched_2021)
+
+saveRDS(data_matched_2021,"data/derived/data_matched_2021.rds" )
+```
+
+Avant le matching pour l'année 2021, nous avons 10 074 groupe de traitement et 3 331 groupe de contrôle sur 15 364 observations. L'équilibre des covariables différent pour les deux groupes. Après le matching, on voit une forte réduction du biais de sélection, surtout pour les variables de base comme le treecover_area et elevation. Tandis quer les variables traveltime_2000_2000 et population_count_2000 présentent encore des problèmes de variance résiduels avec une valeur de 1.4583 et 1.9191. Au total, nous obtenons 6 662 groupes appariés (dont 6743 groupes exclus) avec un total de 13 405 observations.
+
+Ci-suit une carte qui représente les localisations des groupes appariées pour les trois années d'études. Chaque point représente les ménages retenus après le matching.
+
+```{}
 ```
