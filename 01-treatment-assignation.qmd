@@ -6,7 +6,7 @@ editor_options:
 
 # Treatment assignation
 
-Nous classons les clusters d'enquêtes DHS (1997, 2008, 2011, 2013, 2016 et 2021) par rapport à leur distance aux aires protégées et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
+Nous classons les clusters d'enquêtes DHS (1997, 2008, 2011, 2013, 2016 et 2021) par rapport à leur distance aux aires protégées (AP) et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
 
 -   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
 
@@ -72,13 +72,13 @@ gps_2016 <- check_coordinates(gps_2016_initial, contour_mada)
 gps_2021 <- check_coordinates(gps_2021_initial, contour_mada)
 ```
 
-Les coordonnées GPS de neuf clusters de l'enquête 2008 présentent des coordonnées GPS invalides (0,0). Un cluster de l'année 1997 et 2011 présente également des coordonnées GPS invalides..
+Les coordonnées GPS de neuf clusters de l'enquête 2008 présentent des coordonnées GPS invalides (0,0). Un cluster de l'année 1997 et 2011 présente également des coordonnées GPS invalides.
 
 ## Chargement des données AP
 
 Afin de disposer de données actualisées sur les aires protégées, nous avons triangulé les données relatives aux aires protégées avec d'autres sources notamment celles du Service de la Gouvernance des Aires Protégées (SGAP) du Ministère de l'Environnement et de Développement Durable de Madagascar (MEDD)", les décrets officiels et la documentation des gestionnaires des aires protégées. Les données de World Database on Protected Areas (WDPA) restent néanmoins la plus complète.
 
-On charge et nettoie le jeu de données des aires protégées, en ne gardant que celles dont le statut est officiellement désigné et en distinguant les zones terrestres, marines et mixtes. On ajoute le contour du pays pour situer ces aires dans l'espace. On crée ensuite une carte interactive pour visualiser ces aires protégées selon leur type, leurs noms et leurs superficies.
+On charge et nettoie le jeu de données des aires protégées de WDPA, en ne gardant que celles dont le statut est officiellement désigné et en distinguant les zones terrestres, marines et mixtes. On ajoute le contour du pays pour situer ces aires dans l'espace. On crée ensuite une carte interactive pour visualiser ces aires protégées selon leur type, leurs noms et leurs superficies.
 
 ```{r}
 library(wdpar)
@@ -152,7 +152,7 @@ DT::datatable(wdpa_tb_sel)
 
 ## Sélection des parties terrestres des AP
 
-On récupère les limites administratives nationales de Madagascar, dont on attribue un système de coordonnées 4326. Ces limites sont ensuite croisées avec les aires protégées de WDPA pour extraire uniquement les zones terrestres situées à l'intérieur du pays. Après la transformation au coordonnées de Laborde (29702), nous calculons la superficie de chaque aire protégée terrestre, et visualiser le tout sur une carte.
+On récupère les limites administratives nationales de Madagascar, dont on attribue un système de coordonnées 4326. Ces limites sont ensuite croisées avec les aires protégées de WDPA pour extraire uniquement les zones terrestres situées à l'intérieur du pays. Après la transformation en coordonnées de Laborde (29702), nous calculons la superficie de chaque aire protégée terrestre, et visualisons le tout sur une carte.
 
 Seules les aires protégées de la WDPA contenues dans les frontières nationales de Madagascar sont conservées.
 
@@ -195,7 +195,7 @@ On a un problème avec les unités pour les surfaces dans la carte.
 
 ## Ajout de la date de création manquante des aires protégées
 
-En examinant la base de donnée, nous avons constaté qu'il manquait la date de création de l'une des aires protégées. Nous allons donc ajouter l'année de création de l'aire protégée Complexe des aires protégées Ambohimirahavavy Marivorahona, créée par le décret 2015-782 du 28 avril 2015 [@goodman2018].
+En examinant la base de donnée, nous avons constaté qu'il manquait la date de création de l'une des aires protégées. Nous allons donc ajouter l'année de création de l'aire protégée "Complexe des aires protégées Ambohimirahavavy Marivorahona", créée par le décret 2015-782 du 28 avril 2015 [@goodman2018].
 
 ```{r}
 # Ajout de la date de création du complexe des aires protégées Ambohimirahavavy Marivorahona 
@@ -207,6 +207,8 @@ wdpa_terrestre_mod <- wdpa_terrestre %>%
 st_write(wdpa_terrestre_mod, "data/derived/wdpa_terrestre_mod.shp", delete_layer = TRUE)
 
 ```
+
+Comme nos données sont complètes, nous allons maintenant créé un buffer zone de 10 km autour des aires protégées créées avant et après 2008 pour définir le groupe de traitement et de contrôle. Ce seuil de 10 km correspond à la distance la plus fréquemment utilisée dans la littérature concernant les évaluations d'impact.
 
 ## Création de buffer pour les AP avant et après 2008
 
@@ -313,7 +315,7 @@ gt_table
 
 ## Classification des clusters
 
-Les grappes d'enquête sont classées selon leur proximité aux aires protégées créées avant 2008 et à partir de 2008. A l'aide de la fonction classify_clusters(), nous catégorisons chaque cluster en trois groupes: traitement, contrôle ou exclu, selon leur localisation par rapport aux aires protégées et leur statut urbain ou rural. Cette classification est appliquée aux clusters de 1997, 2008, 2011, 2013, 2016 et 2021. Parmi les clusters considérés comme "traités", on identifie l'année de création de l'AP, son type et le numéro WDPAID de l'AP en question. Les résultats sont ensuite fusionnés. Nous créons ensuite une carte par année d'étude pour visualiser la localisation des aires protégées et la répartition spatiale des clusters selon leur groupe. On va maintenant identifier, parmi les clusters considérés comme "traités", l'année de création de l'AP, son type et le numéro WDPAID de l'AP en question.
+Les grappes d'enquête sont classées selon leur proximité aux aires protégées créées avant 2008 et à partir de 2008. A l'aide de la fonction classify_clusters(), nous catégorisons chaque cluster en trois groupes: traitement, contrôle ou exclu, selon leur localisation par rapport aux aires protégées et leur statut urbain ou rural. Cette classification est appliquée aux clusters de 1997, 2008, 2011, 2013, 2016 et 2021. Parmi les clusters considérés comme "traités", on identifie l'année de création de l'AP, son type et le numéro WDPAID ou l'identifiant unique de l'AP en question. Les résultats obtenus sont fusionnés. Nous créons ensuite une carte par année d'étude pour visualiser la localisation des aires protégées et la répartition spatiale des clusters selon leur groupe.
 
 ```{r}
 #| fig-cap: "Grappes d'enquêtes DHS par rapport aux aires protégées existantes"
