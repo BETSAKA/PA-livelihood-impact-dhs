@@ -74,17 +74,17 @@ buffer_all <- gps_all %>%
 
 Nous allons charger et extraire les données sur les données géophysiques des ménages qui serviront de variables d'appariement et de variables de contrôle pour l'analyse. Ces covariables sont des covariables succeptibles d'influencer le traitement (aires protégées créées à proximité du ménage) et le résultat (wealth index et inégalité des ménages):
 
--   Le couvert forestier en 2000 @hansen2013 (Hansen et al.2013)
+-   Le couvert forestier en 2000 @hansen2013
 
--   La pente et l'altitude @nasajpl2020 (NASA SRTM)
+-   La pente et l'altitude @nasajpl2020
 
--   La densité de population en 2000 @worldpop2018 (Worldpop)
+-   La densité de population en 2000 @worldpop2018
 
--   L'accessibilité en 2000 @uchida2011 (JRC, Uchida et Nelson 2011)
+-   L'accessibilité en 2000 @uchida2011
 
--   Les données worldclim @vicente-serrano2010 (Vicente-Serrano, Beguería, et López-Moreno 2010)
+-   Les données worldclim @vicente-serrano2010
 
-On définit notre environnement de travail pour automatiser le téléchargement et le stockage des données spatiales à l'aide de mapme.biodiversity. Nous utilisons la fonction get_resources () pour cela en démarrant un chronomètre avec le package tictoc pour mesurer le temps d'exécution du bloc de code.
+Afin d'automatiser le téléchargement et la gestion de ces données spatiales, nous configurons notre environnement de travail à l'aide de mapme.biodiversity. Nous utilisons la fonction get_resources () pour cela en démarrant un chronomètre avec le package tictoc pour suivre le temps d'exécution du bloc de code.
 
 ```{r}
 #| eval: false
@@ -165,7 +165,7 @@ toc()
 
 # Calcul des indicateurs
 
-Nous appliquons la fonction calc_indicators() du package pour calculer les indicateurs environnementaux avec un buffer zone de 10 km autour des clusters.
+Nous utilisons la fonction calc_indicators() du package pour calculer les indicateurs des variables environnementales dans un rayon de 10 km autour de chaque grappe d'enquête.
 
 ```{r}
 
