@@ -369,7 +369,7 @@ check_balance_after <- function(data_matched, year, matching_variables, plot_dir
   return(list(balance = bal_after))
 }
 
-# Exécution
+
 res_after_1997 <- check_balance_after(data_matched_1997, 1997, matching_variables)
 res_after_2008 <- check_balance_after(data_matched_2008, 2008, matching_variables)
 res_after_2011 <- check_balance_after(data_matched_2011, 2011, matching_variables)
@@ -383,38 +383,76 @@ res_after_2021 <- check_balance_after(data_matched_2021, 2021, matching_variable
 
 ```{r}
 
-plot_matched <- function(years, vars){
+plot_mirror_hist <- function(year, variable){
   
-  balance <- map_dfr(years, ~ {
-    readRDS(glue("data/derived/data_matched_{.x}.rds")) %>%
-      filter(GROUP %in% c("Treatment", "Control")) %>%
-      mutate(treatment = recode(GROUP, "Treatment" = "Traité", "Control" = "Contrôle")) %>%
-      
-      summarise(across(all_of(vars), ~ mean(.x, na.rm = TRUE)), .by = treatment) %>%
-      pivot_longer(-treatment, names_to = "Variable", values_to = "Moyenne") %>%
-      mutate(Annee = .x)
-  })
-  
-  
-  ggplot(balance, aes(x = Variable, y = Moyenne, fill = treatment)) +
-    geom_bar(stat = "identity", position = position_dodge(width = 0.75)) +
-    facet_wrap(~Annee, scales = "free", ncol = 2) +
-    scale_fill_manual(values = c("Traité" = "blue", "Contrôle" = "green")) +
-    labs(
-      title = "Comparison of covariate means after matching",
-      x = "covariable", 
-      y = "Moyenne",
-      fill = "Groupe"
-    ) +
-    theme_minimal() +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      plot.title = element_text(hjust = 0.5, face = "bold")
-    )
+ df <- readRDS(glue("data/derived/data_matched_{year}.rds")) %>%
+   filter(GROUP %in% c("Treatment", "Control")) %>%
+   mutate(
+     treatment = ifelse(GROUP == "Treatment", "Traité", "Contrôle"), 
+     value = .data[[variable]]
+   )
+ 
+ treated <- df %>% filter(treatment == "Traité")
+ control <- df %>% filter(treatment == "Contrôle")
+ 
+ 
+ ggplot() +
+   geom_histogram(
+     data = treated, 
+     aes(x = value), 
+     bins = 30, 
+     fill = "blue", 
+     alpha = 0.6
+     ) + 
+ geom_histogram(
+   data = control, 
+   aes(x = value, y = -after_stat(count)),
+   bins = 30, 
+   fill = "green", 
+   alpha = 0.6
+   ) + 
+   labs(
+     title = glue("Covariate after matching - {variable} ({year})"),
+     x = variable, 
+     y = "Effectifs (+ Traités / - Contrôles)"
+     ) + 
+   geom_hline(yintercept = 0, color = "black") +
+   annotate("text", x = Inf, y = -Inf, label = "Traités", hjust = 1.1, vjust = 2, color = "blue") +
+   annotate("text", x = Inf, y = -Inf, label = "Contrôles", hjust = 1.1, vjust = -1.5, color = "green") +
+   theme_minimal()
+ 
 }
 
-
-plot_matched(yrs, vars)
+plot_mirror_hist(1997,"treecover_area_2000")
+plot_mirror_hist(2008,"treecover_area_2000")
+plot_mirror_hist(2011,"treecover_area_2000")
+plot_mirror_hist(2013,"treecover_area_2000")
+plot_mirror_hist(2016,"treecover_area_2000")
+plot_mirror_hist(2021,"treecover_area_2000")
+plot_mirror_hist(1997,"slope_2000")
+plot_mirror_hist(2008,"slope_2000")
+plot_mirror_hist(2011,"slope_2000")
+plot_mirror_hist(2013,"slope_2000")
+plot_mirror_hist(2016,"slope_2000")
+plot_mirror_hist(2021,"slope_2000")
+plot_mirror_hist(1997,"elevation_2000")
+plot_mirror_hist(2008,"elevation_2000")
+plot_mirror_hist(2011,"elevation_2000")
+plot_mirror_hist(2013,"elevation_2000")
+plot_mirror_hist(2016,"elevation_2000")
+plot_mirror_hist(2021,"elevation_2000")
+plot_mirror_hist(1997,"population_count_2000")
+plot_mirror_hist(2008,"population_count_2000")
+plot_mirror_hist(2011,"population_count_2000")
+plot_mirror_hist(2013,"population_count_2000")
+plot_mirror_hist(2016,"population_count_2000")
+plot_mirror_hist(2021,"population_count_2000")
+plot_mirror_hist(1997,"traveltime_2000_2000")
+plot_mirror_hist(2008,"traveltime_2000_2000")
+plot_mirror_hist(2011,"traveltime_2000_2000")
+plot_mirror_hist(2013,"traveltime_2000_2000")
+plot_mirror_hist(2016,"traveltime_2000_2000")
+plot_mirror_hist(2021,"traveltime_2000_2000")
 ```
 
 L'histogramme compare les moyennes des variables de contrôle après le matching entre les groupes de traitement (en bleu) et de contrôle (en vert) pour chaque année.
