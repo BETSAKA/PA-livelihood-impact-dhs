@@ -270,66 +270,6 @@ descr_stats_match
                              
 ```
 
-### Matching for 2008
-
-```{r}
-hr_2008_final        <- readRDS("data/derived/hr_2008_final.rds")
-matching_result_2008 <- readRDS("data/derived/matching_result_2008.rds")
-data_matched_2008    <- readRDS("data/derived/data_matched_2008.rds")
-
-# Summary of Balance
-summary(matching_result_2008)
-plot(matching_result_2008)
-
-data_matched_2008 <- data_matched_2008 %>%
-  filter(weights > 0)
-nrow(data_matched_2008)
-
-saveRDS(data_matched_2008,"data/derived/data_matched_2008.rds" )
-```
 
 ## Statistiques descriptives (partie estimation)
 
-```{r}
-# Statistiques descriptives 
-evolution_placebo_wi <- placebo_data_wi %>%
-  group_by(DHSYEAR, GROUP) %>%
-  summarise(
-    mean_value = mean(wealth_centile_rural_simple , na.rm = TRUE),
-    sd_value = sd(wealth_centile_rural_simple , na.rm = TRUE),
-    n = n(),
-    se = sd_value / sqrt(n),
-    .groups = "drop"
-  )
-
-# Ajout d'un label pour différencier la période pré/ post
-evolution_placebo_wi <- evolution_placebo_wi %>%
-  mutate(period = ifelse(DHSYEAR < 2008, "Pre-treatment", "Post-treatment"))
-```
-
-Avant le matching pour l'année 2008, nous avons 9 307 groupes de contrôle et 2 419 groupes de traitement sur les 15 364 observations. Nous remarquons que les groupes sont très différents sur la plupart des variables utilisées, surtout sur la variable treecover_area_2000 et population_count_2000. Après le matching, la majorité des variables sont en équilibres sauf pour la variable population_count_2000. Cette variable a une ration de variance très bas indiquant une forte hétérogénéité. Nous obtenons alors 4 838 groupes appariés, avec un total de 13 405 observations.
-
-## Matching for 2021
-
-```{r}
-hr_2021_final        <- readRDS("data/derived/hr_2021_final.rds")
-matching_result_2021 <- readRDS("data/derived/matching_result_2021.rds")
-data_matched_2021    <- readRDS("data/derived/data_matched_2021.rds")
-
-# Summary of Balance
-summary(matching_result_2021)
-plot(matching_result_2021)
-
-data_matched_2021 <- data_matched_2021 %>%
-  filter(weights > 0)
-nrow(data_matched_2021)
-
-saveRDS(data_matched_2021,"data/derived/data_matched_2021.rds" )
-```
-
-Avant le matching pour l'année 2021, nous avons 10 074 groupe de traitement et 3 331 groupe de contrôle sur 15 364 observations. L'équilibre des covariables différent pour les deux groupes. Après le matching, on voit une forte réduction du biais de sélection, surtout pour les variables de base comme le treecover_area et elevation. Tandis quer les variables traveltime_2000_2000 et population_count_2000 présentent encore des problèmes de variance résiduels avec une valeur de 1.4583 et 1.9191. Au total, nous obtenons 6 662 groupes appariés (dont 6743 groupes exclus) avec un total de 13 405 observations.
-
-Ci-suit une carte qui représente les localisations des groupes appariées pour les trois années d'études. Chaque point représente les ménages retenus après le matching.
-
-```{}
-```
