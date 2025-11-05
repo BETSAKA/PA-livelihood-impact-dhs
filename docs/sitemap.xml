@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/07-estimation_staggered.html</loc>
-    <lastmod>2025-10-03T19:17:32.040Z</lastmod>
+    <lastmod>2025-11-05T08:24:01.675Z</lastmod>
   </url>
   <url>
     <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/02-spatial-covariates.html</loc>
@@ -11,5 +11,13 @@
   <url>
     <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/02bis-spei-calculation.html</loc>
     <lastmod>2025-10-07T14:36:23.743Z</lastmod>
+  </url>
+  <url>
+    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/06-matching.html</loc>
+    <lastmod>2025-10-24T03:07:04.033Z</lastmod>
+  </url>
+  <url>
+    <loc>https://betsaka.github.io/PA-livelihood-impact-dhs/05-descriptive.html</loc>
+    <lastmod>2025-11-05T08:07:41.050Z</lastmod>
   </url>
 </urlset>
