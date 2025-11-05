@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.6.42">
+<meta name="generator" content="quarto-1.6.40">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -71,7 +71,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="site_libs/bootstrap/bootstrap-8da5b4427184b79ecddefad3d342027e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
@@ -253,8 +253,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#objectif" id="toc-objectif" class="nav-link active" data-scroll-target="#objectif"><span class="header-section-number">6.1</span> Objectif</a></li>
-  <li><a href="#méthodes" id="toc-méthodes" class="nav-link" data-scroll-target="#méthodes"><span class="header-section-number">6.2</span> Méthodes</a></li>
+  <li><a href="#méthodes" id="toc-méthodes" class="nav-link active" data-scroll-target="#méthodes"><span class="header-section-number">6.1</span> Méthodes</a></li>
   </ul>
 </nav>
     </div>
@@ -280,13 +279,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="objectif" class="level2" data-number="6.1">
-<h2 data-number="6.1" class="anchored" data-anchor-id="objectif"><span class="header-section-number">6.1</span> Objectif</h2>
-<p>L’objectif de ce document est de combiner les clusters de 1997, 2008 et 2021 avec leurs caractéristiques géophysiques et leur variable de résultat respectif dans un seul dataframe.</p>
-</section>
-<section id="méthodes" class="level2" data-number="6.2">
-<h2 data-number="6.2" class="anchored" data-anchor-id="méthodes"><span class="header-section-number">6.2</span> Méthodes</h2>
-<p>Les fichiers contenant les données du Household Recode (HR) pour les années 1997, 2008 et 2021, fournis par DHS, sont d’abord chargés. Pour chaque année, on sélectionne que les variables nécessaires pour l’analyse, à savoir les identifiants des ménages (hv001 et hv002) et les wealth index. On fusionne ces données avec les données géophysiques des ménages, permettant ainsi de constituer un seul dataframe consolidé pour chaque année.</p>
+<p>L’objectif de ce document est de combiner les clusters de 1997, 2008, 2011, 2013, 2016 et 2021 avec leurs caractéristiques géophysiques et leur variable de résultat respectif dans un seul dataframe.</p>
+<section id="méthodes" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="méthodes"><span class="header-section-number">6.1</span> Méthodes</h2>
+<p>Les fichiers contenant les données du Household Recode (HR) pour les années 1997, 2008, 2011, 2013, 2016 et 2021, fournis par DHS, sont d’abord chargés. Pour chaque année, on sélectionne que les variables nécessaires pour l’analyse, à savoir les identifiants des ménages (hv001 et hv002) et les wealth index. On fusionne ces données avec les données géophysiques des ménages, permettant ainsi de constituer un seul dataframe consolidé pour chaque année.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
