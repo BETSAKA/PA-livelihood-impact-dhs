@@ -372,7 +372,7 @@ ggplot(plot_did2s, aes(x = year, y = estimate, color = group)) +
 
 # Test joint de pré-tendances (tous les leads k < 0)
 # On construit un motif regex pour k = -5..-1 présents dans le modèle
-leads_present <- plot_did2s$k[plot_did2s$k < 0 & plot_]
+leads_present <- plot_did2s$k[plot_did2s$k < 0]
 if(length(leads_present) > 0){
   keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
   print(fixest::wald(did2s_es, keep = keep_regex))
@@ -454,7 +454,7 @@ ggplot(plot_did2s, aes(x = year, y = estimate, color = group)) +
 
 # Test joint de pré-tendances (tous les leads k < 0)
 # On construit un motif regex pour k = -5..-1 présents dans le modèle
-leads_present <- plot_did2s$k[plot_did2s$k < 0 & plot_]
+leads_present <- plot_did2s$k[plot_did2s$k < 0]
 if(length(leads_present) > 0){
   keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
   print(fixest::wald(did2s_es, keep = keep_regex))
