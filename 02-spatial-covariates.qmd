@@ -101,7 +101,7 @@ with_progress({
   buffer_all <- buffer_all  %>% 
     get_resources(get_gfw_treecover())
 })
-toc()
+toc() # 620,11 sec elapsed
 
 # Perte de couvert
 tic()
@@ -109,7 +109,7 @@ with_progress({
   buffer_all <- buffer_all %>% 
   get_resources(get_gfw_lossyear()) 
 })
-toc()
+toc() # 266,57 sec elapsed
 
 # NASA SRTM
 tic()
@@ -117,15 +117,17 @@ with_progress({
   buffer_all <- buffer_all %>% 
   get_resources(get_nasa_srtm()) 
 })
-toc()
+toc() # 4578,35 sec elapsed
 
 # Worldpop 2000
-#tic()
+options(timeout = 7200)  
+
+tic()
 with_progress({
   buffer_all <- buffer_all %>%
     get_resources(get_worldpop(years = 2000))
 })
-#toc()
+toc()
   
 # Accesibility
 tic()
@@ -142,7 +144,7 @@ with_progress({
     get_worldclim_max_temperature(years = 1980:2021, resolution = "2.5m")
   )
 })
-toc()
+toc() # 17746 sec elapsed
 
 # Minimum temperatures
 tic()
@@ -151,7 +153,7 @@ with_progress({
     get_worldclim_min_temperature(years = 1980:2021, resolution = "2.5m")
   )
 })
-toc()
+toc() 
 
 # Precipitations
 tic()
@@ -160,7 +162,7 @@ with_progress({
     get_worldclim_precipitation(years = 1980:2021, resolution = "2.5m")
   )
 })
-toc()
+toc() # 17 855,95 sec elapsed
 ```
 
 # Calcul des indicateurs
@@ -188,7 +190,7 @@ if (file.exists("data/derived/spatial_covars_staggered.rds")) {
         calc_temperature_max_wc(engine = "extract", stats = "mean")
       )
   })
-  toc() # 11984.55 sec elapsed
+  toc() # 20 391,84 sec elapsed
   
   # Minimum temperatures
   tic()
@@ -198,7 +200,7 @@ if (file.exists("data/derived/spatial_covars_staggered.rds")) {
          calc_temperature_min_wc( engine = "extract", stats = "mean")
       )
   })
-  toc() # 12588.37 sec | 9660.17 sec elapsed 
+  toc() # 28 357,5 sec elapsed 
   
   
   # Precipitations
@@ -209,7 +211,7 @@ if (file.exists("data/derived/spatial_covars_staggered.rds")) {
         calc_precipitation_wc(engine = "extract", stats = "mean")
       )
   })
-  toc() # 17857.13 sec | 8883.61 sec elapsed 
+  toc() # 19 636,08 sec elapsed 
   
   
   # Forest cover rate in 2000
@@ -220,7 +222,7 @@ if (file.exists("data/derived/spatial_covars_staggered.rds")) {
         calc_treecover_area(years = 2000, min_size = 1, min_cover = 10)
       )
   })
-  toc()   # 548.69 sec | 2519.61 sec elapsed
+  toc()   # 2602.96 sec elapsed
   
   # slope 
   tic()
@@ -230,7 +232,7 @@ if (file.exists("data/derived/spatial_covars_staggered.rds")) {
         calc_slope(engine = "extract", stats = "mean")
       )
   })
-  toc() # 365.87 sec | 2557.28 sec elapsed    
+  toc() # 2398.6 sec elapsed    
   
   # Elevation
   tic()
@@ -240,7 +242,7 @@ if (file.exists("data/derived/spatial_covars_staggered.rds")) {
         calc_elevation(engine = "extract", stats = "mean")
       )
   })
-  toc() # 283.51 sec | 2672.57 sec elapsed  
+  toc() # 4396,93 sec elapsed  
   
   # Population density
   tic()
@@ -250,7 +252,7 @@ if (file.exists("data/derived/spatial_covars_staggered.rds")) {
         calc_population_count(engine = "extract", stats = "mean")
       )
   })
-  toc() # 83.55 sec | 1877.78 sec elapsed
+  toc() # 5233,48 sec elapsed
   
   # Accessibility
   tic()
