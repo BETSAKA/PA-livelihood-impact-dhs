@@ -28,6 +28,7 @@ library(leaflet)
 library(readxl) 
 library(glue)
 
+
 # Systèmes de coordonnées de référence 
 standard_crs <- 4326
 mdg_crs <- 29702 
@@ -53,11 +54,14 @@ gps_2013 <- check_coordinates(gps_2013_initial, contour_mada)
 gps_2016 <- check_coordinates(gps_2016_initial, contour_mada)
 gps_2021 <- check_coordinates(gps_2021_initial, contour_mada)
 
+# Load boundary 
+contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
+  st_as_sf() %>%
+  st_set_crs(standard_crs)
 
 # On charge les données des AP
-wdpa_terrestre_mod <- st_read("data/derived/wdpa_terrestre_mod.shp")
-wdpa_terrestre_mod <- wdpa_terrestre_mod %>%
-  dplyr::rename(
+wdpa_terrestre_mod <- st_read("data/derived/wdpa_terrestre_mod.shp") %>%
+  rename(
     WDPA_PID = WDPA_PI,
     ORIG_NAME = ORIG_NA,
     DESIG_ENG = DESIG_E,
@@ -71,18 +75,34 @@ wdpa_terrestre_mod <- wdpa_terrestre_mod %>%
     GEOMETRY_TYPE = GEOMETR,
     AREA_KM2 = AREA_KM,
     area_km2 = are_km2
-  )
+  ) %>% 
+  st_make_valid() %>%
+  st_transform(standard_crs)
 
+# Intersection des AP de WDPA avec la limite de Madagascar
+wdpa_terrestre <- wdpa_terrestre_mod %>%
+  st_make_valid() %>%
+  filter(rowSums(st_intersects(., contour_mada, sparse = FALSE)) > 0) %>%
+  st_transform(mdg_crs) %>%
+  mutate(
+    area_m2  = as.numeric(st_area(.)),
+    area_ha  = area_m2 / 1e4,
+    area_km2 = area_m2 / 1e6
+  ) %>%
+  st_transform(standard_crs)
 
-# Spécification des AP avant-après 2008 avec un Buffer de 5 km------------------------
-buffer_dist <- 5000 
+# Buffer de 5 km
+buffer_dist <- 5000
+
+# Spécification des AP avant-après 2008--------
 wdpa_before_2008 <- wdpa_terrestre_mod %>%
   filter(STATUS_YR < 2008)
 wdpa_from_2008 <- wdpa_terrestre_mod %>%
   filter(STATUS_YR >= 2008)
 
 # Créer des buffers de 5 km autour des AP
-buffer_5km_before_2008 <- wdpa_before_2008 %>%
+buffer_5km_before_2008 <- 
+  wdpa_before_2008 %>%
   st_transform(mdg_crs) %>%
   st_buffer(dist = buffer_dist) %>%
   st_make_valid() %>%
@@ -91,29 +111,45 @@ buffer_5km_before_2008 <- wdpa_before_2008 %>%
   st_make_valid() %>%
   st_transform(standard_crs)
 
+
 buffer_5km_from_2008 <- wdpa_from_2008  %>%
   st_transform(mdg_crs) %>%
-  st_buffer(dist = buffer_dist) %>% 
+  st_buffer(dist = buffer_dist) %>%
   st_make_valid() %>%
   st_union() %>%
   st_as_sf() %>%
   st_make_valid() %>%
   st_transform(standard_crs)
 
-# Visualisation des cartes------------------------------------------------------------ 
-tm_shape(wdpa_before_2008) +
-tm_polygons(fill = "blue", 
-            col =  "black", 
-            fill_alpha = 0.5) +
+# Visualisation des cartes---------------------
+tmap_mode("view")
+
+tm_shape(contour_mada) + 
+  tm_borders(col = "black", lwd = 1) +
+  
+  tm_shape(wdpa_before_2008) +
+  tm_polygons(fill = "blue", 
+              col =  "black", 
+              fill_alpha = 0.5,
+              id = "ORIG_NAME", 
+              popup.vars = c("Année de création" = "STATUS_YR")) +
+  
+  tm_shape(wdpa_from_2008) +
+  tm_polygons(fill = "darkgreen", 
+              col = "black", 
+              fill_alpha = 0.5,
+              id = "ORIG_NAME", 
+              popup.vars = c("Année de création" = "STATUS_YR")) + 
+  
 tm_shape(buffer_5km_from_2008) +
 tm_borders(col = "darkgreen", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
+  
 tm_shape(buffer_5km_before_2008) +
 tm_borders(col = "blue", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
-tm_shape(wdpa_from_2008) +
-tm_polygons(fill = "darkgreen", 
-            col = "black", 
-            fill_alpha = 0.5) +
-tm_add_legend(type = "polygons", fill = c("blue", "darkgreen"), labels = c("avant 2008", "après 2008")) +
+tm_add_legend(
+  type = "polygons", 
+  fill = c("blue", "darkgreen"), 
+  labels = c("avant 2008", "après 2008")) +
   tm_title("Aires protégées du WDPA par période de création</b><br/>Source: WDPA, 2024") +
   tm_layout(
     legend.outside = TRUE, 
@@ -464,7 +500,7 @@ with_progress({
   buffer_all_5km <- buffer_all_5km  %>% 
     get_resources(get_gfw_treecover())
 })
-toc()
+toc() # 1.25 sec elapsed 
 
 # Perte de couvert
 tic()
@@ -472,7 +508,7 @@ with_progress({
   buffer_all_5km <- buffer_all_5km %>% 
   get_resources(get_gfw_lossyear()) 
 })
-toc()
+toc() # 1.15 sec elapsed 
 
 # NASA SRTM
 tic()
@@ -480,15 +516,15 @@ with_progress({
   buffer_all_5km <- buffer_all_5km %>% 
   get_resources(get_nasa_srtm()) 
 })
-toc()
+toc() # 5.22 sec elapsed 
 
 # Worldpop 2000
-#tic()
+tic()
 with_progress({
   buffer_all_5km <- buffer_all_5km %>%
     get_resources(get_worldpop(years = 2000))
 })
-#toc()
+toc() # 0.22 sec elapsed 
   
 # Accesibility
 tic()
@@ -496,7 +532,7 @@ with_progress({
   buffer_all_5km <- buffer_all_5km %>% 
   get_resources(get_accessibility_2000()) 
 })
-toc()
+toc() # 0.28 sec elapsed 
 
 # Maximum temperatures
 tic()
@@ -505,7 +541,7 @@ with_progress({
     get_worldclim_max_temperature(years = 1980:2021, resolution = "2.5m")
   )
 })
-toc()
+toc() # 28.74 sec elapsed 
 
 # Minimum temperatures
 tic()
@@ -514,7 +550,7 @@ with_progress({
     get_worldclim_min_temperature(years = 1980:2021, resolution = "2.5m")
   )
 })
-toc()
+toc() # 28.23 sec elapsed 
 
 # Precipitations
 tic()
@@ -523,13 +559,17 @@ with_progress({
     get_worldclim_precipitation(years = 1980:2021, resolution = "2.5m")
   )
 })
-toc()
+toc() # 275.08 sec elapsed
   
+```
+
+Après chargement et extraction des données sur les données géophysiques des ménages, nous allons calculer les indicateurs des variables environnementales dans un rayon de 5 km autour de chaque grappe d'enquête.
+
+```{r}
 # Calcul des indicateurs------------------------------------------------------- 
-if (file.exists("data/derived/spatial_covars_staggered_5km.rds")) {
-  cat("Le fichier spatial_covars_staggered_5km.rds existe déjà")
+if(file.exists("data/derived/spatial_covars_staggered_5km.rds")) {cat("Le fichier spatial_covars_staggered_5km.rds existe déjà")
 } else {
-  cat("Fichier introuvable, début du traitement...\n")
+    cat("Fichier introuvable, début du traitement... \n")
   
   # Créer un plan pour paralléliser les calculs
   plan(sequential)
@@ -543,7 +583,10 @@ if (file.exists("data/derived/spatial_covars_staggered_5km.rds")) {
         calc_temperature_max_wc(engine = "extract", stats = "mean")
       )
   })
-  toc() # 11984.55 sec elapsed
+  toc() # 34502.12 sec elapsed
+  
+  write_rds(buffer_all_5km, "data/derived/spatial_covars_partial_max_temp.rds", compress = "gz")
+  
   
   # Minimum temperatures
   tic()
@@ -553,7 +596,9 @@ if (file.exists("data/derived/spatial_covars_staggered_5km.rds")) {
          calc_temperature_min_wc( engine = "extract", stats = "mean")
       )
   })
-  toc() # 12588.37 sec | 9660.17 sec elapsed 
+  toc() # 24445.67 sec elapsed 
+  
+  write_rds(buffer_all_5km, "data/derived/spatial_covars_partial_min_temp.rds", compress = "gz")
   
   
   # Precipitations
@@ -564,7 +609,9 @@ if (file.exists("data/derived/spatial_covars_staggered_5km.rds")) {
         calc_precipitation_wc(engine = "extract", stats = "mean")
       )
   })
-  toc() # 17857.13 sec | 8883.61 sec elapsed 
+  toc() # # 21007.7 sec elapsed 
+ 
+  write_rds(buffer_all_5km, "data/derived/spatial_covars_partial_precip.rds", compress = "gz") 
   
   
   # Forest cover rate in 2000
@@ -575,7 +622,10 @@ if (file.exists("data/derived/spatial_covars_staggered_5km.rds")) {
         calc_treecover_area(years = 2000, min_size = 1, min_cover = 10)
       )
   })
-  toc()   # 548.69 sec | 2519.61 sec elapsed
+  toc()   # 2392.16 sec elapsed
+ 
+  write_rds(buffer_all_5km, "data/derived/spatial_covars_partial_treecover.rds", compress = "gz")
+  
   
   # slope 
   tic()
@@ -585,7 +635,10 @@ if (file.exists("data/derived/spatial_covars_staggered_5km.rds")) {
         calc_slope(engine = "extract", stats = "mean")
       )
   })
-  toc() # 365.87 sec | 2557.28 sec elapsed    
+  toc() # 5995.94 sec elapsed  
+  
+  write_rds(buffer_all_5km, "data/derived/spatial_covars_partial_slope.rds", compress = "gz")
+  
   
   # Elevation
   tic()
@@ -595,7 +648,10 @@ if (file.exists("data/derived/spatial_covars_staggered_5km.rds")) {
         calc_elevation(engine = "extract", stats = "mean")
       )
   })
-  toc() # 283.51 sec | 2672.57 sec elapsed  
+  toc() # 2163.28 sec elapsed 
+  
+  write_rds(buffer_all_5km, "data/derived/spatial_covars_partial_elevation.rds", compress = "gz")
+  
   
   # Population density
   tic()
@@ -605,7 +661,10 @@ if (file.exists("data/derived/spatial_covars_staggered_5km.rds")) {
         calc_population_count(engine = "extract", stats = "mean")
       )
   })
-  toc() # 83.55 sec | 1877.78 sec elapsed
+  toc() # 2134.34 sec elapsed
+  
+  write_rds(buffer_all_5km, "data/derived/spatial_covars_partial_pop_density.rds", compress = "gz")
+  
   
   # Accessibility
   tic()
@@ -615,13 +674,13 @@ if (file.exists("data/derived/spatial_covars_staggered_5km.rds")) {
         calc_traveltime_2000(engine = "extract", stats = "mean")
       )
   })
-  toc() # 87.63 sec | 2594.06 sec elapsed   
+  toc() # 2162.22 sec elapsed  
   
-  # Enregistrement des données 
+  write_rds(buffer_all_5km, "data/derived/spatial_covars_partial_accessibility.rds", compress = "gz")
+  
+  # Enregistrement final des données 
   write_rds(buffer_all_5km, "data/derived/spatial_covars_staggered_5km.rds")
-  cat("Données enregistrées dans spatial_covars_staggered_5km.rds")
-}
-
+ }
 ```
 
 #### Matching
