@@ -211,7 +211,7 @@ if (file.exists("data/derived/spatial_covars_staggered.rds")) {
         calc_precipitation_wc(engine = "extract", stats = "mean")
       )
   })
-  toc() # 19 636,08 sec elapsed 
+  toc() # 19636.08 sec elapsed 
   
   
   # Forest cover rate in 2000
