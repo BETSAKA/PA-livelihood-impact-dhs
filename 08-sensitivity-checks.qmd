@@ -950,8 +950,189 @@ cat("Données enregistrées\n")
 #### Matching
 
 ```{r}
+# Library 
+library(rbounds) # Analyse de sensibilité
+library(rgenoud) # Implementation de l'algorithme génétique
+library(Matching) # Estimation des effets de traitement causaux
+library(progressr) # Suivi de progression
+library(rlang)
+library(car)
+library(tibble)
+library(qqplotr) # pour créer la bande de confiance
+library(halfmoon)
+library(cobalt)
+library(ggpubr)
 
+matching_variables <- c(
+  "treecover_area_2000","slope_2000","elevation_2000",
+  "population_count_2000","traveltime_2000_2000"
+)
+
+prep_matching <- function(df_final) {
+  out <- df_final %>%
+    filter(GROUP %in% c("Treatment","Control")) %>%
+    mutate(treatment = if_else(GROUP == "Treatment", 1L, 0L))
+  
+  missing_cols <- setdiff(matching_variables, names(out))
+  if (length(missing_cols) > 0) {
+    message(">> Colonnes manquantes: ", paste(missing_cols, collapse=", "))
+  }
+  
+  out %>% drop_na(all_of(intersect(matching_variables, names(out))))
+}
+
+# supprimer toute ancienne version pour éviter le masquage
+if (exists("run_matching_year")) rm(run_matching_year)
+
+run_matching_year <- function(year, overwrite = list(gen=FALSE, match=FALSE)) {
+  cat("\n=== Matching", year, "===\n")
+  fin_path <- glue("data/derived/hr_{year}_final_5km.rds")
+  if (!file.exists(fin_path)) stop("Fichier introuvable: ", fin_path)
+  
+  dat   <- readRDS(fin_path)
+  dat_m <- prep_matching(dat)
+  
+  
+  n_total <- nrow(dat)
+  n_filt <- nrow(dat_m)
+  n_treat <- sum(dat_m$treatment == 1, na.rm = TRUE)
+  n_ctrl <- sum(dat_m$treatment == 0, na.rm = TRUE)
+  
+  
+  cat(glue(">> N total={n_total}, après filtre/NA={n_filt}; ",
+           "Traités={n_treat}, ",
+           "Contrôles={n_ctrl}\n"))
+  
+  have_all_vars <- all(matching_variables %in% names(dat_m))
+  cat(">> Toutes les covars présentes ? ", have_all_vars, "\n")
+  if (n_filt < 5 || !have_all_vars) {
+    warning(glue("Année {year}: données insuffisantes ou variables manquantes — on saute."))
+    return(NULL)
+  }
+  
+  X_match <- dat_m %>%
+    sf::st_drop_geometry() %>%
+    dplyr::select(all_of(matching_variables)) %>%
+    as.data.frame()
+  
+  gen_path         <- glue("data/derived/gen_match_model_{year}_5km.rds")
+  match_path       <- glue("data/derived/matching_result_{year}_5km.rds")
+  matched_out_path <- glue("data/derived/data_matched_{year}_5km.rds")
+  
+  # --- GenMatch ---
+  used_cache_gen <- FALSE
+  t0 <- Sys.time()
+  if (file.exists(gen_path) && !isTRUE(overwrite$gen)) {
+    cat(">> GenMatch: cache trouvé -> lecture\n")
+    gen_model <- readRDS(gen_path)
+    used_cache_gen <- TRUE
+  } else {
+    cat(">> GenMatch: calcul en cours...\n")
+    gen_model <- GenMatch(
+      Tr = dat_m$treatment,
+      X  = X_match,
+      BalanceMatrix = X_match,
+      estimand = "ATT",
+      M = 1,
+      weights = NULL,
+      pop.size = 1000,
+      max.generations = 100,
+      wait.generations = 4,
+      caliper = .25,
+      print.level = 1,
+      cluster = rep("localhost", 4)
+    )
+    saveRDS(gen_model, gen_path)
+  }
+  t_gen <- as.numeric(difftime(Sys.time(), t0, units="mins"))
+  cat(glue(">> GenMatch temps = {round(t_gen,1)} min (cache={used_cache_gen})\n"))
+  
+  # --- matchit() ---
+  used_cache_match <- FALSE
+  t1 <- Sys.time()
+  if (file.exists(match_path) && !isTRUE(overwrite$match)) {
+    cat(">> matchit: cache trouvé → lecture\n")
+    m_out <- readRDS(match_path)
+    used_cache_match <- TRUE
+  } else {
+    cat(">> matchit: calcul en cours...\n")
+    fml <- as.formula(paste("treatment ~", paste(matching_variables, collapse=" + ")))
+   
+    
+     m_out <- matchit(
+      formula   = fml,
+      data      = dat_m,
+      method    = "genetic",
+      distance  = "mahalanobis",
+      gen.match = gen_model
+    )
+     
+    saveRDS(m_out, match_path)
+  }
+  
+  matched <- match.data(m_out, data = sf::st_drop_geometry(dat_m)) %>%
+    dplyr::filter(weights > 0)
+  
+  saveRDS(matched, matched_out_path)
+  cat(glue(">> N appariés = {nrow(matched)} (écrit: {matched_out_path})\n"))
+  
+  
+  tibble(
+    Année = year,
+    'Total des observations' = n_total,
+    'Après filtre/NA' = n_filt,
+    Traités = n_treat,
+    Contrôles = n_ctrl,
+    'N appariés' = nrow(matched)
+  )
+}
+
+need_overwrite <- function(year) {
+  gen_path   <- glue("data/derived/gen_match_model_{year}_5km.rds")
+  match_path <- glue("data/derived/matching_result_{year}_5km.rds")
+  list(gen = !file.exists(gen_path), match = !file.exists(match_path))
+}
+
+# --- Exécution avec progression ---
+yrs <- c(1997, 2008, 2011, 2013, 2016, 2021)
+
+
+res_list <- vector("list", length(yrs))
+names(res_list) <- yrs
+
+with_progress({
+  p <- progressor(along = yrs)
+
+for (i in seq_along(yrs)) {
+  yr <- yrs[i]
+  ow <- need_overwrite(yr) 
+  cat(glue("\n>> overwrite {yr}: gen={ow$gen}, match={ow$match}\n"))
+  cat(sprintf("Start %s", yr))
+  t_all <- Sys.time()
+  res_list[[i]] <- tryCatch(
+    run_matching_year(yr, overwrite = ow),
+    error = function(e) { warning(glue("Year {yr} ERROR: {e$message}")); NULL }
+  )
+  cat(sprintf("Done %s (%.1f min)",
+            yr, as.numeric(difftime(Sys.time(), t_all, units="mins"))))
+}
+})
+
+result_list <- purrr::compact(res_list) |> bind_rows()
+saveRDS(result_list, "data/derived/matching_summary_all_years_5km.rds")
+
+bal_tabs <- purrr::imap(res_list, ~ {if (!is.null(.x)) {
+  tryCatch(cobalt::bal.tab(.x$m), error = function(e) NULL) } else {
+    NULL
+  }
+})
+
+saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years_5km.rds")
+
+print(result_list)
 ```
+
+#### Estimation_staggered
 
 ### Test pour une distance de 15km
 
