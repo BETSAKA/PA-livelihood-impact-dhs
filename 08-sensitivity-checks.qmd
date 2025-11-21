@@ -687,8 +687,588 @@ if(file.exists("data/derived/spatial_covars_staggered_5km.rds")) {cat("Le fichie
 
 ### Test pour une distance de 15km
 
--   Création d'un buffer de 15 km autour des aires protégées Matching DID Test de robustesse
--   Réassignation des traitements
+#### Assignation du traitement
+
+```{r}
+# Buffer de 15 km
+buffer_dist <- 15000
+
+# Créer des buffers de 15 km autour des AP
+buffer_15km_before_2008 <- wdpa_before_2008 %>%
+  st_transform(mdg_crs) %>%
+  st_buffer(dist = buffer_dist) %>%
+  st_make_valid() %>%
+  st_union() %>%
+  st_as_sf() %>%
+  st_make_valid() %>%
+  st_transform(standard_crs)
+
+
+buffer_15km_from_2008 <- wdpa_from_2008  %>%
+  st_transform(mdg_crs) %>%
+  st_buffer(dist = buffer_dist) %>%
+  st_make_valid() %>%
+  st_union() %>%
+  st_as_sf() %>%
+  st_make_valid() %>%
+  st_transform(standard_crs)
+
+# Visualisation des cartes---------------------
+tmap_mode("view")
+
+tm_shape(contour_mada) + 
+  tm_borders(col = "black", lwd = 1) +
+  
+  tm_shape(wdpa_before_2008) +
+  tm_polygons(fill = "blue", 
+              col =  "black", 
+              fill_alpha = 0.5,
+              id = "ORIG_NAME", 
+              popup.vars = c("Année de création" = "STATUS_YR")) +
+  
+  tm_shape(wdpa_from_2008) +
+  tm_polygons(fill = "darkgreen", 
+              col = "black", 
+              fill_alpha = 0.5,
+              id = "ORIG_NAME", 
+              popup.vars = c("Année de création" = "STATUS_YR")) + 
+  
+tm_shape(buffer_15km_from_2008) +
+tm_borders(col = "darkgreen", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
+  
+tm_shape(buffer_15km_before_2008) +
+tm_borders(col = "blue", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
+tm_add_legend(
+  type = "polygons", 
+  fill = c("blue", "darkgreen"), 
+  labels = c("avant 2008", "après 2008")) +
+  tm_title("Aires protégées du WDPA par période de création</b><br/>Source: WDPA, 2024") +
+  tm_layout(
+    legend.outside = TRUE, 
+    legend.position = c("left", "top"),
+    frame = FALSE,
+    legend.title.size = 1.2,
+    legend.text.size = 0.8
+  ) +
+  tm_compass(type = "8star", position = c("right", "top")) +
+  tm_scalebar(position = c("right", "bottom"))
+
+# Classification des clusters---------------------------------------------------------
+#| fig-cap: "Grappes d'enquêtes DHS par rapport aux aires protégées existantes"
+
+
+classify_clusters_with_pa <- function(cluster_gps,
+                                      buffer_before,   # union of <2008
+                                      wdpa_after,      # polygons >=2008 (no union)
+                                      buffer_dist = 15000,
+                                      label_treat = "Treatment",
+                                      label_excl  = "Excluded",
+                                      label_ctrl  = "Control") {
+
+  # per-PA buffers (keep attrs)
+  wdpa_after_buf <- wdpa_after %>%
+    st_transform(mdg_crs) %>%
+    mutate(geometry = st_buffer(geometry, buffer_dist)) %>%
+    st_transform(standard_crs)
+
+  # flags
+  in_after  <- st_within(cluster_gps, st_union(wdpa_after_buf),  sparse = FALSE)[,1]
+  in_before <- st_within(cluster_gps, buffer_before,            sparse = FALSE)[,1]
+
+  base <- cluster_gps %>%
+    mutate(groupe = case_when(
+      in_after & !in_before & URBAN_RURA == "R" ~ label_treat,
+      in_before | URBAN_RURA == "U"            ~ label_excl,
+      TRUE                                     ~ label_ctrl
+    ))
+
+  # enrich treated with oldest+nearest PA
+  treated_pts <- base %>% filter(groupe == label_treat)
+
+  if (nrow(treated_pts) == 0) return(base)
+
+  cand <- st_join(treated_pts, wdpa_after_buf, join = st_within, left = FALSE) %>%
+  mutate(
+    .idx = match(WDPAID, wdpa_after$WDPAID),
+    dist_km = as.numeric(
+      st_distance(
+        geometry,
+        wdpa_after$geometry[.idx],
+        by_element = TRUE
+      )
+    ) / 1000
+  ) %>%
+  dplyr::select(-.idx)
+
+  best <- cand %>%
+    group_by(DHSCLUST) %>%
+    slice_min(STATUS_YR, with_ties = TRUE) %>%
+    slice_min(dist_km,   with_ties = FALSE) %>%
+    ungroup() %>%
+    st_drop_geometry() %>%
+    select(DHSYEAR, DHSCLUST, WDPAID, STATUS_YR, IUCN_CAT, dist_km)
+
+  base %>% left_join(best, by = c("DHSYEAR","DHSCLUST"))
+}
+
+gps_1997_class <- classify_clusters_with_pa(gps_1997, buffer_15km_before_2008, 
+                                            wdpa_from_2008)
+gps_2008_class <- classify_clusters_with_pa(gps_2008, buffer_15km_before_2008, 
+                                            wdpa_from_2008)
+gps_2011_class <- classify_clusters_with_pa(gps_2011, buffer_15km_before_2008, 
+                                            wdpa_from_2008)
+gps_2013_class <- classify_clusters_with_pa(gps_2013, buffer_15km_before_2008,
+                                            wdpa_from_2008)
+gps_2016_class <- classify_clusters_with_pa(gps_2016, buffer_15km_before_2008,
+                                            wdpa_from_2008)
+gps_2021_class <- classify_clusters_with_pa(gps_2021, buffer_15km_before_2008,
+                                            wdpa_from_2008)
+
+
+gps_all_class_15km <- bind_rows(
+  gps_1997_class,
+  gps_2008_class,
+  gps_2011_class,
+  gps_2013_class,
+  gps_2016_class,
+  gps_2021_class
+)
+
+# Créer un plot pour visualiser la carte des AP avec les clusters----------------------
+tm_shape(buffer_15km_from_2008) +
+  tm_borders("green", 
+             lwd = 2, 
+             lty = "dashed", 
+             fill.legend = tm_legend_hide()) +  
+  tm_shape(buffer_15km_before_2008) +
+  tm_borders("darkgreen", 
+             lwd = 2, 
+             lty = "dashed", 
+             fill.legend = tm_legend_hide()) +
+  tm_shape(wdpa_from_2008) +
+  tm_polygons(fill = "green", 
+              fill_alpha = 0.5,
+              col = "black", 
+              fill.legend = tm_legend(title = "à partir de 2008", position = tm_pos_in("right", "top"))) +
+  tm_shape(wdpa_before_2008) +
+  tm_polygons(fill = "darkgreen", 
+              fill_alpha = 0.5, 
+              col =  "black", 
+              fill.legend = tm_legend(title = "avant 2008", position = tm_pos_in("right", "top"))) +
+  tm_shape(gps_all_class_15km) +
+  tm_symbols(
+    fill = "groupe", 
+    fill.legend = tm_legend(title = "Groupes"),
+    fill.scale = tm_scale(values = c("Treatment" = "red", "Control" = "blue", "Excluded" = "gray")),
+     size = 0.5,
+    shape = 21
+  ) +
+  tm_facets("DHSYEAR") +
+  tm_add_legend(type = "polygons", 
+                fill = c("green", "darkgreen"), 
+                labels = c("à partir de 2008", "avant 2008")) +
+  tm_layout(
+    legend.outside = TRUE, 
+    legend.position = c("left", "top"),
+    frame = FALSE
+  ) +
+  tm_scalebar(position = c("left", "bottom"))
+
+# Tableau récapitulatif du nombre de grappes d'enquête classées dans chaque groupe-----
+treated_sub_clusters <- gps_all_class_15km %>%
+  st_drop_geometry() %>%
+  filter(groupe == "Treatment") %>%
+  mutate(subcat = case_when(
+    !is.na(STATUS_YR) & DHSYEAR <  STATUS_YR ~ "Avant traitement",
+    !is.na(STATUS_YR) & DHSYEAR >= STATUS_YR ~ "Déjà traités",
+    TRUE ~ NA_character_
+  )) %>%
+  count(DHSYEAR, subcat, name = "n_clusters") %>%
+  pivot_wider(names_from = subcat, values_from = n_clusters, values_fill = 0)
+
+# Ligne "Ensemble" (tous les traités, quel que soit le statut)
+treated_all_clusters <- gps_all_class_15km %>%
+  st_drop_geometry() %>%
+  filter(groupe == "Treatment") %>%
+  count(DHSYEAR, name = "Ensemble")
+
+# Colonnes Contrôles / Exclus
+ctrl_excl_clusters <- gps_all_class_15km %>%
+  st_drop_geometry() %>%
+  filter(groupe %in% c("Control", "Excluded")) %>%
+  mutate(Groupe = recode(groupe, Control = "Contrôles", Excluded = "Exclus")) %>%
+  count(DHSYEAR, Groupe, name = "n") %>%
+  pivot_wider(names_from = Groupe, values_from = n, values_fill = 0)
+
+# Assemblage large (années en lignes)
+tab_wide_clusters <- list(treated_sub_clusters, treated_all_clusters, 
+                          ctrl_excl_clusters) %>%
+  Reduce(function(x, y) full_join(x, y, by = "DHSYEAR"), .) %>%
+  arrange(DHSYEAR) %>%
+  mutate(across(-DHSYEAR, ~replace_na(.x, 0L)))
+
+# Tableau gt : spanner "Traitement" + colonnes Contrôles / Exclus
+gt_table_clusters <- tab_wide_clusters %>%
+  rename(Année = DHSYEAR) %>%
+  gt() %>%
+  tab_header(title = "Nombre de grappes par année d'enquête et par groupe") %>%
+  cols_label(
+    `Avant traitement` = "Avant traitement",
+    `Déjà traités`     = "Déjà traités",
+    Ensemble           = "Ensemble",
+    `Contrôles`        = "Contrôles",
+    `Exclus`           = "Exclus"
+  ) %>%
+  tab_spanner(
+    label = "Traitement",
+    columns = c(`Avant traitement`, `Déjà traités`, Ensemble)
+  ) %>%
+  fmt_number(
+    columns = c(`Avant traitement`, `Déjà traités`, Ensemble, `Contrôles`, `Exclus`),
+    decimals = 0,
+    use_seps = TRUE
+  ) %>%
+  cols_align(align = "center", columns = everything()) %>%
+  tab_footnote(
+    footnote = md("**Avant traitement** : DHSYEAR < STATUS_YR (AP pas encore créée). **Déjà traités** : DHSYEAR ≥ STATUS_YR. **Ensemble** : total des grappes *Traitement*."),
+    locations = cells_title(groups = "title")
+  )
+
+gt_table_clusters
+
+# Tableau récapitulatif du nombre de ménages d'enquête classées dans chaque groupe-----
+load_dhs_data <- function(dhs_folder, year, identifier) {
+  folder_pattern <- paste0(".*", year, ".*", identifier)
+  
+  matching_folder <- list.dirs(dhs_folder, full.names = TRUE, recursive = TRUE) %>%
+    keep(~ str_detect(.x, folder_pattern))
+  
+  if (length(matching_folder) == 0) {
+    stop("No folder found for the specified year and identifier.")
+  }
+  
+  if (identifier == "GE") {
+    file_pattern <- "\\.shp$"
+    data_loader <- function(file) st_read(file, quiet = TRUE)
+  } else {
+    file_pattern <- "\\.[Dd][Tt][Aa]$"
+    data_loader <- read_dta
+  }
+  
+  target_file <- list.files(matching_folder, pattern = file_pattern, full.names = TRUE)
+  
+  if (length(target_file) == 0) {
+    stop("No valid file found in the folder.")
+  }
+  
+  data <- data_loader(target_file)
+  
+  return(data)
+}
+
+dhs_folder <- "data/raw/dhs"
+
+
+# Années disponibles
+years_all <- sort(unique(gps_all_class_15km$DHSYEAR))
+
+# Compte ménages (toutes observations) 
+households_counts_all <- map_dfr(years_all, function(y) {
+  # HR de l'année
+  hr <- load_dhs_data(dhs_folder, y, "HR") %>%
+    mutate(DHSYEAR = y)  # pour la jointure avec la classification
+
+  # Classification des grappes de l'année
+  cl_y <- gps_all_class_15km %>%
+    st_drop_geometry() %>%
+    filter(DHSYEAR == y) %>%
+    select(DHSYEAR, DHSCLUST, groupe, STATUS_YR)
+
+  # Jointure ménages <- classification (par cluster hv001)
+  hr_cl <- hr %>%
+    select(DHSYEAR, hv001) %>%
+    left_join(cl_y, by = c("DHSYEAR" = "DHSYEAR", "hv001" = "DHSCLUST"))
+
+  # Comptes par sous-catégories du traitement (DHSYEAR vs STATUS_YR)
+  avant  <- hr_cl %>% filter(groupe == "Treatment", !is.na(STATUS_YR), DHSYEAR <  STATUS_YR) %>% nrow()
+  deja   <- hr_cl %>% filter(groupe == "Treatment", !is.na(STATUS_YR), DHSYEAR >= STATUS_YR) %>% nrow()
+  ens    <- hr_cl %>% filter(groupe == "Treatment") %>% nrow()
+  ctrl   <- hr_cl %>% filter(groupe == "Control")   %>% nrow()
+  excl   <- hr_cl %>% filter(groupe == "Excluded")  %>% nrow()
+
+  tibble(
+    DHSYEAR = y,
+    `Avant traitement` = avant,
+    `Déjà traités`     = deja,
+    Ensemble           = ens,
+    `Contrôles`        = ctrl,
+    `Exclus`           = excl
+  )
+})
+
+# Tableau gt (ménages, toutes observations)
+gt_table_menages_all <- households_counts_all %>%
+  rename(Année = DHSYEAR) %>%
+  gt() %>%
+  tab_header(title = "Nombre de ménages par année d'enquête et par groupe") %>%
+  cols_label(
+    `Avant traitement` = "Avant traitement",
+    `Déjà traités`     = "Déjà traités",
+    Ensemble           = "Ensemble",
+    `Contrôles`        = "Contrôles",
+    `Exclus`           = "Exclus"
+  ) %>%
+  tab_spanner(
+    label = "Traitement",
+    columns = c(`Avant traitement`, `Déjà traités`, Ensemble)
+  ) %>%
+  fmt_number(
+    columns = c(`Avant traitement`, `Déjà traités`, Ensemble, `Contrôles`, `Exclus`),
+    decimals = 0, use_seps = TRUE
+  ) %>%
+  cols_align(align = "center", columns = everything()) %>%
+  tab_footnote(
+    footnote = md("**Avant traitement** : DHSYEAR < STATUS_YR (AP pas encore créée). **Déjà traités** : DHSYEAR ≥ STATUS_YR. **Ensemble** : total des ménages du groupe *Traitement*."), locations = cells_title(groups = "title"))
+
+gt_table_menages_all   
+
+# Sauvegarde des classifications des clusters 
+all_class_15km <- gps_all_class_15km %>%
+  select(DHSYEAR, DHSCLUST, GROUP = groupe, WDPAID, STATUS_YR, IUCN_CAT, dist_km)
+
+write_csv(all_class_15km, "data/derived/cluster_treatment_classification_staggered_15km.csv")
+
+write_csv(wdpa_before_2008, "data/derived/wdpa_before_2008_15km.csv")
+write_csv(wdpa_from_2008, "data/derived/wdpa_from_2008_15km.csv")
+
+# Classification des clusters avec les données HR des ménages--------------------------- 
+for(year in years_all) {
+  hr_data <- load_dhs_data(dhs_folder, year, "HR") %>%
+    mutate(DHSYEAR = year)
+  
+  cluster_class <- gps_all_class_15km %>%
+    st_drop_geometry() %>%
+    filter(DHSYEAR == year) %>%
+    select(DHSYEAR, DHSCLUST, groupe, STATUS_YR)
+  
+  hr_final_15km <- hr_data %>%
+    rename(DHSCLUST = hv001) %>%
+    left_join(cluster_class, by = c("DHSYEAR", "DHSCLUST")) %>%
+    
+    mutate(treatment = if_else(groupe == "Treatment", 1L, 0L),
+           control = if_else(groupe == "Control", 1L, 0L))
+  
+  saveRDS(hr_final_15km, glue("data/derived/hr_{year}_final_15km.rds"))
+    
+}
+```
+
+#### Covariates Calculation
+
+```{r}
+# Load data
+buffer_all_15km <- gps_all_class_15km %>%
+  st_transform(mdg_crs) %>%
+  st_buffer(dist = 15000) %>%
+  st_transform(standard_crs)
+
+# Chargement des données géophysiques des ménages--------------------------------
+# Définir le chemin relatif pour ton répertoire local
+
+outdir <- "data/raw/mapme"
+dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+mapme_options(outdir = outdir, verbose = TRUE)
+
+
+# Couvert forestier
+tic()
+with_progress({
+  buffer_all_15km <- buffer_all_15km  %>% 
+    get_resources(get_gfw_treecover())
+})
+toc() # 1.18 sec elapsed 
+
+# Perte de couvert
+tic()
+with_progress({
+  buffer_all_15km <- buffer_all_15km %>% 
+  get_resources(get_gfw_lossyear()) 
+})
+toc() # 1.39 sec elapsed 
+
+# NASA SRTM
+tic()
+with_progress({
+  buffer_all_15km <- buffer_all_15km %>% 
+  get_resources(get_nasa_srtm()) 
+})
+toc() # 5.41 sec elapsed 
+
+# Worldpop 2000
+tic()
+with_progress({
+  buffer_all_15km <- buffer_all_15km %>%
+    get_resources(get_worldpop(years = 2000))
+})
+toc() # 0.27 sec elapsed 
+  
+# Accesibility
+tic()
+with_progress({
+  buffer_all_15km <- buffer_all_15km %>% 
+  get_resources(get_accessibility_2000()) 
+})
+toc() # 0.25 sec elapsed 
+
+# Maximum temperatures
+tic()
+with_progress({
+  buffer_all_15km <- buffer_all_15km %>% get_resources(
+    get_worldclim_max_temperature(years = 1980:2021, resolution = "2.5m")
+  )
+})
+toc() # 86.71 sec elapsed 
+
+# Minimum temperatures
+tic()
+with_progress({
+  buffer_all_15km <- buffer_all_15km %>% get_resources(
+    get_worldclim_min_temperature(years = 1980:2021, resolution = "2.5m")
+  )
+})
+toc() # 93.67 sec elapsed 
+
+# Precipitations
+tic()
+with_progress({
+  buffer_all_15km <- buffer_all_15km %>% get_resources(
+    get_worldclim_precipitation(years = 1980:2021, resolution = "2.5m")
+  )
+})
+toc() #  25.87 sec elapsed
+  
+```
+
+Après chargement et extraction des données sur les données géophysiques des ménages, nous allons calculer les indicateurs des variables environnementales dans un rayon de 15 km autour de chaque grappe d'enquête.
+
+```{r}
+# Calcul des indicateurs------------------------------------------------------- 
+if(file.exists("data/derived/spatial_covars_staggered_15km.rds")) {cat("Le fichier spatial_covars_staggered_15km.rds existe déjà")
+} else {
+    cat("Fichier introuvable, début du traitement... \n")
+  
+  # Créer un plan pour paralléliser les calculs
+  plan(sequential)
+  plan(multisession, workers = 4)
+  
+  # Maximum temperatures
+  tic()
+  with_progress({
+    buffer_all_15km <- buffer_all_15km %>%
+      calc_indicators(
+        calc_temperature_max_wc(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 28053.12 sec elapsed
+  
+  write_rds(buffer_all_15km, "data/derived/spatial_covars_partial_max_temp_15km.rds", compress = "gz")
+   
+  
+  # Minimum temperatures
+  tic()
+  with_progress({
+    buffer_all_15km <- buffer_all_15km %>%
+      calc_indicators(
+         calc_temperature_min_wc( engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 26406.66 sec elapsed 
+  
+  write_rds(buffer_all_15km, "data/derived/spatial_covars_partial_min_temp_15km.rds", compress = "gz")
+  
+  
+  # Precipitations
+  tic()
+  with_progress({
+    buffer_all_15km <- buffer_all_15km %>%
+      calc_indicators(
+        calc_precipitation_wc(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 18938.39 sec elapsed 
+ 
+  write_rds(buffer_all_15km, "data/derived/spatial_covars_partial_precip_15km.rds", compress = "gz") 
+  
+  
+  # Forest cover rate in 2000
+  tic()
+  with_progress({
+    buffer_all_15km <- buffer_all_15km %>%
+      calc_indicators(
+        calc_treecover_area(years = 2000, min_size = 1, min_cover = 10)
+      )
+  })
+  toc()   # 8712.08 sec elapsed
+ 
+  write_rds(buffer_all_15km, "data/derived/spatial_covars_partial_treecover_15km.rds", compress = "gz")
+  
+  
+  # slope 
+  tic()
+  with_progress({
+    buffer_all_15km <- buffer_all_15km %>%
+      calc_indicators(
+        calc_slope(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 7270.96 sec elapsed  
+  
+  write_rds(buffer_all_15km, "data/derived/spatial_covars_partial_slope_15km.rds", compress = "gz")
+  
+  
+  # Elevation
+  tic()
+  with_progress({
+    buffer_all_15km <- buffer_all_15km %>%
+      calc_indicators(
+        calc_elevation(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 8016.01 sec elapsed 
+  
+  write_rds(buffer_all_15km, "data/derived/spatial_covars_partial_elevation_15km.rds", compress = "gz")
+  
+  
+  # Population density
+  tic()
+  with_progress({
+    buffer_all_15km <- buffer_all_15km %>%
+      calc_indicators(
+        calc_population_count(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 544.9 sec elapsed
+  
+  write_rds(buffer_all_15km, "data/derived/spatial_covars_partial_pop_density_15km.rds", compress = "gz")
+  
+  
+  # Accessibility
+  tic()
+  with_progress({
+    buffer_all_15km <- buffer_all_15km %>%
+      calc_indicators(
+        calc_traveltime_2000(engine = "extract", stats = "mean")
+      )
+  })
+  toc() # 289.5 sec elapsed  
+  
+  write_rds(buffer_all_15km, "data/derived/spatial_covars_partial_accessibility_15km.rds", compress = "gz")
+  
+  # Enregistrement final des données 
+  write_rds(buffer_all_15km, "data/derived/spatial_covars_staggered_15km.rds")
+ }
+```
+
 -   Matching
 -   Test d'équilibre
 -   DID
