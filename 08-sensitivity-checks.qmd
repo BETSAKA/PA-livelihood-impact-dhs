@@ -820,6 +820,133 @@ write_rds(spatial_covars_spei_df_5km, "data/derived/spatial_covars_spei_staggere
 cat("SPEI (annuel, 1981–2021) enregistré dans data/derived/spatial_covars_spei_staggered_5km.rds\n")
 ```
 
+#### Variable consolidation
+
+```{r}
+
+library(lubridate)
+
+# Covariates spatio-temporelles + classification de traitement
+spatial_covars_spei_5km <- readRDS("data/derived/spatial_covars_spei_staggered_5km.rds")
+all_covars <- spatial_covars_spei_5km %>%
+  select(DHSYEAR, DHSCLUST, URBAN_RURA, treecover_area, slope, elevation,
+         population_count, traveltime_2000, spei_wc)
+
+all_class_5km <- read.csv("data/derived/cluster_treatment_classification_staggered_5km.csv")
+
+# Helper: fabrique la table finale pour une année donnée
+vars_to_nest <- c("treecover_area", "slope", "elevation",
+                  "population_count", "traveltime_2000", "spei_wc")
+
+build_year <- function(hr_object,
+                       year,
+                       hh_rural_path,
+                       spei_years = (year-2):year) {
+
+  # Charger HR (identifiants + variables chef) et HH_rural (centiles/zscore déjà calculés)
+  hr <- hr_object %>%
+    dplyr::select(hv001, hv002, hv219, hv220)
+  
+  hh_rural <- read_rds(hh_rural_path) # contient hv001/hv002 + wealth_* déjà prêts
+  
+  # Joindre covariates spatiaux + classification de groupes
+  base <- hh_rural %>%
+    left_join(hr, by = c("hv001", "hv002")) %>%
+    left_join(
+      all_covars %>% filter(DHSYEAR == year) %>% select(-DHSYEAR),
+      by = c("hv001" = "DHSCLUST")
+    ) %>%
+    left_join(
+      all_class_5km %>% filter(DHSYEAR == year) %>% select(-DHSYEAR),
+      by = c("hv001" = "DHSCLUST")
+    ) %>%
+    mutate(DHSYEAR = year) %>%
+    relocate(DHSYEAR, .before = everything())
+  
+  # Désimbriquer les covars imbriquées et appliquer la fenêtre temporelle SPEI
+  #    moyenne par (hv001, hv002) pour chaque indicateur_année
+  df_long <- base %>%
+    select(hv001, hv002, any_of(vars_to_nest)) %>%
+    pivot_longer(cols = any_of(vars_to_nest),
+                 names_to = "indicator", values_to = "data") %>%
+    unnest(data) %>%
+    filter(indicator != "spei_wc" | year(datetime) %in% spei_years) %>%
+    mutate(year_indicator = paste0(indicator, "_", year(datetime))) %>%
+    select(hv001, hv002, year_indicator, value)
+  
+  df_wide <- df_long %>%
+    pivot_wider(names_from = year_indicator, values_from = value,
+                names_glue = "{year_indicator}") %>%
+    group_by(hv001, hv002) %>%
+    summarise(across(everything(), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
+  
+  # Table finale (une ligne par ménage hv001/hv002)
+  out <- base %>%
+    select(-any_of(vars_to_nest)) %>%
+    distinct(hv001, hv002, .keep_all = TRUE) %>%
+    left_join(df_wide, by = c("hv001", "hv002"))
+  
+  out
+}
+
+# Application
+
+hr_1997_final_5km <- read_dta("data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA") %>%
+  build_year(year = 1997,
+             hh_rural_path = "data/derived/hh_1997_rural_simpler.rds",
+             spei_years = 1995:1997)
+
+hr_2008_final_5km <- read_dta("data/raw/dhs/DHS_2008/MDHR51DT/MDHR51FL.DTA") %>%
+  build_year(year = 2008,
+             hh_rural_path = "data/derived/hh_2008_rural_simpler.rds",
+             spei_years = 2006:2008)
+
+hr_2011_final_5km <- read_dta("data/raw/dhs/DHS_2011/MDHR61DT/MDHR61FL.DTA") %>%
+  build_year(year = 2011,
+             hh_rural_path = "data/derived/hh_2011_rural_simpler.rds",
+             spei_years = 2009:2011)
+
+hr_2013_final_5km <- read_dta("data/raw/dhs/DHS_2013/MDHR6ADT/MDHR6AFL.DTA") %>%
+  build_year(year = 2013,
+  hh_rural_path = "data/derived/hh_2013_rural_simpler.rds",
+  spei_years = 2011:2013)
+
+hr_2016_final_5km <- read_dta("data/raw/dhs/DHS_2016/MDHR71DT/MDHR71FL.DTA") %>%
+  build_year(year = 2016,
+  hh_rural_path = "data/derived/hh_2016_rural_simpler.rds",
+  spei_years = 2014:2016)
+
+hr_2021_final_5km <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA") %>%
+  build_year(year = 2021,
+  hh_rural_path = "data/derived/hh_2021_rural_simpler.rds",
+  spei_years = 2019:2021)
+
+# Consolidation
+
+hr_consolidated_5km <- bind_rows(
+  hr_1997_final_5km,
+  hr_2008_final_5km,
+  hr_2011_final_5km,
+  hr_2013_final_5km,
+  hr_2016_final_5km,
+  hr_2021_final_5km
+)
+
+hr_consolidated_5km %>% count(DHSYEAR)
+
+# Sauvegardes millésime
+write_rds(hr_1997_final_5km, "data/derived/hr_1997_final_5km.rds")
+write_rds(hr_2008_final_5km, "data/derived/hr_2008_final_5km.rds")
+write_rds(hr_2011_final_5km, "data/derived/hr_2011_final_5km.rds")
+write_rds(hr_2013_final_5km, "data/derived/hr_2013_final_5km.rds")
+write_rds(hr_2016_final_5km, "data/derived/hr_2016_final_5km.rds")
+write_rds(hr_2021_final_5km, "data/derived/hr_2021_final_5km.rds")
+
+# Sauvegarde consolidée
+write_rds(hr_consolidated_5km, "data/derived/hr_consolidated_5km_1997_2008_2011_2013_2016_2021.rds")
+cat("Données enregistrées\n")
+```
+
 #### Matching
 
 ```{r}
