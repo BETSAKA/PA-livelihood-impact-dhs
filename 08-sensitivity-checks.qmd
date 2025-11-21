@@ -683,7 +683,148 @@ if(file.exists("data/derived/spatial_covars_staggered_5km.rds")) {cat("Le fichie
  }
 ```
 
+#### Spei calculation 
+
+```{r}
+library(SPEI) # Calcul de l'indice SPEI
+library(labelled) # Manipulation des labels
+library(tibbletime) # Manipulation des données temporelles 
+library(zoo) # Manipulation des données temporelles 
+library(readr) # Lecture des données de texte rectangulaires
+library(ggplot2) # visualisation
+
+# Load data 
+spatial_covars_5km <- read_rds("data/derived/spatial_covars_staggered_5km.rds")
+
+# Function to compute SPEI
+compute_spei_annual <- function(tmin_tbl, tmax_tbl, prec_tbl, lat_deg) {
+  # tmin_tbl/tmax_tbl/prec_tbl: tibbles avec colonnes `datetime` (Date) et `value` (num)
+  d_tmin <- tibble(date = tmin_tbl$datetime, tmin = tmin_tbl$value)
+  d_tmax <- tibble(date = tmax_tbl$datetime, tmax = tmax_tbl$value)
+  d_prec <- tibble(date = prec_tbl$datetime, prec = prec_tbl$value)
+
+  d_merged <- reduce(list(d_tmin, d_tmax, d_prec), left_join, by = "date") %>%
+    arrange(date)
+
+  d_clean <- drop_na(d_merged)  # supprime lignes avec NA
+
+  # Si séries trop courtes, renvoyer squelette 1981:2021 en NA
+  if (nrow(d_clean) < 12) {
+    return(tibble(year = 1981:2021, spei_mean = NA_real_))
+  }
+
+  # PET (Hargreaves), bilan hydrique et SPEI mensuel
+  pet <- hargreaves(Tmin = d_clean$tmin,
+                    Tmax = d_clean$tmax,
+                    Pre  = d_clean$prec,
+                    lat  = lat_deg)
+
+  wb <- d_clean$prec - pet
+
+  wb_ts <- ts(wb,
+              start = c(year(min(d_clean$date)), month(min(d_clean$date))),
+              frequency = 12)
+
+  spei_obj <- spei(wb_ts,
+                   scale = 12,
+                   ref.start = c(1981, 1),
+                   ref.end   = c(2021, 12))
+
+  tibble(datetime = d_clean$date,
+         spei      = as.numeric(spei_obj$fitted)) %>%
+    filter(datetime >= as.Date("1981-01-01"),
+           datetime <= as.Date("2021-12-31")) %>%
+    mutate(year = year(datetime)) %>%
+    group_by(year) %>%
+    summarise(spei_mean = mean(spei, na.rm = TRUE), .groups = "drop") %>%
+    complete(year = 1981:2021, fill = list(spei_mean = NA_real_))
+}
+
+
+
+# Latitude géodésique depuis la géométrie (centroïde)
+spatial_covars_spei_5km <- spatial_covars_5km %>%
+  mutate(lat = st_coordinates(st_centroid(geometry))[, 2])
+
+row1 <- spatial_covars_spei_5km[1, ]
+
+spei_tbl_one <- compute_spei_annual(
+  tmin_tbl = row1$temperature_min_wc[[1]],
+  tmax_tbl = row1$temperature_max_wc[[1]],
+  prec_tbl = row1$precipitation_wc[[1]],
+  lat_deg  = row1$lat
+)
+
+# Graphique 
+spei_2017 <- spei_tbl_one %>% 
+  filter(year == 2017)
+
+ggplot(spei_tbl_one, aes(x = year, y = spei_mean)) +
+  geom_col(aes(y = pmax(0, -spei_mean)), alpha = 0.25) +  # barres pour sécheresse (optionnel)
+  geom_line(linewidth = 0.8) +
+  geom_vline(xintercept = 2017, color = "red", linetype = "dotted", linewidth = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_label(
+    data = spei_2017, 
+    aes(x = 2017, y = spei_mean, 
+        label = paste0("Année: 2017\nSPEI: ", round(spei_mean, 2))),
+    nudge_x = 1, 
+    nudge_y = 0.3,
+    fill = "white",
+    color = "black",
+    linewidth = 0.4, 
+    label.padding = unit(0.2, "lines")
+  ) +
+  
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Annual SPEI (scale=12) – cluster de démonstration",
+       x = "Année", y = "SPEI (moyenne annuelle)") +
+  theme_minimal()
+
+# SPEI for all clusters 
+spatial_covars_spei_5km <- spatial_covars_spei_5km %>%
+  mutate(
+    spei_wc = pmap(
+      list(temperature_min_wc, temperature_max_wc, precipitation_wc, lat),
+      ~ compute_spei_annual(..1, ..2, ..3, ..4)
+    )
+  )
+
+spei_df <- spatial_covars_spei_5km %>%
+  select(DHSCLUST, spei_wc) %>%
+  unnest(spei_wc)
+
+ggplot(spei_df, aes(x = year, y = spei_mean, group = DHSCLUST)) +
+  geom_line(alpha = 0.35) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Annual SPEI by cluster with 5 km buffer (1981–2021)",
+       x = "Année", y = "SPEI (moyenne annuelle)") +
+  theme_minimal()
+
+# Chaque élément spei_wc devient une table {datetime, variable, unit, value}
+spatial_covars_spei_5km <- spatial_covars_spei_5km %>%
+  mutate(
+    spei_wc = map(spei_wc, ~ .x %>%
+      mutate(
+        datetime = as.Date(paste0(.data$year, "-01-01")),
+        variable = "spei_scale12_mean",
+        unit     = "annual",
+        value    = .data$spei_mean
+      ) %>%
+      select(datetime, variable, unit, value))
+  )
+
+# Sauvegarde (cohérente avec le reste de tes scripts)
+spatial_covars_spei_df_5km <- as.data.frame(spatial_covars_spei_5km)
+write_rds(spatial_covars_spei_df_5km, "data/derived/spatial_covars_spei_staggered_5km.rds")
+cat("SPEI (annuel, 1981–2021) enregistré dans data/derived/spatial_covars_spei_staggered_5km.rds\n")
+```
+
 #### Matching
+
+```{r}
+
+```
 
 ### Test pour une distance de 15km
 
