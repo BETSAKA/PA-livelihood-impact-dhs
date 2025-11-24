@@ -683,7 +683,7 @@ if(file.exists("data/derived/spatial_covars_staggered_5km.rds")) {cat("Le fichie
  }
 ```
 
-#### Spei calculation 
+#### Spei calculation
 
 ```{r}
 library(SPEI) # Calcul de l'indice SPEI
@@ -952,6 +952,7 @@ cat("Données enregistrées\n")
 ```{r}
 # Library 
 library(rbounds) # Analyse de sensibilité
+library(MatchIt)
 library(rgenoud) # Implementation de l'algorithme génétique
 library(Matching) # Estimation des effets de traitement causaux
 library(progressr) # Suivi de progression
@@ -1133,6 +1134,476 @@ print(result_list)
 ```
 
 #### Estimation_staggered
+
+##### Overall effect on livelihoods
+
+```{r}
+### 2X2 DiD
+library(fixest)
+library(didimputation)
+library(broom)
+
+# Chargement des données
+d97_5km <- read_rds("data/derived/data_matched_1997_5km.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_1995,
+         spei_wc_n_1 = spei_wc_1996,
+         spei_wc_n   = spei_wc_1997) %>%
+  mutate(hv219 = zap_labels(hv219), # hhh sex (1/2)
+         hv220 = zap_labels(hv220)) # hhh age (num)
+
+d08_5km <- read_rds("data/derived/data_matched_2008_5km.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2006,
+         spei_wc_n_1 = spei_wc_2007,
+         spei_wc_n   = spei_wc_2008) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d11_5km <- read_rds("data/derived/data_matched_2011_5km.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2009,
+         spei_wc_n_1 = spei_wc_2010,
+         spei_wc_n   = spei_wc_2011) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d13_5km <- read_rds("data/derived/data_matched_2013_5km.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2011,
+         spei_wc_n_1 = spei_wc_2012,
+         spei_wc_n   = spei_wc_2013) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d16_5km <- read_rds("data/derived/data_matched_2016_5km.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2014,
+         spei_wc_n_1 = spei_wc_2015,
+         spei_wc_n   = spei_wc_2016) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d21_5km <- read_rds("data/derived/data_matched_2021_5km.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2019,
+         spei_wc_n_1 = spei_wc_2020,
+         spei_wc_n   = spei_wc_2021) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+# Préparation des données
+dat_5km <- bind_rows(d97_5km, d08_5km, d11_5km, d13_5km, d16_5km, d21_5km) %>%
+  filter(GROUP %in% c("Treatment","Control")) %>%
+  mutate(
+    hv219   = factor(hv219, levels = c(1,2), labels = c("Homme","Femme")), # sexe (cat.)
+    hv220   = as.numeric(hv220),                                           # âge
+    treat   = as.integer(GROUP == "Treatment"),
+    w_svy   = hv005 / 1e6,
+    w_all   = w_svy * weights, # poids d'enquête × poids de matching (si 'weights' existe)
+    id      = row_number(),
+    # Map des années de statut -> première année d'observation post (treatment_phase)
+    treatment_phase = case_when(
+      STATUS_YR == 2010 ~ 2011,
+      STATUS_YR == 2012 ~ 2013,
+      STATUS_YR == 2015 ~ 2016,
+      STATUS_YR == 2017 ~ 2021,
+      is.na(STATUS_YR)  ~ 0,
+      TRUE               ~ STATUS_YR
+    )
+  )
+
+# Outcome h
+yvar <- "wealth_centile_rural_weighted"
+
+# fixest DID 2×2: placebo 1997–2008, traitement 2008–2021 ------------------
+
+# Placebo 1997–2008
+pre_5km <- dat_5km %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(post = as.integer(DHSYEAR == 2008),
+         treat_post = treat * post)
+
+f_pre <- as.formula(paste(
+  yvar, "~ treat + post + treat_post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre <- feols(f_pre, data = pre_5km, weights = ~ w_all, cluster = ~ hv001)
+
+# Traitement 2008–2021
+main <- dat_5km %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(post = as.integer(DHSYEAR == 2021),
+         treat_post = treat * post)
+
+f_main <- f_pre  # même formule
+
+m_main <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ hv001)
+
+etable(m_pre, m_main, headers = c("Placebo 97–08", "Traitement 08–21"))
+
+# Extraction compacte des deux effets DID
+did_row <- function(model, year_post, vc = ~ hv001, term = "treat_post"){
+  summary(model, vcov = vc) %>% broom::tidy() %>%
+    filter(term == !!term) %>%
+    transmute(year = year_post, estimate, se = std.error)
+}
+did_df <- bind_rows(
+  did_row(m_pre, 2008),
+  did_row(m_main, 2021)
+) %>%
+  mutate(period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
+                         levels = c("1997–2008", "2008–2021")),
+         lo = estimate - 1.96*se,
+         hi = estimate + 1.96*se)
+
+ggplot(did_df, aes(x = period, y = estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = .2) +
+  geom_point(size = 3) +
+  labs(x = NULL, y = "Effet DID sur le centile de richesse (pondéré)",
+       title = "DID 2×2 avec IC clusterisés (hv001)")
+
+
+# Staggered diff-in-diff
+# did2s (Gardner) : statique + event-study--------------------------------
+library(did2s)
+
+dat3 <- dat_5km %>%
+  mutate(
+    treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
+    rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
+    # Binning prudent pour stabilité (-5..5)
+    rel_year_binned = pmax(pmin(rel_year, 5), -5)
+  )
+
+# -- Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(treat_on, ref = FALSE),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_static, headers = "did2s statique")
+
+# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
+did2s_es <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(rel_year_binned, ref = c(-1, Inf)),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_es, headers = "did2s event-study (-5..5)")
+
+# Plot ES did2s
+plot_did2s <- broom::tidy(did2s_es, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_binned::", term)) %>%
+  mutate(k = as.numeric(sub("^rel_year_binned::", "", term))) %>%
+  arrange(k)
+
+ggplot(plot_did2s, aes(k, estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
+  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
+       y = "Effet estimé",
+       title = "Event-study (did2s)")
+
+# Test joint de pré-tendances (tous les leads k < 0)
+# On construit un motif regex pour k = -5..-1 présents dans le modèle
+leads_present <- plot_did2s$k[plot_did2s$k < 0]
+if(length(leads_present) > 0){
+  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
+  print(fixest::wald(did2s_es, keep = keep_regex))
+}
+```
+
+##### Effect on inequalities
+
+```{r}
+# Staggered DiD
+yvar <- "zscore_wealth"
+
+# did2s (Gardner) : statique + event-study--------------------------------
+# -- Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(treat_on, ref = FALSE),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_static, headers = "did2s statique")
+
+# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
+did2s_es <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(rel_year_binned, ref = c(-1, Inf)),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_es, headers = "did2s event-study (-5..5)")
+
+# Plot ES did2s
+plot_did2s <- broom::tidy(did2s_es, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_binned::", term)) %>%
+  mutate(k = as.numeric(sub("^rel_year_binned::", "", term))) %>%
+  arrange(k)
+
+ggplot(plot_did2s, aes(k, estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
+  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
+       y = "Effet estimé",
+       title = "Event-study (did2s)")
+
+# Test joint de pré-tendances (tous les leads k < 0)
+# On construit un motif regex pour k = -5..-1 présents dans le modèle
+leads_present <- plot_did2s$k[plot_did2s$k < 0]
+if(length(leads_present) > 0){
+  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
+  print(fixest::wald(did2s_es, keep = keep_regex))
+}
+
+# Quantile treatment effects
+# Testing Quantile treatment effects --------------------------------------
+library(qte)
+
+# Avec CiC -------------------
+
+## Traitement 2008 -> 2021
+set.seed(123)
+dat_2per <- dat_5km %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(treat = as.integer(GROUP == "Treatment"))
+
+cic_res <- suppressWarnings(CiC(
+  formla = wealth_centile_rural_weighted ~ treat,
+  t = 2021, tmin1 = 2008, tname = "DHSYEAR",
+  data = dat_2per,
+  panel = FALSE, # repeated cross-sections
+  se = TRUE, iters = 200, # bootstrap
+  probs = seq(0.05, 0.95, 0.05),
+  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+))
+
+summary(cic_res)
+ggqte(cic_res) + labs(x="Quantiles", y="QTET", title="CiC QTET: 2008-2021")
+
+## placebo
+
+## Placebo: 1997 -> 2008
+dat_placebo <- dat_5km %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(treat = as.integer(GROUP == "Treatment"))
+
+# (Optional) sanity check:
+# with(dat_placebo, table(DHSYEAR, treat))
+
+cic_pre <-  suppressWarnings(CiC(
+  formla = wealth_centile_rural_simple ~ treat,
+  t = 2008, tmin1 = 1997, tname = "DHSYEAR",
+  data = dat_placebo,
+  panel = FALSE, # repeated cross-sections
+  se = TRUE, iters = 100, # bootstrap
+  probs = seq(0.05, 0.95, 0.05),
+  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+))
+
+summary(cic_pre)
+
+ggqte(cic_pre) +
+  labs(x = "Quantiles", y = "QTET",
+       title = "Placebo CiC QTET: 1997-2008")
+```
+
+##### Heterogeneity
+
+```{r}
+# Création du groupe IUCN 
+dat3 <- dat3 %>%
+  filter(!is.na(IUCN_CAT), !is.na(treat_on)) %>%
+  mutate(
+    IUCN_group = case_when(
+    IUCN_CAT %in% c("Ia", "Ib", "II", "III", "IV") ~ "strict",
+    IUCN_CAT %in% c("V", "VI") ~ "usage_multiple", 
+    TRUE ~ NA_character_
+  ),
+  IUCN_group = factor(IUCN_group, levels = c("strict", "usage_multiple")),
+  rel_year_binned = factor(rel_year_binned)
+  ) %>%
+  filter(!is.na(IUCN_group))
+
+# Outcome: wealth_centile_rural_weighted ----------------------------------------
+yvar <- "wealth_centile_rural_weighted"
+
+# did2s (Gardner) : statique + event-study--------------------------------
+# -- Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ treat_on * IUCN_group,
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_static, headers = "did2s statique (strict vs usage multiple)")
+
+# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
+did2s_es <- did2s(
+  data = dat3,
+  yname = yvar, 
+  first_stage = ~ spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ 
+    i(rel_year_binned, ref = -1) +
+    i(rel_year_binned, IUCN_group),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_es, headers = "did2s event-study (-5..5) par statut IUCN")
+
+tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_binned::", term)) %>%
+  mutate(
+    year = as.numeric(sub("rel_year_binned::(-?\\d+).*", "\\1", term)),
+    type = case_when(
+      grepl("IUCN_group::usage_multiple", term) ~ "diff_usage_multiple",
+      TRUE ~ "strict"
+    )
+  )
+
+# Effet pour les AP stricts
+strict_effect <- tidy_es %>%
+  filter(type == "strict") %>%
+  mutate(group = "strict") %>%
+  select(year, estimate, conf.low, conf.high, group)
+
+# Effet total pour AP à usage multiple
+usage_effect <- tidy_es %>%
+  filter(type == "diff_usage_multiple") %>%
+  rename(estimate_diff = estimate,
+         conf.low_diff = conf.low,
+         conf.high_diff = conf.high) %>%
+  left_join(strict_effect, by = "year") %>%
+  mutate(
+    estimate = estimate + estimate_diff,
+    conf.low = conf.low + conf.low_diff,
+    conf.high = conf.high + conf.high_diff,
+    group = "usage_multiple"
+  ) %>%
+  select(year, estimate, conf.low, conf.high, group)
+
+# Plot ES did2s
+plot_did2s <- bind_rows(strict_effect, usage_effect)
+
+ggplot(plot_did2s, aes(x = year, y = estimate, color = group)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
+  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
+       y = "Effet estimé",
+       title = "Event-study (did2s) - hétérogénéité par statut IUCN",
+       color = "Catégorie IUCN") + 
+  theme_minimal()
+
+# Test joint de pré-tendances (tous les leads k < 0)
+# On construit un motif regex pour k = -5..-1 présents dans le modèle
+leads_present <- plot_did2s$k[plot_did2s$k < 0]
+if(length(leads_present) > 0){
+  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
+  print(fixest::wald(did2s_es, keep = keep_regex))
+}
+
+# Outcome: zscore_wealth----------------------------------------------------------
+yvar <- "zscore_wealth"
+
+# did2s (Gardner) : statique + event-study--------------------------------
+# -- Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ treat_on * IUCN_group,
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_static, headers = "did2s statique (strict vs usage multiple)")
+
+# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
+did2s_es <- did2s(
+  data = dat3,
+  yname = yvar, 
+  first_stage = ~ spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ 
+    i(rel_year_binned, ref = -1) +
+    i(rel_year_binned, IUCN_group),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_es, headers = "did2s event-study (-5..5) par statut IUCN")
+
+tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_binned::", term)) %>%
+  mutate(
+    year = as.numeric(sub("rel_year_binned::(-?\\d+).*", "\\1", term)),
+    type = case_when(
+      grepl("IUCN_group::usage_multiple", term) ~ "diff_usage_multiple",
+      TRUE ~ "strict"
+    )
+  )
+# Effet pour les AP stricts
+strict_effect <- tidy_es %>%
+  filter(type == "strict") %>%
+  mutate(group = "strict") %>%
+  select(year, estimate, conf.low, conf.high, group)
+
+# Effet total pour AP à usage multiple
+usage_effect <- tidy_es %>%
+  filter(type == "diff_usage_multiple") %>%
+  rename(estimate_diff = estimate,
+         conf.low_diff = conf.low,
+         conf.high_diff = conf.high) %>%
+  left_join(strict_effect, by = "year") %>%
+  mutate(
+    estimate = estimate + estimate_diff,
+    conf.low = conf.low + conf.low_diff,
+    conf.high = conf.high + conf.high_diff,
+    group = "usage_multiple"
+  ) %>%
+  select(year, estimate, conf.low, conf.high, group)
+
+# Plot ES did2s
+plot_did2s <- bind_rows(strict_effect, usage_effect)
+
+ggplot(plot_did2s, aes(x = year, y = estimate, color = group)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
+  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
+       y = "Effet estimé",
+       title = "Event-study (did2s) - hétérogénéité par statut IUCN",
+       color = "Catégorie IUCN") + 
+  theme_minimal()
+
+# Test joint de pré-tendances (tous les leads k < 0)
+# On construit un motif regex pour k = -5..-1 présents dans le modèle
+leads_present <- plot_did2s$k[plot_did2s$k < 0]
+if(length(leads_present) > 0){
+  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
+  print(fixest::wald(did2s_es, keep = keep_regex))
+}
+```
 
 ### Test pour une distance de 15km
 
@@ -1718,10 +2189,426 @@ if(file.exists("data/derived/spatial_covars_staggered_15km.rds")) {cat("Le fichi
  }
 ```
 
--   Matching
--   Test d'équilibre
--   DID
--   Test de robustesse
+#### Spei calculation
+
+```{r}
+
+# Load data 
+spatial_covars_15km <- read_rds("data/derived/spatial_covars_staggered_15km.rds")
+
+# Function to compute SPEI
+compute_spei_annual <- function(tmin_tbl, tmax_tbl, prec_tbl, lat_deg) {
+  # tmin_tbl/tmax_tbl/prec_tbl: tibbles avec colonnes `datetime` (Date) et `value` (num)
+  d_tmin <- tibble(date = tmin_tbl$datetime, tmin = tmin_tbl$value)
+  d_tmax <- tibble(date = tmax_tbl$datetime, tmax = tmax_tbl$value)
+  d_prec <- tibble(date = prec_tbl$datetime, prec = prec_tbl$value)
+
+  d_merged <- reduce(list(d_tmin, d_tmax, d_prec), left_join, by = "date") %>%
+    arrange(date)
+
+  d_clean <- drop_na(d_merged)  # supprime lignes avec NA
+
+  # Si séries trop courtes, renvoyer squelette 1981:2021 en NA
+  if (nrow(d_clean) < 12) {
+    return(tibble(year = 1981:2021, spei_mean = NA_real_))
+  }
+
+  # PET (Hargreaves), bilan hydrique et SPEI mensuel
+  pet <- hargreaves(Tmin = d_clean$tmin,
+                    Tmax = d_clean$tmax,
+                    Pre  = d_clean$prec,
+                    lat  = lat_deg)
+
+  wb <- d_clean$prec - pet
+
+  wb_ts <- ts(wb,
+              start = c(year(min(d_clean$date)), month(min(d_clean$date))),
+              frequency = 12)
+
+  spei_obj <- spei(wb_ts,
+                   scale = 12,
+                   ref.start = c(1981, 1),
+                   ref.end   = c(2021, 12))
+
+  tibble(datetime = d_clean$date,
+         spei      = as.numeric(spei_obj$fitted)) %>%
+    filter(datetime >= as.Date("1981-01-01"),
+           datetime <= as.Date("2021-12-31")) %>%
+    mutate(year = year(datetime)) %>%
+    group_by(year) %>%
+    summarise(spei_mean = mean(spei, na.rm = TRUE), .groups = "drop") %>%
+    complete(year = 1981:2021, fill = list(spei_mean = NA_real_))
+}
+
+# Latitude géodésique depuis la géométrie (centroïde)
+spatial_covars_spei_15km <- spatial_covars_15km %>%
+  mutate(lat = st_coordinates(st_centroid(geometry))[, 2])
+
+row1 <- spatial_covars_spei_15km[1, ]
+
+spei_tbl_one <- compute_spei_annual(
+  tmin_tbl = row1$temperature_min_wc[[1]],
+  tmax_tbl = row1$temperature_max_wc[[1]],
+  prec_tbl = row1$precipitation_wc[[1]],
+  lat_deg  = row1$lat
+)
+
+# Graphique 
+spei_2017 <- spei_tbl_one %>% 
+  filter(year == 2017)
+
+ggplot(spei_tbl_one, aes(x = year, y = spei_mean)) +
+  geom_col(aes(y = pmax(0, -spei_mean)), alpha = 0.25) +  # barres pour sécheresse (optionnel)
+  geom_line(linewidth = 0.8) +
+  geom_vline(xintercept = 2017, color = "red", linetype = "dotted", linewidth = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_label(
+    data = spei_2017, 
+    aes(x = 2017, y = spei_mean, 
+        label = paste0("Année: 2017\nSPEI: ", round(spei_mean, 2))),
+    nudge_x = 1, 
+    nudge_y = 0.3,
+    fill = "white",
+    color = "black",
+    linewidth = 0.4, 
+    label.padding = unit(0.2, "lines")
+  ) +
+  
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Annual SPEI (scale=12) – cluster de démonstration",
+       x = "Année", y = "SPEI (moyenne annuelle)") +
+  theme_minimal()
+
+# SPEI for all clusters 
+spatial_covars_spei_15km <- spatial_covars_spei_15km %>%
+  mutate(
+    spei_wc = pmap(
+      list(temperature_min_wc, temperature_max_wc, precipitation_wc, lat),
+      ~ compute_spei_annual(..1, ..2, ..3, ..4)
+    )
+  )
+
+spei_df <- spatial_covars_spei_15km %>%
+  select(DHSCLUST, spei_wc) %>%
+  unnest(spei_wc)
+
+ggplot(spei_df, aes(x = year, y = spei_mean, group = DHSCLUST)) +
+  geom_line(alpha = 0.35) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Annual SPEI by cluster with 15 km buffer (1981–2021)",
+       x = "Année", y = "SPEI (moyenne annuelle)") +
+  theme_minimal()
+
+# Chaque élément spei_wc devient une table {datetime, variable, unit, value}
+spatial_covars_spei_15km <- spatial_covars_spei_15km %>%
+  mutate(
+    spei_wc = map(spei_wc, ~ .x %>%
+      mutate(
+        datetime = as.Date(paste0(.data$year, "-01-01")),
+        variable = "spei_scale12_mean",
+        unit     = "annual",
+        value    = .data$spei_mean
+      ) %>%
+      select(datetime, variable, unit, value))
+  )
+
+# Sauvegarde (cohérente avec le reste de tes scripts)
+spatial_covars_spei_df_15km <- as.data.frame(spatial_covars_spei_15km)
+write_rds(spatial_covars_spei_df_15km, "data/derived/spatial_covars_spei_staggered_15km.rds")
+cat("SPEI (annuel, 1981–2021) enregistré dans data/derived/spatial_covars_spei_staggered_15km.rds\n")
+```
+
+#### Variable consolidation
+
+```{r}
+# Covariates spatio-temporelles + classification de traitement
+spatial_covars_spei_15km <- readRDS("data/derived/spatial_covars_spei_staggered_15km.rds")
+all_covars <- spatial_covars_spei_15km %>%
+  select(DHSYEAR, DHSCLUST, URBAN_RURA, treecover_area, slope, elevation,
+         population_count, traveltime_2000, spei_wc)
+
+all_class_15km <- read.csv("data/derived/cluster_treatment_classification_staggered_15km.csv")
+
+# Helper: fabrique la table finale pour une année donnée
+vars_to_nest <- c("treecover_area", "slope", "elevation",
+                  "population_count", "traveltime_2000", "spei_wc")
+
+build_year <- function(hr_object,
+                       year,
+                       hh_rural_path,
+                       spei_years = (year-2):year) {
+
+  # Charger HR (identifiants + variables chef) et HH_rural (centiles/zscore déjà calculés)
+  hr <- hr_object %>%
+    dplyr::select(hv001, hv002, hv219, hv220)
+  
+  hh_rural <- read_rds(hh_rural_path) # contient hv001/hv002 + wealth_* déjà prêts
+  
+  # Joindre covariates spatiaux + classification de groupes
+  base <- hh_rural %>%
+    left_join(hr, by = c("hv001", "hv002")) %>%
+    left_join(
+      all_covars %>% filter(DHSYEAR == year) %>% select(-DHSYEAR),
+      by = c("hv001" = "DHSCLUST")
+    ) %>%
+    left_join(
+      all_class_15km %>% filter(DHSYEAR == year) %>% select(-DHSYEAR),
+      by = c("hv001" = "DHSCLUST")
+    ) %>%
+    mutate(DHSYEAR = year) %>%
+    relocate(DHSYEAR, .before = everything())
+  
+  # Désimbriquer les covars imbriquées et appliquer la fenêtre temporelle SPEI
+  #    moyenne par (hv001, hv002) pour chaque indicateur_année
+  df_long <- base %>%
+    select(hv001, hv002, any_of(vars_to_nest)) %>%
+    pivot_longer(cols = any_of(vars_to_nest),
+                 names_to = "indicator", values_to = "data") %>%
+    unnest(data) %>%
+    filter(indicator != "spei_wc" | year(datetime) %in% spei_years) %>%
+    mutate(year_indicator = paste0(indicator, "_", year(datetime))) %>%
+    select(hv001, hv002, year_indicator, value)
+  
+  df_wide <- df_long %>%
+    pivot_wider(names_from = year_indicator, values_from = value,
+                names_glue = "{year_indicator}") %>%
+    group_by(hv001, hv002) %>%
+    summarise(across(everything(), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
+  
+  # Table finale (une ligne par ménage hv001/hv002)
+  out <- base %>%
+    select(-any_of(vars_to_nest)) %>%
+    distinct(hv001, hv002, .keep_all = TRUE) %>%
+    left_join(df_wide, by = c("hv001", "hv002"))
+  
+  out
+}
+
+# Application
+
+hr_1997_final_15km <- read_dta("data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA") %>%
+  build_year(year = 1997,
+             hh_rural_path = "data/derived/hh_1997_rural_simpler.rds",
+             spei_years = 1995:1997)
+
+hr_2008_final_15km <- read_dta("data/raw/dhs/DHS_2008/MDHR51DT/MDHR51FL.DTA") %>%
+  build_year(year = 2008,
+             hh_rural_path = "data/derived/hh_2008_rural_simpler.rds",
+             spei_years = 2006:2008)
+
+hr_2011_final_15km <- read_dta("data/raw/dhs/DHS_2011/MDHR61DT/MDHR61FL.DTA") %>%
+  build_year(year = 2011,
+             hh_rural_path = "data/derived/hh_2011_rural_simpler.rds",
+             spei_years = 2009:2011)
+
+hr_2013_final_15km <- read_dta("data/raw/dhs/DHS_2013/MDHR6ADT/MDHR6AFL.DTA") %>%
+  build_year(year = 2013,
+  hh_rural_path = "data/derived/hh_2013_rural_simpler.rds",
+  spei_years = 2011:2013)
+
+hr_2016_final_15km <- read_dta("data/raw/dhs/DHS_2016/MDHR71DT/MDHR71FL.DTA") %>%
+  build_year(year = 2016,
+  hh_rural_path = "data/derived/hh_2016_rural_simpler.rds",
+  spei_years = 2014:2016)
+
+hr_2021_final_15km <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA") %>%
+  build_year(year = 2021,
+  hh_rural_path = "data/derived/hh_2021_rural_simpler.rds",
+  spei_years = 2019:2021)
+
+# Consolidation
+
+hr_consolidated_15km <- bind_rows(
+  hr_1997_final_15km,
+  hr_2008_final_15km,
+  hr_2011_final_15km,
+  hr_2013_final_15km,
+  hr_2016_final_15km,
+  hr_2021_final_15km
+)
+
+hr_consolidated_15km %>% count(DHSYEAR)
+
+# Sauvegardes millésime
+write_rds(hr_1997_final_15km, "data/derived/hr_1997_final_15km.rds")
+write_rds(hr_2008_final_15km, "data/derived/hr_2008_final_15km.rds")
+write_rds(hr_2011_final_15km, "data/derived/hr_2011_final_15km.rds")
+write_rds(hr_2013_final_15km, "data/derived/hr_2013_final_15km.rds")
+write_rds(hr_2016_final_15km, "data/derived/hr_2016_final_15km.rds")
+write_rds(hr_2021_final_15km, "data/derived/hr_2021_final_15km.rds")
+
+# Sauvegarde consolidée
+write_rds(hr_consolidated_15km, "data/derived/hr_consolidated_15km_1997_2008_2011_2013_2016_2021.rds")
+cat("Données enregistrées\n")
+```
+
+#### Matching
+
+```{r}
+
+prep_matching <- function(df_final) {
+  out <- df_final %>%
+    filter(GROUP %in% c("Treatment","Control")) %>%
+    mutate(treatment = if_else(GROUP == "Treatment", 1L, 0L))
+  
+  missing_cols <- setdiff(matching_variables, names(out))
+  if (length(missing_cols) > 0) {
+    message(">> Colonnes manquantes: ", paste(missing_cols, collapse=", "))
+  }
+  
+  out %>% drop_na(all_of(intersect(matching_variables, names(out))))
+}
+
+# supprimer toute ancienne version pour éviter le masquage
+if (exists("run_matching_year")) rm(run_matching_year)
+
+run_matching_year <- function(year, overwrite = list(gen=FALSE, match=FALSE)) {
+  cat("\n=== Matching", year, "===\n")
+  fin_path <- glue("data/derived/hr_{year}_final_15km.rds")
+  if (!file.exists(fin_path)) stop("Fichier introuvable: ", fin_path)
+  
+  dat   <- readRDS(fin_path)
+  dat_m <- prep_matching(dat)
+  
+  
+  n_total <- nrow(dat)
+  n_filt <- nrow(dat_m)
+  n_treat <- sum(dat_m$treatment == 1, na.rm = TRUE)
+  n_ctrl <- sum(dat_m$treatment == 0, na.rm = TRUE)
+  
+  
+  cat(glue(">> N total={n_total}, après filtre/NA={n_filt}; ",
+           "Traités={n_treat}, ",
+           "Contrôles={n_ctrl}\n"))
+  
+  have_all_vars <- all(matching_variables %in% names(dat_m))
+  cat(">> Toutes les covars présentes ? ", have_all_vars, "\n")
+  if (n_filt < 5 || !have_all_vars) {
+    warning(glue("Année {year}: données insuffisantes ou variables manquantes — on saute."))
+    return(NULL)
+  }
+  
+  X_match <- dat_m %>%
+    sf::st_drop_geometry() %>%
+    dplyr::select(all_of(matching_variables)) %>%
+    as.data.frame()
+  
+  gen_path         <- glue("data/derived/gen_match_model_{year}_15km.rds")
+  match_path       <- glue("data/derived/matching_result_{year}_15km.rds")
+  matched_out_path <- glue("data/derived/data_matched_{year}_15km.rds")
+  
+  # --- GenMatch ---
+  used_cache_gen <- FALSE
+  t0 <- Sys.time()
+  if (file.exists(gen_path) && !isTRUE(overwrite$gen)) {
+    cat(">> GenMatch: cache trouvé -> lecture\n")
+    gen_model <- readRDS(gen_path)
+    used_cache_gen <- TRUE
+  } else {
+    cat(">> GenMatch: calcul en cours...\n")
+    gen_model <- GenMatch(
+      Tr = dat_m$treatment,
+      X  = X_match,
+      BalanceMatrix = X_match,
+      estimand = "ATT",
+      M = 1,
+      weights = NULL,
+      pop.size = 1000,
+      max.generations = 100,
+      wait.generations = 4,
+      caliper = .25,
+      print.level = 1,
+      cluster = rep("localhost", 4)
+    )
+    saveRDS(gen_model, gen_path)
+  }
+  t_gen <- as.numeric(difftime(Sys.time(), t0, units="mins"))
+  cat(glue(">> GenMatch temps = {round(t_gen,1)} min (cache={used_cache_gen})\n"))
+  
+  # --- matchit() ---
+  used_cache_match <- FALSE
+  t1 <- Sys.time()
+  if (file.exists(match_path) && !isTRUE(overwrite$match)) {
+    cat(">> matchit: cache trouvé → lecture\n")
+    m_out <- readRDS(match_path)
+    used_cache_match <- TRUE
+  } else {
+    cat(">> matchit: calcul en cours...\n")
+    fml <- as.formula(paste("treatment ~", paste(matching_variables, collapse=" + ")))
+   
+    
+     m_out <- matchit(
+      formula   = fml,
+      data      = dat_m,
+      method    = "genetic",
+      distance  = "mahalanobis",
+      gen.match = gen_model
+    )
+     
+    saveRDS(m_out, match_path)
+  }
+  
+  matched <- match.data(m_out, data = sf::st_drop_geometry(dat_m)) %>%
+    dplyr::filter(weights > 0)
+  
+  saveRDS(matched, matched_out_path)
+  cat(glue(">> N appariés = {nrow(matched)} (écrit: {matched_out_path})\n"))
+  
+  
+  tibble(
+    Année = year,
+    'Total des observations' = n_total,
+    'Après filtre/NA' = n_filt,
+    Traités = n_treat,
+    Contrôles = n_ctrl,
+    'N appariés' = nrow(matched)
+  )
+}
+
+need_overwrite <- function(year) {
+  gen_path   <- glue("data/derived/gen_match_model_{year}_15km.rds")
+  match_path <- glue("data/derived/matching_result_{year}_15km.rds")
+  list(gen = !file.exists(gen_path), match = !file.exists(match_path))
+}
+
+# --- Exécution avec progression ---
+yrs <- c(1997, 2008, 2011, 2013, 2016, 2021)
+
+
+res_list <- vector("list", length(yrs))
+names(res_list) <- yrs
+
+with_progress({
+  p <- progressor(along = yrs)
+
+for (i in seq_along(yrs)) {
+  yr <- yrs[i]
+  ow <- need_overwrite(yr) 
+  cat(glue("\n>> overwrite {yr}: gen={ow$gen}, match={ow$match}\n"))
+  cat(sprintf("Start %s", yr))
+  t_all <- Sys.time()
+  res_list[[i]] <- tryCatch(
+    run_matching_year(yr, overwrite = ow),
+    error = function(e) { warning(glue("Year {yr} ERROR: {e$message}")); NULL }
+  )
+  cat(sprintf("Done %s (%.1f min)",
+            yr, as.numeric(difftime(Sys.time(), t_all, units="mins"))))
+}
+})
+
+result_list <- purrr::compact(res_list) |> bind_rows()
+saveRDS(result_list, "data/derived/matching_summary_all_years_15km.rds")
+
+bal_tabs <- purrr::imap(res_list, ~ {if (!is.null(.x)) {
+  tryCatch(cobalt::bal.tab(.x$m), error = function(e) NULL) } else {
+    NULL
+  }
+})
+
+saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years_15km.rds")
+
+print(result_list)
+```
 
 ## Test pour l'hypothèse multiple
 
