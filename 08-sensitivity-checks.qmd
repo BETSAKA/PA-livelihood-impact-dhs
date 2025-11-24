@@ -824,6 +824,8 @@ Dans l'ensemble, la série oscille autour de zéro, alternant des périodes humi
 
 #### Variable consolidation
 
+Nous combinons les clusters de 1997, 2008, 2011, 2013, 2016 et 2021 avec leurs caractéristiques géophysiques et leur variable de résultat respectif dans un seul dataframe.
+
 ```{r}
 
 library(lubridate)
@@ -950,6 +952,8 @@ cat("Données enregistrées\n")
 ```
 
 #### Matching
+
+Nous appliquons la méthode de matching pour rendre comparable les groupes traités et contrôles, en les appariant selon cinq caractéristiques environnementales dans un rayon de 5 km.
 
 ```{r}
 # Library 
@@ -1133,6 +1137,234 @@ bal_tabs <- purrr::imap(res_list, ~ {if (!is.null(.x)) {
 saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years_5km.rds")
 
 print(result_list)
+```
+
+Après le matching, nous comptons 5124 groupes appariées pour l'année 1997, 13364 pour 2008, 6025 pour 2011, 6375 pour 2013, 9295 pour 2016 et 15364 pour 2021.
+
+##### Checking covariate balance
+
+Nous allons vérifier l'équilibre relatif des variables mesurées dans des unités différentes avant le matching pour mesurer l'écart entre les moyennes des covariables dans les groupes de traitement et de contrôle
+
+```{r}
+# Balance test before matching
+data_matched_1997_5km <- read_rds("data/derived/data_matched_1997_5km.rds")
+data_matched_2008_5km <- read_rds("data/derived/data_matched_2008_5km.rds")
+data_matched_2011_5km <- read_rds("data/derived/data_matched_2011_5km.rds")
+data_matched_2013_5km <- read_rds("data/derived/data_matched_2013_5km.rds")
+data_matched_2016_5km <- read_rds("data/derived/data_matched_2016_5km.rds")
+data_matched_2021_5km <- read_rds("data/derived/data_matched_2021_5km.rds")
+
+# Equilibre des covariables
+check_balance_before <- function(df, year, matching_variables){
+  
+  data <- df %>%
+    filter(GROUP %in% c("Treatment", "Control")) %>%
+    mutate(treatment = if_else(GROUP == "Treatment", 1, 0))
+  
+  formula <- as.formula(
+    paste("treatment ~", paste(matching_variables, collapse = "+"))
+  )
+  
+  # Balance avant appariement
+  bal_before <- bal.tab(
+    formula,
+    data = data,
+    estimand = "ATT",
+    un = TRUE,
+    abs = TRUE
+  )
+  
+  print(bal_before)
+  
+  # Extraction du Standardized Mean Difference (SMD)
+  balance_df <- as.data.frame(bal_before$Balance) %>%
+    tibble::rownames_to_column("Variable")
+  
+  smd_col <- grep("Diff|Std", names(balance_df), value = TRUE)[1]
+  
+  smd_table <- balance_df %>%
+    dplyr::select(Variable, SMD = all_of(smd_col)) %>%
+    mutate(
+      Equilibre = if_else(abs(SMD) <= 0.1, "Equilibré", "Déséquilibré"),
+      Year = year) %>%
+    relocate(Year, .before = Variable)
+  
+  return(list(
+    bal_before = bal_before,
+    smd_table = smd_table
+  ))
+}
+
+res_1997_5km  <- check_balance_before(data_matched_1997_5km, 1997, matching_variables)
+res_2008_5km  <- check_balance_before(data_matched_2008_5km, 2008, matching_variables)
+res_2011_5km  <- check_balance_before(data_matched_2011_5km, 2011, matching_variables)
+res_2013_5km  <- check_balance_before(data_matched_2013_5km, 2013, matching_variables)
+res_2016_5km  <- check_balance_before(data_matched_2016_5km, 2016, matching_variables)
+res_2021_5km  <- check_balance_before(data_matched_2021_5km, 2021, matching_variables)
+
+# Distribution des covariables
+data_list <- list(
+  "1997" = data_matched_1997_5km,
+  "2008" = data_matched_2008_5km,
+  "2011" = data_matched_2011_5km,
+  "2013" = data_matched_2013_5km,
+  "2016" = data_matched_2016_5km,
+  "2021" = data_matched_2021_5km 
+)
+
+
+  density_plot <- function(data, year, matching_variables){
+    data %>%
+      filter(GROUP %in% c("Treatment", "Control")) %>%
+      mutate(GROUP =factor(GROUP, levels = c("Control", "Treatment"))) %>%
+    pivot_longer(cols = all_of(matching_variables), names_to = "variable", values_to = "value") %>%
+    ggplot(aes(x = value, fill = GROUP)) +
+    geom_density(alpha = 0.5, color = "black", linewidth = 0.7, adjust = 0.7) +
+    facet_wrap(~variable, scales = "free") + 
+    scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
+    labs(
+      title = paste("Covariate distribution before matching(", year, ")", sep = ""),
+      x = "Valeur de la covariable",
+      y = "Densité",
+      fill = "Group"
+    ) + 
+    theme_minimal()
+  }
+    
+print(density_plot(data_matched_1997_5km, 1997, matching_variables))
+print(density_plot(data_matched_2008_5km, 2008, matching_variables))
+print(density_plot(data_matched_2011_5km, 2011, matching_variables))
+print(density_plot(data_matched_2013_5km, 2013, matching_variables))
+print(density_plot(data_matched_2016_5km, 2016, matching_variables))
+print(density_plot(data_matched_2021_5km, 2021, matching_variables))
+```
+
+Nous testons ensuite l'équilibre après l'appariement pour chaque covariable d'appariement.
+
+```{r}
+# Balance test after matching: Quantile- quantile QQ Plot analysis
+check_balance_after <- function(data_matched, year, matching_variables, plot_dir = "plots") {
+  
+  # Balance après appariement
+  bal_after <- cobalt::bal.tab(
+    x = data_matched[, matching_variables],
+    treat = data_matched$GROUP,
+    un = TRUE,
+    abs = TRUE,
+    estimand = "ATT"
+  )
+  
+  print(bal_after)
+  
+  # QQ Plot
+  year_dir <- file.path(plot_dir, paste0("QQplots_", year))
+  if (!dir.exists(year_dir)) dir.create(year_dir, recursive = TRUE)
+  
+
+  for (var in matching_variables) {
+    if (!is.numeric(data_matched[[var]])) {
+    }
+    
+    
+    control_values <- data_matched %>% filter(GROUP == "Control") %>% pull(var) %>% na.omit()
+    treated_values <- data_matched %>% filter(GROUP == "Treatment") %>% pull(var) %>% na.omit()
+    
+    p <- ggqqplot(data_matched, x = var, color = "GROUP", palette = c("#1f77b4", "#ff7f0e"),
+                  title = paste("QQ Plot -", var, "(", year, ")")) +
+      geom_abline(slope = 1, intercept = 0, linetype = "dashed", size = 0.7, color = "black") +
+      theme_minimal() +
+      labs(x = "Quantiles théoriques", y = "Quantiles observés", color = "Groupe") +
+      theme(plot.title = element_text(hjust = 0.5))
+    
+    # Sauvegarde du graphique
+    ggsave(
+      filename = file.path(year_dir, paste0("QQplot_", var, "_", year, ".png")),
+      plot = p, width = 7, height = 5
+    )
+  }
+  
+  return(list(balance = bal_after))
+}
+
+
+res_after_1997_5km <- check_balance_after(data_matched_1997_5km, 1997, matching_variables)
+res_after_2008_5km <- check_balance_after(data_matched_2008_5km, 2008, matching_variables)
+res_after_2011_5km <- check_balance_after(data_matched_2011_5km, 2011, matching_variables)
+res_after_2013_5km <- check_balance_after(data_matched_2013_5km, 2013, matching_variables)
+res_after_2016_5km <- check_balance_after(data_matched_2016_5km, 2016, matching_variables)
+res_after_2021_5km <- check_balance_after(data_matched_2021_5km, 2021, matching_variables)
+
+# Balance test after matching: Histogram
+plot_mirror_hist_5km <- function(year, variable){
+  
+ df <- readRDS(glue("data/derived/data_matched_{year}.rds")) %>%
+   filter(GROUP %in% c("Treatment", "Control")) %>%
+   mutate(
+     treatment = ifelse(GROUP == "Treatment", "Traité", "Contrôle"), 
+     value = .data[[variable]]
+   )
+ 
+ treated <- df %>% filter(treatment == "Traité")
+ control <- df %>% filter(treatment == "Contrôle")
+ 
+ 
+ ggplot() +
+   geom_histogram(
+     data = treated, 
+     aes(x = value), 
+     bins = 30, 
+     fill = "blue", 
+     alpha = 0.6
+     ) + 
+ geom_histogram(
+   data = control, 
+   aes(x = value, y = -after_stat(count)),
+   bins = 30, 
+   fill = "green", 
+   alpha = 0.6
+   ) + 
+   labs(
+     title = glue("Covariate after matching - {variable} ({year})"),
+     x = variable, 
+     y = "Effectifs (+ Traités / - Contrôles)"
+     ) + 
+   geom_hline(yintercept = 0, color = "black") +
+   annotate("text", x = Inf, y = -Inf, label = "Traités", hjust = 1.1, vjust = 2, color = "blue") +
+   annotate("text", x = Inf, y = -Inf, label = "Contrôles", hjust = 1.1, vjust = -1.5, color = "green") +
+   theme_minimal()
+ 
+}
+
+plot_mirror_hist_5km(1997,"treecover_area_2000")
+plot_mirror_hist_5km(2008,"treecover_area_2000")
+plot_mirror_hist_5km(2011,"treecover_area_2000")
+plot_mirror_hist_5km(2013,"treecover_area_2000")
+plot_mirror_hist_5km(2016,"treecover_area_2000")
+plot_mirror_hist_5km(2021,"treecover_area_2000")
+plot_mirror_hist_5km(1997,"slope_2000")
+plot_mirror_hist_5km(2008,"slope_2000")
+plot_mirror_hist_5km(2011,"slope_2000")
+plot_mirror_hist_5km(2013,"slope_2000")
+plot_mirror_hist_5km(2016,"slope_2000")
+plot_mirror_hist_5km(2021,"slope_2000")
+plot_mirror_hist_5km(1997,"elevation_2000")
+plot_mirror_hist_5km(2008,"elevation_2000")
+plot_mirror_hist_5km(2011,"elevation_2000")
+plot_mirror_hist_5km(2013,"elevation_2000")
+plot_mirror_hist_5km(2016,"elevation_2000")
+plot_mirror_hist_5km(2021,"elevation_2000")
+plot_mirror_hist_5km(1997,"population_count_2000")
+plot_mirror_hist_5km(2008,"population_count_2000")
+plot_mirror_hist_5km(2011,"population_count_2000")
+plot_mirror_hist_5km(2013,"population_count_2000")
+plot_mirror_hist_5km(2016,"population_count_2000")
+plot_mirror_hist_5km(2021,"population_count_2000")
+plot_mirror_hist_5km(1997,"traveltime_2000_2000")
+plot_mirror_hist_5km(2008,"traveltime_2000_2000")
+plot_mirror_hist_5km(2011,"traveltime_2000_2000")
+plot_mirror_hist_5km(2013,"traveltime_2000_2000")
+plot_mirror_hist_5km(2016,"traveltime_2000_2000")
+plot_mirror_hist_5km(2021,"traveltime_2000_2000")
 ```
 
 #### Estimation_staggered
