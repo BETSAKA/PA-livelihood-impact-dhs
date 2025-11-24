@@ -685,6 +685,8 @@ if(file.exists("data/derived/spatial_covars_staggered_5km.rds")) {cat("Le fichie
 
 #### Spei calculation
 
+Nous calculons ici l'évolution annuelle du SPEI, à l'échelle de 12 mois, pour un cluster pour la période de 1980 - 2021.
+
 ```{r}
 library(SPEI) # Calcul de l'indice SPEI
 library(labelled) # Manipulation des labels
@@ -739,8 +741,6 @@ compute_spei_annual <- function(tmin_tbl, tmax_tbl, prec_tbl, lat_deg) {
     summarise(spei_mean = mean(spei, na.rm = TRUE), .groups = "drop") %>%
     complete(year = 1981:2021, fill = list(spei_mean = NA_real_))
 }
-
-
 
 # Latitude géodésique depuis la géométrie (centroïde)
 spatial_covars_spei_5km <- spatial_covars_5km %>%
@@ -819,6 +819,8 @@ spatial_covars_spei_df_5km <- as.data.frame(spatial_covars_spei_5km)
 write_rds(spatial_covars_spei_df_5km, "data/derived/spatial_covars_spei_staggered_5km.rds")
 cat("SPEI (annuel, 1981–2021) enregistré dans data/derived/spatial_covars_spei_staggered_5km.rds\n")
 ```
+
+Dans l'ensemble, la série oscille autour de zéro, alternant des périodes humides et sèches. On observe toutefois plusieurs épisodes de sécheresse importante à la fin des années 1980. En 2017, le SPEI a une valeur particulièrement basse (SPEI = -2.25), qui d'après la classification de Vicente-Serrano et al. @2010 caractérise une sécheresse très sévère.
 
 #### Variable consolidation
 
@@ -1138,7 +1140,7 @@ print(result_list)
 ##### Overall effect on livelihoods
 
 ```{r}
-### 2X2 DiD
+# 2X2 DiD----------------------------------------------
 library(fixest)
 library(didimputation)
 library(broom)
@@ -1260,7 +1262,7 @@ ggplot(did_df, aes(x = period, y = estimate)) +
        title = "DID 2×2 avec IC clusterisés (hv001)")
 
 
-# Staggered diff-in-diff
+# Staggered diff-in-diff----------------------------------------
 # did2s (Gardner) : statique + event-study--------------------------------
 library(did2s)
 
@@ -1322,7 +1324,7 @@ if(length(leads_present) > 0){
 ##### Effect on inequalities
 
 ```{r}
-# Staggered DiD
+# Staggered DiD-----------------------------------------
 yvar <- "zscore_wealth"
 
 # did2s (Gardner) : statique + event-study--------------------------------
@@ -1373,7 +1375,7 @@ if(length(leads_present) > 0){
 }
 
 # Quantile treatment effects
-# Testing Quantile treatment effects --------------------------------------
+# Testing Quantile treatment effect------------------------------
 library(qte)
 
 # Avec CiC -------------------
@@ -1397,7 +1399,7 @@ cic_res <- suppressWarnings(CiC(
 summary(cic_res)
 ggqte(cic_res) + labs(x="Quantiles", y="QTET", title="CiC QTET: 2008-2021")
 
-## placebo
+## placebo------------------------------------------------------
 
 ## Placebo: 1997 -> 2008
 dat_placebo <- dat_5km %>%
@@ -1562,6 +1564,7 @@ tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
       TRUE ~ "strict"
     )
   )
+
 # Effet pour les AP stricts
 strict_effect <- tidy_es %>%
   filter(type == "strict") %>%
@@ -2610,9 +2613,521 @@ saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years_15km.rds")
 print(result_list)
 ```
 
+#### Estimation
+
+##### Overall effect on livelihoods
+
+```{r}
+# 2X2 DiD----------------------------------------------
+library(fixest)
+library(didimputation)
+library(broom)
+
+# Chargement des données
+d97_15km <- read_rds("data/derived/data_matched_1997_15km.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_1995,
+         spei_wc_n_1 = spei_wc_1996,
+         spei_wc_n   = spei_wc_1997) %>%
+  mutate(hv219 = zap_labels(hv219), # hhh sex (1/2)
+         hv220 = zap_labels(hv220)) # hhh age (num)
+
+d08_15km <- read_rds("data/derived/data_matched_2008_15km.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2006,
+         spei_wc_n_1 = spei_wc_2007,
+         spei_wc_n   = spei_wc_2008) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d11_15km <- read_rds("data/derived/data_matched_2011_15km.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2009,
+         spei_wc_n_1 = spei_wc_2010,
+         spei_wc_n   = spei_wc_2011) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d13_15km <- read_rds("data/derived/data_matched_2013_15km.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2011,
+         spei_wc_n_1 = spei_wc_2012,
+         spei_wc_n   = spei_wc_2013) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d16_15km <- read_rds("data/derived/data_matched_2016_15km.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2014,
+         spei_wc_n_1 = spei_wc_2015,
+         spei_wc_n   = spei_wc_2016) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d21_15km <- read_rds("data/derived/data_matched_2021_15km.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2019,
+         spei_wc_n_1 = spei_wc_2020,
+         spei_wc_n   = spei_wc_2021) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+# Préparation des données
+dat_15km <- bind_rows(d97_15km, d08_15km, d11_15km, d13_15km, d16_15km, d21_15km) %>%
+  filter(GROUP %in% c("Treatment","Control")) %>%
+  mutate(
+    hv219   = factor(hv219, levels = c(1,2), labels = c("Homme","Femme")), # sexe (cat.)
+    hv220   = as.numeric(hv220),                                           # âge
+    treat   = as.integer(GROUP == "Treatment"),
+    w_svy   = hv005 / 1e6,
+    w_all   = w_svy * weights, # poids d'enquête × poids de matching (si 'weights' existe)
+    id      = row_number(),
+    # Map des années de statut -> première année d'observation post (treatment_phase)
+    treatment_phase = case_when(
+      STATUS_YR == 2010 ~ 2011,
+      STATUS_YR == 2012 ~ 2013,
+      STATUS_YR == 2015 ~ 2016,
+      STATUS_YR == 2017 ~ 2021,
+      is.na(STATUS_YR)  ~ 0,
+      TRUE               ~ STATUS_YR
+    )
+  )
+
+# Outcome h
+yvar <- "wealth_centile_rural_weighted"
+
+# fixest DID 2×2: placebo 1997–2008, traitement 2008–2021 ------------------
+
+# Placebo 1997–2008
+pre_15km <- dat_15km %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(post = as.integer(DHSYEAR == 2008),
+         treat_post = treat * post)
+
+f_pre <- as.formula(paste(
+  yvar, "~ treat + post + treat_post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre <- feols(f_pre, data = pre_15km, weights = ~ w_all, cluster = ~ hv001)
+
+# Traitement 2008–2021
+main <- dat_15km %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(post = as.integer(DHSYEAR == 2021),
+         treat_post = treat * post)
+
+f_main <- f_pre  # même formule
+
+m_main <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ hv001)
+
+etable(m_pre, m_main, headers = c("Placebo 97–08", "Traitement 08–21"))
+
+# Extraction compacte des deux effets DID
+did_row <- function(model, year_post, vc = ~ hv001, term = "treat_post"){
+  summary(model, vcov = vc) %>% broom::tidy() %>%
+    filter(term == !!term) %>%
+    transmute(year = year_post, estimate, se = std.error)
+}
+did_df <- bind_rows(
+  did_row(m_pre, 2008),
+  did_row(m_main, 2021)
+) %>%
+  mutate(period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
+                         levels = c("1997–2008", "2008–2021")),
+         lo = estimate - 1.96*se,
+         hi = estimate + 1.96*se)
+
+ggplot(did_df, aes(x = period, y = estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = .2) +
+  geom_point(size = 3) +
+  labs(x = NULL, y = "Effet DID sur le centile de richesse (pondéré)",
+       title = "DID 2×2 avec IC clusterisés (hv001)")
+
+
+# Staggered diff-in-diff----------------------------------------
+# did2s (Gardner) : statique + event-study--------------------------------
+library(did2s)
+
+dat3 <- dat_15km %>%
+  mutate(
+    treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
+    rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
+    # Binning prudent pour stabilité (-5..5)
+    rel_year_binned = pmax(pmin(rel_year, 5), -5)
+  )
+
+# -- Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(treat_on, ref = FALSE),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_static, headers = "did2s statique")
+
+# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
+did2s_es <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(rel_year_binned, ref = c(-1, Inf)),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_es, headers = "did2s event-study (-5..5)")
+
+# Plot ES did2s
+plot_did2s <- broom::tidy(did2s_es, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_binned::", term)) %>%
+  mutate(k = as.numeric(sub("^rel_year_binned::", "", term))) %>%
+  arrange(k)
+
+ggplot(plot_did2s, aes(k, estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
+  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
+       y = "Effet estimé",
+       title = "Event-study (did2s)")
+
+# Test joint de pré-tendances (tous les leads k < 0)
+# On construit un motif regex pour k = -5..-1 présents dans le modèle
+leads_present <- plot_did2s$k[plot_did2s$k < 0]
+if(length(leads_present) > 0){
+  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
+  print(fixest::wald(did2s_es, keep = keep_regex))
+}
+```
+
+Dans l'ensemble, les analyses DID 2x2 et staggered DID montrent que la création d'aires protégées n'a pas entraîné de changements significatifs sur le centile de richesse des ménages à 15 km des aires protégées.
+
+Les tests placebo (1997-2008) ainsi que les tests de pré-tendances montrent l'absence de d'effet avant la création des aires protégées, renforçant la crédibilité causale. Toutefois, on observe un léger effet positif moyen des aires protégées sur le centile de richesse dans les années 1 à 3 années suivant sa mise en place. Ces effets sont sont ni robustes ni durable.
+
+##### Effect on inequalities 
+
+```{r}
+# Staggered DiD-----------------------------------------
+yvar <- "zscore_wealth"
+
+# did2s (Gardner) : statique + event-study--------------------------------
+# -- Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(treat_on, ref = FALSE),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_static, headers = "did2s statique")
+
+# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
+did2s_es <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(rel_year_binned, ref = c(-1, Inf)),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_es, headers = "did2s event-study (-5..5)")
+
+# Plot ES did2s
+plot_did2s <- broom::tidy(did2s_es, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_binned::", term)) %>%
+  mutate(k = as.numeric(sub("^rel_year_binned::", "", term))) %>%
+  arrange(k)
+
+ggplot(plot_did2s, aes(k, estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
+  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
+       y = "Effet estimé",
+       title = "Event-study (did2s)")
+
+# Test joint de pré-tendances (tous les leads k < 0)
+# On construit un motif regex pour k = -5..-1 présents dans le modèle
+leads_present <- plot_did2s$k[plot_did2s$k < 0]
+if(length(leads_present) > 0){
+  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
+  print(fixest::wald(did2s_es, keep = keep_regex))
+}
+
+# Quantile treatment effects
+# Testing Quantile treatment effect------------------------------
+library(qte)
+
+# Avec CiC -------------------
+
+## Traitement 2008 -> 2021
+set.seed(123)
+dat_2per <- dat_15km %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(treat = as.integer(GROUP == "Treatment"))
+
+cic_res <- suppressWarnings(CiC(
+  formla = wealth_centile_rural_weighted ~ treat,
+  t = 2021, tmin1 = 2008, tname = "DHSYEAR",
+  data = dat_2per,
+  panel = FALSE, # repeated cross-sections
+  se = TRUE, iters = 200, # bootstrap
+  probs = seq(0.05, 0.95, 0.05),
+  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+))
+
+summary(cic_res)
+ggqte(cic_res) + labs(x="Quantiles", y="QTET", title="CiC QTET: 2008-2021")
+
+## placebo------------------------------------------------------
+
+## Placebo: 1997 -> 2008
+dat_placebo <- dat_15km %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(treat = as.integer(GROUP == "Treatment"))
+
+# (Optional) sanity check:
+# with(dat_placebo, table(DHSYEAR, treat))
+
+cic_pre <-  suppressWarnings(CiC(
+  formla = wealth_centile_rural_simple ~ treat,
+  t = 2008, tmin1 = 1997, tname = "DHSYEAR",
+  data = dat_placebo,
+  panel = FALSE, # repeated cross-sections
+  se = TRUE, iters = 100, # bootstrap
+  probs = seq(0.05, 0.95, 0.05),
+  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+))
+
+summary(cic_pre)
+
+ggqte(cic_pre) +
+  labs(x = "Quantiles", y = "QTET",
+       title = "Placebo CiC QTET: 1997-2008")
+```
+
+##### Heterogeneity
+
+```{r}
+library(dplyr)
+
+# Création du groupe IUCN 
+dat3 <- dat3 %>%
+  dplyr::filter(!is.na(IUCN_CAT), !is.na(treat_on)) %>%
+  dplyr::mutate(
+    IUCN_group = case_when(
+    IUCN_CAT %in% c("Ia", "Ib", "II", "III", "IV") ~ "strict",
+    IUCN_CAT %in% c("V", "VI") ~ "usage_multiple", 
+    TRUE ~ NA_character_
+  ),
+  
+  IUCN_group = factor(IUCN_group, levels = c("strict", "usage_multiple")),
+  rel_year_binned = factor(rel_year_binned)
+  ) %>%
+  dplyr::filter(!is.na(IUCN_group))
+
+# Outcome: wealth_centile_rural_weighted ----------------------------------------
+yvar <- "wealth_centile_rural_weighted"
+
+run_did2s_iucn <- function(data, yvar) {
+  # did2s (Gardner) : statique + event-study--------------------------------
+# -- Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = data,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ treat_on * IUCN_group,
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_static, headers = paste0("did2s statique (strict vs usage multiple)(", yvar,")"))
+
+# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
+did2s_es <- did2s(
+  data = data,
+  yname = yvar, 
+  first_stage = ~ spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ 
+    i(rel_year_binned, ref = -1) +
+    i(rel_year_binned, IUCN_group),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_es, headers = "did2s event-study (-5..5) par statut IUCN")
+  
+# Extraction des coefficients
+
+tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
+  dplyr::filter(grepl("^rel_year_binned::", term)) %>%
+  dplyr::mutate(
+    year = as.numeric(sub("rel_year_binned::(-?\\d+).*", "\\1", term)),
+    type = dplyr::if_else(grepl("IUCN_group::usage_multiple", term) ~ "diff_usage_multiple",
+      TRUE ~ "strict"
+    )
+  )
+
+# Effet pour les AP stricts
+strict_effect <- tidy_es %>%
+  dplyr::filter(type == "strict") %>%
+  dplyr::mutate(group = "strict") %>%
+  dplyr::select(year, estimate, conf.low, conf.high, group)
+
+
+# Effet total pour AP à usage multiple
+usage_effect <- tidy_es %>%
+  dplyr::filter(type == "diff_usage_multiple") %>%
+  dplyr::rename(estimate_diff = estimate,
+         conf.low_diff = conf.low,
+         conf.high_diff = conf.high) %>%
+  dplyr::left_join(strict_effect, by = "year") %>%
+  dplyr::mutate(
+    estimate = estimate + estimate_diff,
+    conf.low = conf.low + conf.low_diff,
+    conf.high = conf.high + conf.high_diff,
+    group = "usage_multiple"
+  ) %>%
+  dplyr::select(year, estimate, conf.low, conf.high, group)
+
+
+# Plot ES did2s
+plot_did2s <- bind_rows(strict_effect, usage_effect)
+
+p <- ggplot(plot_data, aes(x = year, y = estimate, color = group)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
+  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
+       y = paste0("Effet estimé sur", yvar),
+       title = paste0("Event-study (did2s) - hétérogénéité par statut IUCN (", yvar,")"),
+       color = "Catégorie IUCN") + 
+  theme_minimal()
+
+print(p)
+
+# Test joint de pré-tendances (tous les leads k < 0)
+# On construit un motif regex pour k = -5..-1 présents dans le modèle
+leads_present <- plot_data$year[plot_data$year < 0]
+if(length(leads_present) > 0){
+  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
+  print(fixest::wald(did2s_es, keep = keep_regex))
+}
+
+return(list(
+  static = did2s_static,
+  es = did2s_es,
+  plot_data = plot_data,
+  plot = p
+  
+))
+}
+
+res_wealth <- run_did2s_iucn(dat3, "wealth_centile_rural_weighted")
+res_zscore <- run_did2s_iucn(dat3, "zscore_wealth")
+
+
+
+
+
+
+
+
+
+
+# Outcome: zscore_wealth----------------------------------------------------------
+yvar <- "zscore_wealth"
+
+# did2s (Gardner) : statique + event-study--------------------------------
+# -- Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ treat_on * IUCN_group,
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_static, headers = "did2s statique (strict vs usage multiple)")
+
+# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
+did2s_es <- did2s(
+  data = dat3,
+  yname = yvar, 
+  first_stage = ~ spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ 
+    i(rel_year_binned, ref = -1) +
+    i(rel_year_binned, IUCN_group),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_es, headers = "did2s event-study (-5..5) par statut IUCN")
+
+tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_binned::", term)) %>%
+  mutate(
+    year = as.numeric(sub("rel_year_binned::(-?\\d+).*", "\\1", term)),
+    type = case_when(
+      grepl("IUCN_group::usage_multiple", term) ~ "diff_usage_multiple",
+      TRUE ~ "strict"
+    )
+  )
+# Effet pour les AP stricts
+strict_effect <- tidy_es %>%
+  dplyr::filter(type == "strict") %>%
+  dplyr::mutate(group = "strict") %>%
+  dplyr::select(year, estimate, conf.low, conf.high, group)
+
+# Effet total pour AP à usage multiple
+usage_effect <- tidy_es %>%
+  filter(type == "diff_usage_multiple") %>%
+  rename(estimate_diff = estimate,
+         conf.low_diff = conf.low,
+         conf.high_diff = conf.high) %>%
+  left_join(strict_effect, by = "year") %>%
+  mutate(
+    estimate = estimate + estimate_diff,
+    conf.low = conf.low + conf.low_diff,
+    conf.high = conf.high + conf.high_diff,
+    group = "usage_multiple"
+  ) %>%
+  select(year, estimate, conf.low, conf.high, group)
+
+# Plot ES did2s
+plot_did2s <- bind_rows(strict_effect, usage_effect)
+
+ggplot(plot_did2s, aes(x = year, y = estimate, color = group)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
+  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
+       y = "Effet estimé",
+       title = "Event-study (did2s) - hétérogénéité par statut IUCN",
+       color = "Catégorie IUCN") + 
+  theme_minimal()
+
+# Test joint de pré-tendances (tous les leads k < 0)
+# On construit un motif regex pour k = -5..-1 présents dans le modèle
+leads_present <- plot_did2s$k[plot_did2s$k < 0]
+if(length(leads_present) > 0){
+  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
+  print(fixest::wald(did2s_es, keep = keep_regex))
+}
+```
+
 ## Test pour l'hypothèse multiple
 
-La méthode "False Directory Rate" de Benjamini-Hochberg sera appliqué aux hypothèses H2 et H3 pour corriger le problème des tests multiples.
+Dans notre analyse, nous testons 3 hypothèses. Or, que lorsqu'on teste beaucoup d'hypothèses, on augmente automatiquement le risque d'inférer à tort des effets significatifs, des problèmes de multiplicité des tests. Afin de mitiger ce risque, nous appliquerons pour ces hypothèses secondaires H2 et H3 la méthode de False Discovery Rate FDR) de @benjamini1995. Cette méthode propose de contrôler la proportion moyenne des faux positifs parmi les résultats déclarés significatifs.
+
+Nous récupérons les p-values des tests de H2 et H3, puis nous les trions dans l'ordre croissant avant d'appliquer la règle BH. Nous considérons comme significatif tout test avec pBH​\<0.05.
+
+```{r}
+
+```
 
 ## Analyse de sensibilité de Rosenbaum
 
@@ -2653,40 +3168,6 @@ Caractéristiques socio-démographiques et environnementales:
 -   EStimation de la probabilité à un seuil de puissance fixée à 0.8 avec un seuil de signification fixée à 0.05
 
 -   **Mobilisation des données MIS 2011, MIS 2013 et MIS 2016 si la puissance statistique est insuffisante**
-
-Analyse de sensibilité ==\> à voir
-
-Tests de robustesse
-
-Test de sensibilité aux tailles de buffer
-
-Test pour une distance de 5 km
-
-Création d'un buffer de 5 km autour des aires protégées
-
-Réassignation des traitements
-
-Matching
-
-Test d'équilibre
-
-DID
-
-Test de robustesse
-
-Test pour une distance de 15km
-
-Création d'un buffer de 15 km autour des aires protégées Matching DID Test de robustesse
-
-Réassignation des traitements
-
-Matching
-
-Test d'équilibre
-
-DID
-
-Test de robustesse
 
 Test pour l'hypothèse multiple
 
