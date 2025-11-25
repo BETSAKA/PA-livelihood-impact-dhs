@@ -1147,13 +1147,13 @@ Après le matching, nous obtenons:
 
 -   2008: 13364 groupes appariées dont 1266 traités et 11221 contrôles
 
--    2011: 6025 groupes appariées dont 528 traités et 5076 contrôles
+-   2011: 6025 groupes appariées dont 528 traités et 5076 contrôles
 
 -   2013: 6375 groupes appariées dont 874 traités et 5092 contrôles
 
 -   2016: 9295 groupes appariées dont 863 traités et 7933 contrôles
 
--    2021: 15364 groupes appariées dont 1806 traités et 12487 contrôles
+-   2021: 15364 groupes appariées dont 1806 traités et 12487 contrôles
 
 ##### Checking covariate balance: test before matching
 
@@ -1349,9 +1349,13 @@ walk(yrs, function(y){
 })
 ```
 
+Après le matching, pour l'ensemble des variables de chaque année, la différence moyenne standardisée s'est améliorée. Toutefois, la variable population_count_2000 reste difficile à équilibrer. Cela s'explique par le fait que les aires protégées ne sont pas implantées de manière aléatoire dans le paysage: celles gérées pour la conservation de la biodiversité se situent généralement dans des zones plus isolées et moins peuplées, tandis que les aires gérées pour des usages mixtes sont entourées de populations plus denses. Comme le souligne @chung2018 "la densité démographique autour des zones protégées gérées à des fins mixtes est également plus élevée que celle des zones protégées gérées principalement pour la conservation de la biodiversité." Cette hétérogénéité entre les contextes humains entourant les différents types d'aires protégées crée un manque d'overlap dans la distribution de la densité de population entre les groupes traités et contrôles, rendant cette variable difficile à équilibrer. même après matching.
+
 #### Estimation
 
 ##### Overall effect on livelihoods
+
+Cette partie évalue dans quelle mesure les aires protégées influencent les conditions de vie des ménages.
 
 ```{r}
 # 2X2 DiD----------------------------------------------
@@ -1535,6 +1539,10 @@ if(length(leads_present) > 0){
 }
 ```
 
+Les résultats de l'estimation DID 2x2 indiquent qu'il n'a aucune différence d'évolution significative entre les groupes traités et contrôles avant la mise en place des aires protégées. Le coefficient placebo treat_post est non significatif (7.743). De même, sur la période de traitement (2008-2021), le coefficient est légèrement négatif mais non significatif, indiquant l'absence d'effet détectable des aires protégées sur le centile de richesse des ménages ruraux. Les graphiques confirment également cela: pour le pré-traitement, l'effet est proche de zéro, tandis que pour le post-traitement, l'effet est plutôt négatif mais non significatif.
+
+Dans l'analyse par event study (staggered adoption), un effet positif apparaît trois ans après la mise en place de l'aire protégée (rel_year = 3: 19.03\*), suggérantt une amélioration du niveau de vie. Toutefois, l'absence de significativité pour les autres années montre qu'il ne s'agit pas d'un effet régulier ou durable.
+
 ##### Effect on inequalities
 
 ```{r}
@@ -1588,6 +1596,9 @@ if(length(leads_present) > 0){
   print(fixest::wald(did2s_es, keep = keep_regex))
 }
 
+```
+
+```{r}
 # Quantile treatment effects
 # Testing Quantile treatment effect------------------------------
 library(qte)
@@ -1659,104 +1670,104 @@ dat3 <- dat3 %>%
 
 run_did2s_es <- function(data, yvar) {
   
-  # -- Statique (traitement "on/off")
-did2s_static <- did2s(
-  data        = dat3,
-  yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage= ~ treat_on * IUCN_group,
-  treatment   = "treat_on",
-  cluster_var = "hv001",
-  weights     = "w_all"
-)
-print(etable(did2s_static, headers = paste("did2s statique -", yvar)))
-  
-}
+  # DID Statique
+  did2s_static <- did2s(
+    data        = data,
+    yname       = yvar,
+    first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+    second_stage = ~ treat_on * IUCN_group,
+    treatment   = "treat_on",
+    cluster_var = "hv001",
+    weights     = "w_all"
+  )
+  print(etable(did2s_static, headers = paste("did2s statique -", yvar)))
 
-# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
-did2s_es <- did2s(
-  data = dat3,
-  yname = yvar, 
-  first_stage = ~ spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage = ~ 
-    i(rel_year_binned, ref = -1) +
-    i(rel_year_binned, IUCN_group),
-  treatment   = "treat_on",
-  cluster_var = "hv001",
-  weights     = "w_all"
-)
-print(etable(did2s_es, headers = paste("did2s event-study (-5..5) par statut IUCN", yvar)))
+  # Event-study (avec binning -5 ..(, ref = -1 et never-treated))
+  did2s_es <- did2s(
+    data = data,
+    yname = yvar, 
+    first_stage = ~ spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+    second_stage = ~ 
+      i(rel_year_binned, ref = -1) +
+      i(rel_year_binned, IUCN_group),
+    treatment   = "treat_on",
+    cluster_var = "hv001",
+    weights     = "w_all"
+  )
+  print(etable(did2s_es, headers = paste("did2s event-study (-5..5) par statut IUCN", yvar)))
 
-tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
-  filter(grepl("^rel_year_binned =", term)) %>%
-  mutate(
-    year = as.numeric(sub("rel_year_binned = (-?\\d+).*", "\\1", term)),
-    type = case_when(
-      grepl("IUCN_group::usage_multiple", term) ~ "diff_usage_multiple",
-      TRUE ~ "strict"
+  # Extraction des coefficients
+  tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
+    filter(grepl("^rel_year_binned =", term)) %>%
+    mutate(
+      year = as.numeric(sub("rel_year_binned = (-?\\d+).*", "\\1", term)),
+      type = case_when(
+        grepl("IUCN_group::usage_multiple", term) ~ "diff_usage_multiple",
+        TRUE ~ "strict"
+      )
     )
-  )
+  # Effet des AP stricts 
+  strict_effect <- tidy_es %>%
+    filter(type == "strict") %>%
+    select(
+      year, 
+      estimate = estimate, 
+      conf.low, conf.high
+    ) %>%
+    mutate(group = "strict")
 
-# Effet pour les AP stricts
-strict_effect <- tidy_es %>%
-  filter(type == "strict") %>%
-  dplyr::select(
-    year, 
-    estimate_strict = estimate, 
-    conf.low_strict = conf.low,
-    conf.high_strict = conf.high
-  )
+  usage_diff <- tidy_es %>%
+    filter(type == "diff_usage_multiple") %>%
+    select(year, estimate_diff = estimate, conf.low_diff = conf.low, conf.high_diff = conf.high)
 
-# Effet total pour AP à usage multiple
-usage_diff <- tidy_es %>%
-  filter(type == "diff_usage_multiple") %>%
-  dplyr::select(
-    year,
-    estimate_diff = estimate,
-    conf.low_diff = conf.low,
-    conf.high_diff = conf.high)
+  # Effet total pour AP à usage multiple
+  usage_effect <- left_join(strict_effect, usage_diff, by = "year") %>%
+    mutate(
+      estimate = estimate + estimate_diff,
+      conf.low = conf.low + conf.low_diff,
+      conf.high = conf.high + conf.high_diff,
+      group = "usage_multiple"
+    ) %>%
+    select(year, estimate, conf.low, conf.high, group)
 
-usage_effect <- left_join(strict_effect, usage_diff, by = "year") %>%
-  mutate(
-    estimate = estimate_strict + estimate_diff,
-    conf.low = conf.low_strict + conf.low_diff,
-    conf.high = conf.high_strict + conf.high_diff,
-    group = "usage_multiple"
-  ) %>%
-  dplyr::select(year, estimate, conf.low, conf.high, group)
+  # Plot ES did2s
+  plot_did2s <- bind_rows(strict_effect, usage_effect)
 
-# Plot ES did2s
-plot_did2s <- bind_rows(strict_effect, usage_effect)
+  g <- ggplot(plot_did2s, aes(x = year, y = estimate, color = group)) +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_point() +
+    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
+    labs(x = "Années relatives au 1er traitement (binnées -5..5)",
+         y = "Effet estimé",
+         title = "Event-study (did2s) - hétérogénéité par statut IUCN",
+         color = "Catégorie IUCN") + 
+    theme_minimal()
 
-ggplot(plot_did2s, aes(x = year, y = estimate, color = group)) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_point() +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
-  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
-       y = "Effet estimé",
-       title = "Event-study (did2s) - hétérogénéité par statut IUCN",
-       color = "Catégorie IUCN") + 
-  theme_minimal()
+  print(g)
 
-# Test joint de pré-tendances (tous les leads k < 0)
-# On construit un motif regex pour k = -5..-1 présents dans le modèle
-leads_present <- strict_effect$year[strict_effect$year < 0]
+  # Test de pré-tendances
+  leads_present <- strict_effect$year[strict_effect$year < 0]
+  if(length(leads_present) > 0){
+    keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
+    print(wald(did2s_es, keep = keep_regex))
+  }
 
-if(length(leads_present) > 0){
-  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
-  print(fixest::wald(did2s_es, keep = keep_regex))
-}
+  return(list(
+    static = did2s_static,
+    es = did2s_es,
+    plot = g
+  ))
 
- return(list(
-   static = did2s_static,
-   es = did2s_es,
-   plot_did2s = plot_did2s
- ))
-}
+} 
 
-res_wealth_centile <- run_did2s_es(dat3, "wealth_centile_rural_weighted")
+res_wealth <- run_did2s_es(dat3, "wealth_centile_rural_weighted")
+res_zscore <- run_did2s_es(dat3, "zscore_wealth")
 
 ```
+
+Outcome: Wealth_centile_rural
+
+Outcome: zscore_wealth
 
 ### Test pour une distance de 15km
 
