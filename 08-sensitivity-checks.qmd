@@ -1316,7 +1316,7 @@ plot_mirror_hist_5km <- function(year, variable){
  
  ggplot() +
    geom_histogram(
-     data = df %>% filter(treatment == "Traité", 
+     data = df %>% filter(treatment == "Traité"), 
      aes(x = value), 
      bins = 30, 
      fill = "blue", 
@@ -1341,7 +1341,7 @@ plot_mirror_hist_5km <- function(year, variable){
  
 }
 
-walk(years, function(y){
+walk(yrs, function(y){
   walk(matching_variables, function(v){
     message(glue("→ Histogramme {v} ({y})"))
     print(plot_mirror_hist_5km(y, v))
@@ -1661,7 +1661,7 @@ run_did2s_es <- function(data, yvar) {
   
   # -- Statique (traitement "on/off")
 did2s_static <- did2s(
-  data        = data,
+  data        = dat3,
   yname       = yvar,
   first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
   second_stage= ~ treat_on * IUCN_group,
@@ -1675,7 +1675,7 @@ print(etable(did2s_static, headers = paste("did2s statique -", yvar)))
 
 # -- Event-study (avec binning -5..5, ref = -1 et never-treated)
 did2s_es <- did2s(
-  data = data,
+  data = dat3,
   yname = yvar, 
   first_stage = ~ spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
   second_stage = ~ 
@@ -1688,9 +1688,9 @@ did2s_es <- did2s(
 print(etable(did2s_es, headers = paste("did2s event-study (-5..5) par statut IUCN", yvar)))
 
 tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
-  filter(grepl("^rel_year_binned::", term)) %>%
+  filter(grepl("^rel_year_binned =", term)) %>%
   mutate(
-    year = as.numeric(sub("rel_year_binned::(-?\\d+).*", "\\1", term)),
+    year = as.numeric(sub("rel_year_binned = (-?\\d+).*", "\\1", term)),
     type = case_when(
       grepl("IUCN_group::usage_multiple", term) ~ "diff_usage_multiple",
       TRUE ~ "strict"
@@ -1700,24 +1700,30 @@ tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
 # Effet pour les AP stricts
 strict_effect <- tidy_es %>%
   filter(type == "strict") %>%
-  transmute(
-    year, estimate, conf.low, conf.high, group = "strict")
+  dplyr::select(
+    year, 
+    estimate_strict = estimate, 
+    conf.low_strict = conf.low,
+    conf.high_strict = conf.high
+  )
 
 # Effet total pour AP à usage multiple
-usage_effect <- tidy_es %>%
+usage_diff <- tidy_es %>%
   filter(type == "diff_usage_multiple") %>%
-  rename(
+  dplyr::select(
+    year,
     estimate_diff = estimate,
     conf.low_diff = conf.low,
-    conf.high_diff = conf.high) %>%
-  left_join(strict_effect, by = "year") %>%
+    conf.high_diff = conf.high)
+
+usage_effect <- left_join(strict_effect, usage_diff, by = "year") %>%
   mutate(
-    estimate = estimate + estimate_diff,
-    conf.low = conf.low + conf.low_diff,
-    conf.high = conf.high + conf.high_diff,
+    estimate = estimate_strict + estimate_diff,
+    conf.low = conf.low_strict + conf.low_diff,
+    conf.high = conf.high_strict + conf.high_diff,
     group = "usage_multiple"
   ) %>%
-  select(year, estimate, conf.low, conf.high, group)
+  dplyr::select(year, estimate, conf.low, conf.high, group)
 
 # Plot ES did2s
 plot_did2s <- bind_rows(strict_effect, usage_effect)
