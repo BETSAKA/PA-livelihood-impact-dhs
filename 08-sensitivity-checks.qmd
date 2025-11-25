@@ -1269,42 +1269,40 @@ check_balance_after <- function(data_matched, year, matching_variables, plot_dir
   print(bal_after)
   
   # QQ Plot
-  year_dir <- file.path(plot_dir, paste0("QQplots_", year))
-  if (!dir.exists(year_dir)) dir.create(year_dir, recursive = TRUE)
+  year_dir <- file.path(plot_dir, glue("QQplots_{year}"))
+  dir.create(year_dir, recursive = TRUE, showWarnings = FALSE)
   
-
-  for (var in matching_variables) {
-    if (!is.numeric(data_matched[[var]])) {
-    }
+  matching_variables %>% walk(function(var){
+  if(!is.numeric(data_matched[[var]])){
+    return(NULL)
+  }
     
-    
-    control_values <- data_matched %>% filter(GROUP == "Control") %>% pull(var) %>% na.omit()
-    treated_values <- data_matched %>% filter(GROUP == "Treatment") %>% pull(var) %>% na.omit()
-    
-    p <- ggqqplot(data_matched, x = var, color = "GROUP", palette = c("#1f77b4", "#ff7f0e"),
-                  title = paste("QQ Plot -", var, "(", year, ")")) +
-      geom_abline(slope = 1, intercept = 0, linetype = "dashed", size = 0.7, color = "black") +
+    p <- ggqqplot(
+      data_matched, x = var, color = "GROUP",
+      palette = c("#1f77b4", "#ff7f0e"),
+      title = glue("QQ Polt - {var} ({year})")
+    ) + 
+      geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
       theme_minimal() +
-      labs(x = "Quantiles théoriques", y = "Quantiles observés", color = "Groupe") +
+      labs(x = "Quantiles théoriques", y = "Quantiles observés", color = "Groupe") + 
       theme(plot.title = element_text(hjust = 0.5))
     
-    # Sauvegarde du graphique
+    
     ggsave(
-      filename = file.path(year_dir, paste0("QQplot_", var, "_", year, ".png")),
-      plot = p, width = 7, height = 5
+      filename = file.path(year_dir, glue("QQplot_{var}_{year}.png")), plot = p, width = 7, height = 5
     )
-  }
+  })
   
   return(list(balance = bal_after))
 }
 
+results_list <- map(yrs, function(y){
+  data_y <- readRDS(glue("data/derived/data_matched_{y}_5km.rds"))
+  check_balance_after(data_y, y,matching_variables)
+})
 
-res_after_1997_5km <- check_balance_after(data_matched_1997_5km, 1997, matching_variables)
-res_after_2008_5km <- check_balance_after(data_matched_2008_5km, 2008, matching_variables)
-res_after_2011_5km <- check_balance_after(data_matched_2011_5km, 2011, matching_variables)
-res_after_2013_5km <- check_balance_after(data_matched_2013_5km, 2013, matching_variables)
-res_after_2016_5km <- check_balance_after(data_matched_2016_5km, 2016, matching_variables)
-res_after_2021_5km <- check_balance_after(data_matched_2021_5km, 2021, matching_variables)
+names(results_list) <- yrs
+
 
 # Balance test after matching: Histogram
 plot_mirror_hist_5km <- function(year, variable){
@@ -1316,67 +1314,39 @@ plot_mirror_hist_5km <- function(year, variable){
      value = .data[[variable]]
    )
  
- treated <- df %>% filter(treatment == "Traité")
- control <- df %>% filter(treatment == "Contrôle")
- 
- 
  ggplot() +
    geom_histogram(
-     data = treated, 
+     data = df %>% filter(treatment == "Traité", 
      aes(x = value), 
      bins = 30, 
      fill = "blue", 
      alpha = 0.6
      ) + 
  geom_histogram(
-   data = control, 
+   data = df %>% filter(treatment == "Contrôle"), 
    aes(x = value, y = -after_stat(count)),
    bins = 30, 
    fill = "green", 
    alpha = 0.6
    ) + 
+   geom_hline(yintercept = 0, color = "black") + 
    labs(
      title = glue("Covariate after matching - {variable} ({year})"),
      x = variable, 
      y = "Effectifs (+ Traités / - Contrôles)"
      ) + 
-   geom_hline(yintercept = 0, color = "black") +
    annotate("text", x = Inf, y = -Inf, label = "Traités", hjust = 1.1, vjust = 2, color = "blue") +
    annotate("text", x = Inf, y = -Inf, label = "Contrôles", hjust = 1.1, vjust = -1.5, color = "green") +
    theme_minimal()
  
 }
 
-plot_mirror_hist_5km(1997,"treecover_area_2000")
-plot_mirror_hist_5km(2008,"treecover_area_2000")
-plot_mirror_hist_5km(2011,"treecover_area_2000")
-plot_mirror_hist_5km(2013,"treecover_area_2000")
-plot_mirror_hist_5km(2016,"treecover_area_2000")
-plot_mirror_hist_5km(2021,"treecover_area_2000")
-plot_mirror_hist_5km(1997,"slope_2000")
-plot_mirror_hist_5km(2008,"slope_2000")
-plot_mirror_hist_5km(2011,"slope_2000")
-plot_mirror_hist_5km(2013,"slope_2000")
-plot_mirror_hist_5km(2016,"slope_2000")
-plot_mirror_hist_5km(2021,"slope_2000")
-plot_mirror_hist_5km(1997,"elevation_2000")
-plot_mirror_hist_5km(2008,"elevation_2000")
-plot_mirror_hist_5km(2011,"elevation_2000")
-plot_mirror_hist_5km(2013,"elevation_2000")
-plot_mirror_hist_5km(2016,"elevation_2000")
-plot_mirror_hist_5km(2021,"elevation_2000")
-plot_mirror_hist_5km(1997,"population_count_2000")
-plot_mirror_hist_5km(2008,"population_count_2000")
-plot_mirror_hist_5km(2011,"population_count_2000")
-plot_mirror_hist_5km(2013,"population_count_2000")
-plot_mirror_hist_5km(2016,"population_count_2000")
-plot_mirror_hist_5km(2021,"population_count_2000")
-plot_mirror_hist_5km(1997,"traveltime_2000_2000")
-plot_mirror_hist_5km(2008,"traveltime_2000_2000")
-plot_mirror_hist_5km(2011,"traveltime_2000_2000")
-plot_mirror_hist_5km(2013,"traveltime_2000_2000")
-plot_mirror_hist_5km(2016,"traveltime_2000_2000")
-plot_mirror_hist_5km(2021,"traveltime_2000_2000")
+walk(years, function(y){
+  walk(matching_variables, function(v){
+    message(glue("→ Histogramme {v} ({y})"))
+    print(plot_mirror_hist_5km(y, v))
+  })
+})
 ```
 
 #### Estimation
