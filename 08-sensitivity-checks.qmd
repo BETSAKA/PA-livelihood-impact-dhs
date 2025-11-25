@@ -473,6 +473,8 @@ for(year in years_all) {
 
 #### Covariates Calculation
 
+Nous chargeons les covariables à partir du package mapme.biodiversity.
+
 ```{r}
 library(labelled) # Manipulation des labels
 library(mapme.biodiversity)
@@ -1139,31 +1141,39 @@ saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years_5km.rds")
 print(result_list)
 ```
 
-Après le matching, nous comptons 5124 groupes appariées pour l'année 1997, 13364 pour 2008, 6025 pour 2011, 6375 pour 2013, 9295 pour 2016 et 15364 pour 2021.
+Après le matching, nous obtenons:
 
-##### Checking covariate balance
+-   1997: 5124 groupes appariées dont 624 traités et 4141 contrôles
 
-Nous allons vérifier l'équilibre relatif des variables mesurées dans des unités différentes avant le matching pour mesurer l'écart entre les moyennes des covariables dans les groupes de traitement et de contrôle
+-   2008: 13364 groupes appariées dont 1266 traités et 11221 contrôles
+
+-    2011: 6025 groupes appariées dont 528 traités et 5076 contrôles
+
+-   2013: 6375 groupes appariées dont 874 traités et 5092 contrôles
+
+-   2016: 9295 groupes appariées dont 863 traités et 7933 contrôles
+
+-    2021: 15364 groupes appariées dont 1806 traités et 12487 contrôles
+
+##### Checking covariate balance: test before matching
+
+Nous allons vérifier l'équilibre relatif des variables mesurées dans des unités différentes avant le matching pour mesurer l'écart entre les moyennes des covariables dans les groupes de traitement et de contrôle pour un buffer de 5 km.
 
 ```{r}
-# Balance test before matching
-data_matched_1997_5km <- read_rds("data/derived/data_matched_1997_5km.rds")
-data_matched_2008_5km <- read_rds("data/derived/data_matched_2008_5km.rds")
-data_matched_2011_5km <- read_rds("data/derived/data_matched_2011_5km.rds")
-data_matched_2013_5km <- read_rds("data/derived/data_matched_2013_5km.rds")
-data_matched_2016_5km <- read_rds("data/derived/data_matched_2016_5km.rds")
-data_matched_2021_5km <- read_rds("data/derived/data_matched_2021_5km.rds")
+# Load 
+hr_list <- setNames(
+  lapply(yrs, function(y) read_rds(paste0("data/derived/hr_", y, "_final_5km.rds"))),
+  yrs
+)
 
 # Equilibre des covariables
-check_balance_before <- function(df, year, matching_variables){
+check_balance_before <- function(df, year, matching_variables) {
   
   data <- df %>%
     filter(GROUP %in% c("Treatment", "Control")) %>%
     mutate(treatment = if_else(GROUP == "Treatment", 1, 0))
-  
-  formula <- as.formula(
-    paste("treatment ~", paste(matching_variables, collapse = "+"))
-  )
+
+  formula <- reformulate(matching_variables, response = "treatment")
   
   # Balance avant appariement
   bal_before <- bal.tab(
@@ -1174,42 +1184,40 @@ check_balance_before <- function(df, year, matching_variables){
     abs = TRUE
   )
   
-  print(bal_before)
-  
   # Extraction du Standardized Mean Difference (SMD)
-  balance_df <- as.data.frame(bal_before$Balance) %>%
+ balance_df <- bal_before$Balance %>%
+    as.data.frame() %>%
     tibble::rownames_to_column("Variable")
-  
+
   smd_col <- grep("Diff|Std", names(balance_df), value = TRUE)[1]
-  
+
   smd_table <- balance_df %>%
     dplyr::select(Variable, SMD = all_of(smd_col)) %>%
     mutate(
-      Equilibre = if_else(abs(SMD) <= 0.1, "Equilibré", "Déséquilibré"),
-      Year = year) %>%
-    relocate(Year, .before = Variable)
-  
-  return(list(
-    bal_before = bal_before,
-    smd_table = smd_table
-  ))
+      Year = year,
+      Equilibre = if_else(abs(SMD) <= 0.1, "Équilibré", "Déséquilibré")
+    ) %>%
+    relocate(Year)
+
+  return(smd_table)
 }
 
-res_1997_5km  <- check_balance_before(data_matched_1997_5km, 1997, matching_variables)
-res_2008_5km  <- check_balance_before(data_matched_2008_5km, 2008, matching_variables)
-res_2011_5km  <- check_balance_before(data_matched_2011_5km, 2011, matching_variables)
-res_2013_5km  <- check_balance_before(data_matched_2013_5km, 2013, matching_variables)
-res_2016_5km  <- check_balance_before(data_matched_2016_5km, 2016, matching_variables)
-res_2021_5km  <- check_balance_before(data_matched_2021_5km, 2021, matching_variables)
+balance_results <- lapply(names(hr_list), function(y) {
+  check_balance_before(hr_list[[y]], as.numeric(y), matching_variables)
+})
+
+balance_results <- bind_rows(balance_results)
+
+balance_results
 
 # Distribution des covariables
 data_list <- list(
-  "1997" = data_matched_1997_5km,
-  "2008" = data_matched_2008_5km,
-  "2011" = data_matched_2011_5km,
-  "2013" = data_matched_2013_5km,
-  "2016" = data_matched_2016_5km,
-  "2021" = data_matched_2021_5km 
+  "1997" = hr_1997_final_5km,
+  "2008" = hr_2008_final_5km,
+  "2011" = hr_2011_final_5km,
+  "2013" = hr_2013_final_5km,
+  "2016" = hr_2016_final_5km,
+  "2021" = hr_2021_final_5km 
 )
 
 
@@ -1231,15 +1239,19 @@ data_list <- list(
     theme_minimal()
   }
     
-print(density_plot(data_matched_1997_5km, 1997, matching_variables))
-print(density_plot(data_matched_2008_5km, 2008, matching_variables))
-print(density_plot(data_matched_2011_5km, 2011, matching_variables))
-print(density_plot(data_matched_2013_5km, 2013, matching_variables))
-print(density_plot(data_matched_2016_5km, 2016, matching_variables))
-print(density_plot(data_matched_2021_5km, 2021, matching_variables))
+print(density_plot(hr_1997_final_5km, 1997, matching_variables))
+print(density_plot(hr_2008_final_5km, 2008, matching_variables))
+print(density_plot(hr_2011_final_5km, 2011, matching_variables))
+print(density_plot(hr_2013_final_5km, 2013, matching_variables))
+print(density_plot(hr_2016_final_5km, 2016, matching_variables))
+print(density_plot(hr_2021_final_5km, 2021, matching_variables))
 ```
 
+L'analyse de l'équilibre avant appariement montre que, pour la plupart des années, les différences moyennes standardisées entre les groupes traités et contrôles restent inférieures au seuil de 0.1, indiquant un bon équilibre. En 1997, toutes les covariables présentent un bon équilibre, seule la variable population_count_2000 demeure déséquilibrer (Diff.Un = 0.2107). L'année 2008 affiche l'équilibre les plus satisfaisant, avec des différences quasi nulles pour toutes les covariables. En 2011 et 2013, l'équilibre demeure globalement correct, toutefois la variable population_count_2000 reste légèrement déséquilibrée avec une différence standardisée de 0.1352 pour 2011 et 0.0903 pour 2013. L'année 2016 constitue le cas le plus problématiques pour plusieurs covariables, la variable treecover_ara_2000 (Diff.Un = 0.1113) et population_count_2000 (Diff.Un = 0.1457) dépassant le seuil de 0.1. En revanche, pour 2021, la différence standardisée pour toutes les covariables est inférieure à 0.1.
+
 Nous testons ensuite l'équilibre après l'appariement pour chaque covariable d'appariement.
+
+##### Checking covariate balance: test after matching
 
 ```{r}
 # Balance test after matching: Quantile- quantile QQ Plot analysis
@@ -1367,7 +1379,7 @@ plot_mirror_hist_5km(2016,"traveltime_2000_2000")
 plot_mirror_hist_5km(2021,"traveltime_2000_2000")
 ```
 
-#### Estimation_staggered
+#### Estimation
 
 ##### Overall effect on livelihoods
 
@@ -1671,17 +1683,15 @@ dat3 <- dat3 %>%
     TRUE ~ NA_character_
   ),
   IUCN_group = factor(IUCN_group, levels = c("strict", "usage_multiple")),
-  rel_year_binned = factor(rel_year_binned)
+  rel_year_binned = factor(rel_year_binned, levels = -5:5)
   ) %>%
   filter(!is.na(IUCN_group))
 
-# Outcome: wealth_centile_rural_weighted ----------------------------------------
-yvar <- "wealth_centile_rural_weighted"
-
-# did2s (Gardner) : statique + event-study--------------------------------
-# -- Statique (traitement "on/off")
+run_did2s_es <- function(data, yvar) {
+  
+  # -- Statique (traitement "on/off")
 did2s_static <- did2s(
-  data        = dat3,
+  data        = data,
   yname       = yvar,
   first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
   second_stage= ~ treat_on * IUCN_group,
@@ -1689,21 +1699,23 @@ did2s_static <- did2s(
   cluster_var = "hv001",
   weights     = "w_all"
 )
-etable(did2s_static, headers = "did2s statique (strict vs usage multiple)")
+print(etable(did2s_static, headers = paste("did2s statique -", yvar)))
+  
+}
 
 # -- Event-study (avec binning -5..5, ref = -1 et never-treated)
 did2s_es <- did2s(
-  data = dat3,
+  data = data,
   yname = yvar, 
   first_stage = ~ spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage= ~ 
+  second_stage = ~ 
     i(rel_year_binned, ref = -1) +
     i(rel_year_binned, IUCN_group),
   treatment   = "treat_on",
   cluster_var = "hv001",
   weights     = "w_all"
 )
-etable(did2s_es, headers = "did2s event-study (-5..5) par statut IUCN")
+print(etable(did2s_es, headers = paste("did2s event-study (-5..5) par statut IUCN", yvar)))
 
 tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
   filter(grepl("^rel_year_binned::", term)) %>%
@@ -1718,15 +1730,16 @@ tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
 # Effet pour les AP stricts
 strict_effect <- tidy_es %>%
   filter(type == "strict") %>%
-  mutate(group = "strict") %>%
-  select(year, estimate, conf.low, conf.high, group)
+  transmute(
+    year, estimate, conf.low, conf.high, group = "strict")
 
 # Effet total pour AP à usage multiple
 usage_effect <- tidy_es %>%
   filter(type == "diff_usage_multiple") %>%
-  rename(estimate_diff = estimate,
-         conf.low_diff = conf.low,
-         conf.high_diff = conf.high) %>%
+  rename(
+    estimate_diff = estimate,
+    conf.low_diff = conf.low,
+    conf.high_diff = conf.high) %>%
   left_join(strict_effect, by = "year") %>%
   mutate(
     estimate = estimate + estimate_diff,
@@ -1751,93 +1764,22 @@ ggplot(plot_did2s, aes(x = year, y = estimate, color = group)) +
 
 # Test joint de pré-tendances (tous les leads k < 0)
 # On construit un motif regex pour k = -5..-1 présents dans le modèle
-leads_present <- plot_did2s$k[plot_did2s$k < 0]
+leads_present <- strict_effect$year[strict_effect$year < 0]
+
 if(length(leads_present) > 0){
   keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
   print(fixest::wald(did2s_es, keep = keep_regex))
 }
 
-# Outcome: zscore_wealth----------------------------------------------------------
-yvar <- "zscore_wealth"
-
-# did2s (Gardner) : statique + event-study--------------------------------
-# -- Statique (traitement "on/off")
-did2s_static <- did2s(
-  data        = dat3,
-  yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage= ~ treat_on * IUCN_group,
-  treatment   = "treat_on",
-  cluster_var = "hv001",
-  weights     = "w_all"
-)
-etable(did2s_static, headers = "did2s statique (strict vs usage multiple)")
-
-# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
-did2s_es <- did2s(
-  data = dat3,
-  yname = yvar, 
-  first_stage = ~ spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage= ~ 
-    i(rel_year_binned, ref = -1) +
-    i(rel_year_binned, IUCN_group),
-  treatment   = "treat_on",
-  cluster_var = "hv001",
-  weights     = "w_all"
-)
-etable(did2s_es, headers = "did2s event-study (-5..5) par statut IUCN")
-
-tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
-  filter(grepl("^rel_year_binned::", term)) %>%
-  mutate(
-    year = as.numeric(sub("rel_year_binned::(-?\\d+).*", "\\1", term)),
-    type = case_when(
-      grepl("IUCN_group::usage_multiple", term) ~ "diff_usage_multiple",
-      TRUE ~ "strict"
-    )
-  )
-
-# Effet pour les AP stricts
-strict_effect <- tidy_es %>%
-  filter(type == "strict") %>%
-  mutate(group = "strict") %>%
-  select(year, estimate, conf.low, conf.high, group)
-
-# Effet total pour AP à usage multiple
-usage_effect <- tidy_es %>%
-  filter(type == "diff_usage_multiple") %>%
-  rename(estimate_diff = estimate,
-         conf.low_diff = conf.low,
-         conf.high_diff = conf.high) %>%
-  left_join(strict_effect, by = "year") %>%
-  mutate(
-    estimate = estimate + estimate_diff,
-    conf.low = conf.low + conf.low_diff,
-    conf.high = conf.high + conf.high_diff,
-    group = "usage_multiple"
-  ) %>%
-  select(year, estimate, conf.low, conf.high, group)
-
-# Plot ES did2s
-plot_did2s <- bind_rows(strict_effect, usage_effect)
-
-ggplot(plot_did2s, aes(x = year, y = estimate, color = group)) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_point() +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
-  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
-       y = "Effet estimé",
-       title = "Event-study (did2s) - hétérogénéité par statut IUCN",
-       color = "Catégorie IUCN") + 
-  theme_minimal()
-
-# Test joint de pré-tendances (tous les leads k < 0)
-# On construit un motif regex pour k = -5..-1 présents dans le modèle
-leads_present <- plot_did2s$k[plot_did2s$k < 0]
-if(length(leads_present) > 0){
-  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
-  print(fixest::wald(did2s_es, keep = keep_regex))
+ return(list(
+   static = did2s_static,
+   es = did2s_es,
+   plot_did2s = plot_did2s
+ ))
 }
+
+res_wealth_centile <- run_did2s_es(dat3, "wealth_centile_rural_weighted")
+
 ```
 
 ### Test pour une distance de 15km
@@ -2845,6 +2787,104 @@ saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years_15km.rds")
 print(result_list)
 ```
 
+##### Checking covariate balance
+
+Nous allons vérifier l'équilibre relatif des variables mesurées dans des unités différentes avant le matching pour mesurer l'écart entre les moyennes des covariables dans les groupes de traitement et de contrôle pour un buffer de 15 km.
+
+```{r}
+# Balance test before matching
+data_matched_1997_15km <- read_rds("data/derived/data_matched_1997_15km.rds")
+data_matched_2008_15km <- read_rds("data/derived/data_matched_2008_15km.rds")
+data_matched_2011_15km <- read_rds("data/derived/data_matched_2011_15km.rds")
+data_matched_2013_15km <- read_rds("data/derived/data_matched_2013_15km.rds")
+data_matched_2016_15km <- read_rds("data/derived/data_matched_2016_15km.rds")
+data_matched_2021_15km <- read_rds("data/derived/data_matched_2021_15km.rds")
+
+# Equilibre des covariables
+check_balance_before <- function(df, year, matching_variables){
+  
+  data <- df %>%
+    filter(GROUP %in% c("Treatment", "Control")) %>%
+    mutate(treatment = if_else(GROUP == "Treatment", 1, 0))
+  
+  formula <- as.formula(
+    paste("treatment ~", paste(matching_variables, collapse = "+"))
+  )
+  
+  # Balance avant appariement
+  bal_before <- bal.tab(
+    formula,
+    data = data,
+    estimand = "ATT",
+    un = TRUE,
+    abs = TRUE
+  )
+  
+  print(bal_before)
+  
+  # Extraction du Standardized Mean Difference (SMD)
+  balance_df <- as.data.frame(bal_before$Balance) %>%
+    tibble::rownames_to_column("Variable")
+  
+  smd_col <- grep("Diff|Std", names(balance_df), value = TRUE)[1]
+  
+  smd_table <- balance_df %>%
+    dplyr::select(Variable, SMD = all_of(smd_col)) %>%
+    mutate(
+      Equilibre = if_else(abs(SMD) <= 0.1, "Equilibré", "Déséquilibré"),
+      Year = year) %>%
+    relocate(Year, .before = Variable)
+  
+  return(list(
+    bal_before = bal_before,
+    smd_table = smd_table
+  ))
+}
+
+res_1997_15km  <- check_balance_before(data_matched_1997_15km, 1997, matching_variables)
+res_2008_15km  <- check_balance_before(data_matched_2008_15km, 2008, matching_variables)
+res_2011_15km  <- check_balance_before(data_matched_2011_15km, 2011, matching_variables)
+res_2013_15km  <- check_balance_before(data_matched_2013_15km, 2013, matching_variables)
+res_2016_15km  <- check_balance_before(data_matched_2016_15km, 2016, matching_variables)
+res_2021_15km  <- check_balance_before(data_matched_2021_15km, 2021, matching_variables)
+
+# Distribution des covariables
+data_list <- list(
+  "1997" = data_matched_1997_15km,
+  "2008" = data_matched_2008_15km,
+  "2011" = data_matched_2011_15km,
+  "2013" = data_matched_2013_15km,
+  "2016" = data_matched_2016_15km,
+  "2021" = data_matched_2021_15km 
+)
+
+
+  density_plot <- function(data, year, matching_variables){
+    data %>%
+      filter(GROUP %in% c("Treatment", "Control")) %>%
+      mutate(GROUP =factor(GROUP, levels = c("Control", "Treatment"))) %>%
+    pivot_longer(cols = all_of(matching_variables), names_to = "variable", values_to = "value") %>%
+    ggplot(aes(x = value, fill = GROUP)) +
+    geom_density(alpha = 0.5, color = "black", linewidth = 0.7, adjust = 0.7) +
+    facet_wrap(~variable, scales = "free") + 
+    scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
+    labs(
+      title = paste("Covariate distribution before matching(", year, ")", sep = ""),
+      x = "Valeur de la covariable",
+      y = "Densité",
+      fill = "Group"
+    ) + 
+    theme_minimal()
+  }
+    
+print(density_plot(data_matched_1997_15km, 1997, matching_variables))
+print(density_plot(data_matched_2008_15km, 2008, matching_variables))
+print(density_plot(data_matched_2011_15km, 2011, matching_variables))
+print(density_plot(data_matched_2013_15km, 2013, matching_variables))
+print(density_plot(data_matched_2016_15km, 2016, matching_variables))
+print(density_plot(data_matched_2021_15km, 2021, matching_variables))
+```
+
 #### Estimation
 
 ##### Overall effect on livelihoods
@@ -3035,7 +3075,7 @@ Dans l'ensemble, les analyses DID 2x2 et staggered DID montrent que la création
 
 Les tests placebo (1997-2008) ainsi que les tests de pré-tendances montrent l'absence de d'effet avant la création des aires protégées, renforçant la crédibilité causale. Toutefois, on observe un léger effet positif moyen des aires protégées sur le centile de richesse dans les années 1 à 3 années suivant sa mise en place. Ces effets sont sont ni robustes ni durable.
 
-##### Effect on inequalities 
+##### Effect on inequalities
 
 ```{r}
 # Staggered DiD-----------------------------------------
