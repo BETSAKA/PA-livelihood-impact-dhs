@@ -1331,7 +1331,7 @@ plot_mirror_hist_5km <- function(year, variable){
    ) + 
    geom_hline(yintercept = 0, color = "black") + 
    labs(
-     title = glue("Covariate after matching - {variable} ({year})"),
+     title = glue("Covariate after matching - {variable} - 5km ({year})"),
      x = variable, 
      y = "Effectifs (+ Traités / - Contrôles)"
      ) + 
@@ -1343,7 +1343,7 @@ plot_mirror_hist_5km <- function(year, variable){
 
 walk(yrs, function(y){
   walk(matching_variables, function(v){
-    message(glue("→ Histogramme {v} ({y})"))
+    message(glue("→ Histogramme-5km {v} ({y})"))
     print(plot_mirror_hist_5km(y, v))
   })
 })
@@ -1539,11 +1539,15 @@ if(length(leads_present) > 0){
 }
 ```
 
-Les résultats de l'estimation DID 2x2 indiquent qu'il n'a aucune différence d'évolution significative entre les groupes traités et contrôles avant la mise en place des aires protégées. Le coefficient placebo treat_post est non significatif (7.743). De même, sur la période de traitement (2008-2021), le coefficient est légèrement négatif mais non significatif, indiquant l'absence d'effet détectable des aires protégées sur le centile de richesse des ménages ruraux. Les graphiques confirment également cela: pour le pré-traitement, l'effet est proche de zéro, tandis que pour le post-traitement, l'effet est plutôt négatif mais non significatif.
+Les résultats de l'estimation DID 2x2 indiquent qu'avant la mise en place des aires protégées, il n'y avait aucune différence d'évolution significative entre les groupes traités et contrôles. Le coefficient placebo treat_post est non significatif (7.743). De même, sur la période de traitement (2008-2021), le coefficient est légèrement négatif mais non significatif, indiquant l'absence d'effet détectable des aires protégées sur le centile de richesse des ménages ruraux. Les graphiques confirment également cela: pour le pré-traitement, l'effet est proche de zéro, tandis que pour le post-traitement, l'effet est plutôt négatif mais non significatif.
 
-Dans l'analyse par event study (staggered adoption), un effet positif apparaît trois ans après la mise en place de l'aire protégée (rel_year = 3: 19.03\*), suggérantt une amélioration du niveau de vie. Toutefois, l'absence de significativité pour les autres années montre qu'il ne s'agit pas d'un effet régulier ou durable.
+Dans l'analyse par event study (staggered adoption), un test de pre-trend a été réalisé à partir du test de Wald. Ce test examine l'hypothèse nulle H0 selon laquelle les coefficients associés aux périodes de pré-traitement rel_year_binned:: -5 et rel_year_binned::-3 sont conjointement égaux à zéro. Autrement dit, avant le traitement, pour les années -5 et -3 relatives à l'intervention, il ne doit pas y avoir d'effet. Le résultat du test indique que le p_value est égale à 0.4079145, largement supérieur au seuil de 0.05, donc l'hypothèse nulle est rejeté. Cela suggère que les trajectoires des groupes traités et contrôles étaient similaires avant le traitement pour les deux périodes, soutenant ainsi l'hypothèse des tendances parallèles. L'estimation par event study a aussi montré qu'un effet positif apparaît trois ans après la mise en place de l'aire protégée (rel_year = 3: 19.03\*), suggérant une amélioration du niveau de vie. Toutefois, l'absence de significativité pour les autres années montre qu'il ne s'agit pas d'un effet régulier ou durable.
 
 ##### Effect on inequalities
+
+###### Staggered DID 
+
+Cette partie estime les effets sur les inégalités pour vérifier l'hypothèse 2: Les aires protégées exacerbent les inégalités économiques, car ce sont les personnes les plus aisées ou les mieux connectées qui profitent le plus des avantages.
 
 ```{r}
 # Staggered DiD-----------------------------------------
@@ -1598,6 +1602,14 @@ if(length(leads_present) > 0){
 
 ```
 
+L'estimation DID 2x2 montre que l'effet moyen d'être dans un cluster traité (situé à proximité des aires protégées créées après 2008) n'est pas statistiquement significatif sur le Z-score de l'indice de richesse (𝜷 = 0.0029; SE = 0.0082). De plus R² et R² ajusté sont proches de zéro et identiques, indiquant que le modèle n'explique pratiquement aucune part de la variation du niveau de richesse.
+
+Le modèle event study ne met en évidence aucune tendance significative avant la mise en place des aires protégées. L'hypothèse des tendances parallèles est vérifié car l'hypothèse nulle est rejeté (p-value = 0.06151144 \> 0.05). Après la mise en place de l'aire protégée, un effet positif émerge deux ans après l'intervention (rel_year = 2: 0.0228\*), puis devient particulièrement marqué au bout de trois ans (rel_year = 3: 0.0565\*\*\*). Toutefois, cet effet disparaît au bout de cinq ans, indiquant que l'effet n'est pas durable. Le R² et R² ajusté montrent que la part de variance expliquée par le traitement est minimale.
+
+###### Quantile treatment effect
+
+Cette partie mesure l'effet du traitement à différents points de la distribution du zscore de l'indice de richesse: au niveau des ménages les plus pauvres (quantiles bas), la classe moyenne et au niveau des ménages les plus aisés (quantiles élevés).
+
 ```{r}
 # Quantile treatment effects
 # Testing Quantile treatment effect------------------------------
@@ -1650,6 +1662,10 @@ ggqte(cic_pre) +
   labs(x = "Quantiles", y = "QTET",
        title = "Placebo CiC QTET: 1997-2008")
 ```
+
+Pour l'estimation principale (2008-2021), les résultats de QTE indiquent un effet négatif sur l'ensemble de la distribution de la richesse des ménages. Toutefois, l'impact du traitement n'est pas homogène pour toutes les classes. Il est plus marqué pour les classes moyennes (quantile variant de 0.30 à 0.60 avec des effets entre -20 et -23), tandis qu'il est plus faible ches les ménages les plus pauvres et les plus riches. L'effet moyen du traitement (ATE = -16.36) confirme une baisse significative du niveau de richesse associée à la proximité des aires protégées créées après 2008. Ces résultats suggèrent que la mise en place des aires protégées renforcent les inégalités.
+
+Pour le placebo (1997-2008), Les ménages les plus pauvres semblent peu affectés, voire légèrement bénéficiaires de la mise en place des aires protégées, avec des QTE positifs (quantiles variant de 5.53 à .
 
 ##### Heterogeneity
 
@@ -2774,29 +2790,25 @@ saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years_15km.rds")
 print(result_list)
 ```
 
-##### Checking covariate balance
+##### Checking covariate balance: test before matching
 
 Nous allons vérifier l'équilibre relatif des variables mesurées dans des unités différentes avant le matching pour mesurer l'écart entre les moyennes des covariables dans les groupes de traitement et de contrôle pour un buffer de 15 km.
 
 ```{r}
-# Balance test before matching
-data_matched_1997_15km <- read_rds("data/derived/data_matched_1997_15km.rds")
-data_matched_2008_15km <- read_rds("data/derived/data_matched_2008_15km.rds")
-data_matched_2011_15km <- read_rds("data/derived/data_matched_2011_15km.rds")
-data_matched_2013_15km <- read_rds("data/derived/data_matched_2013_15km.rds")
-data_matched_2016_15km <- read_rds("data/derived/data_matched_2016_15km.rds")
-data_matched_2021_15km <- read_rds("data/derived/data_matched_2021_15km.rds")
+# Load 
+hr_list <- setNames(
+  lapply(yrs, function(y) read_rds(paste0("data/derived/hr_", y, "_final_15km.rds"))),
+  yrs
+)
 
 # Equilibre des covariables
-check_balance_before <- function(df, year, matching_variables){
+check_balance_before <- function(df, year, matching_variables) {
   
   data <- df %>%
     filter(GROUP %in% c("Treatment", "Control")) %>%
     mutate(treatment = if_else(GROUP == "Treatment", 1, 0))
-  
-  formula <- as.formula(
-    paste("treatment ~", paste(matching_variables, collapse = "+"))
-  )
+
+  formula <- reformulate(matching_variables, response = "treatment")
   
   # Balance avant appariement
   bal_before <- bal.tab(
@@ -2807,42 +2819,40 @@ check_balance_before <- function(df, year, matching_variables){
     abs = TRUE
   )
   
-  print(bal_before)
-  
   # Extraction du Standardized Mean Difference (SMD)
-  balance_df <- as.data.frame(bal_before$Balance) %>%
+ balance_df <- bal_before$Balance %>%
+    as.data.frame() %>%
     tibble::rownames_to_column("Variable")
-  
+
   smd_col <- grep("Diff|Std", names(balance_df), value = TRUE)[1]
-  
+
   smd_table <- balance_df %>%
     dplyr::select(Variable, SMD = all_of(smd_col)) %>%
     mutate(
-      Equilibre = if_else(abs(SMD) <= 0.1, "Equilibré", "Déséquilibré"),
-      Year = year) %>%
-    relocate(Year, .before = Variable)
-  
-  return(list(
-    bal_before = bal_before,
-    smd_table = smd_table
-  ))
+      Year = year,
+      Equilibre = if_else(abs(SMD) <= 0.1, "Équilibré", "Déséquilibré")
+    ) %>%
+    relocate(Year)
+
+  return(smd_table)
 }
 
-res_1997_15km  <- check_balance_before(data_matched_1997_15km, 1997, matching_variables)
-res_2008_15km  <- check_balance_before(data_matched_2008_15km, 2008, matching_variables)
-res_2011_15km  <- check_balance_before(data_matched_2011_15km, 2011, matching_variables)
-res_2013_15km  <- check_balance_before(data_matched_2013_15km, 2013, matching_variables)
-res_2016_15km  <- check_balance_before(data_matched_2016_15km, 2016, matching_variables)
-res_2021_15km  <- check_balance_before(data_matched_2021_15km, 2021, matching_variables)
+balance_results <- lapply(names(hr_list), function(y) {
+  check_balance_before(hr_list[[y]], as.numeric(y), matching_variables)
+})
+
+balance_results <- bind_rows(balance_results)
+
+balance_results
 
 # Distribution des covariables
 data_list <- list(
-  "1997" = data_matched_1997_15km,
-  "2008" = data_matched_2008_15km,
-  "2011" = data_matched_2011_15km,
-  "2013" = data_matched_2013_15km,
-  "2016" = data_matched_2016_15km,
-  "2021" = data_matched_2021_15km 
+  "1997" = hr_1997_final_15km,
+  "2008" = hr_2008_final_15km,
+  "2011" = hr_2011_final_15km,
+  "2013" = hr_2013_final_15km,
+  "2016" = hr_2016_final_15km,
+  "2021" = hr_2021_final_15km 
 )
 
 
@@ -2864,13 +2874,117 @@ data_list <- list(
     theme_minimal()
   }
     
-print(density_plot(data_matched_1997_15km, 1997, matching_variables))
-print(density_plot(data_matched_2008_15km, 2008, matching_variables))
-print(density_plot(data_matched_2011_15km, 2011, matching_variables))
-print(density_plot(data_matched_2013_15km, 2013, matching_variables))
-print(density_plot(data_matched_2016_15km, 2016, matching_variables))
-print(density_plot(data_matched_2021_15km, 2021, matching_variables))
+print(density_plot(hr_1997_final_15km, 1997, matching_variables))
+print(density_plot(hr_2008_final_15km, 2008, matching_variables))
+print(density_plot(hr_2011_final_15km, 2011, matching_variables))
+print(density_plot(hr_2013_final_15km, 2013, matching_variables))
+print(density_plot(hr_2016_final_15km, 2016, matching_variables))
+print(density_plot(hr_2021_final_15km, 2021, matching_variables))
 ```
+
+L'analyse de l'équilibre avant appariement montre que, pour la plupart des années, les différences moyennes standardisées entre les groupes traités et contrôles restent inférieures au seuil de 0.1, indiquant un bon équilibre. En 1997, toutes les covariables présentent un bon équilibre, seule la variable population_count_2000 demeure déséquilibrer (Diff.Un = 0.2107). L'année 2008 affiche l'équilibre les plus satisfaisant, avec des différences quasi nulles pour toutes les covariables. En 2011 et 2013, l'équilibre demeure globalement correct, toutefois la variable population_count_2000 reste légèrement déséquilibrée avec une différence standardisée de 0.1352 pour 2011 et 0.0903 pour 2013. L'année 2016 constitue le cas le plus problématiques pour plusieurs covariables, la variable treecover_ara_2000 (Diff.Un = 0.1113) et population_count_2000 (Diff.Un = 0.1457) dépassant le seuil de 0.1. En revanche, pour 2021, la différence standardisée pour toutes les covariables est inférieure à 0.1.
+
+Nous testons ensuite l'équilibre après l'appariement pour chaque covariable d'appariement.
+
+##### Checking covariate balance: test after matching
+
+```{r}
+# Balance test after matching: Quantile- quantile QQ Plot analysis
+check_balance_after <- function(data_matched, year, matching_variables, plot_dir = "plots") {
+  
+  # Balance après appariement
+  bal_after <- cobalt::bal.tab(
+    x = data_matched[, matching_variables],
+    treat = data_matched$GROUP,
+    un = TRUE,
+    abs = TRUE,
+    estimand = "ATT"
+  )
+  
+  print(bal_after)
+  
+  # QQ Plot
+  year_dir <- file.path(plot_dir, glue("QQplots_{year}"))
+  dir.create(year_dir, recursive = TRUE, showWarnings = FALSE)
+  
+  matching_variables %>% walk(function(var){
+  if(!is.numeric(data_matched[[var]])){
+    return(NULL)
+  }
+    
+    p <- ggqqplot(
+      data_matched, x = var, color = "GROUP",
+      palette = c("#1f77b4", "#ff7f0e"),
+      title = glue("QQ Polt - {var} ({year})")
+    ) + 
+      geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
+      theme_minimal() +
+      labs(x = "Quantiles théoriques", y = "Quantiles observés", color = "Groupe") + 
+      theme(plot.title = element_text(hjust = 0.5))
+    
+    
+    ggsave(
+      filename = file.path(year_dir, glue("QQplot_{var}_{year}.png")), plot = p, width = 7, height = 5
+    )
+  })
+  
+  return(list(balance = bal_after))
+}
+
+results_list <- map(yrs, function(y){
+  data_y <- readRDS(glue("data/derived/data_matched_{y}_15km.rds"))
+  check_balance_after(data_y, y,matching_variables)
+})
+
+names(results_list) <- yrs
+
+
+# Balance test after matching: Histogram
+plot_mirror_hist_5km <- function(year, variable){
+  
+ df <- readRDS(glue("data/derived/data_matched_{year}.rds")) %>%
+   filter(GROUP %in% c("Treatment", "Control")) %>%
+   mutate(
+     treatment = ifelse(GROUP == "Treatment", "Traité", "Contrôle"), 
+     value = .data[[variable]]
+   )
+ 
+ ggplot() +
+   geom_histogram(
+     data = df %>% filter(treatment == "Traité"), 
+     aes(x = value), 
+     bins = 30, 
+     fill = "blue", 
+     alpha = 0.6
+     ) + 
+ geom_histogram(
+   data = df %>% filter(treatment == "Contrôle"), 
+   aes(x = value, y = -after_stat(count)),
+   bins = 30, 
+   fill = "green", 
+   alpha = 0.6
+   ) + 
+   geom_hline(yintercept = 0, color = "black") + 
+   labs(
+     title = glue("Covariate after matching - {variable} - 15km ({year})"),
+     x = variable, 
+     y = "Effectifs (+ Traités / - Contrôles)"
+     ) + 
+   annotate("text", x = Inf, y = -Inf, label = "Traités", hjust = 1.1, vjust = 2, color = "blue") +
+   annotate("text", x = Inf, y = -Inf, label = "Contrôles", hjust = 1.1, vjust = -1.5, color = "green") +
+   theme_minimal()
+ 
+}
+
+walk(yrs, function(y){
+  walk(matching_variables, function(v){
+    message(glue("→ Histogramme-15km {v} ({y})"))
+    print(plot_mirror_hist_5km(y, v))
+  })
+})
+```
+
+Après le matching, pour l'ensemble des variables de chaque année, la différence moyenne standardisée s'est améliorée. Toutefois, la variable population_count_2000 reste difficile à équilibrer. Cela s'explique par le fait que les aires protégées ne sont pas implantées de manière aléatoire dans le paysage: celles gérées pour la conservation de la biodiversité se situent généralement dans des zones plus isolées et moins peuplées, tandis que les aires gérées pour des usages mixtes sont entourées de populations plus denses. Comme le souligne @chung2018 "la densité démographique autour des zones protégées gérées à des fins mixtes est également plus élevée que celle des zones protégées gérées principalement pour la conservation de la biodiversité." Cette hétérogénéité entre les contextes humains entourant les différents types d'aires protégées crée un manque d'overlap dans la distribution de la densité de population entre les groupes traités et contrôles, rendant cette variable difficile à équilibrer. même après matching.
 
 #### Estimation
 
