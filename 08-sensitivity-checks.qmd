@@ -1545,7 +1545,7 @@ Dans l'analyse par event study (staggered adoption), un test de pre-trend a ét�
 
 ##### Effect on inequalities
 
-###### Staggered DID 
+###### Staggered DID
 
 Cette partie estime les effets sur les inégalités pour vérifier l'hypothèse 2: Les aires protégées exacerbent les inégalités économiques, car ce sont les personnes les plus aisées ou les mieux connectées qui profitent le plus des avantages.
 
@@ -1669,6 +1669,8 @@ Pour le placebo (1997-2008), Les ménages les plus pauvres semblent peu affecté
 
 ##### Heterogeneity
 
+Dans cette partie, nous allons vérifier l'hypothèse 3 portant sur l'hétérogénéité des effets selon le type de gouvernance des aires protégées.
+
 ```{r}
 # Création du groupe IUCN 
 dat3 <- dat3 %>%
@@ -1697,84 +1699,71 @@ run_did2s_es <- function(data, yvar) {
     weights     = "w_all"
   )
   print(etable(did2s_static, headers = paste("did2s statique -", yvar)))
-
-  # Event-study (avec binning -5 ..(, ref = -1 et never-treated))
+  
+# DID event study
+  
   did2s_es <- did2s(
     data = data,
     yname = yvar, 
-    first_stage = ~ spei_wc_n_2 +  spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-    second_stage = ~ 
-      i(rel_year_binned, ref = -1) +
-      i(rel_year_binned, IUCN_group),
+    first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+    second_stage = ~ i(rel_year_binned, IUCN_group, ref = -1),
     treatment   = "treat_on",
     cluster_var = "hv001",
     weights     = "w_all"
   )
-  print(etable(did2s_es, headers = paste("did2s event-study (-5..5) par statut IUCN", yvar)))
-
-  # Extraction des coefficients
+  
+  print(etable(did2s_es, 
+               headers = paste("did2s event-study (-5..5) par statut IUCN - buffer de 5km", yvar)))
+  
+    # Extraction des coefficients
   tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
-    filter(grepl("^rel_year_binned =", term)) %>%
+    filter(grepl("^rel_year_binned::", term)) %>%
     mutate(
-      year = as.numeric(sub("rel_year_binned = (-?\\d+).*", "\\1", term)),
-      type = case_when(
-        grepl("IUCN_group::usage_multiple", term) ~ "diff_usage_multiple",
-        TRUE ~ "strict"
-      )
-    )
-  # Effet des AP stricts 
-  strict_effect <- tidy_es %>%
-    filter(type == "strict") %>%
-    select(
-      year, 
-      estimate = estimate, 
-      conf.low, conf.high
+      year = as.numeric(stringr::str_extract(term, "(?<=::)-?[0-9]+")),
+      
+      # identifier strict vs usage_multiple
+      group = case_when(
+        grepl("usage_multiple", term, ignore.case = TRUE) ~ "usage_multiple",
+        grepl("strict", term, ignore.case = TRUE) ~ "strict",
+        TRUE ~ NA_character_
+      ),
+      outcome = yvar
     ) %>%
-    mutate(group = "strict")
+    filter(!is.na(group))
 
-  usage_diff <- tidy_es %>%
-    filter(type == "diff_usage_multiple") %>%
-    select(year, estimate_diff = estimate, conf.low_diff = conf.low, conf.high_diff = conf.high)
-
-  # Effet total pour AP à usage multiple
-  usage_effect <- left_join(strict_effect, usage_diff, by = "year") %>%
-    mutate(
-      estimate = estimate + estimate_diff,
-      conf.low = conf.low + conf.low_diff,
-      conf.high = conf.high + conf.high_diff,
-      group = "usage_multiple"
-    ) %>%
-    select(year, estimate, conf.low, conf.high, group)
-
-  # Plot ES did2s
-  plot_did2s <- bind_rows(strict_effect, usage_effect)
-
-  g <- ggplot(plot_did2s, aes(x = year, y = estimate, color = group)) +
+  #Plot
+  plot_title <- paste0("Event-study (did2s) -", yvar, "\nHétérogénéité par statut IUCN - buffer 5km")
+  
+  g <- ggplot(tidy_es, aes(x = year, y = estimate, color = group)) +
     geom_hline(yintercept = 0, linetype = "dashed") +
-    geom_point() +
-    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
-    labs(x = "Années relatives au 1er traitement (binnées -5..5)",
-         y = "Effet estimé",
-         title = "Event-study (did2s) - hétérogénéité par statut IUCN",
-         color = "Catégorie IUCN") + 
-    theme_minimal()
-
+    geom_point(size = 2) +
+    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+    labs(
+      x = "Années relatives au 1er traitement (binnées -5..5)",
+      y = "Effet estimé",
+      title = plot_title,
+      color = "Catégorie IUCN"
+    ) +
+    theme_minimal(base_size = 14)
+  
   print(g)
-
+  
   # Test de pré-tendances
-  leads_present <- strict_effect$year[strict_effect$year < 0]
-  if(length(leads_present) > 0){
-    keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
+  leads <- tidy_es %>% filter(year < 0)
+  
+  if(nrow(leads) > 0){
+    keep_regex <- paste0("^rel_year_binned::(", paste(unique(leads$year), collapse="|"), "):")
     print(wald(did2s_es, keep = keep_regex))
   }
-
+  
   return(list(
     static = did2s_static,
-    es = did2s_es,
-    plot = g
+    es     = did2s_es,
+    coef   = tidy_es,
+    plot   = g
   ))
+}
 
-} 
 
 res_wealth <- run_did2s_es(dat3, "wealth_centile_rural_weighted")
 res_zscore <- run_did2s_es(dat3, "zscore_wealth")
@@ -1782,6 +1771,12 @@ res_zscore <- run_did2s_es(dat3, "zscore_wealth")
 ```
 
 Outcome: Wealth_centile_rural
+
+L'estimation du DID statique montre qu'être situé dans un rayon de 5 km autour d'une aire protégée (que ce soit pour les aires strictes ou pour les aires à usage multiple) n'a pas d'effet significatif sur le centile de richesse.
+
+L'analyse en event study confirme également l'absence d'effet significatif avant le traitement. L'hypothèse de tendances parallèles est donc respectée. Au moment du traitement (rel_year_binned = 0), le résultat montre un effet positif et très significatif. Les ménages proches d'une aire protégée strict voient leur centile de richesse augmenter fortement (coefficient = 29.59\*). Les ménages proches d'une aire protégée à usage multiple connaissent également une augmentation de leur centile de richesse (coefficient = 10.48\*), mais plutôt modéré. Ces résultats apparaissent clairement sur le graphique, qui illustre l'évolution de l'effet estimé du traitement (à 5 km d'une aire protégée) avant et après le premier traitement, distinguant les aires protégées strictes et les aires en usage multiple.
+
+A savoir que le résultat ne comprennent que les bins allant -5 à +2, car les bins +3, +4 et +5 n'ont pas assez d'observations pour certaines combinaisons et ne peuvent d'être estimer.
 
 Outcome: zscore_wealth
 
