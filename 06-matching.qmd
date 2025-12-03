@@ -222,23 +222,20 @@ Pour effectuer le test avant l'appariement, on détermine les déséquilibres in
 -   Si SMD \> 0.1, le déséquilibre est significatif [@austin2009]. Pour réajuster l'équilibre, on augmentera l'intervalle des calipers afin d'obtenir un SMD **≤** 0.1.
 
 ```{r}
-data_matched_1997 <- read_rds("data/derived/data_matched_1997.rds")
-data_matched_2008 <- read_rds("data/derived/data_matched_2008.rds")
-data_matched_2011 <- read_rds("data/derived/data_matched_2011.rds")
-data_matched_2013 <- read_rds("data/derived/data_matched_2013.rds")
-data_matched_2016 <- read_rds("data/derived/data_matched_2016.rds")
-data_matched_2021 <- read_rds("data/derived/data_matched_2021.rds")
+# Load 
+hr_list <- setNames(
+  lapply(years, function(y) read_rds(paste0("data/derived/hr_", y, "_final.rds"))),
+  yrs
+)
 
 # Equilibre des covariables
-check_balance_before <- function(df, year, matching_variables){
+check_balance_before <- function(df, year, matching_variables) {
   
   data <- df %>%
     filter(GROUP %in% c("Treatment", "Control")) %>%
     mutate(treatment = if_else(GROUP == "Treatment", 1, 0))
-  
-  formula <- as.formula(
-    paste("treatment ~", paste(matching_variables, collapse = "+"))
-  )
+
+  formula <- reformulate(matching_variables, response = "treatment")
   
   # Balance avant appariement
   bal_before <- bal.tab(
@@ -249,33 +246,33 @@ check_balance_before <- function(df, year, matching_variables){
     abs = TRUE
   )
   
-  print(bal_before)
-  
   # Extraction du Standardized Mean Difference (SMD)
-  balance_df <- as.data.frame(bal_before$Balance) %>%
+ balance_df <- bal_before$Balance %>%
+    as.data.frame() %>%
     tibble::rownames_to_column("Variable")
-  
+
   smd_col <- grep("Diff|Std", names(balance_df), value = TRUE)[1]
-  
+
   smd_table <- balance_df %>%
     dplyr::select(Variable, SMD = all_of(smd_col)) %>%
     mutate(
-      Equilibre = if_else(abs(SMD) <= 0.1, "Equilibré", "Déséquilibré"),
-      Year = year) %>%
-    relocate(Year, .before = Variable)
-  
-  return(list(
-    bal_before = bal_before,
-    smd_table = smd_table
-  ))
+      Year = year,
+      Equilibre = if_else(abs(SMD) <= 0.1, "Équilibré", "Déséquilibré")
+    ) %>%
+    relocate(Year)
+
+  return(smd_table)
 }
 
-res_1997 <- check_balance_before(data_matched_1997, 1997, matching_variables)
-res_2008 <- check_balance_before(data_matched_2008, 2008, matching_variables)
-res_2011 <- check_balance_before(data_matched_2011, 2011, matching_variables)
-res_2013 <- check_balance_before(data_matched_2013, 2013, matching_variables)
-res_2016 <- check_balance_before(data_matched_2016, 2016, matching_variables)
-res_2021 <- check_balance_before(data_matched_2021, 2021, matching_variables)
+balance_results <- lapply(names(hr_list), function(y) {
+  check_balance_before(hr_list[[y]], as.numeric(y), matching_variables)
+})
+
+balance_results <- bind_rows(balance_results)
+
+balance_results
+
+
 ```
 
 L'analyse des distributions des covariables avant le matching montrent un déséquilibre important entre les groupes de traitement et de contrôle. En 1997, l'équilibre des covariables est partiellement atteint. Deux variables montrent un déséquilibre dont la couverture forestière en 2000 (avec un SMD = 0.15) et l'accessibilité en 2000 (avec un SMD = 0.17). Cela montre des différences structurelles persistantes entre les groupes. En 2008, l'équilibre est globalement satisfaisant, avec un léger déséquilibre pour la variable densité de population avec un SMD égale à 0.10, tandis que l'ensemble des autres covariables présente un SMD inférieur à 0.05. En 2011, tous les covariables sont bien équilibrées sauf pour la variable densité de population. Cette dernière montre un déséquilibre modéré dont la SMD est égale à 0.15. Cela suggère une certaine hétérogénéité territoriale entre les zones traitées et non traitées. Cette année est celle où le matching est le plus performant. En 2013, la majorité des covariables sont équilibrées mais le temps de déplacement reste déséquilibré avec un SMD égale à 0.14. Cela indique l'existence d'une différence persistante d'accessibilité entre les groupes. En 2016, toutes les covariables présentent un SMD inférieur au seuil de 0.1, qui indique un équilibre satisfaisant entre les groupes. En 2021, plusieurs covariables présentent un léger déséquilibre. Les groupes restent structurellement différents en termes de contexte géographique et socio-démographique.
@@ -283,12 +280,12 @@ L'analyse des distributions des covariables avant le matching montrent un désé
 ```{r}
 # Distribution des covariables
 data_list <- list(
-  "1997" = data_matched_1997,
-  "2008" = data_matched_2008,
-  "2011" = data_matched_2011,
-  "2013" = data_matched_2013,
-  "2016" = data_matched_2016,
-  "2021" = data_matched_2021
+  "1997" = hr_final_1997
+  "2008" = hr_final_2008,
+  "2011" = hr_final_2011,
+  "2013" = hr_final_2013,
+  "2016" = hr_final_2016,
+  "2021" = hr_final_2021 
 )
 
 
@@ -310,13 +307,12 @@ data_list <- list(
     theme_minimal()
   }
     
-print(density_plot(data_matched_1997, 1997, matching_variables))
-print(density_plot(data_matched_2008, 2008, matching_variables))
-print(density_plot(data_matched_2011, 2011, matching_variables))
-print(density_plot(data_matched_2013, 2013, matching_variables))
-print(density_plot(data_matched_2016, 2016, matching_variables))
-print(density_plot(data_matched_2021, 2021, matching_variables))
-
+print(density_plot(hr_final_1997, 1997, matching_variables))
+print(density_plot(hr_final_2008, 2008, matching_variables))
+print(density_plot(hr_final_2011, 2011, matching_variables))
+print(density_plot(hr_final_2013, 2013, matching_variables))
+print(density_plot(hr_final_2016, 2016, matching_variables))
+print(density_plot(hr_final_2021, 2021, matching_variables))
 ```
 
 Ces graphiques présentent la distribution des covariables avant le matching entre les clusters situés à proximité des aires protégées (en violet) et ceux qui en sont éloignés (vert). Chaque panneau illustre les covariables utilisées dans le matching à savoir le taux de couvert forestier en 2000, la pente et l'altitude, la densité de population en 2000, la pente , l'accessibilité en 2000 (temps estimé de trajet en voiture des ménages jusqu'aux villes les plus proches).
