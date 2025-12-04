@@ -3435,6 +3435,8 @@ Cette partie présente le tes tests multiples sur les variables de résultat et 
 
 ### Test multiple pour l'hypothèse H2 
 
+H2-effect on inequalities: PA exacerbate economic inequalities, as better-off or better-connected individuals capture most of the benefits (tourism jobs, development projects).
+
 ```{r}
 library(fuzzySim)
 
@@ -3468,7 +3470,7 @@ etable(did2s_es, headers = "did2s event-study (-5..5)")
 tidy_H2 <- broom::tidy(did2s_static)
 
 p_H2_did <- tidy_H2 %>%
-  filter(term == "treat_on") %>% 
+  filter(term == "treat_on::1") %>% 
   pull(p.value)
 
 # Extraction du p-value du coefficient estimé par event study
@@ -3502,7 +3504,9 @@ results_H2 <- list(
 results_H2 
 ```
 
-### 
+L'estimation DID statique indique qu'en moyenne, la création des aires protégées n'a pas modifié significativement le score de richesse standardisé des ménages exposés (treat_on = 1:: 0.0015). Toutefois, l'analyse dynamique via l'event study) nuance cette conclusion. L' effet reste nul autour de l'année de la création des aires protégées, mais deviennent positifs et significatifs après deux à trois ans. L'effet n'est pas durable mais diminue environ cinq plus tard.
+
+L'analyse distributionnelle (QTE) met en évidence la présence d'hétérogénéité des effets. Les ménages les plus pauvres à intermédiaires sont significativement appauvris, tandis que les ménages les plus aisés subissent des effets plus faibles. L'absence d'impact moyen masque en réalité une forte inégalité d'impact entre les groupes, notamment au détriment des ménages les plus pauvres.
 
 ## Analyse de sensibilité de Rosenbaum
 
