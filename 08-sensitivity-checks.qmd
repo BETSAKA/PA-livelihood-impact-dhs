@@ -3508,6 +3508,110 @@ L'estimation DID statique indique qu'en moyenne, la création des aires protég�
 
 L'analyse distributionnelle (QTE) met en évidence la présence d'hétérogénéité des effets. Les ménages les plus pauvres à intermédiaires sont significativement appauvris, tandis que les ménages les plus aisés subissent des effets plus faibles. L'absence d'impact moyen masque en réalité une forte inégalité d'impact entre les groupes, notamment au détriment des ménages les plus pauvres.
 
+### Test multiple pour l'hypothèse H3
+
+H3-heterogeneity: Impacts vary across PA depending on governance, community participation, and management approaches.
+
+```{r}
+library(stringr)
+# Extraction des coefficients
+apply_fdr <- function(res_object, outcome_name){
+
+  coef_df <- broom::tidy(res_object$es) %>%
+    filter(grepl("^rel_year_binned::", term)) %>%
+    mutate(
+      year = as.numeric(str_extract(term, "(?<=::)-?[0-9]+")),
+      group = case_when(
+        grepl("usage_multiple", term, ignore.case = TRUE) ~ "usage_multiple",
+        grepl("strict", term, ignore.case = TRUE) ~ "strict",
+        TRUE ~ NA_character_
+      ),
+      
+      outcome = outcome_name,
+      p_fdr = p.adjust(p.value, method = "BH")
+      
+    )
+
+  return(coef_df)
+}
+
+wealth_fdr <- apply_fdr(res_wealth, "wealth_centile_rural_weighted")
+zscore_fdr <- apply_fdr(res_zscore, "zscore_wealth")
+
+list(
+  Wealth_FDR = wealth_fdr,
+  Zscore_FDR = zscore_fdr
+)
+
+# Plot----------------------- 
+# Ajouter des intervalles de confiance
+prep_for_plot <- function(df){
+  df %>%
+    mutate(
+      ci_low = estimate - 1.96 * std.error,
+      ci_high = estimate + 1.96 * std.error,
+      signif_raw = p.value < 0.05,
+      signif_fdr = p_fdr < 0.05
+    )
+}
+
+wealth_df <- prep_for_plot(wealth_fdr)
+zscore_df <- prep_for_plot(zscore_fdr)
+
+
+plot_event_study <- function(df, title, y_lab){
+  ggplot(df, aes(x = year, y = estimate)) + 
+    geom_hline(yintercept = 0, linetype = "dashed", size = 0.7) + 
+    geom_errorbar(
+      aes(ymin = ci_low, ymax = ci_high, color = signif_fdr),
+      width = 0.2, size = 0.9
+    ) +
+    geom_point(
+      aes(color = signif_fdr, size = signif_fdr),
+      alpha = 0.9
+    ) +
+    scale_color_manual(values = c("FALSE" = 2.3, "TRUE" = 4)) +
+    labs(
+      title = title,
+      x = "Année relative à la création des aires protégées",
+      y = y_lab,
+      color = "Significativité",
+      size = "Significativité"
+    ) +
+    
+    theme_minimal(base_size = 15) + 
+    theme(
+      legend.position = "bottom",
+      plot.title = element_text(face = "bold"),
+      panel.grid.minor = element_blank()
+    )
+}
+
+# Plot du wealth index 
+plot_wealth <- plot_event_study(
+  df = wealth_df,
+  title = "Effets temporels des aires protégées sur le Wealth index",
+  y_lab = "Effet estimé sur le centile du wealth Index"
+)
+plot_wealth
+
+# Plot du zscore du wealth index
+plot_zscore <- plot_event_study(
+  df = zscore_df,
+  title = "Effets temporels des aires protégées sur le zscore du Wealth index",
+  y_lab = "Effet estimé sur le zscore du wealth Index"
+)
+plot_zscore
+```
+
+-   [**Outcome:**]{.underline} wealth index
+
+Avant correction multiple, les coefficients ne montrent pas de tendance stable d'amélioration ou de détérioration de l'indice de richesse. Après le contrôle du risque de faux positifs, seul un effet négatif marqué sur l'indice de richesse demeure statistiquement significatif, suggérant un effet transitoire d'appauvrissement après deux ans de la mise en place des aires protégées. Les ménages localisés à 10 km des aires protégées ont dû subir un choc économique ponctuel (choc d'implémentation ou perte d'accès aux ressources ou transition socio-économique avant ajustement), plutôt qu'une tendance persistante.
+
+-   [**Outcome:**]{.underline} zscore du wealth index
+
+Après correction FDR, aucune des estimations ne demeure statistiquement significative. Les signaux positifs observés dans l'estimation classique pourraient refléter des fluctuations aléatoires plutôt qu'un effet causal robuste.
+
 ## Analyse de sensibilité de Rosenbaum
 
 Vérification de la robustesse des résultats issus du matching face à un éventuel biais non observé en testant différentes valeurs de Γ, afin d'évaluer dans quelle mesure la présence d'un biais caché pourraient influencer les conclusions de l'analyse
