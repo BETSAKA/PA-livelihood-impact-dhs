@@ -1534,10 +1534,10 @@ ggplot(plot_did2s_5km, aes(k, estimate)) +
 
 # Test joint de pré-tendances (tous les leads k < 0)
 # On construit un motif regex pour k = -5..-1 présents dans le modèle
-leads_present_5km <- plot_did2s$k[plot_did2s$k < 0]
-if(length(leads_present) > 0){
-  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
-  print(fixest::wald(did2s_es, keep = keep_regex))
+leads_present_5km <- plot_did2s_5km$k[plot_did2s_5km$k < 0]
+if(length(leads_present_5km) > 0){
+  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present_5km, collapse="|"), ")$")
+  print(fixest::wald(did2s_es_5km, keep = keep_regex))
 }
 ```
 
@@ -1578,15 +1578,15 @@ did2s_es_5km_zscore <- did2s(
   cluster_var = "hv001",
   weights     = "w_all"
 )
-etable(did2s_es, headers = "did2s event-study (-5..5) - zscore - buffer 5 km")
+etable(did2s_es_5km_zscore, headers = "did2s event-study (-5..5) - zscore - buffer 5 km")
 
 # Plot ES did2s
-plot_did2s <- broom::tidy(did2s_es, conf.int = TRUE) %>%
+plot_did2s_5km_zscore <- broom::tidy(did2s_es_5km_zscore, conf.int = TRUE) %>%
   filter(grepl("^rel_year_binned::", term)) %>%
   mutate(k = as.numeric(sub("^rel_year_binned::", "", term))) %>%
   arrange(k)
 
-ggplot(plot_did2s, aes(k, estimate)) +
+ggplot(plot_did2s_5km_zscore, aes(k, estimate)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_point() +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
@@ -1596,10 +1596,10 @@ ggplot(plot_did2s, aes(k, estimate)) +
 
 # Test joint de pré-tendances (tous les leads k < 0)
 # On construit un motif regex pour k = -5..-1 présents dans le modèle
-leads_present_5km_zscore <- plot_did2s$k[plot_did2s$k < 0]
-if(length(leads_present) > 0){
-  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
-  print(fixest::wald(did2s_es, keep = keep_regex))
+leads_present_5km_zscore <- plot_did2s_5km_zscore$k[plot_did2s_5km_zscore$k < 0]
+if(length(leads_present_5km_zscore) > 0){
+  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present_5km_zscore, collapse="|"), ")$")
+  print(fixest::wald(did2s_es_5km_zscore, keep = keep_regex))
 }
 
 ```
@@ -1755,7 +1755,7 @@ run_did2s_es <- function(data, yvar) {
   
   if(nrow(leads) > 0){
     keep_regex <- paste0("^rel_year_binned::(", paste(unique(leads$year), collapse="|"), "):")
-    print(wald(did2s_es, keep = keep_regex))
+    print(wald(did2s_es_5km, keep = keep_regex))
   }
   
   return(list(
@@ -3375,7 +3375,7 @@ run_did2s_es <- function(data, yvar) {
                headers = paste("did2s event-study (-5..5) par statut IUCN - buffer 15km", yvar)))
   
     # Extraction des coefficients
-  tidy_es_15km <- broom::tidy(did2s_es_15km, conf.int = TRUE) %>%
+  tidy_es <- broom::tidy(did2s_es_15km, conf.int = TRUE) %>%
     filter(grepl("^rel_year_binned::", term)) %>%
     mutate(
       year = as.numeric(stringr::str_extract(term, "(?<=::)-?[0-9]+")),
@@ -3393,7 +3393,7 @@ run_did2s_es <- function(data, yvar) {
   #Plot
   plot_title <- paste0("Event-study (did2s) -", yvar, "\nHétérogénéité par statut IUCN - buffer 15km")
   
-  g <- ggplot(tidy_es_15km, aes(x = year, y = estimate, color = group)) +
+  g <- ggplot(tidy_es, aes(x = year, y = estimate, color = group)) +
     geom_hline(yintercept = 0, linetype = "dashed") +
     geom_point(size = 2) +
     geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
@@ -3408,16 +3408,16 @@ run_did2s_es <- function(data, yvar) {
   print(g)
   
   # Test de pré-tendances
-  leads <- tidy_es_15km %>% filter(year < 0)
+  leads <- tidy_es %>% filter(year < 0)
   
   if(nrow(leads) > 0){
     keep_regex <- paste0("^rel_year_binned::(", paste(unique(leads$year), collapse="|"), "):")
-    print(wald(did2s_es, keep = keep_regex))
+    print(wald(did2s_es_15km, keep = keep_regex))
   }
   
   return(list(
-    static = did2s_static,
-    es     = did2s_es,
+    static = did2s_static_15km,
+    es     = did2s_es_15km,
     coef   = tidy_es,
     plot   = g
   ))
@@ -3431,13 +3431,78 @@ res_zscore <- run_did2s_es(dat3, "zscore_wealth")
 
 ## Test pour l'hypothèse multiple
 
-Dans notre analyse, nous testons 3 hypothèses. Or, que lorsqu'on teste beaucoup d'hypothèses, on augmente automatiquement le risque d'inférer à tort des effets significatifs, des problèmes de multiplicité des tests. Afin de mitiger ce risque, nous appliquerons pour ces hypothèses secondaires H2 et H3 la méthode de False Discovery Rate FDR) de @benjamini1995. Cette méthode propose de contrôler la proportion moyenne des faux positifs parmi les résultats déclarés significatifs.
+Cette partie présente le tes tests multiples sur les variables de résultat et les hypothèses. Lorsqu'on teste beaucoup d'hypothèses, on augmente automatiquement le risque d'inférer à tort des effets significatifs, des problèmes de multiplicité des tests. Afin de mitiger ce risque, @benjamini1995 propose de contrôler la proportion moyenne des faux positifs parmi les résultats déclarés significatifs. La méthode de False Discovery Rate (FDR) est donc appliqué aux hypothèses secondaires H2 sur les inégalités entre ménages (évaluées via un z-score de l'indice de richesse) et H3 sur l'importance du mode de gouvernance des aires protégées. Pour se faire, les p-values des tests de H2 et H3 sont récupérées et triées dans l'ordre croissant avant d'appliquer la règle BH. Si pBH \< 0.05, le test est considéré comme significatif.
 
-Nous récupérons les p-values des tests de H2 et H3, puis nous les trions dans l'ordre croissant avant d'appliquer la règle BH. Nous considérons comme significatif tout test avec pBH​\<0.05.
+### Test multiple pour l'hypothèse H2 
 
 ```{r}
+library(fuzzySim)
 
+# Test appliqué à H2-------------------------
+# did2s (Gardner) : statique + event-study
+# -- Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(treat_on, ref = FALSE),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_static, headers = "did2s statique")
+
+# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
+did2s_es <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(rel_year_binned, ref = c(-1, Inf)),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_es, headers = "did2s event-study (-5..5)")
+
+# Extraction du p-value du coefficient estimé par DID static
+tidy_H2 <- broom::tidy(did2s_static)
+
+p_H2_did <- tidy_H2 %>%
+  filter(term == "treat_on") %>% 
+  pull(p.value)
+
+# Extraction du p-value du coefficient estimé par event study
+ev <- broom::tidy(did2s_es) %>%
+  mutate(
+    p_fdr <- p.adjust(p.value, method = "BH")
+  )
+
+# Extraction du p-value du coefficient estimé par QTE 
+library(dplyr)
+
+qte_df <- tibble(
+  quantile  = cic_res$probs,
+  QTE       = cic_res$qte,
+  Std_Error = cic_res$qte.se
+) %>% 
+  mutate(
+    t_stat  = QTE / Std_Error,
+    p_value = 2 * (1 - pnorm(abs(t_stat))),
+    p_fdr   = p.adjust(p_value, method = "BH")
+  )
+
+qte_df
+
+# Correction FDR BH 
+results_H2 <- list(
+  DID_p_value = p_H2_did,
+  EventStudy_Table = ev %>% select(term, estimate, std.error),
+  QTE_table = qte_df 
+)
+results_H2 
 ```
+
+### 
 
 ## Analyse de sensibilité de Rosenbaum
 
