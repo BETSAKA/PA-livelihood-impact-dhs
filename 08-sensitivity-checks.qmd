@@ -3612,6 +3612,27 @@ Avant correction multiple, les coefficients ne montrent pas de tendance stable d
 
 Après correction FDR, aucune des estimations ne demeure statistiquement significative. Les signaux positifs observés dans l'estimation classique pourraient refléter des fluctuations aléatoires plutôt qu'un effet causal robuste.
 
+## Pseudo Panel
+
+Il se peut que dans l’analyse, la variable de résultat soit corrélée avec des éléments non observés ou des chocs au niveau du ménage. Des méthodes d’effets fixes permettent de corriger ces facteurs, mais on ne dispose ici que des données en coupe transversales répétées. On peut toutefois contourner cette difficulté en utilisant une approche de pseudo panel pour estimer les modèles à effets fixes à l’échelle de cohortes des ménages @deaton1985. L'approche du pseudo panel permet de construire des pseudos individus en regroupant les individus réels en cohortes. Ces variables de regroupement doivent être également exogènes, invariantes dans le temps et disponibles pour tous les ménages dans les données (p.ex. Année de naissance, région…). Cela permet de garantir que la variation au sein des cohortes ne biaise pas les résultats et que les caractéristiques utilisées pour regrouper les ménages restent constantes au fil du temps.
+
+-   Construction de cohorte de ménage
+
+-   Estimation d'un modèle à effet fixe pour corriger les biais liées aux variables non observés
+
+-   Pondérer les observations en fonction de la taille des cohortes
+
+```{r}
+library(tidyr)
+library(fixest)
+# Construction de cohorte de ménage
+
+
+# Calcul des moyennes au niveau cohorte x année
+
+
+```
+
 ## Analyse de sensibilité de Rosenbaum
 
 Vérification de la robustesse des résultats issus du matching face à un éventuel biais non observé en testant différentes valeurs de Γ, afin d'évaluer dans quelle mesure la présence d'un biais caché pourraient influencer les conclusions de l'analyse
@@ -3637,18 +3658,6 @@ Caractéristiques socio-démographiques et environnementales:
 ## Impact sur l'inégalité intra-communautaire
 
 -   Inégalité intra-communautaire (Z-score standardisée du wealth index)
-
-```{r}
-
-```
-
-## Pseudo Panel
-
--   Construction de cohorte de ménage
-
--   Estimation d'un modèle à effet fixe pour corriger les biais liées aux variables non observés
-
--   Pondérer les observations en fonction de la taille des cohortes
 
 ```{r}
 
