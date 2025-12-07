@@ -611,7 +611,7 @@ Les informations essentielles sur la classification des grappes d'enquête sont 
 
 ```{r}
 all_class <- gps_all_class %>%
-  select(DHSYEAR, DHSCLUST, GROUP = groupe, WDPAID, STATUS_YR, IUCN_CAT, dist_km)
+  select(DHSYEAR, DHSCLUST, DHSREGNA, GROUP = groupe, WDPAID, STATUS_YR, IUCN_CAT, dist_km)
 
 write_csv(all_class, "data/derived/cluster_treatment_classification_staggered.csv")
 
