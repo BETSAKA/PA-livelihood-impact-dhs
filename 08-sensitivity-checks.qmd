@@ -3433,16 +3433,92 @@ res_zscore <- run_did2s_es(dat3, "zscore_wealth")
 
 Cette partie présente le tes tests multiples sur les variables de résultat et les hypothèses. Lorsqu'on teste beaucoup d'hypothèses, on augmente automatiquement le risque d'inférer à tort des effets significatifs, des problèmes de multiplicité des tests. Afin de mitiger ce risque, @benjamini1995 propose de contrôler la proportion moyenne des faux positifs parmi les résultats déclarés significatifs. La méthode de False Discovery Rate (FDR) est donc appliqué aux hypothèses secondaires H2 sur les inégalités entre ménages (évaluées via un z-score de l'indice de richesse) et H3 sur l'importance du mode de gouvernance des aires protégées. Pour se faire, les p-values des tests de H2 et H3 sont récupérées et triées dans l'ordre croissant avant d'appliquer la règle BH. Si pBH \< 0.05, le test est considéré comme significatif.
 
-### Test multiple pour l'hypothèse H2 
+### Test multiple pour l'hypothèse H2
 
 H2-effect on inequalities: PA exacerbate economic inequalities, as better-off or better-connected individuals capture most of the benefits (tourism jobs, development projects).
 
 ```{r}
 library(fuzzySim)
+library(did2s)
+library(qte)
 
-# Test appliqué à H2-------------------------
+# Chargement des données
+d97 <- read_rds("data/derived/data_matched_1997.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_1995,
+         spei_wc_n_1 = spei_wc_1996,
+         spei_wc_n   = spei_wc_1997) %>%
+  mutate(hv219 = zap_labels(hv219), # hhh sex (1/2)
+         hv220 = zap_labels(hv220)) # hhh age (num)
+
+d08 <- read_rds("data/derived/data_matched_2008.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2006,
+         spei_wc_n_1 = spei_wc_2007,
+         spei_wc_n   = spei_wc_2008) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d11 <- read_rds("data/derived/data_matched_2011.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2009,
+         spei_wc_n_1 = spei_wc_2010,
+         spei_wc_n   = spei_wc_2011) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d13 <- read_rds("data/derived/data_matched_2013.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2011,
+         spei_wc_n_1 = spei_wc_2012,
+         spei_wc_n   = spei_wc_2013) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d16 <- read_rds("data/derived/data_matched_2016.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2014,
+         spei_wc_n_1 = spei_wc_2015,
+         spei_wc_n   = spei_wc_2016) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d21 <- read_rds("data/derived/data_matched_2021.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2019,
+         spei_wc_n_1 = spei_wc_2020,
+         spei_wc_n   = spei_wc_2021) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+# Préparation des données
+dat <- bind_rows(d97, d08, d11, d13, d16, d21) %>%
+  filter(GROUP %in% c("Treatment","Control")) %>%
+  mutate(
+    hv219   = factor(hv219, levels = c(1,2), labels = c("Homme","Femme")), # sexe (cat.)
+    hv220   = as.numeric(hv220),                                           # âge
+    treat   = as.integer(GROUP == "Treatment"),
+    w_svy   = hv005 / 1e6,
+    w_all   = w_svy * weights, # poids d'enquête × poids de matching (si 'weights' existe)
+    id      = row_number(),
+    # Map des années de statut -> première année d'observation post (treatment_phase)
+    treatment_phase = case_when(
+      STATUS_YR == 2010 ~ 2011,
+      STATUS_YR == 2012 ~ 2013,
+      STATUS_YR == 2015 ~ 2016,
+      STATUS_YR == 2017 ~ 2021,
+      is.na(STATUS_YR)  ~ 0,
+      TRUE               ~ STATUS_YR
+    )
+  )
+
 # did2s (Gardner) : statique + event-study
-# -- Statique (traitement "on/off")
+dat3 <- dat %>%
+  mutate(
+    treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
+    rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
+    # Binning prudent pour stabilité (-5..5)
+    rel_year_binned = pmax(pmin(rel_year, 5), -5)
+  )
+
+# Outcome h
+yvar <- "wealth_centile_rural_weighted"
+
+# -- Statique (traitement "on/off")------------------------------
 did2s_static <- did2s(
   data        = dat3,
   yname       = yvar,
@@ -3454,7 +3530,7 @@ did2s_static <- did2s(
 )
 etable(did2s_static, headers = "did2s statique")
 
-# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
+# -- Event-study (avec binning -5..5, ref = -1 et never-treated)--
 did2s_es <- did2s(
   data        = dat3,
   yname       = yvar,
@@ -3466,20 +3542,68 @@ did2s_es <- did2s(
 )
 etable(did2s_es, headers = "did2s event-study (-5..5)")
 
-# Extraction du p-value du coefficient estimé par DID static
+# -- Testing Quantile treatment effects---------------------------
+# Avec CiC -------------------
+
+## Traitement 2008 -> 2021
+set.seed(123)
+dat_2per <- dat %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(treat = as.integer(GROUP == "Treatment"))
+
+cic_res <- suppressWarnings(CiC(
+  formla = wealth_centile_rural_weighted ~ treat,
+  t = 2021, tmin1 = 2008, tname = "DHSYEAR",
+  data = dat_2per,
+  panel = FALSE, # repeated cross-sections
+  se = TRUE, iters = 200, # bootstrap
+  probs = seq(0.05, 0.95, 0.05),
+  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+))
+
+summary(cic_res)
+ggqte(cic_res) + labs(x="Quantiles", y="QTET", title="CiC QTET: 2008-2021")
+
+## placebo
+
+## Placebo: 1997 -> 2008
+dat_placebo <- dat %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(treat = as.integer(GROUP == "Treatment"))
+
+# (Optional) sanity check:
+# with(dat_placebo, table(DHSYEAR, treat))
+
+cic_pre <-  suppressWarnings(CiC(
+  formla = wealth_centile_rural_simple ~ treat,
+  t = 2008, tmin1 = 1997, tname = "DHSYEAR",
+  data = dat_placebo,
+  panel = FALSE, # repeated cross-sections
+  se = TRUE, iters = 100, # bootstrap
+  probs = seq(0.05, 0.95, 0.05),
+  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+))
+
+summary(cic_pre)
+
+ggqte(cic_pre) +
+  labs(x = "Quantiles", y = "QTET",
+       title = "Placebo CiC QTET: 1997-2008 - buffer 10 km")
+
+# Extraction du p-value du coefficient estimé par DID static-----
 tidy_H2 <- broom::tidy(did2s_static)
 
 p_H2_did <- tidy_H2 %>%
   filter(term == "treat_on::1") %>% 
   pull(p.value)
 
-# Extraction du p-value du coefficient estimé par event study
+# Extraction du p-value du coefficient estimé par event study-----
 ev <- broom::tidy(did2s_es) %>%
   mutate(
     p_fdr <- p.adjust(p.value, method = "BH")
   )
 
-# Extraction du p-value du coefficient estimé par QTE 
+# Extraction du p-value du coefficient estimé par QTE------------ 
 library(dplyr)
 
 qte_df <- tibble(
@@ -3614,31 +3738,89 @@ Après correction FDR, aucune des estimations ne demeure statistiquement signifi
 
 ## Pseudo Panel
 
-Il se peut que dans l’analyse, la variable de résultat soit corrélée avec des éléments non observés ou des chocs au niveau du ménage. Des méthodes d’effets fixes permettent de corriger ces facteurs, mais on ne dispose ici que des données en coupe transversales répétées. On peut toutefois contourner cette difficulté en utilisant une approche de pseudo panel pour estimer les modèles à effets fixes à l’échelle de cohortes des ménages @deaton1985. L'approche du pseudo panel permet de construire des pseudos individus en regroupant les individus réels en cohortes. Ces variables de regroupement doivent être également exogènes, invariantes dans le temps et disponibles pour tous les ménages dans les données (p.ex. Année de naissance, région…). Cela permet de garantir que la variation au sein des cohortes ne biaise pas les résultats et que les caractéristiques utilisées pour regrouper les ménages restent constantes au fil du temps.
+Dans l’analyse, la variable de résultat peut être corrélée avec des éléments non observés ou des chocs au niveau du ménage. Les méthodes d’effets fixes permettent de corriger ces facteurs, mais les données disponibles sont uniquement des coupes transversales répétées. Cette difficulté peut être contournée grâce à l'approche de pseudo panel, qui estime les modèles à effets fixes à l’échelle de cohortes des ménages @deaton1985. La méthode permet de construire des pseudos individus en regroupant les individus réels en cohortes. Cela permet de garantir que la variation au sein des cohortes ne biaise pas les résultats et que les caractéristiques utilisées pour regrouper les ménages restent constantes au fil du temps.
 
--   Construction de cohorte de ménage
-
--   Estimation d'un modèle à effet fixe pour corriger les biais liées aux variables non observés
-
--   Pondérer les observations en fonction de la taille des cohortes
+La première étape est de construire les cohortes de ménage en sélectionnant les moyennes des variables de résultat, des covariables. Le pseudo panel ainsi construit est présenté sous forme de tableau où chaque ligne correspond à une cohorte observée à une année donnée. La dernière étape est de faire une estimation à effet fixe pour corriger les biais liées aux variables non observés, pondérer les observations en fonction de la taille des cohortes.
 
 ```{r}
 library(tidyr)
 library(fixest)
-# Construction de cohorte de ménage
+library(readr)
+
+# Chargement des données 
+hr_consolidated <- read_rds("data/derived/hr_consolidated_1997_2008_2011_2013_2016_2021.rds")
+
+# Construction des cohortes de ménage
+pseudo_panel <- hr_consolidated %>%
+  group_by(DHSYEAR, hv001) %>%
+  summarise(
+    # Variables de résultat
+    wealth_centile_mean = mean(wealth_centile_rural_simple, na.rm = TRUE),
+    zscore_wealth_mean = mean(zscore_wealth, na.rm = TRUE),
+    
+    # Variables environnementales
+    dist_mean = mean(dist_km, na.rm = TRUE),
+    treecover_mean = mean(treecover_area_2000, na.rm = TRUE),
+    slope_mean = mean(slope_2000, na.rm = TRUE),
+    elevation_mean = mean(elevation_2000, na.rm = TRUE),
+    population_count_mean = mean(population_count_2000, na.rm = TRUE),
+    traveltime_mean = mean(traveltime_2000_2000, na.rm = TRUE),
+    
+    # Variable de contrôle
+    prop_urban = mean(URBAN_RURA == 1, na.rm = TRUE),
+    prop_female_head = mean(hv219 == 2, na.rm = TRUE),
+    prop_male_head = mean(hv219 == 1, na.rm = TRUE),
+    age_mean = mean(hv220, na.rm = TRUE),
+    
+    # Taille de cohorte (nombre de ménages)
+    cohort_size = n(),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    weight = 1 / sqrt(cohort_size),
+    hv001 = as.factor(hv001),
+    DHSYEAR = as.factor(DHSYEAR)
+  )
 
 
-# Calcul des moyennes au niveau cohorte x année
+# Estimation d'un modèle à effets fixes---------------------------------
 
+# Outcome: wealth_centile_rural_simple
+fe_model_wealth <- feols(
+  wealth_centile_mean ~ dist_mean + treecover_mean + slope_mean + elevation_mean + population_count_mean + traveltime_mean + prop_urban + prop_female_head + prop_male_head + age_mean| hv001 + DHSYEAR,
+  data = pseudo_panel,
+  weights = ~ weight
+)
 
+# Summary avec erreurs standard robustes clusterisées par cluster
+summary(fe_model_wealth, cluster = ~ hv001)
+
+# Summary avec erreurs standard robustes clusterisées par année
+summary(fe_model_wealth, cluster = ~ DHSYEAR)
+
+# Summary avec erreurs standard robustes clusterisées par année
+summary(fe_model_wealth, se = "hetero")
+
+# Outcome:  zscore_wealth
+fe_model_zscore <- feols(
+   zscore_wealth_mean ~ dist_mean + treecover_mean + slope_mean + elevation_mean + population_count_mean + traveltime_mean + prop_urban + prop_female_head + prop_male_head + age_mean| hv001 + DHSYEAR,
+  data = pseudo_panel,
+  weights = ~ weight
+)
+
+summary(fe_model_zscore, cluster = ~ hv001) # SE robustes par cluster
+summary(fe_model_wealth, cluster = ~ DHSYEAR) # SE robustes par année
+summary(fe_model_wealth, se = "hetero") # SE robustes hétéroscédastiques 
 ```
 
 ## Analyse de sensibilité de Rosenbaum
 
+L'appariement génétique et l'estimation DID sur une coupe transversale ne contrôlent pas les caractéristiques non observées qui peuvent simultanément affecter les aires protégées et la variable de résultat (indice de richesse). Pour évaluer la robustesse des résultats face à ces éventuels biais résultant de variables confondantes non observées, on procède à une analyse de sensibilité avec la méthode de @rosenbaum2002. Les tests de sensibilité visent à déterminer si l'estimation obtenue par l'appariement est robuste face à un éventuel biais non observé. Cette approche s'appuie sur un paramètre de sensibilité Γ qui mesure le degré d'écart par rapport à une assignation aléatoire du traitement @keele2010. Concrètement, différentes valeurs de Γ sont testées pour évaluer dans quelle mesure les conclusions de l'analyse pourraient être affectées par la présence d'un biais caché.
+
 Vérification de la robustesse des résultats issus du matching face à un éventuel biais non observé en testant différentes valeurs de Γ, afin d'évaluer dans quelle mesure la présence d'un biais caché pourraient influencer les conclusions de l'analyse
 
 ```{r}
-
+install.packages("")
 ```
 
 ## Effets hétérogènes
