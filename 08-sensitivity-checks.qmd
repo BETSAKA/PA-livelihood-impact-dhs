@@ -3792,14 +3792,7 @@ fe_model_wealth <- feols(
   weights = ~ weight
 )
 
-# Summary avec erreurs standard robustes clusterisées par cluster
 summary(fe_model_wealth, cluster = ~ hv001)
-
-# Summary avec erreurs standard robustes clusterisées par année
-summary(fe_model_wealth, cluster = ~ DHSYEAR)
-
-# Summary avec erreurs standard robustes clusterisées par année
-summary(fe_model_wealth, se = "hetero")
 
 # Outcome:  zscore_wealth
 fe_model_zscore <- feols(
@@ -3808,10 +3801,10 @@ fe_model_zscore <- feols(
   weights = ~ weight
 )
 
-summary(fe_model_zscore, cluster = ~ hv001) # SE robustes par cluster
-summary(fe_model_wealth, cluster = ~ DHSYEAR) # SE robustes par année
-summary(fe_model_wealth, se = "hetero") # SE robustes hétéroscédastiques 
+summary(fe_model_zscore, cluster = ~ hv001) 
 ```
+
+L'analyse du pseudo panel montre que l'indice de richesse moyen des cohortes de ménages est influencée par les facteurs environnementaux: plusieurs covariables apparaissent robustes et significatifs. Les résultats indiquent que les ménages situés en altitude et dans des zones densément peuplées présentent un indice de richesse plus élevé. La couverture forestière est également positive et significative. Tandis que la pente et l'accessibilité montre un effet négatif sur l'indice de richesse. En revanche, les variables socio-démographiques (sexe et âge du chef de ménage) n'ont pas d'effet significatif, suggérant que les conditions spatiales et environnementales jouent un rôle plus déterminant que les caractéristiques individuelles des ménages.
 
 ## Analyse de sensibilité de Rosenbaum
 
