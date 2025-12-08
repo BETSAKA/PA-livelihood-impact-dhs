@@ -3863,32 +3863,145 @@ Le résultat montre que les effets estimés diffèrent selon les années, mais r
 
 ## Effets hétérogènes
 
-Estimation des effets hétérogènes en introduisant des interactions entre le traitement et les différentes variables différenciatrices dans un modèle de double DID pour explorer les effets différenciés des aires protégées sur les ménages en fonction des caractéristiques socio-démographiques et environnementales
-
-Caractéristiques socio-démographiques et environnementales:
+Cette partie présente l'estimation des effets hétérogènes en introduisant des interactions entre le traitement et les différentes variables différenciatrices dans un modèle de double DID. Le but est d'explorer les effets différenciés des aires protégées sur les ménages en fonction des caractéristiques socio-démographiques et environnementales tels que:
 
 -   Sexe et âge du chef de ménage
 
 -   Conditions environnementales (Pluviométrie, sécheresse)
 
--   Type de gouvernance des aires protégées (strictes (statuts IUCN I-IV) vs multi-usages ( statuts IUCN V-VI))
-
--   Distance aux aires protégées (5km, 10 km, 15 km) -\> même analyse que test de robustess? si oui, enlver de cette partie
-
-## Impact sur l'inégalité intra-communautaire
-
--   Inégalité intra-communautaire (Z-score standardisée du wealth index)
-
 ```{r}
+library(did2s)
+# Chargement des données
+d97 <- read_rds("data/derived/data_matched_1997.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_1995,
+         spei_wc_n_1 = spei_wc_1996,
+         spei_wc_n   = spei_wc_1997) %>%
+  mutate(hv219 = zap_labels(hv219), # hhh sex (1/2)
+         hv220 = zap_labels(hv220)) # hhh age (num)
 
+d08 <- read_rds("data/derived/data_matched_2008.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2006,
+         spei_wc_n_1 = spei_wc_2007,
+         spei_wc_n   = spei_wc_2008) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d11 <- read_rds("data/derived/data_matched_2011.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2009,
+         spei_wc_n_1 = spei_wc_2010,
+         spei_wc_n   = spei_wc_2011) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d13 <- read_rds("data/derived/data_matched_2013.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2011,
+         spei_wc_n_1 = spei_wc_2012,
+         spei_wc_n   = spei_wc_2013) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d16 <- read_rds("data/derived/data_matched_2016.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2014,
+         spei_wc_n_1 = spei_wc_2015,
+         spei_wc_n   = spei_wc_2016) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d21 <- read_rds("data/derived/data_matched_2021.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2019,
+         spei_wc_n_1 = spei_wc_2020,
+         spei_wc_n   = spei_wc_2021) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+# Préparation des données
+dat <- bind_rows(d97, d08, d11, d13, d16, d21) %>%
+  filter(GROUP %in% c("Treatment","Control")) %>%
+  mutate(
+    hv219   = factor(hv219, levels = c(1,2), labels = c("Homme","Femme")), # sexe (cat.)
+    hv220   = as.numeric(hv220),                                           # âge
+    treat   = as.integer(GROUP == "Treatment"),
+    w_svy   = hv005 / 1e6,
+    w_all   = w_svy * weights, # poids d'enquête × poids de matching (si 'weights' existe)
+    id      = row_number(),
+    # Map des années de statut -> première année d'observation post (treatment_phase)
+    treatment_phase = case_when(
+      STATUS_YR == 2010 ~ 2011,
+      STATUS_YR == 2012 ~ 2013,
+      STATUS_YR == 2015 ~ 2016,
+      STATUS_YR == 2017 ~ 2021,
+      is.na(STATUS_YR)  ~ 0,
+      TRUE               ~ STATUS_YR
+    )
+  )
+
+# Outcome h
+yvar <- "wealth_centile_rural_weighted"
 ```
 
-# Appendix
+### Effet hétérogène par sexe
 
-## Statistical power
+```{r}
+did_sex <- did2s(
+  data = dat,
+  yname = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 +
+  spei_wc_n + hv220 | DHSYEAR,
+  second_stage = ~ treat * hv219, # interaction avec sexe
+  treatment = "treat",
+  cluster_var = "hv001",
+  weights = "w_all"
+)
 
--   Estimation de la puissance statistique pour détecter un effet d'au moins 7.5 centiles dans l'indice de richesse entre les groupes
+etable(did_sex, headers = "Effet hétérogène par sexe")
+```
 
--   EStimation de la probabilité à un seuil de puissance fixée à 0.8 avec un seuil de signification fixée à 0.05
+Les résultats montrent une forte disparité de richesse selon le sexe du chef de ménage. Les ménages dirigés par des hommes présentent en moyenne un niveau de richesse significativement plus élevé (0.7440), tandis que ceux dirigés par des femmes ont en moyenne un centile de richesse plus faible (-2.307). L'effet moyen des aires protégées sur la richesse n'est pas, en revanche, significatif. L'interaction entre le traitement et le sexe du chef de ménage ne révèle pas non plus de différence robuste entre hommes et femmes.
 
-**Mobilisation des données MIS 2011, MIS 2013 et MIS 2016 si la puissance statistique est insuffisante**
+### Effet hétérogène par âge
+
+```{r}
+dat <- dat %>%
+  mutate(hv220 = as.numeric(hv220)) %>%
+  filter(!is.na(hv220))
+
+dat <- dat %>%
+  mutate(age_group = cut(hv220,
+                   breaks = c(15,30,45,60,80),
+                   labels = c("15-29","30-44","45-59","60-79"),
+                   include.lowest = TRUE,
+                   right = FALSE)) %>%
+  filter(!is.na(age_group))
+
+did_age <- did2s(
+  data = dat,
+  yname = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n | DHSYEAR, 
+  second_stage = ~ treat * age_group,
+  treatment = "treat",
+  cluster_var = "hv001",
+  weights = "w_all"
+)
+
+etable(did_age, headers = "Effet hétérogène par âge")
+```
+
+### Effet hétérogène par pluviométrie
+
+```{r}
+# Effet hétérogène par pluviométrie (pluie vs sécheresse)
+dat <- dat %>%
+  mutate(rain_group = ifelse(spei_wc_n > 0, "pluie", "sécheresse"))
+
+did_rain <- did2s(
+  data = dat, 
+  yname = yvar, 
+  first_stage = ~ hv220 | DHSYEAR,
+  second_stage = ~ treat * rain_group,
+  treatment = "treat",
+  cluster_var = "hv001",
+  weights = "w_all"
+)
+
+etable(did_rain, headers = "Effet hétérogène par pluviométrie")
+```
