@@ -3986,6 +3986,8 @@ did_age <- did2s(
 etable(did_age, headers = "Effet hétérogène par âge")
 ```
 
+Les résultats montrent que les aires protégées n'ont pas d'impact significatif sur la richesse des ménages selon l'âge du chef de ménages. Seuls les ménages dont le chef est âgé de 45 - 59 ans apparaissent significativement plus riches (2.920) que les autres. Aucune interaction par âge ne montre pas non plus un effet robuste.
+
 ### Effet hétérogène par pluviométrie
 
 ```{r}
