@@ -4007,3 +4007,5 @@ did_rain <- did2s(
 
 etable(did_rain, headers = "Effet hétérogène par pluviométrie")
 ```
+
+Le résultat montre que les aires protégées n'ont pas d'impact significatif sur la richesse, quelle que soit la condition climatique, même si les ménages observées en période de pluies semblent légèrement plus riches.
