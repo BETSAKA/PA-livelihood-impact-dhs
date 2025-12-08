@@ -3810,11 +3810,56 @@ L'analyse du pseudo panel montre que l'indice de richesse moyen des cohortes de 
 
 L'appariement génétique et l'estimation DID sur une coupe transversale ne contrôlent pas les caractéristiques non observées qui peuvent simultanément affecter les aires protégées et la variable de résultat (indice de richesse). Pour évaluer la robustesse des résultats face à ces éventuels biais résultant de variables confondantes non observées, on procède à une analyse de sensibilité avec la méthode de @rosenbaum2002. Les tests de sensibilité visent à déterminer si l'estimation obtenue par l'appariement est robuste face à un éventuel biais non observé. Cette approche s'appuie sur un paramètre de sensibilité Γ qui mesure le degré d'écart par rapport à une assignation aléatoire du traitement @keele2010. Concrètement, différentes valeurs de Γ sont testées pour évaluer dans quelle mesure les conclusions de l'analyse pourraient être affectées par la présence d'un biais caché.
 
-Vérification de la robustesse des résultats issus du matching face à un éventuel biais non observé en testant différentes valeurs de Γ, afin d'évaluer dans quelle mesure la présence d'un biais caché pourraient influencer les conclusions de l'analyse
+Si Γ = 1, il n'y a aucune preuve qu'un facteur non observé influence l'assignation au traitement
+
+Si Γ \> 1, un biais est suceptible d'exister.
 
 ```{r}
-install.packages("")
+library(rbounds)
+
+# Load data matched 
+data_matched_1997 <- readRDS("data/derived/data_matched_1997.rds")
+data_matched_2008 <- readRDS("data/derived/data_matched_2008.rds")
+data_matched_2011 <- readRDS("data/derived/data_matched_2011.rds")
+data_matched_2013 <- readRDS("data/derived/data_matched_2013.rds")
+data_matched_2016 <- readRDS("data/derived/data_matched_2016.rds")
+data_matched_2021 <- readRDS("data/derived/data_matched_2021.rds")
+
+# Regrouper les jeux de données 
+years_data <- list(
+  "1997" = data_matched_1997,
+  "2008" = data_matched_2008,
+  "2011" = data_matched_2011,
+  "2013" = data_matched_2013,
+  "2016" = data_matched_2016,
+  "2021" = data_matched_2021
+)
+
+results_all <- lapply(names(years_data), function(year) {
+  df <- years_data[[year]]
+  treated <- df$wealth_centile_rural_simple[df$GROUP == "Treatment"]
+  control <- df$wealth_centile_rural_simple[df$GROUP == "Control"]
+  
+  # Test de Wilcoxon pour psens 
+  wilcox_test <- wilcox.test(treated, control)
+  
+  # Sensibilité sur les p-values 
+  res_p <- psens(x = treated, y = control, Gamma = 3, GammaInc = 0.5)
+  
+  # Sensibilité sur l'estimateur HL
+  res_hl <- hlsens(x = treated, y = control, Gamma = 3, GammaInc = 0.5)
+  
+  list(
+    Year = year,
+    Pvalue_bounds = res_p,
+    HL_bounds = res_hl
+  )
+})
+
+print(results_all)
 ```
+
+Le résultat montre que les effets estimés diffèrent selon les années, mais restent globablement peu robustes face à l'hypothèse d'un biais non observé. En 2008, 2011 et 2016, les tests suggèrent un effet significatif lorsqu'on suppose l'absence de biais ( Γ = 1). cependant, cet effet disparaît rapidement dès qu'un faible déséquilibre non mesuré est introduit ( Γ \> 1). Les intervalles de Hodges-Lehmann incluent des zéro et les bornes de p-values dépassent le seuil de 0.05, remettant en question la significativité. Pour les années 1997, 2013 et 2021, aucun effet significatif n'est détecté et les bornes de sensibilité montrent qu'un biais très faible suffit à rendre les conclusions incertaines.
 
 ## Effets hétérogènes
 
