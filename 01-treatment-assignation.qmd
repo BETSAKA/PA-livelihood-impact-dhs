@@ -37,14 +37,14 @@ standard_crs <- 4326
 mdg_crs <- 29702 
 
 # On charge les données
-gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp")
-gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp") 
-gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp") 
-gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp") 
-gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp")
-gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
+gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp", quiet = TRUE)
+gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp", quiet = TRUE) 
+gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp", quiet = TRUE) 
+gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp", quiet = TRUE) 
+gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp", quiet = TRUE)
+gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp", quiet = TRUE)
 
-tmap_mode("view")
+tmap_mode("plot")
 bind_rows(gps_1997_initial, gps_2008_initial, gps_2011_initial,
           gps_2013_initial,  gps_2016_initial, gps_2021_initial) %>%
   tm_shape() + tm_dots() + tm_facets("DHSYEAR")
@@ -176,15 +176,16 @@ wdpa_terrestre <- wdpa %>%
   ) %>%
   st_transform(standard_crs)
 
+tmap_mode("view")
 tm_shape(contour_mada) +
   tm_borders() +
 tm_shape(wdpa_terrestre) +
   tm_polygons(fill =  "green", 
               id = "ORIG_NAME",
               popup.vars = c("Superficie terrestre (ha)" = "REP_AREA")) +
-  tm_scalebar(position = c("left", "bottom")) + 
+  tm_scalebar(position = c("RIGHT", "BOTTOM")) + 
   tmap_options(check_and_fix = TRUE) +
-  tm_title("Aires protégées terrestres de Madagascar</b><br/>Source: WDPA, 2024") +
+  tm_title("Aires protégées terrestres de Madagascar\nSource: WDPA, 2024") +
   tm_layout(legend.outside = TRUE)
 
 ```
@@ -250,29 +251,26 @@ buffer_10km_from_2008 <- wdpa_from_2008  %>%
   st_transform(standard_crs)
 
 # Visualisation des cartes 
+tmap_mode("plot")
+
+tm_shape(contour_mada) + 
+  tm_borders() +
 tm_shape(wdpa_before_2008) +
 tm_polygons(fill = "blue", 
             col =  "black", 
             fill_alpha = 0.5) +
 tm_shape(buffer_10km_from_2008) +
-tm_borders(col = "darkgreen", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
+tm_borders(col = "darkgreen", lwd = 1, fill.legend = tm_legend_hide()) +
 tm_shape(buffer_10km_before_2008) +
-tm_borders(col = "blue", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
+tm_borders(col = "blue", lwd = 1, fill.legend = tm_legend_hide()) +
 tm_shape(wdpa_from_2008) +
 tm_polygons(fill = "darkgreen", 
             col = "black", 
             fill_alpha = 0.5) +
 tm_add_legend(type = "polygons", fill = c("blue", "darkgreen"), labels = c("avant 2008", "après 2008")) +
-  tm_title("Aires protégées du WDPA par période de création</b><br/>Source: WDPA, 2024") +
-  tm_layout(
-    legend.outside = TRUE, 
-    legend.position = c("left", "top"),
-    frame = FALSE,
-    legend.title.size = 1.2,
-    legend.text.size = 0.8
-  ) +
-  tm_compass(type = "8star", position = c("right", "top")) +
-  tm_scalebar(position = c("right", "bottom"))
+  tm_title("Aires protégées par\npériode de création", fontface = "bold", size = 1) +
+  tm_credits("Source: WDPA, 2025", position =  c("BOTTOM", "RIGHT")) +
+  tm_scalebar(position = c("TOP", "LEFT"))
 ```
 
 On agrège les données pour chaque groupe, en calculant le nombre total d'aires protégées et leur superficie totale, que l'on présente sous forme de tableau.
@@ -398,45 +396,62 @@ gps_all_class <- bind_rows(
   gps_2021_class
 )
 
-# Créer un plot pour visualiser la carte des AP avec les clusters
-tm_shape(buffer_10km_from_2008) +
-  tm_borders("green", 
-             lwd = 2, 
-             lty = "dashed", 
-             fill.legend = tm_legend_hide()) +  
-  tm_shape(buffer_10km_before_2008) +
-  tm_borders("darkgreen", 
-             lwd = 2, 
-             lty = "dashed", 
+tmap_mode("plot")
+
+tm_shape(contour_mada) +
+  tm_borders(col = "black", lwd = 1) +
+
+  tm_shape(buffer_10km_from_2008) +
+  tm_borders("green", lwd = 2, lty = "dashed",
              fill.legend = tm_legend_hide()) +
+
+  tm_shape(buffer_10km_before_2008) +
+  tm_borders("darkgreen", lwd = 2, lty = "dashed",
+             fill.legend = tm_legend_hide()) +
+
   tm_shape(wdpa_from_2008) +
-  tm_polygons(fill = "green", 
-              fill_alpha = 0.5,
-              col = "black", 
-              fill.legend = tm_legend(title = "à partir de 2008", position = tm_pos_in("right", "top"))) +
+  tm_polygons(fill = "green", fill_alpha = 0.5,
+              col = "black",
+              fill.legend = tm_legend_hide()) +
+
   tm_shape(wdpa_before_2008) +
-  tm_polygons(fill = "darkgreen", 
-              fill_alpha = 0.5, 
-              col =  "black", 
-              fill.legend = tm_legend(title = "avant 2008", position = tm_pos_in("right", "top"))) +
+  tm_polygons(fill = "darkgreen", fill_alpha = 0.5,
+              col = "black",
+              fill.legend = tm_legend_hide()) +
+
   tm_shape(gps_all_class) +
   tm_symbols(
-    fill = "groupe", 
-    fill.legend = tm_legend(title = "Groupes"),
-    fill.scale = tm_scale(values = c("Treatment" = "red", "Control" = "blue", "Excluded" = "gray")),
-     size = 0.5,
+    fill = "groupe",
+    fill.scale = tm_scale(values = c(
+      "Treatment" = "red",
+      "Control"   = "blue",
+      "Excluded"  = "gray"
+    )),
+    fill.legend = tm_legend_hide(),
+    size = 0.5,
     shape = 21
   ) +
-  tm_facets("DHSYEAR") +
-  tm_add_legend(type = "polygons", 
-                fill = c("green", "darkgreen"), 
-                labels = c("à partir de 2008", "avant 2008")) +
-  tm_layout(
-    legend.outside = TRUE, 
-    legend.position = c("left", "top"),
-    frame = FALSE
+
+  tm_facets("DHSYEAR", nrow = 2, ncol = 3) +
+
+  tm_add_legend(
+    type  = "polygons",
+    fill  = c("green", "darkgreen"),
+    labels = c("à partir de 2008", "avant 2008"),
+    title = "Aires protégées"
   ) +
-  tm_scalebar(position = c("left", "bottom"))
+  tm_add_legend(
+    type   = "symbol",
+    col    = c("red", "blue", "gray"),
+    labels = c("Treatment", "Control", "Excluded"),
+    shape  = 21,
+    title  = "Groupes"
+  ) +
+
+  tm_layout(
+    legend.outside = TRUE,
+    legend.outside.position = c("center", "bottom")
+  )
 ```
 
 Nous produisons un tableau récapitulatif du nombre de grappes d'enquête classées dans chaque groupe pour les années 1997, 2008, 2011, 2013, 2016 et 2021. Afin de faciliter le comptage et la transformation en tableau, nous supprimons les données spatiales pour ne conserver que les informations attributaires (année d'enquête "DHSYEAR" et groupe de classification "groupe").
