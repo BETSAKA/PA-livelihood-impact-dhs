@@ -347,6 +347,7 @@ Ces graphiques présentent la distribution des covariables avant le matching ent
 Le test après appariement sera un test visuel de la qualité du matching en comparant la distribution de chaque covariable à partir d'un plot. La méthode graphique offre une vue d'ensemble de la distribution des covariables. Le graphique facilite ainsi l'identification des déséquilibres à différents niveaux de la distribution. Lorsque les points Q-Q plot se situent près de la diagonale, le quantile des deux distributions sont similaires, signalant ainsi un bon équilibre. Si les points s'écartent de la diagonale, cela indique que la distribution de l'échantillon diffère de la distribution théorique.
 
 ```{r}
+# Balance test after matching: Quantile- quantile QQ Plot analysis
 check_balance_after <- function(data_matched, year, matching_variables, plot_dir = "plots") {
   
   # Balance après appariement
@@ -361,43 +362,37 @@ check_balance_after <- function(data_matched, year, matching_variables, plot_dir
   print(bal_after)
   
   # QQ Plot
-  year_dir <- file.path(plot_dir, paste0("QQplots_", year))
-  if (!dir.exists(year_dir)) dir.create(year_dir, recursive = TRUE)
+  year_dir <- file.path(plot_dir, glue("QQplots_{year}"))
+  dir.create(year_dir, recursive = TRUE, showWarnings = FALSE)
   
-
-  for (var in matching_variables) {
-    if (!is.numeric(data_matched[[var]])) {
-    }
+  matching_variables %>% walk(function(var){
+  if(!is.numeric(data_matched[[var]])){
+    return(NULL)
+  }
     
-    
-    control_values <- data_matched %>% filter(GROUP == "Control") %>% pull(var) %>% na.omit()
-    treated_values <- data_matched %>% filter(GROUP == "Treatment") %>% pull(var) %>% na.omit()
-    
-    p <- ggqqplot(data_matched, x = var, color = "GROUP", palette = c("#1f77b4", "#ff7f0e"),
-                  title = paste("QQ Plot -", var, "(", year, ")")) +
-      geom_abline(slope = 1, intercept = 0, linetype = "dashed", size = 0.7, color = "black") +
+    p <- ggqqplot(
+      data_matched, x = var, color = "GROUP",
+      palette = c("#1f77b4", "#ff7f0e"),
+      title = glue("QQ Polt - {var} ({year})")
+    ) + 
+      geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
       theme_minimal() +
-      labs(x = "Quantiles théoriques", y = "Quantiles observés", color = "Groupe") +
+      labs(x = "Quantiles théoriques", y = "Quantiles observés", color = "Groupe") + 
       theme(plot.title = element_text(hjust = 0.5))
     
-    # Sauvegarde du graphique
+    
     ggsave(
-      filename = file.path(year_dir, paste0("QQplot_", var, "_", year, ".png")),
-      plot = p, width = 7, height = 5
+      filename = file.path(year_dir, glue("QQplot_{var}_{year}.png")), plot = p, width = 7, height = 5
     )
-  }
+  })
   
   return(list(balance = bal_after))
 }
 
-
-res_after_1997 <- check_balance_after(data_matched_1997, 1997, matching_variables)
-res_after_2008 <- check_balance_after(data_matched_2008, 2008, matching_variables)
-res_after_2011 <- check_balance_after(data_matched_2011, 2011, matching_variables)
-res_after_2013 <- check_balance_after(data_matched_2013, 2013, matching_variables)
-res_after_2016 <- check_balance_after(data_matched_2016, 2016, matching_variables)
-res_after_2021 <- check_balance_after(data_matched_2021, 2021, matching_variables)
-
+results_list <- map(yrs, function(y){
+  data_y <- readRDS(glue("data/derived/data_matched_{y}.rds"))
+  check_balance_after(data_y, y,matching_variables)
+})
 ```
 
 #### Balance test after matching: Histogram
@@ -474,6 +469,23 @@ plot_mirror_hist(2011,"traveltime_2000_2000")
 plot_mirror_hist(2013,"traveltime_2000_2000")
 plot_mirror_hist(2016,"traveltime_2000_2000")
 plot_mirror_hist(2021,"traveltime_2000_2000")
+
+plots <- list()
+
+for (y in c(1997, 2008, 2011, 2013, 2016, 2021)) {
+  for (v in matching_variables) {
+    plots[[paste0(v, "_", y)]] <- plot_mirror_hist(y, v)
+  }
+}
+
+library(patchwork)
+
+# Tous les graphiques pour une année donnée
+wrap_plots(plots[grep("_1997$", names(plots))], ncol = 2)
+
+# Tous les graphiques pour une variable donnée
+wrap_plots(plots[grep("^slope_2000", names(plots))], ncol = 3)
+
 ```
 
 L'histogramme compare les moyennes des variables de contrôle après le matching entre les groupes de traitement (en bleu) et de contrôle (en vert) pour chaque année.
