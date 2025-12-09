@@ -6,7 +6,7 @@ editor_options:
 
 # Treatment assignation
 
-Nous classons les clusters d'enquêtes DHS (1997, 2008, 2011, 2013, 2016 et 2021) par rapport à leur distance aux aires protégées (AP) et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
+Les clusters d'enquêtes DHS (1997, 2008, 2011, 2013, 2016 et 2021) sont classés par rapport à leur distance aux aires protégées (AP) et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
 
 -   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
 
@@ -76,7 +76,7 @@ Les coordonnées GPS de neuf clusters de l'enquête 2008 présentent des coordon
 
 ## Chargement des données AP
 
-Afin de disposer de données actualisées sur les aires protégées, nous avons triangulé les données relatives aux aires protégées avec d'autres sources notamment celles du Service de la Gouvernance des Aires Protégées (SGAP) du Ministère de l'Environnement et de Développement Durable de Madagascar (MEDD)", les décrets officiels et la documentation des gestionnaires des aires protégées. Les données de World Database on Protected Areas (WDPA) restent néanmoins la plus complète.
+Afin de disposer de données actualisées sur les aires protégées, nous avons triangulé les données relatives aux aires protégées avec d'autres sources notamment celles du Service de la Gouvernance des Aires Protégées (SGAP) du Ministère de l'Environnement et de Développement Durable de Madagascar (MEDD)", les décrets officiels et la documentation des gestionnaires des aires protégées. Les données de *World Database on Protected Areas* (WDPA) restent néanmoins la plus complète.
 
 On charge et nettoie le jeu de données des aires protégées de WDPA, en ne gardant que celles dont le statut est officiellement désigné et en distinguant les zones terrestres, marines et mixtes. On ajoute le contour du pays pour situer ces aires dans l'espace. On crée ensuite une carte interactive pour visualiser ces aires protégées selon leur type, leurs noms et leurs superficies.
 
@@ -214,7 +214,7 @@ Comme nos données sont complètes, nous allons maintenant créé un buffer zone
 
 On travaille toujours avec les portions terrestres des AP.
 
-Pour analyser l'impact des aires protégées selon leur période de création, on spécifie les aires protégées créées avant 2008 et à partir de 2008. On applique ensuite une zone tampon de 10 km autour de chaque groupe d'aires protégées. Chaque groupe a été reprojeté dans le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702) pour les calculs de distances. Nous créons ensuite une carte pour visualiser les aires protégées et leurs zones d'influence.
+Pour analyser l'impact des aires protégées selon leur période de création, on spécifie les aires protégées créées avant 2008 et à partir de 2008. On applique ensuite un buffer zone de 10 km autour de chaque groupe d'aires protégées. Chaque groupe a été reprojeté dans le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702) pour les calculs de distances. Nous créons ensuite une carte pour visualiser les aires protégées et leurs zones d'influence.
 
 ```{r}
 #| fig-cap: "Aires protégées du WDPA par période de création"
