@@ -224,7 +224,7 @@ Pour effectuer le test avant l'appariement, on détermine les déséquilibres in
 ```{r}
 # Load 
 hr_list <- setNames(
-  lapply(years, function(y) read_rds(paste0("data/derived/hr_", y, "_final.rds"))),
+  lapply(yrs, function(y) read_rds(paste0("data/derived/hr_", y, "_final.rds"))),
   yrs
 )
 
@@ -278,14 +278,22 @@ balance_results
 L'analyse des distributions des covariables avant le matching montrent un déséquilibre important entre les groupes de traitement et de contrôle. En 1997, l'équilibre des covariables est partiellement atteint. Deux variables montrent un déséquilibre dont la couverture forestière en 2000 (avec un SMD = 0.15) et l'accessibilité en 2000 (avec un SMD = 0.17). Cela montre des différences structurelles persistantes entre les groupes. En 2008, l'équilibre est globalement satisfaisant, avec un léger déséquilibre pour la variable densité de population avec un SMD égale à 0.10, tandis que l'ensemble des autres covariables présente un SMD inférieur à 0.05. En 2011, tous les covariables sont bien équilibrées sauf pour la variable densité de population. Cette dernière montre un déséquilibre modéré dont la SMD est égale à 0.15. Cela suggère une certaine hétérogénéité territoriale entre les zones traitées et non traitées. Cette année est celle où le matching est le plus performant. En 2013, la majorité des covariables sont équilibrées mais le temps de déplacement reste déséquilibré avec un SMD égale à 0.14. Cela indique l'existence d'une différence persistante d'accessibilité entre les groupes. En 2016, toutes les covariables présentent un SMD inférieur au seuil de 0.1, qui indique un équilibre satisfaisant entre les groupes. En 2021, plusieurs covariables présentent un léger déséquilibre. Les groupes restent structurellement différents en termes de contexte géographique et socio-démographique.
 
 ```{r}
+# Load data before matching
+hr_1997_final <- readRDS("data/derived/hr_1997_final.rds")
+hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
+hr_2011_final <- readRDS("data/derived/hr_2011_final.rds")
+hr_2013_final <- readRDS("data/derived/hr_2013_final.rds")
+hr_2016_final <- readRDS("data/derived/hr_2016_final.rds")
+hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
+
 # Distribution des covariables
 data_list <- list(
-  "1997" = hr_final_1997
-  "2008" = hr_final_2008,
-  "2011" = hr_final_2011,
-  "2013" = hr_final_2013,
-  "2016" = hr_final_2016,
-  "2021" = hr_final_2021 
+  "1997" = hr_1997_final,
+  "2008" = hr_2008_final,
+  "2011" = hr_2011_final,
+  "2013" = hr_2013_final,
+  "2016" = hr_2016_final,
+  "2021" = hr_2021_final 
 )
 
 
@@ -307,12 +315,29 @@ data_list <- list(
     theme_minimal()
   }
     
-print(density_plot(hr_final_1997, 1997, matching_variables))
-print(density_plot(hr_final_2008, 2008, matching_variables))
-print(density_plot(hr_final_2011, 2011, matching_variables))
-print(density_plot(hr_final_2013, 2013, matching_variables))
-print(density_plot(hr_final_2016, 2016, matching_variables))
-print(density_plot(hr_final_2021, 2021, matching_variables))
+print(density_plot(hr_1997_final, 1997, matching_variables))
+print(density_plot(hr_2008_final, 2008, matching_variables))
+print(density_plot(hr_2011_final, 2011, matching_variables))
+print(density_plot(hr_2013_final, 2013, matching_variables))
+print(density_plot(hr_2016_final, 2016, matching_variables))
+print(density_plot(hr_2021_final, 2021, matching_variables))
+
+# Combiner les plots
+library(patchwork)
+
+p1997 <- density_plot(hr_1997_final, 1997, matching_variables)
+p2008 <- density_plot(hr_2008_final, 2008, matching_variables)
+p2011 <- density_plot(hr_2011_final, 2011, matching_variables)
+p2013 <- density_plot(hr_2013_final, 2013, matching_variables)
+p2016 <- density_plot(hr_2016_final, 2016, matching_variables)
+p2021 <- density_plot(hr_2021_final, 2021, matching_variables)
+
+# Combiner en grille (2 lignes x 3 colonnes)
+combined <- (p1997 | p2008 | p2011) /
+            (p2013 | p2016 | p2021)
+
+print(combined)
+
 ```
 
 Ces graphiques présentent la distribution des covariables avant le matching entre les clusters situés à proximité des aires protégées (en violet) et ceux qui en sont éloignés (vert). Chaque panneau illustre les covariables utilisées dans le matching à savoir le taux de couvert forestier en 2000, la pente et l'altitude, la densité de population en 2000, la pente , l'accessibilité en 2000 (temps estimé de trajet en voiture des ménages jusqu'aux villes les plus proches).
