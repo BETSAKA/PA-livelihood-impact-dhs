@@ -20,9 +20,9 @@ library(sf) # Analyse spatiale
 library(readr)
 
 # On charge les données
-wdpa_before_2008 <- st_read("data/derived/wdpa_before_2008.csv") 
+wdpa_before_2008 <- st_read("data/derived/wdpa_before_2008.csv", quiet = TRUE) 
 
-wdpa_from_2008 <- read.csv("data/derived/wdpa_from_2008.csv")
+wdpa_from_2008 <- read.csv("data/derived/wdpa_from_2008.csv", quiet = TRUE)
 
 # Fonction utilitaire pour produire les statistiques d'une période
 get_descriptive_stats <- function(data, periode_label) {
@@ -191,30 +191,25 @@ vars_ut <- c("treecover_area_2000", "slope_2000", "elevation_2000", "population_
 
 # Fonction pour statistiques descriptives robustes
 calc_descr_stats <- function(df, vars, year) {
-  df_num <- df %>% 
-    select(any_of(vars)) %>% select(where(is.numeric))
-  
-  if (ncol(df_num) == 0) return(NULL)       
-  
-  df_num %>%
-    summarise(across(
-      everything(),
-      list(
-        n = ~sum(!is.na(.)),
-        mean = ~mean(., na.rm = TRUE),
-        sd = ~sd(., na.rm = TRUE),
-        min = ~min(., na.rm = TRUE),
-        median = ~median(., na.rm = TRUE),
-        max = ~max(., na.rm = TRUE)
-      ),
-      .names = "{.col}_{.fn}"
-    )) %>%
+  df %>% 
+    select(any_of(vars)) %>% 
+    mutate(across(everything(), as.numeric)) %>% 
     pivot_longer(
       everything(),
-      names_to = c("Variable", ".value"),
-      names_sep = "_"
-    ) %>%
-    mutate(Year = year)
+      names_to = "Variable",
+      values_to = "value"
+    ) %>% 
+    group_by(Variable) %>% 
+    summarise(
+      n      = sum(!is.na(value)),
+      mean   = mean(value, na.rm = TRUE),
+      sd     = sd(value, na.rm = TRUE),
+      min    = min(value, na.rm = TRUE),
+      median = median(value, na.rm = TRUE),
+      max    = max(value, na.rm = TRUE),
+      .groups = "drop"
+    ) %>% 
+    mutate(Year = year, .before = 1)
 }
 
 years <- c(1997, 2008, 2011, 2013, 2016, 2021)
@@ -223,10 +218,15 @@ data_list <- lapply(years, function(yr){
 })
 
 
-descr_stats_vars <- map2_dfr(data_list, years, calc_descr_stats, vars = vars_ut)
+descr_stats_vars <- map2_dfr(data_list, years, calc_descr_stats, vars = vars_ut) %>% 
+  arrange(Variable, Year) %>% 
+  mutate(across(where(is.numeric), ~round(.x, 2)))
 
-descr_stats_vars
-    
+kable(
+  descr_stats_vars,
+  caption = "Statistiques descriptives des covariables du modèle",
+  digits = 2
+)
 ```
 
 ## Statistiques descriptives (partie matching)
@@ -237,39 +237,43 @@ Nous créons une fonction pour automatiser la création d'un résumé statistiqu
 # Load data 
 years <- c(1997, 2008, 2011, 2013, 2016, 2021)
 
-summary_matched <- function(year){
+summary_matched <- function(year) {
   file_path <- paste0("data/derived/data_matched_", year, ".rds")
-df <- readRDS(file_path)
-  
-df %>%
-  summarise(across(
-    where(is.numeric),
-    list(
-      n = ~sum(!is.na(.)),
-        mean = ~mean(., na.rm = TRUE),
-        sd = ~sd(., na.rm = TRUE),
-        min = ~min(., na.rm = TRUE),
-        median = ~median(., na.rm = TRUE),
-        max = ~max(., na.rm = TRUE)
-    ),
-      .names = "{.col}_{.fn}"
-    )) %>%
+  df <- readRDS(file_path) %>% 
+    mutate(across(where(is.numeric), as.numeric))
+
+  df %>% 
     pivot_longer(
-      cols = everything(),
-      names_to = c("Variable", "Stat"),
-      names_sep = "_",
-      values_to = "Value"
-    ) %>%
-  pivot_wider(names_from = Stat, values_from = Value) %>%
-  mutate(Year = year, .before = 1)
+      where(is.numeric),
+      names_to = "Variable",
+      values_to = "value"
+    ) %>% 
+    group_by(Variable) %>% 
+    summarise(
+      n      = sum(!is.na(value)),
+      mean   = mean(value, na.rm = TRUE),
+      sd     = sd(value, na.rm = TRUE),
+      min    = min(value, na.rm = TRUE),
+      median = median(value, na.rm = TRUE),
+      max    = max(value, na.rm = TRUE),
+      .groups = "drop"
+    ) %>% 
+    mutate(Year = year, .before = 1)
 }
 
-descr_stats_match <- map_dfr(years, summary_matched)
+descr_stats_match <- map_dfr(years, summary_matched) %>% 
+  arrange(Variable, Year) %>% 
+  mutate(across(where(is.numeric), ~round(.x, 2)))
 
-descr_stats_match
+kable(
+  descr_stats_match,
+  caption = "Statistiques descriptives des variables dans les échantillons appariés",
+  digits = 2
+)
                              
 ```
 
 
 ## Statistiques descriptives (partie estimation)
+
 

@@ -6,6 +6,6 @@ bibliography: references.bib
 
 > Par commodité, on écrit pour l'instant en français, mais on traduira au moment de la finalisation.
 
-L'analyse ici est décrite dans un PAP
+L'analyse ici est décrite dans un Pre-analysis plan, déposé sur le portail OSF le 14 novembre 2024 et mis à jour le 18 mars 2025 : https://osf.io/bgu5n
 
-Ce travaille utilise mapme.biodiversity [@mapme.biodiversity].
+Ce travaille utilise notamment le package mapme.biodiversity [@mapme.biodiversity].
