@@ -852,57 +852,461 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Fonction pour statistiques descriptives robustes</span></span>
 <span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>calc_descr_stats <span class="ot">&lt;-</span> <span class="cf">function</span>(df, vars, year) {</span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  df_num <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span> </span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">any_of</span>(vars)) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">where</span>(is.numeric))</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">ncol</span>(df_num) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="cn">NULL</span>)       </span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  df_num <span class="sc">%&gt;%</span></span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="fu">across</span>(</span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">everything</span>(),</span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">list</span>(</span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>        <span class="at">n =</span> <span class="sc">~</span><span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(.)),</span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>        <span class="at">mean =</span> <span class="sc">~</span><span class="fu">mean</span>(., <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>        <span class="at">sd =</span> <span class="sc">~</span><span class="fu">sd</span>(., <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>        <span class="at">min =</span> <span class="sc">~</span><span class="fu">min</span>(., <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>        <span class="at">median =</span> <span class="sc">~</span><span class="fu">median</span>(., <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">max =</span> <span class="sc">~</span><span class="fu">max</span>(., <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>      ),</span>
-<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>      <span class="at">.names =</span> <span class="st">"{.col}_{.fn}"</span></span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>    )) <span class="sc">%&gt;%</span></span>
-<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(</span>
-<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>      <span class="fu">everything</span>(),</span>
-<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>      <span class="at">names_to =</span> <span class="fu">c</span>(<span class="st">"Variable"</span>, <span class="st">".value"</span>),</span>
-<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>      <span class="at">names_sep =</span> <span class="st">"_"</span></span>
-<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">Year =</span> year)</span>
-<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">%&gt;%</span> </span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">any_of</span>(vars)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), as.numeric)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">everything</span>(),</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>      <span class="at">names_to =</span> <span class="st">"Variable"</span>,</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>      <span class="at">values_to =</span> <span class="st">"value"</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(Variable) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>      <span class="at">n      =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(value)),</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>      <span class="at">mean   =</span> <span class="fu">mean</span>(value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>      <span class="at">sd     =</span> <span class="fu">sd</span>(value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>      <span class="at">min    =</span> <span class="fu">min</span>(value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>      <span class="at">median =</span> <span class="fu">median</span>(value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>      <span class="at">max    =</span> <span class="fu">max</span>(value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>      <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">Year =</span> year, <span class="at">.before =</span> <span class="dv">1</span>)</span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>years <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1997</span>, <span class="dv">2008</span>, <span class="dv">2011</span>, <span class="dv">2013</span>, <span class="dv">2016</span>, <span class="dv">2021</span>)</span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>data_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(years, <span class="cf">function</span>(yr){</span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">readRDS</span>(glue<span class="sc">::</span><span class="fu">glue</span>(<span class="st">"data/derived/hr_{yr}_final.rds"</span>))</span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>years <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1997</span>, <span class="dv">2008</span>, <span class="dv">2011</span>, <span class="dv">2013</span>, <span class="dv">2016</span>, <span class="dv">2021</span>)</span>
-<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>data_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(years, <span class="cf">function</span>(yr){</span>
-<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">readRDS</span>(glue<span class="sc">::</span><span class="fu">glue</span>(<span class="st">"data/derived/hr_{yr}_final.rds"</span>))</span>
-<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>descr_stats_vars <span class="ot">&lt;-</span> <span class="fu">map2_dfr</span>(data_list, years, calc_descr_stats, <span class="at">vars =</span> vars_ut) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(Variable, Year) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span><span class="fu">round</span>(.x, <span class="dv">2</span>)))</span>
 <span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>descr_stats_vars <span class="ot">&lt;-</span> <span class="fu">map2_dfr</span>(data_list, years, calc_descr_stats, <span class="at">vars =</span> vars_ut)</span>
-<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>descr_stats_vars</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(</span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>  descr_stats_vars,</span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Statistiques descriptives des covariables du modèle"</span>,</span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span></span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 234 × 6
-   Variable    area  `2000` count    wc  Year
-   &lt;chr&gt;      &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
- 1 treecover  5124    NA       NA    NA  1997
- 2 treecover 18640.   NA       NA    NA  1997
- 3 treecover 10058.   NA       NA    NA  1997
- 4 treecover  1343.   NA       NA    NA  1997
- 5 treecover 18447.   NA       NA    NA  1997
- 6 treecover 31567.   NA       NA    NA  1997
- 7 slope        NA  5124       NA    NA  1997
- 8 slope        NA     8.25    NA    NA  1997
- 9 slope        NA     4.50    NA    NA  1997
-10 slope        NA     1.45    NA    NA  1997
-# ℹ 224 more rows</code></pre>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Statistiques descriptives des covariables du modèle</caption>
+<colgroup>
+<col style="width: 6%">
+<col style="width: 28%">
+<col style="width: 7%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 11%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Year</th>
+<th style="text-align: left;">Variable</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">mean</th>
+<th style="text-align: right;">sd</th>
+<th style="text-align: right;">min</th>
+<th style="text-align: right;">median</th>
+<th style="text-align: right;">max</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">elevation_2000</td>
+<td style="text-align: right;">5124</td>
+<td style="text-align: right;">558.86</td>
+<td style="text-align: right;">539.42</td>
+<td style="text-align: right;">3.01</td>
+<td style="text-align: right;">314.74</td>
+<td style="text-align: right;">1966.77</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">elevation_2000</td>
+<td style="text-align: right;">13181</td>
+<td style="text-align: right;">597.18</td>
+<td style="text-align: right;">530.37</td>
+<td style="text-align: right;">2.93</td>
+<td style="text-align: right;">435.35</td>
+<td style="text-align: right;">1835.09</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">elevation_2000</td>
+<td style="text-align: right;">5997</td>
+<td style="text-align: right;">570.49</td>
+<td style="text-align: right;">510.53</td>
+<td style="text-align: right;">7.47</td>
+<td style="text-align: right;">332.11</td>
+<td style="text-align: right;">1734.68</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">elevation_2000</td>
+<td style="text-align: right;">6375</td>
+<td style="text-align: right;">571.60</td>
+<td style="text-align: right;">515.47</td>
+<td style="text-align: right;">9.53</td>
+<td style="text-align: right;">329.71</td>
+<td style="text-align: right;">1596.12</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">elevation_2000</td>
+<td style="text-align: right;">9295</td>
+<td style="text-align: right;">561.30</td>
+<td style="text-align: right;">506.07</td>
+<td style="text-align: right;">5.53</td>
+<td style="text-align: right;">348.85</td>
+<td style="text-align: right;">1663.60</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">elevation_2000</td>
+<td style="text-align: right;">15364</td>
+<td style="text-align: right;">602.38</td>
+<td style="text-align: right;">519.44</td>
+<td style="text-align: right;">5.61</td>
+<td style="text-align: right;">460.17</td>
+<td style="text-align: right;">2006.92</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">population_count_2000</td>
+<td style="text-align: right;">5124</td>
+<td style="text-align: right;">106.14</td>
+<td style="text-align: right;">323.19</td>
+<td style="text-align: right;">1.79</td>
+<td style="text-align: right;">33.09</td>
+<td style="text-align: right;">2199.75</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">population_count_2000</td>
+<td style="text-align: right;">13181</td>
+<td style="text-align: right;">77.30</td>
+<td style="text-align: right;">248.93</td>
+<td style="text-align: right;">1.37</td>
+<td style="text-align: right;">27.65</td>
+<td style="text-align: right;">2650.08</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">population_count_2000</td>
+<td style="text-align: right;">5997</td>
+<td style="text-align: right;">142.82</td>
+<td style="text-align: right;">422.06</td>
+<td style="text-align: right;">2.31</td>
+<td style="text-align: right;">28.86</td>
+<td style="text-align: right;">2548.30</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">population_count_2000</td>
+<td style="text-align: right;">6375</td>
+<td style="text-align: right;">124.84</td>
+<td style="text-align: right;">375.61</td>
+<td style="text-align: right;">1.12</td>
+<td style="text-align: right;">27.27</td>
+<td style="text-align: right;">2723.96</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">population_count_2000</td>
+<td style="text-align: right;">9295</td>
+<td style="text-align: right;">83.71</td>
+<td style="text-align: right;">260.86</td>
+<td style="text-align: right;">1.16</td>
+<td style="text-align: right;">27.70</td>
+<td style="text-align: right;">2443.56</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">population_count_2000</td>
+<td style="text-align: right;">15364</td>
+<td style="text-align: right;">88.68</td>
+<td style="text-align: right;">304.20</td>
+<td style="text-align: right;">0.41</td>
+<td style="text-align: right;">24.16</td>
+<td style="text-align: right;">2748.21</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">slope_2000</td>
+<td style="text-align: right;">5124</td>
+<td style="text-align: right;">8.25</td>
+<td style="text-align: right;">4.50</td>
+<td style="text-align: right;">1.45</td>
+<td style="text-align: right;">8.08</td>
+<td style="text-align: right;">19.30</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">slope_2000</td>
+<td style="text-align: right;">13181</td>
+<td style="text-align: right;">7.94</td>
+<td style="text-align: right;">4.39</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">7.59</td>
+<td style="text-align: right;">20.41</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">slope_2000</td>
+<td style="text-align: right;">5997</td>
+<td style="text-align: right;">6.85</td>
+<td style="text-align: right;">4.69</td>
+<td style="text-align: right;">1.37</td>
+<td style="text-align: right;">5.72</td>
+<td style="text-align: right;">18.23</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">slope_2000</td>
+<td style="text-align: right;">6375</td>
+<td style="text-align: right;">7.14</td>
+<td style="text-align: right;">4.74</td>
+<td style="text-align: right;">1.51</td>
+<td style="text-align: right;">5.87</td>
+<td style="text-align: right;">19.38</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">slope_2000</td>
+<td style="text-align: right;">9295</td>
+<td style="text-align: right;">7.75</td>
+<td style="text-align: right;">4.13</td>
+<td style="text-align: right;">0.98</td>
+<td style="text-align: right;">7.70</td>
+<td style="text-align: right;">20.86</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">slope_2000</td>
+<td style="text-align: right;">15364</td>
+<td style="text-align: right;">8.02</td>
+<td style="text-align: right;">4.43</td>
+<td style="text-align: right;">0.99</td>
+<td style="text-align: right;">7.80</td>
+<td style="text-align: right;">20.84</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">spei_wc_1995</td>
+<td style="text-align: right;">5124</td>
+<td style="text-align: right;">-0.02</td>
+<td style="text-align: right;">0.45</td>
+<td style="text-align: right;">-1.18</td>
+<td style="text-align: right;">-0.02</td>
+<td style="text-align: right;">1.14</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">spei_wc_1996</td>
+<td style="text-align: right;">5124</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0.69</td>
+<td style="text-align: right;">-0.38</td>
+<td style="text-align: right;">1.09</td>
+<td style="text-align: right;">1.87</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">spei_wc_1997</td>
+<td style="text-align: right;">5124</td>
+<td style="text-align: right;">-0.15</td>
+<td style="text-align: right;">0.60</td>
+<td style="text-align: right;">-1.30</td>
+<td style="text-align: right;">-0.08</td>
+<td style="text-align: right;">1.56</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">spei_wc_2006</td>
+<td style="text-align: right;">13181</td>
+<td style="text-align: right;">0.22</td>
+<td style="text-align: right;">0.15</td>
+<td style="text-align: right;">-0.22</td>
+<td style="text-align: right;">0.23</td>
+<td style="text-align: right;">0.55</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">spei_wc_2007</td>
+<td style="text-align: right;">13181</td>
+<td style="text-align: right;">0.09</td>
+<td style="text-align: right;">0.45</td>
+<td style="text-align: right;">-2.13</td>
+<td style="text-align: right;">0.20</td>
+<td style="text-align: right;">0.52</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">spei_wc_2008</td>
+<td style="text-align: right;">13181</td>
+<td style="text-align: right;">0.22</td>
+<td style="text-align: right;">0.19</td>
+<td style="text-align: right;">-0.40</td>
+<td style="text-align: right;">0.25</td>
+<td style="text-align: right;">0.54</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">spei_wc_2019</td>
+<td style="text-align: right;">15364</td>
+<td style="text-align: right;">-0.13</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;">-1.15</td>
+<td style="text-align: right;">-0.16</td>
+<td style="text-align: right;">0.76</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">spei_wc_2020</td>
+<td style="text-align: right;">15364</td>
+<td style="text-align: right;">-0.05</td>
+<td style="text-align: right;">0.29</td>
+<td style="text-align: right;">-0.76</td>
+<td style="text-align: right;">-0.07</td>
+<td style="text-align: right;">0.72</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">spei_wc_2021</td>
+<td style="text-align: right;">15364</td>
+<td style="text-align: right;">-1.11</td>
+<td style="text-align: right;">0.46</td>
+<td style="text-align: right;">-1.91</td>
+<td style="text-align: right;">-1.20</td>
+<td style="text-align: right;">0.13</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">traveltime_2000_2000</td>
+<td style="text-align: right;">5124</td>
+<td style="text-align: right;">247.61</td>
+<td style="text-align: right;">190.77</td>
+<td style="text-align: right;">14.12</td>
+<td style="text-align: right;">204.87</td>
+<td style="text-align: right;">1287.92</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">traveltime_2000_2000</td>
+<td style="text-align: right;">13181</td>
+<td style="text-align: right;">232.09</td>
+<td style="text-align: right;">143.89</td>
+<td style="text-align: right;">12.31</td>
+<td style="text-align: right;">204.77</td>
+<td style="text-align: right;">1311.45</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">traveltime_2000_2000</td>
+<td style="text-align: right;">5997</td>
+<td style="text-align: right;">198.19</td>
+<td style="text-align: right;">137.05</td>
+<td style="text-align: right;">14.21</td>
+<td style="text-align: right;">179.63</td>
+<td style="text-align: right;">949.12</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">traveltime_2000_2000</td>
+<td style="text-align: right;">6375</td>
+<td style="text-align: right;">198.84</td>
+<td style="text-align: right;">133.41</td>
+<td style="text-align: right;">14.37</td>
+<td style="text-align: right;">177.58</td>
+<td style="text-align: right;">978.14</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">traveltime_2000_2000</td>
+<td style="text-align: right;">9295</td>
+<td style="text-align: right;">225.11</td>
+<td style="text-align: right;">143.74</td>
+<td style="text-align: right;">16.35</td>
+<td style="text-align: right;">198.95</td>
+<td style="text-align: right;">1122.49</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">traveltime_2000_2000</td>
+<td style="text-align: right;">15364</td>
+<td style="text-align: right;">238.17</td>
+<td style="text-align: right;">154.81</td>
+<td style="text-align: right;">13.85</td>
+<td style="text-align: right;">212.18</td>
+<td style="text-align: right;">1567.83</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">treecover_area_2000</td>
+<td style="text-align: right;">5124</td>
+<td style="text-align: right;">18640.42</td>
+<td style="text-align: right;">10058.05</td>
+<td style="text-align: right;">1342.77</td>
+<td style="text-align: right;">18447.03</td>
+<td style="text-align: right;">31566.59</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">treecover_area_2000</td>
+<td style="text-align: right;">13181</td>
+<td style="text-align: right;">16731.16</td>
+<td style="text-align: right;">10224.05</td>
+<td style="text-align: right;">327.77</td>
+<td style="text-align: right;">15681.88</td>
+<td style="text-align: right;">31566.18</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">treecover_area_2000</td>
+<td style="text-align: right;">5997</td>
+<td style="text-align: right;">13857.05</td>
+<td style="text-align: right;">10325.87</td>
+<td style="text-align: right;">358.71</td>
+<td style="text-align: right;">10847.27</td>
+<td style="text-align: right;">31554.36</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">treecover_area_2000</td>
+<td style="text-align: right;">6375</td>
+<td style="text-align: right;">14715.03</td>
+<td style="text-align: right;">10354.71</td>
+<td style="text-align: right;">146.24</td>
+<td style="text-align: right;">12698.52</td>
+<td style="text-align: right;">31553.77</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">treecover_area_2000</td>
+<td style="text-align: right;">9295</td>
+<td style="text-align: right;">16894.43</td>
+<td style="text-align: right;">10565.34</td>
+<td style="text-align: right;">35.10</td>
+<td style="text-align: right;">15765.97</td>
+<td style="text-align: right;">31582.40</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">treecover_area_2000</td>
+<td style="text-align: right;">15364</td>
+<td style="text-align: right;">16791.05</td>
+<td style="text-align: right;">10146.62</td>
+<td style="text-align: right;">84.97</td>
+<td style="text-align: right;">15583.59</td>
+<td style="text-align: right;">31547.64</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </section>
@@ -912,57 +1316,1511 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data </span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>years <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1997</span>, <span class="dv">2008</span>, <span class="dv">2011</span>, <span class="dv">2013</span>, <span class="dv">2016</span>, <span class="dv">2021</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>summary_matched <span class="ot">&lt;-</span> <span class="cf">function</span>(year){</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  file_path <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"data/derived/data_matched_"</span>, year, <span class="st">".rds"</span>)</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(file_path)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>df <span class="sc">%&gt;%</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">across</span>(</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">where</span>(is.numeric),</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">n =</span> <span class="sc">~</span><span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(.)),</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">mean =</span> <span class="sc">~</span><span class="fu">mean</span>(., <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">sd =</span> <span class="sc">~</span><span class="fu">sd</span>(., <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">min =</span> <span class="sc">~</span><span class="fu">min</span>(., <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">median =</span> <span class="sc">~</span><span class="fu">median</span>(., <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>        <span class="at">max =</span> <span class="sc">~</span><span class="fu">max</span>(., <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">.names =</span> <span class="st">"{.col}_{.fn}"</span></span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    )) <span class="sc">%&gt;%</span></span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(</span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">cols =</span> <span class="fu">everything</span>(),</span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">names_to =</span> <span class="fu">c</span>(<span class="st">"Variable"</span>, <span class="st">"Stat"</span>),</span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>      <span class="at">names_sep =</span> <span class="st">"_"</span>,</span>
-<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>      <span class="at">values_to =</span> <span class="st">"Value"</span></span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> Stat, <span class="at">values_from =</span> Value) <span class="sc">%&gt;%</span></span>
-<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Year =</span> year, <span class="at">.before =</span> <span class="dv">1</span>)</span>
-<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>descr_stats_match <span class="ot">&lt;-</span> <span class="fu">map_dfr</span>(years, summary_matched)</span>
-<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>descr_stats_match</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data </span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>years <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1997</span>, <span class="dv">2008</span>, <span class="dv">2011</span>, <span class="dv">2013</span>, <span class="dv">2016</span>, <span class="dv">2021</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>summary_matched <span class="ot">&lt;-</span> <span class="cf">function</span>(year) {</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  file_path <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"data/derived/data_matched_"</span>, year, <span class="st">".rds"</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  df <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(file_path) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), as.numeric))</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">%&gt;%</span> </span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">where</span>(is.numeric),</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">names_to =</span> <span class="st">"Variable"</span>,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">values_to =</span> <span class="st">"value"</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(Variable) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">n      =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(value)),</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">mean   =</span> <span class="fu">mean</span>(value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">sd     =</span> <span class="fu">sd</span>(value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">min    =</span> <span class="fu">min</span>(value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">median =</span> <span class="fu">median</span>(value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">max    =</span> <span class="fu">max</span>(value, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">Year =</span> year, <span class="at">.before =</span> <span class="dv">1</span>)</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>descr_stats_match <span class="ot">&lt;-</span> <span class="fu">map_dfr</span>(years, summary_matched) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(Variable, Year) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span><span class="fu">round</span>(.x, <span class="dv">2</span>)))</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  descr_stats_match,</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Statistiques descriptives des variables dans les échantillons appariés"</span>,</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">digits =</span> <span class="dv">2</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 126 × 16
-    Year Variable n         mean      sd        min       median    max      
-   &lt;dbl&gt; &lt;chr&gt;    &lt;list&gt;    &lt;list&gt;    &lt;list&gt;    &lt;list&gt;    &lt;list&gt;    &lt;list&gt;   
- 1  1997 DHSYEAR  &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt;
- 2  1997 hv001    &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt;
- 3  1997 hv002    &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt;
- 4  1997 hv005    &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt;
- 5  1997 hv025    &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt;
- 6  1997 hv271    &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt;
- 7  1997 wealth   &lt;NULL&gt;    &lt;NULL&gt;    &lt;NULL&gt;    &lt;NULL&gt;    &lt;NULL&gt;    &lt;NULL&gt;   
- 8  1997 zscore   &lt;NULL&gt;    &lt;NULL&gt;    &lt;NULL&gt;    &lt;NULL&gt;    &lt;NULL&gt;    &lt;NULL&gt;   
- 9  1997 hv219    &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt;
-10  1997 hv220    &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt; &lt;dbl+lbl&gt;
-# ℹ 116 more rows
-# ℹ 8 more variables: centile &lt;list&gt;, wealth &lt;list&gt;, YR &lt;list&gt;, km &lt;list&gt;,
-#   area &lt;list&gt;, `2000` &lt;list&gt;, count &lt;list&gt;, wc &lt;list&gt;</code></pre>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Statistiques descriptives des variables dans les échantillons appariés</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 29%">
+<col style="width: 4%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 10%">
+<col style="width: 12%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Year</th>
+<th style="text-align: left;">Variable</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">mean</th>
+<th style="text-align: right;">sd</th>
+<th style="text-align: right;">min</th>
+<th style="text-align: right;">median</th>
+<th style="text-align: right;">max</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">DHSYEAR</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">1997.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">1997.00</td>
+<td style="text-align: right;">1997.00</td>
+<td style="text-align: right;">1997.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">DHSYEAR</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">2008.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">2008.00</td>
+<td style="text-align: right;">2008.00</td>
+<td style="text-align: right;">2008.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">DHSYEAR</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">2011.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">2011.00</td>
+<td style="text-align: right;">2011.00</td>
+<td style="text-align: right;">2011.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">DHSYEAR</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">2013.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">2013.00</td>
+<td style="text-align: right;">2013.00</td>
+<td style="text-align: right;">2013.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">DHSYEAR</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">2016.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">2016.00</td>
+<td style="text-align: right;">2016.00</td>
+<td style="text-align: right;">2016.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">DHSYEAR</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">2021.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">2021.00</td>
+<td style="text-align: right;">2021.00</td>
+<td style="text-align: right;">2021.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">STATUS_YR</td>
+<td style="text-align: right;">965</td>
+<td style="text-align: right;">2014.80</td>
+<td style="text-align: right;">1.02</td>
+<td style="text-align: right;">2009.00</td>
+<td style="text-align: right;">2015.00</td>
+<td style="text-align: right;">2015.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">STATUS_YR</td>
+<td style="text-align: right;">2451</td>
+<td style="text-align: right;">2014.52</td>
+<td style="text-align: right;">1.39</td>
+<td style="text-align: right;">2009.00</td>
+<td style="text-align: right;">2015.00</td>
+<td style="text-align: right;">2015.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">STATUS_YR</td>
+<td style="text-align: right;">930</td>
+<td style="text-align: right;">2014.69</td>
+<td style="text-align: right;">1.15</td>
+<td style="text-align: right;">2010.00</td>
+<td style="text-align: right;">2015.00</td>
+<td style="text-align: right;">2015.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">STATUS_YR</td>
+<td style="text-align: right;">1539</td>
+<td style="text-align: right;">2014.60</td>
+<td style="text-align: right;">1.19</td>
+<td style="text-align: right;">2010.00</td>
+<td style="text-align: right;">2015.00</td>
+<td style="text-align: right;">2015.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">STATUS_YR</td>
+<td style="text-align: right;">1685</td>
+<td style="text-align: right;">2014.81</td>
+<td style="text-align: right;">1.05</td>
+<td style="text-align: right;">2010.00</td>
+<td style="text-align: right;">2015.00</td>
+<td style="text-align: right;">2017.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">STATUS_YR</td>
+<td style="text-align: right;">3392</td>
+<td style="text-align: right;">2014.46</td>
+<td style="text-align: right;">1.54</td>
+<td style="text-align: right;">2010.00</td>
+<td style="text-align: right;">2015.00</td>
+<td style="text-align: right;">2017.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">WDPAID</td>
+<td style="text-align: right;">965</td>
+<td style="text-align: right;">285717732.96</td>
+<td style="text-align: right;">277766602.67</td>
+<td style="text-align: right;">1299.00</td>
+<td style="text-align: right;">555542728.00</td>
+<td style="text-align: right;">555697917.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">WDPAID</td>
+<td style="text-align: right;">2451</td>
+<td style="text-align: right;">307040577.16</td>
+<td style="text-align: right;">276267047.27</td>
+<td style="text-align: right;">1299.00</td>
+<td style="text-align: right;">555547960.00</td>
+<td style="text-align: right;">555697917.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">WDPAID</td>
+<td style="text-align: right;">930</td>
+<td style="text-align: right;">426639369.17</td>
+<td style="text-align: right;">234644631.79</td>
+<td style="text-align: right;">1299.00</td>
+<td style="text-align: right;">555549452.00</td>
+<td style="text-align: right;">555785986.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">WDPAID</td>
+<td style="text-align: right;">1539</td>
+<td style="text-align: right;">352837539.73</td>
+<td style="text-align: right;">267485964.60</td>
+<td style="text-align: right;">1299.00</td>
+<td style="text-align: right;">555549452.00</td>
+<td style="text-align: right;">555785986.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">WDPAID</td>
+<td style="text-align: right;">1685</td>
+<td style="text-align: right;">324916381.87</td>
+<td style="text-align: right;">273784180.32</td>
+<td style="text-align: right;">1299.00</td>
+<td style="text-align: right;">555549450.00</td>
+<td style="text-align: right;">555697916.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">WDPAID</td>
+<td style="text-align: right;">3392</td>
+<td style="text-align: right;">364405870.81</td>
+<td style="text-align: right;">263955383.79</td>
+<td style="text-align: right;">1299.00</td>
+<td style="text-align: right;">555697871.00</td>
+<td style="text-align: right;">555697918.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">dist_km</td>
+<td style="text-align: right;">965</td>
+<td style="text-align: right;">3.90</td>
+<td style="text-align: right;">3.03</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">3.78</td>
+<td style="text-align: right;">8.91</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">dist_km</td>
+<td style="text-align: right;">2451</td>
+<td style="text-align: right;">4.64</td>
+<td style="text-align: right;">3.06</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">5.23</td>
+<td style="text-align: right;">10.01</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">dist_km</td>
+<td style="text-align: right;">930</td>
+<td style="text-align: right;">4.31</td>
+<td style="text-align: right;">3.38</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">5.50</td>
+<td style="text-align: right;">9.93</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">dist_km</td>
+<td style="text-align: right;">1539</td>
+<td style="text-align: right;">4.50</td>
+<td style="text-align: right;">3.41</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">4.37</td>
+<td style="text-align: right;">9.89</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">dist_km</td>
+<td style="text-align: right;">1685</td>
+<td style="text-align: right;">4.56</td>
+<td style="text-align: right;">3.29</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">4.86</td>
+<td style="text-align: right;">9.68</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">dist_km</td>
+<td style="text-align: right;">3392</td>
+<td style="text-align: right;">4.83</td>
+<td style="text-align: right;">3.33</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">5.18</td>
+<td style="text-align: right;">9.95</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">elevation_2000</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">403.85</td>
+<td style="text-align: right;">443.83</td>
+<td style="text-align: right;">3.01</td>
+<td style="text-align: right;">207.42</td>
+<td style="text-align: right;">1892.28</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">elevation_2000</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">404.32</td>
+<td style="text-align: right;">470.78</td>
+<td style="text-align: right;">2.93</td>
+<td style="text-align: right;">195.40</td>
+<td style="text-align: right;">1800.69</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">elevation_2000</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">380.94</td>
+<td style="text-align: right;">449.69</td>
+<td style="text-align: right;">7.47</td>
+<td style="text-align: right;">167.05</td>
+<td style="text-align: right;">1555.08</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">elevation_2000</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">315.34</td>
+<td style="text-align: right;">404.44</td>
+<td style="text-align: right;">9.53</td>
+<td style="text-align: right;">157.55</td>
+<td style="text-align: right;">1596.12</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">elevation_2000</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">377.12</td>
+<td style="text-align: right;">450.11</td>
+<td style="text-align: right;">5.53</td>
+<td style="text-align: right;">164.99</td>
+<td style="text-align: right;">1663.60</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">elevation_2000</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">405.23</td>
+<td style="text-align: right;">472.56</td>
+<td style="text-align: right;">5.61</td>
+<td style="text-align: right;">188.91</td>
+<td style="text-align: right;">1824.29</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">hv001</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">178.41</td>
+<td style="text-align: right;">59.96</td>
+<td style="text-align: right;">64.00</td>
+<td style="text-align: right;">181.00</td>
+<td style="text-align: right;">270.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">hv001</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">381.47</td>
+<td style="text-align: right;">147.28</td>
+<td style="text-align: right;">62.00</td>
+<td style="text-align: right;">377.00</td>
+<td style="text-align: right;">600.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">hv001</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">162.13</td>
+<td style="text-align: right;">71.48</td>
+<td style="text-align: right;">12.00</td>
+<td style="text-align: right;">189.00</td>
+<td style="text-align: right;">268.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">hv001</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">171.61</td>
+<td style="text-align: right;">70.95</td>
+<td style="text-align: right;">13.00</td>
+<td style="text-align: right;">186.00</td>
+<td style="text-align: right;">284.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">hv001</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">232.23</td>
+<td style="text-align: right;">94.47</td>
+<td style="text-align: right;">24.00</td>
+<td style="text-align: right;">239.00</td>
+<td style="text-align: right;">375.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">hv001</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">404.87</td>
+<td style="text-align: right;">162.59</td>
+<td style="text-align: right;">52.00</td>
+<td style="text-align: right;">409.00</td>
+<td style="text-align: right;">655.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">hv002</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">19.75</td>
+<td style="text-align: right;">14.10</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">17.00</td>
+<td style="text-align: right;">60.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">hv002</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">82.31</td>
+<td style="text-align: right;">63.03</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">69.00</td>
+<td style="text-align: right;">446.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">hv002</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">87.38</td>
+<td style="text-align: right;">62.43</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">77.00</td>
+<td style="text-align: right;">296.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">hv002</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">77.42</td>
+<td style="text-align: right;">51.46</td>
+<td style="text-align: right;">3.00</td>
+<td style="text-align: right;">71.00</td>
+<td style="text-align: right;">274.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">hv002</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">116.28</td>
+<td style="text-align: right;">535.16</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">77.00</td>
+<td style="text-align: right;">9040.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">hv002</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">84.37</td>
+<td style="text-align: right;">61.93</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">75.00</td>
+<td style="text-align: right;">1146.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">hv005</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">993831.26</td>
+<td style="text-align: right;">258108.51</td>
+<td style="text-align: right;">602637.00</td>
+<td style="text-align: right;">1070160.00</td>
+<td style="text-align: right;">1490113.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">hv005</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">1092060.84</td>
+<td style="text-align: right;">632228.03</td>
+<td style="text-align: right;">146947.00</td>
+<td style="text-align: right;">932684.00</td>
+<td style="text-align: right;">2806127.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">hv005</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">986568.93</td>
+<td style="text-align: right;">960310.64</td>
+<td style="text-align: right;">47981.00</td>
+<td style="text-align: right;">451523.00</td>
+<td style="text-align: right;">3962731.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">hv005</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">1266857.67</td>
+<td style="text-align: right;">951224.57</td>
+<td style="text-align: right;">146497.00</td>
+<td style="text-align: right;">1346608.00</td>
+<td style="text-align: right;">4111918.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">hv005</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">1077199.12</td>
+<td style="text-align: right;">667117.77</td>
+<td style="text-align: right;">120564.00</td>
+<td style="text-align: right;">941891.00</td>
+<td style="text-align: right;">3421986.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">hv005</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">1067029.08</td>
+<td style="text-align: right;">564203.69</td>
+<td style="text-align: right;">98180.00</td>
+<td style="text-align: right;">950214.50</td>
+<td style="text-align: right;">3858947.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">hv025</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">hv025</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">hv025</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">hv025</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">hv025</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">hv025</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.00</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">hv219</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">1.23</td>
+<td style="text-align: right;">0.42</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">hv219</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">1.22</td>
+<td style="text-align: right;">0.41</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">hv219</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">1.27</td>
+<td style="text-align: right;">0.44</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">hv219</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">1.26</td>
+<td style="text-align: right;">0.44</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">hv219</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">1.32</td>
+<td style="text-align: right;">0.47</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">hv219</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">1.23</td>
+<td style="text-align: right;">0.42</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">2.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">hv220</td>
+<td style="text-align: right;">1929</td>
+<td style="text-align: right;">43.11</td>
+<td style="text-align: right;">16.21</td>
+<td style="text-align: right;">10.00</td>
+<td style="text-align: right;">40.00</td>
+<td style="text-align: right;">98.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">hv220</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">42.57</td>
+<td style="text-align: right;">15.70</td>
+<td style="text-align: right;">13.00</td>
+<td style="text-align: right;">40.00</td>
+<td style="text-align: right;">99.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">hv220</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">43.62</td>
+<td style="text-align: right;">16.24</td>
+<td style="text-align: right;">13.00</td>
+<td style="text-align: right;">41.00</td>
+<td style="text-align: right;">98.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">hv220</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">43.75</td>
+<td style="text-align: right;">16.77</td>
+<td style="text-align: right;">14.00</td>
+<td style="text-align: right;">42.00</td>
+<td style="text-align: right;">98.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">hv220</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">42.67</td>
+<td style="text-align: right;">16.00</td>
+<td style="text-align: right;">13.00</td>
+<td style="text-align: right;">40.00</td>
+<td style="text-align: right;">98.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">hv220</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">42.66</td>
+<td style="text-align: right;">15.74</td>
+<td style="text-align: right;">15.00</td>
+<td style="text-align: right;">40.00</td>
+<td style="text-align: right;">95.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">hv271</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">-0.48</td>
+<td style="text-align: right;">0.39</td>
+<td style="text-align: right;">-1.09</td>
+<td style="text-align: right;">-0.56</td>
+<td style="text-align: right;">1.87</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">hv271</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">-46649.50</td>
+<td style="text-align: right;">55805.66</td>
+<td style="text-align: right;">-117457.00</td>
+<td style="text-align: right;">-65227.50</td>
+<td style="text-align: right;">257881.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">hv271</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">-49077.32</td>
+<td style="text-align: right;">56852.63</td>
+<td style="text-align: right;">-130632.00</td>
+<td style="text-align: right;">-67778.50</td>
+<td style="text-align: right;">303130.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">hv271</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">-53964.28</td>
+<td style="text-align: right;">43195.87</td>
+<td style="text-align: right;">-106583.00</td>
+<td style="text-align: right;">-67441.00</td>
+<td style="text-align: right;">221809.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">hv271</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">-34437.66</td>
+<td style="text-align: right;">66445.81</td>
+<td style="text-align: right;">-134245.00</td>
+<td style="text-align: right;">-56575.50</td>
+<td style="text-align: right;">417411.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">hv271</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">-39468.04</td>
+<td style="text-align: right;">62276.79</td>
+<td style="text-align: right;">-119182.00</td>
+<td style="text-align: right;">-56674.50</td>
+<td style="text-align: right;">407214.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">population_count_2000</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">37.88</td>
+<td style="text-align: right;">32.12</td>
+<td style="text-align: right;">2.33</td>
+<td style="text-align: right;">26.81</td>
+<td style="text-align: right;">155.18</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">population_count_2000</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">34.71</td>
+<td style="text-align: right;">29.14</td>
+<td style="text-align: right;">1.39</td>
+<td style="text-align: right;">27.65</td>
+<td style="text-align: right;">178.49</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">population_count_2000</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">42.69</td>
+<td style="text-align: right;">27.66</td>
+<td style="text-align: right;">5.49</td>
+<td style="text-align: right;">40.31</td>
+<td style="text-align: right;">130.01</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">population_count_2000</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">31.45</td>
+<td style="text-align: right;">23.80</td>
+<td style="text-align: right;">1.12</td>
+<td style="text-align: right;">25.97</td>
+<td style="text-align: right;">136.35</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">population_count_2000</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">33.42</td>
+<td style="text-align: right;">27.25</td>
+<td style="text-align: right;">1.16</td>
+<td style="text-align: right;">25.31</td>
+<td style="text-align: right;">119.65</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">population_count_2000</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">32.57</td>
+<td style="text-align: right;">32.75</td>
+<td style="text-align: right;">0.41</td>
+<td style="text-align: right;">24.16</td>
+<td style="text-align: right;">232.04</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">slope_2000</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">8.66</td>
+<td style="text-align: right;">5.00</td>
+<td style="text-align: right;">1.45</td>
+<td style="text-align: right;">9.40</td>
+<td style="text-align: right;">16.69</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">slope_2000</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">8.31</td>
+<td style="text-align: right;">5.16</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">7.57</td>
+<td style="text-align: right;">17.67</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">slope_2000</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">6.18</td>
+<td style="text-align: right;">5.23</td>
+<td style="text-align: right;">1.37</td>
+<td style="text-align: right;">3.18</td>
+<td style="text-align: right;">18.23</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">slope_2000</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">6.90</td>
+<td style="text-align: right;">5.22</td>
+<td style="text-align: right;">1.58</td>
+<td style="text-align: right;">4.58</td>
+<td style="text-align: right;">18.72</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">slope_2000</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">7.42</td>
+<td style="text-align: right;">4.88</td>
+<td style="text-align: right;">0.98</td>
+<td style="text-align: right;">5.63</td>
+<td style="text-align: right;">17.88</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">slope_2000</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">8.48</td>
+<td style="text-align: right;">4.98</td>
+<td style="text-align: right;">0.99</td>
+<td style="text-align: right;">8.89</td>
+<td style="text-align: right;">20.84</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">spei_wc_1995</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">0.46</td>
+<td style="text-align: right;">-0.78</td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;">1.14</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">spei_wc_1996</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">0.79</td>
+<td style="text-align: right;">0.62</td>
+<td style="text-align: right;">-0.29</td>
+<td style="text-align: right;">0.81</td>
+<td style="text-align: right;">1.79</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">spei_wc_1997</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">-0.24</td>
+<td style="text-align: right;">0.58</td>
+<td style="text-align: right;">-1.30</td>
+<td style="text-align: right;">-0.20</td>
+<td style="text-align: right;">1.56</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">spei_wc_2006</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">0.23</td>
+<td style="text-align: right;">0.17</td>
+<td style="text-align: right;">-0.22</td>
+<td style="text-align: right;">0.27</td>
+<td style="text-align: right;">0.55</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">spei_wc_2007</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">-0.02</td>
+<td style="text-align: right;">0.66</td>
+<td style="text-align: right;">-2.13</td>
+<td style="text-align: right;">0.23</td>
+<td style="text-align: right;">0.52</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">spei_wc_2008</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">0.21</td>
+<td style="text-align: right;">0.24</td>
+<td style="text-align: right;">-0.40</td>
+<td style="text-align: right;">0.29</td>
+<td style="text-align: right;">0.54</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">spei_wc_2009</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">0.33</td>
+<td style="text-align: right;">0.09</td>
+<td style="text-align: right;">-0.06</td>
+<td style="text-align: right;">0.33</td>
+<td style="text-align: right;">0.60</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">spei_wc_2010</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">0.10</td>
+<td style="text-align: right;">0.18</td>
+<td style="text-align: right;">-0.35</td>
+<td style="text-align: right;">0.09</td>
+<td style="text-align: right;">0.92</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">spei_wc_2011</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">-0.36</td>
+<td style="text-align: right;">0.36</td>
+<td style="text-align: right;">-1.12</td>
+<td style="text-align: right;">-0.23</td>
+<td style="text-align: right;">0.65</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">spei_wc_2011</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">-0.33</td>
+<td style="text-align: right;">0.36</td>
+<td style="text-align: right;">-1.13</td>
+<td style="text-align: right;">-0.21</td>
+<td style="text-align: right;">0.67</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">spei_wc_2012</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">-0.37</td>
+<td style="text-align: right;">0.31</td>
+<td style="text-align: right;">-0.91</td>
+<td style="text-align: right;">-0.33</td>
+<td style="text-align: right;">0.41</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">spei_wc_2013</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">0.52</td>
+<td style="text-align: right;">1.17</td>
+<td style="text-align: right;">-1.83</td>
+<td style="text-align: right;">0.64</td>
+<td style="text-align: right;">1.96</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">spei_wc_2014</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;">0.98</td>
+<td style="text-align: right;">-1.42</td>
+<td style="text-align: right;">0.13</td>
+<td style="text-align: right;">1.77</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">spei_wc_2015</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">0.20</td>
+<td style="text-align: right;">0.74</td>
+<td style="text-align: right;">-0.98</td>
+<td style="text-align: right;">0.35</td>
+<td style="text-align: right;">2.01</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">spei_wc_2016</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">-0.48</td>
+<td style="text-align: right;">0.56</td>
+<td style="text-align: right;">-1.21</td>
+<td style="text-align: right;">-0.55</td>
+<td style="text-align: right;">0.99</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">spei_wc_2019</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">-0.17</td>
+<td style="text-align: right;">0.34</td>
+<td style="text-align: right;">-1.15</td>
+<td style="text-align: right;">-0.24</td>
+<td style="text-align: right;">0.76</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">spei_wc_2020</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">-0.09</td>
+<td style="text-align: right;">0.32</td>
+<td style="text-align: right;">-0.74</td>
+<td style="text-align: right;">-0.10</td>
+<td style="text-align: right;">0.71</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">spei_wc_2021</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">-0.96</td>
+<td style="text-align: right;">0.52</td>
+<td style="text-align: right;">-1.91</td>
+<td style="text-align: right;">-1.15</td>
+<td style="text-align: right;">0.13</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">traveltime_2000_2000</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">221.34</td>
+<td style="text-align: right;">110.83</td>
+<td style="text-align: right;">46.75</td>
+<td style="text-align: right;">204.87</td>
+<td style="text-align: right;">692.19</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">traveltime_2000_2000</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">238.38</td>
+<td style="text-align: right;">128.46</td>
+<td style="text-align: right;">29.54</td>
+<td style="text-align: right;">208.11</td>
+<td style="text-align: right;">614.27</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">traveltime_2000_2000</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">154.80</td>
+<td style="text-align: right;">94.05</td>
+<td style="text-align: right;">36.21</td>
+<td style="text-align: right;">135.78</td>
+<td style="text-align: right;">511.82</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">traveltime_2000_2000</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">218.55</td>
+<td style="text-align: right;">145.24</td>
+<td style="text-align: right;">36.85</td>
+<td style="text-align: right;">190.12</td>
+<td style="text-align: right;">978.14</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">traveltime_2000_2000</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">235.92</td>
+<td style="text-align: right;">127.02</td>
+<td style="text-align: right;">44.72</td>
+<td style="text-align: right;">216.92</td>
+<td style="text-align: right;">612.61</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">traveltime_2000_2000</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">257.36</td>
+<td style="text-align: right;">146.30</td>
+<td style="text-align: right;">42.24</td>
+<td style="text-align: right;">221.96</td>
+<td style="text-align: right;">1428.54</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">treatment</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">treatment</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">treatment</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">treatment</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">treatment</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">treatment</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">treecover_area_2000</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">22346.44</td>
+<td style="text-align: right;">9084.92</td>
+<td style="text-align: right;">1342.77</td>
+<td style="text-align: right;">24936.56</td>
+<td style="text-align: right;">31566.59</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">treecover_area_2000</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">21427.72</td>
+<td style="text-align: right;">9296.08</td>
+<td style="text-align: right;">327.77</td>
+<td style="text-align: right;">23493.47</td>
+<td style="text-align: right;">31566.18</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">treecover_area_2000</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">14741.10</td>
+<td style="text-align: right;">11246.84</td>
+<td style="text-align: right;">358.71</td>
+<td style="text-align: right;">11327.65</td>
+<td style="text-align: right;">31541.12</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">treecover_area_2000</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">18492.66</td>
+<td style="text-align: right;">10869.12</td>
+<td style="text-align: right;">146.24</td>
+<td style="text-align: right;">20201.42</td>
+<td style="text-align: right;">31553.77</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">treecover_area_2000</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">21634.03</td>
+<td style="text-align: right;">9026.54</td>
+<td style="text-align: right;">35.10</td>
+<td style="text-align: right;">24420.51</td>
+<td style="text-align: right;">31582.40</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">treecover_area_2000</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">22541.23</td>
+<td style="text-align: right;">8960.72</td>
+<td style="text-align: right;">952.56</td>
+<td style="text-align: right;">24825.72</td>
+<td style="text-align: right;">31547.64</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">wealth_centile_rural_simple</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">48.43</td>
+<td style="text-align: right;">26.68</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">49.00</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">wealth_centile_rural_simple</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">47.76</td>
+<td style="text-align: right;">28.17</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">46.00</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">wealth_centile_rural_simple</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">44.66</td>
+<td style="text-align: right;">27.85</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">42.00</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">wealth_centile_rural_simple</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">45.16</td>
+<td style="text-align: right;">26.16</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">45.00</td>
+<td style="text-align: right;">99.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">wealth_centile_rural_simple</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">47.58</td>
+<td style="text-align: right;">28.04</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">46.00</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">wealth_centile_rural_simple</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">50.02</td>
+<td style="text-align: right;">27.79</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">50.00</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">wealth_centile_rural_weighted</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">47.43</td>
+<td style="text-align: right;">26.51</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">49.00</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">wealth_centile_rural_weighted</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">42.76</td>
+<td style="text-align: right;">27.70</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">39.00</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">wealth_centile_rural_weighted</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">39.90</td>
+<td style="text-align: right;">29.24</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">34.00</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">wealth_centile_rural_weighted</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">41.92</td>
+<td style="text-align: right;">26.81</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">39.00</td>
+<td style="text-align: right;">99.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">wealth_centile_rural_weighted</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">44.60</td>
+<td style="text-align: right;">27.32</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">43.00</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">wealth_centile_rural_weighted</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">46.03</td>
+<td style="text-align: right;">27.32</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">45.00</td>
+<td style="text-align: right;">100.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">weights</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">weights</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">weights</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">weights</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">weights</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">weights</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">zscore_wealth</td>
+<td style="text-align: right;">1930</td>
+<td style="text-align: right;">0.81</td>
+<td style="text-align: right;">0.55</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.74</td>
+<td style="text-align: right;">3.81</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">zscore_wealth</td>
+<td style="text-align: right;">4902</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0.57</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.72</td>
+<td style="text-align: right;">4.50</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">zscore_wealth</td>
+<td style="text-align: right;">1860</td>
+<td style="text-align: right;">0.81</td>
+<td style="text-align: right;">0.56</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.73</td>
+<td style="text-align: right;">3.22</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">zscore_wealth</td>
+<td style="text-align: right;">3078</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0.57</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.73</td>
+<td style="text-align: right;">3.94</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">zscore_wealth</td>
+<td style="text-align: right;">3370</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0.58</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.71</td>
+<td style="text-align: right;">4.77</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">zscore_wealth</td>
+<td style="text-align: right;">6784</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0.57</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.72</td>
+<td style="text-align: right;">3.93</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </section>
