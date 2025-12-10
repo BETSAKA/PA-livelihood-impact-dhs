@@ -254,19 +254,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#objectives" id="toc-objectives" class="nav-link active" data-scroll-target="#objectives"><span class="header-section-number">9.1</span> Objectives</a></li>
-  <li><a href="#overall-effect-on-livelihoods" id="toc-overall-effect-on-livelihoods" class="nav-link" data-scroll-target="#overall-effect-on-livelihoods"><span class="header-section-number">9.2</span> Overall effect on livelihoods</a>
+  <li><a href="#data-preparation" id="toc-data-preparation" class="nav-link" data-scroll-target="#data-preparation"><span class="header-section-number">9.2</span> Data preparation</a></li>
+  <li><a href="#overall-effect-on-livelihoods" id="toc-overall-effect-on-livelihoods" class="nav-link" data-scroll-target="#overall-effect-on-livelihoods"><span class="header-section-number">9.3</span> Overall effect on livelihoods</a>
   <ul class="collapse">
-  <li><a href="#x2-did" id="toc-x2-did" class="nav-link" data-scroll-target="#x2-did"><span class="header-section-number">9.2.1</span> 2X2 DiD</a></li>
-  <li><a href="#staggered-diff-in-diff" id="toc-staggered-diff-in-diff" class="nav-link" data-scroll-target="#staggered-diff-in-diff"><span class="header-section-number">9.2.2</span> Staggered diff-in-diff</a></li>
+  <li><a href="#x2-did" id="toc-x2-did" class="nav-link" data-scroll-target="#x2-did"><span class="header-section-number">9.3.1</span> 2X2 DiD</a></li>
+  <li><a href="#staggered-diff-in-diff" id="toc-staggered-diff-in-diff" class="nav-link" data-scroll-target="#staggered-diff-in-diff"><span class="header-section-number">9.3.2</span> Staggered diff-in-diff</a></li>
   </ul></li>
-  <li><a href="#effect-on-inequalities" id="toc-effect-on-inequalities" class="nav-link" data-scroll-target="#effect-on-inequalities"><span class="header-section-number">9.3</span> Effect on inequalities</a>
+  <li><a href="#effect-on-inequalities" id="toc-effect-on-inequalities" class="nav-link" data-scroll-target="#effect-on-inequalities"><span class="header-section-number">9.4</span> Effect on inequalities</a>
   <ul class="collapse">
-  <li><a href="#staggered-did" id="toc-staggered-did" class="nav-link" data-scroll-target="#staggered-did"><span class="header-section-number">9.3.1</span> Staggered DiD</a></li>
+  <li><a href="#staggered-did" id="toc-staggered-did" class="nav-link" data-scroll-target="#staggered-did"><span class="header-section-number">9.4.1</span> Staggered DiD</a></li>
+  <li><a href="#quantile-treatment-effects" id="toc-quantile-treatment-effects" class="nav-link" data-scroll-target="#quantile-treatment-effects"><span class="header-section-number">9.4.2</span> Quantile treatment effects</a></li>
   </ul></li>
-  <li><a href="#heterogeneity" id="toc-heterogeneity" class="nav-link" data-scroll-target="#heterogeneity"><span class="header-section-number">9.4</span> Heterogeneity</a>
-  <ul class="collapse">
-  <li><a href="#quantile-treatment-effects" id="toc-quantile-treatment-effects" class="nav-link" data-scroll-target="#quantile-treatment-effects"><span class="header-section-number">9.4.1</span> Quantile treatment effects</a></li>
-  </ul></li>
+  <li><a href="#heterogeneity" id="toc-heterogeneity" class="nav-link" data-scroll-target="#heterogeneity"><span class="header-section-number">9.5</span> Heterogeneity</a></li>
   </ul>
 </nav>
     </div>
@@ -294,17 +293,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="objectives" class="level2" data-number="9.1">
 <h2 data-number="9.1" class="anchored" data-anchor-id="objectives"><span class="header-section-number">9.1</span> Objectives</h2>
+<p>Le document présente l’estimation en double différence des groupes de traitement et de contrôle pour la période 2008 à 2021. Le principe est de comparer l’indice de richesse des ménages de contrôle et de traitement à une période antérieure et à une période postérieure à la mise en place des aires protégées.</p>
 <p>Reminder, we have the following hypothesis:</p>
 <ul>
 <li>H1-overall effect on livelihoods: PA reduce the living standards of nearby households by restricting access to natural resources, with insufficient compensation or benefits.</li>
 <li>H2-effect on inequalities: PA exacerbate economic inequalities, as better-off or better-connected individuals capture most of the benefits (tourism jobs, development projects).</li>
-<li>H3-heterogeneity: Impacts vary across PA depending on governance, community participation, and management approaches.</li>
 </ul>
+<p>H3-heterogeneity: Impacts vary across PA depending on governance, community participation, and management approaches.</p>
 </section>
-<section id="overall-effect-on-livelihoods" class="level2" data-number="9.2">
-<h2 data-number="9.2" class="anchored" data-anchor-id="overall-effect-on-livelihoods"><span class="header-section-number">9.2</span> Overall effect on livelihoods</h2>
-<section id="x2-did" class="level3" data-number="9.2.1">
-<h3 data-number="9.2.1" class="anchored" data-anchor-id="x2-did"><span class="header-section-number">9.2.1</span> 2X2 DiD</h3>
+<section id="data-preparation" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="data-preparation"><span class="header-section-number">9.2</span> Data preparation</h2>
+<p>La période de pré-traitement sera la période de 1997 à 2008, et la période de post-traitement sera la période 2008 et 2021. Le groupe de traitement sont les ménages vivant à moins de 10km des aires protégées créées entre 2008 et 2021. Le groupe de contrôle sont les ménages vivant à plus de 10km des aires protégées créées jusqu’en 2021. Les ménages vivant à moins de 10km d’une aire protégée créée avant 2008 seront exclus de l’analyse.</p>
+</section>
+<section id="overall-effect-on-livelihoods" class="level2" data-number="9.3">
+<h2 data-number="9.3" class="anchored" data-anchor-id="overall-effect-on-livelihoods"><span class="header-section-number">9.3</span> Overall effect on livelihoods</h2>
+<section id="x2-did" class="level3" data-number="9.3.1">
+<h3 data-number="9.3.1" class="anchored" data-anchor-id="x2-did"><span class="header-section-number">9.3.1</span> 2X2 DiD</h3>
 <p>In our PAP, we stated:</p>
 <blockquote class="blockquote">
 <p>“The difference-in-difference principle is to compare the wealth index of control and treatment households before and after the establishment of PA. Our treatment began in 2011, so we use 2008 DHS data for the pre-treatment and 2021 DHS data for the post-treatment. This method relies on the parallel trends assumption, meaning that, in the absence of treatment, treatment and control groups would have experienced similar changes over time. To verify this assumption, we include two pre-treatment, points (DHS 1997 and DHS 2008 data) and assess trends between these years. […] The difference-in-difference method relies on the assumption of parallel trends. To validate this assumption, we will use as a reference, among the rural households surveyed in 1997, those living in an area located in or within of a PA created between 2008 and 2021 (placebo treatment group) and those matched to them using the method described above (placebo control group). We will graphically represent the evolution of the treatment and control groups in 1997, 2008 and 2021 for visual confirmation. To confirm the validity of the parallel trends assumption, we will conduct a placebo test 1997-2008 outcomes, as well as matching and control variables, while defining the treatment variable for post-2008 PA. If the estimated effect between 1997 and 2008 is null or statistically insignificant, this supports the parallel trends assumption.”</p>
@@ -418,20 +422,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
                               Placebo 97–08            Traitement 08–21
 Dependent Var.: wealth_centile_rural_weighted wealth_centile_rural_weighted
                                                                            
-Constant                     45.18*** (4.229)              37.69*** (2.690)
-treat                          -1.887 (4.069)                 1.736 (3.463)
-post                           -7.289 (5.911)              23.28*** (4.574)
-treat_post                      4.101 (5.340)                -2.770 (4.305)
-spei_wc_n_2                     4.387 (3.736)                -3.797 (3.305)
-spei_wc_n_1                   -0.8792 (2.567)             -7.770*** (2.140)
-spei_wc_n                       3.174 (4.248)              17.40*** (2.452)
-hv219Femme                   -1.727. (0.9356)            -3.255*** (0.7606)
-hv220                      0.0968*** (0.0254)            0.0925*** (0.0183)
+Constant                     44.96*** (4.313)              37.89*** (2.715)
+treat                          -1.797 (4.156)                 1.484 (3.454)
+post                           -6.394 (6.043)              22.55*** (4.543)
+treat_post                      3.736 (5.392)                -2.751 (4.300)
+spei_wc_n_2                     2.114 (3.907)               -5.482. (3.310)
+spei_wc_n_1                    -1.055 (2.639)             -8.214*** (2.203)
+spei_wc_n                       2.411 (4.317)              17.72*** (2.512)
+hv219Femme                   -1.735. (0.9367)            -3.268*** (0.7580)
+hv220                      0.0966*** (0.0255)            0.0921*** (0.0182)
 _______________ _____________________________ _____________________________
 S.E.: Clustered                     by: hv001                     by: hv001
 Observations                            6,831                        11,686
-R2                                    0.00834                       0.07972
-Adj. R2                               0.00717                       0.07909
+R2                                    0.00655                       0.08010
+Adj. R2                               0.00539                       0.07948
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -457,7 +461,7 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> lo, <span class="at">ymax =</span> hi), <span class="at">width =</span> .<span class="dv">2</span>) <span class="sc">+</span></span>
 <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Effet DID sur le centile de richesse (pondéré)"</span>,</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"DID 2×2 avec IC clusterisés (hv001)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"DID 2×2 avec IC clusterisés (hv001) - buffer 10 km"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -467,10 +471,10 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 </div>
 </div>
-<p>Le test placebo donne une estimation avec un coefficient faible (+1.8 centile) et non significatif: pas de différence détectée avant intervention dans les tendances du groupe traitement et du groupe contrôle. L’estimation du traitement préente une plus grande magnitude (-4.1 centiles), mais il reste non significatif. Les ménages vivant près des AP semblent connaître, un niveau de bien-être légèrement inférieur à celui des ménages contrôle, mais l’effet n’est pas significatif. A ce stade, l’analyse ne confirme pas l’hypothèse 1 (que les AP réduice le niveau de vie) : le sens de la relation est négatif, mais on ne peut pas rejeter l’hypothèse nulle. L’intervalle de confiance couvre encore largement 0, ce qui signifie qu’on a une précision insuffisante pour détecter un effet. L’effet est donc soit nul, soit inférieur à notre capacité de détection. Dans le PAP, on avait estimé que l’effet devrait être d’au moins 7.5 centiles pour pouvoir être détecté.</p>
+<p>Le test placebo donne une estimation avec un coefficient faible (+1.8 centile) et non significatif: pas de différence détectée avant intervention dans les tendances du groupe traitement et du groupe contrôle. L’estimation du traitement présente une plus grande magnitude (-4.1 centiles), mais il reste non significatif. Les ménages vivant près des AP semblent connaître, un niveau de bien-être légèrement inférieur à celui des ménages contrôle, mais l’effet n’est pas significatif. A ce stade, l’analyse ne confirme pas l’hypothèse 1 (que les AP réduice le niveau de vie) : le sens de la relation est négatif, mais on ne peut pas rejeter l’hypothèse nulle. L’intervalle de confiance couvre encore largement 0, ce qui signifie qu’on a une précision insuffisante pour détecter un effet. L’effet est donc soit nul, soit inférieur à notre capacité de détection. Dans le PAP, on avait estimé que l’effet devrait être d’au moins 7.5 centiles pour pouvoir être détecté.</p>
 </section>
-<section id="staggered-diff-in-diff" class="level3" data-number="9.2.2">
-<h3 data-number="9.2.2" class="anchored" data-anchor-id="staggered-diff-in-diff"><span class="header-section-number">9.2.2</span> Staggered diff-in-diff</h3>
+<section id="staggered-diff-in-diff" class="level3" data-number="9.3.2">
+<h3 data-number="9.3.2" class="anchored" data-anchor-id="staggered-diff-in-diff"><span class="header-section-number">9.3.2</span> Staggered diff-in-diff</h3>
 <p>In our PAP, we stated:</p>
 <blockquote class="blockquote">
 <p>“The MIS data can therefore be mobilized for this study. However, the periods covered by MIS only allow for comparisons beyond a simple “before” and “after” framework, which complicates the analysis and necessitates methods with limited methodological consensus. Since 2020, the state of the art in difference-in-difference methods has been challenged by the recognition that classical two-way fixed effects methods can yield spurious results when the effects of an intervention are heterogeneous and assessed over multiple periods. Since then, a dozen alternative approaches have been developed, but econometricians continue to debate their reliability (Roth et al.&nbsp;2023). To avoid undermining the credibility of our results, we will initially limit ourselves to two study periods (DHS 2008 and 2021). Only if this approach lacks sufficient statistical power will we consider incorporating additional data. […] Additionally, if we incorporate data from MIS 1997, MIS 2011, and MIS 2013, we could apply an estimator suitable for staggered adoption and multiple study periods accounting for potential heterogeneous treatment effects (Borusyak, Jaravel, and Spiess 2024). This will only be performed if power is insufficient with two periods of data.”</p>
@@ -508,12 +512,12 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                                did2s statique
 Dependent Var.: wealth_centile_rural_weighted
                                              
-treat_on = 1                    1.867 (2.121)
+treat_on = 1                    1.720 (2.156)
 _______________ _____________________________
 S.E.: Clustered                     by: hv001
 Observations                           21,923
-R2                                    0.00085
-Adj. R2                               0.00085
+R2                                    0.00071
+Adj. R2                               0.00071
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -536,17 +540,17 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                          did2s event-study (-5..5)
 Dependent Var.:      wealth_centile_rural_weighted
                                                   
-rel_year_binned = -5                0.6611 (1.317)
-rel_year_binned = -3                -2.577 (2.180)
-rel_year_binned = 0                  4.337 (3.507)
-rel_year_binned = 2                -0.3961 (4.855)
-rel_year_binned = 3               12.68*** (3.054)
-rel_year_binned = 5                0.0935 (0.7913)
+rel_year_binned = -5                0.7757 (1.305)
+rel_year_binned = -3                -2.535 (2.164)
+rel_year_binned = 0                  3.944 (3.579)
+rel_year_binned = 2                -0.3823 (4.957)
+rel_year_binned = 3               13.95*** (3.322)
+rel_year_binned = 5                0.0375 (0.7943)
 ____________________ _____________________________
 S.E.: Clustered                          by: hv001
 Observations                                21,923
-R2                                         0.00382
-Adj. R2                                    0.00359
+R2                                         0.00378
+Adj. R2                                    0.00355
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -564,7 +568,7 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> conf.low, <span class="at">ymax =</span> conf.high), <span class="at">width =</span> .<span class="dv">2</span>) <span class="sc">+</span></span>
 <span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Années relatives au 1er traitement (binnées -5..5)"</span>,</span>
 <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Effet estimé"</span>,</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Event-study (did2s)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Event-study (did2s) - buffer de 10 km"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -585,11 +589,11 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Wald test, H0: joint nullity of rel_year_binned::-5 and rel_year_binned::-3
- stat = 0.830881, p-value = 0.435679, on 2 and 21,917 DoF, VCOV: Corrected Clustered (hv001).$stat
-[1] 0.8308809
+ stat = 0.866281, p-value = 0.420527, on 2 and 21,917 DoF, VCOV: Corrected Clustered (hv001).$stat
+[1] 0.8662812
 
 $p
-[1] 0.435679
+[1] 0.4205269
 
 $df1
 [1] 2
@@ -604,10 +608,10 @@ $vcov
 <p>L’estimation en “statique” donne un coefficient de ~1 centile (0.99), avec une erreur type de 2.1, ce qui indique un résultat non significatif. L’analyse en série temporelle avec binning ±5 ans. Etaye l’hypothèse de tendances parallèle. Les estimations en post semblent apparaître, mais ne semblent pas persister. Cela abonde dans le sens d’un impact faible et non-significatif. De possibles avancées à court-terme (~3 ans après la création de l’AP), mais pas soutenues dans le temps.</p>
 </section>
 </section>
-<section id="effect-on-inequalities" class="level2" data-number="9.3">
-<h2 data-number="9.3" class="anchored" data-anchor-id="effect-on-inequalities"><span class="header-section-number">9.3</span> Effect on inequalities</h2>
-<section id="staggered-did" class="level3" data-number="9.3.1">
-<h3 data-number="9.3.1" class="anchored" data-anchor-id="staggered-did"><span class="header-section-number">9.3.1</span> Staggered DiD</h3>
+<section id="effect-on-inequalities" class="level2" data-number="9.4">
+<h2 data-number="9.4" class="anchored" data-anchor-id="effect-on-inequalities"><span class="header-section-number">9.4</span> Effect on inequalities</h2>
+<section id="staggered-did" class="level3" data-number="9.4.1">
+<h3 data-number="9.4.1" class="anchored" data-anchor-id="staggered-did"><span class="header-section-number">9.4.1</span> Staggered DiD</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -631,12 +635,12 @@ $vcov
                  did2s statique
 Dependent Var.:   zscore_wealth
                                
-treat_on = 1    0.0009 (0.0057)
+treat_on = 1    0.0015 (0.0057)
 _______________ _______________
 S.E.: Clustered       by: hv001
 Observations             21,923
-R2                     -4.51e-5
-Adj. R2                -4.51e-5
+R2                     -4.43e-5
+Adj. R2                -4.43e-5
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -659,17 +663,17 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                      did2s event-study (-5..5)
 Dependent Var.:                  zscore_wealth
                                               
-rel_year_binned = -5          0.0091* (0.0039)
+rel_year_binned = -5          0.0089* (0.0039)
 rel_year_binned = -3           0.0040 (0.0064)
-rel_year_binned = 0           -0.0042 (0.0117)
-rel_year_binned = 2          0.0209** (0.0068)
-rel_year_binned = 3           0.0314* (0.0135)
-rel_year_binned = 5           -0.0026 (0.0021)
-____________________         _________________
+rel_year_binned = 0           -0.0034 (0.0116)
+rel_year_binned = 2         0.0221*** (0.0067)
+rel_year_binned = 3           0.0302* (0.0140)
+rel_year_binned = 5           -0.0024 (0.0021)
+____________________        __________________
 S.E.: Clustered                      by: hv001
 Observations                            21,923
-R2                                     5.58e-5
-Adj. R2                               -0.00017
+R2                                     4.97e-5
+Adj. R2                               -0.00018
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -687,7 +691,7 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> conf.low, <span class="at">ymax =</span> conf.high), <span class="at">width =</span> .<span class="dv">2</span>) <span class="sc">+</span></span>
 <span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Années relatives au 1er traitement (binnées -5..5)"</span>,</span>
 <span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Effet estimé"</span>,</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Event-study (did2s)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Event-study (did2s) - buffer 10 km"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -708,11 +712,11 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Wald test, H0: joint nullity of rel_year_binned::-5 and rel_year_binned::-3
- stat = 2.88012, p-value = 0.056149, on 2 and 21,917 DoF, VCOV: Corrected Clustered (hv001).$stat
-[1] 2.880117
+ stat = 2.75235, p-value = 0.0638, on 2 and 21,917 DoF, VCOV: Corrected Clustered (hv001).$stat
+[1] 2.752355
 
 $p
-[1] 0.05614944
+[1] 0.06379954
 
 $df1
 [1] 2
@@ -726,142 +730,66 @@ $vcov
 </div>
 <p>Rien de très significatif non plus.</p>
 </section>
-</section>
-<section id="heterogeneity" class="level2" data-number="9.4">
-<h2 data-number="9.4" class="anchored" data-anchor-id="heterogeneity"><span class="header-section-number">9.4</span> Heterogeneity</h2>
+<section id="quantile-treatment-effects" class="level3" data-number="9.4.2">
+<h3 data-number="9.4.2" class="anchored" data-anchor-id="quantile-treatment-effects"><span class="header-section-number">9.4.2</span> Quantile treatment effects</h3>
+<p>Le quantile treatment effect mesure l’effet du traitement à différents points de la distribution de la variable de résultat, le zscore du wealth index. Il montre comment le traitement affecte les ménages les plus pauvres (quantiles bas), la classe moyenne et les ménages les plus aisés (quantiles élevés).</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Création du groupe IUCN </span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>dat3 <span class="ot">&lt;-</span> dat3 <span class="sc">%&gt;%</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(IUCN_CAT), <span class="sc">!</span><span class="fu">is.na</span>(treat_on)) <span class="sc">%&gt;%</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">IUCN_group =</span> <span class="fu">case_when</span>(</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    IUCN_CAT <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Ia"</span>, <span class="st">"Ib"</span>, <span class="st">"II"</span>, <span class="st">"III"</span>, <span class="st">"IV"</span>) <span class="sc">~</span> <span class="st">"strict"</span>,</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    IUCN_CAT <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"V"</span>, <span class="st">"VI"</span>) <span class="sc">~</span> <span class="st">"usage_multiple"</span>, </span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_character_</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">IUCN_group =</span> <span class="fu">factor</span>(IUCN_group, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"strict"</span>, <span class="st">"usage_multiple"</span>)),</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">rel_year_binned =</span> <span class="fu">factor</span>(rel_year_binned)</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(IUCN_group))</span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Outcome: wealth_centile_rural_weighted ----------------------------------------</span></span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>yvar <span class="ot">&lt;-</span> <span class="st">"wealth_centile_rural_weighted"</span></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="co"># did2s (Gardner) : statique + event-study--------------------------------</span></span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="co"># -- Statique (traitement "on/off")</span></span>
-<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>did2s_static <span class="ot">&lt;-</span> <span class="fu">did2s</span>(</span>
-<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">data        =</span> dat3,</span>
-<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">yname       =</span> yvar,</span>
-<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">first_stage =</span> <span class="sc">~</span> spei_wc_n_2 <span class="sc">+</span> spei_wc_n_1 <span class="sc">+</span> spei_wc_n <span class="sc">+</span> hv219 <span class="sc">+</span> hv220 <span class="sc">|</span> DHSYEAR,</span>
-<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">second_stage=</span> <span class="sc">~</span> treat_on <span class="sc">*</span> IUCN_group,</span>
-<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">treatment   =</span> <span class="st">"treat_on"</span>,</span>
-<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">cluster_var =</span> <span class="st">"hv001"</span>,</span>
-<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights     =</span> <span class="st">"w_all"</span></span>
-<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a><span class="fu">etable</span>(did2s_static, <span class="at">headers =</span> <span class="st">"did2s statique (strict vs usage multiple)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Testing Quantile treatment effects --------------------------------------</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(qte)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Avec CiC -------------------</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="do">## Traitement 2008 -&gt; 2021</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>dat_2per <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DHSYEAR <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2008</span>, <span class="dv">2021</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">treat =</span> <span class="fu">as.integer</span>(GROUP <span class="sc">==</span> <span class="st">"Treatment"</span>))</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>cic_res <span class="ot">&lt;-</span> <span class="fu">suppressWarnings</span>(<span class="fu">CiC</span>(</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">formla =</span> wealth_centile_rural_weighted <span class="sc">~</span> treat,</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">t =</span> <span class="dv">2021</span>, <span class="at">tmin1 =</span> <span class="dv">2008</span>, <span class="at">tname =</span> <span class="st">"DHSYEAR"</span>,</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_2per,</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">panel =</span> <span class="cn">FALSE</span>, <span class="co"># repeated cross-sections</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">se =</span> <span class="cn">TRUE</span>, <span class="at">iters =</span> <span class="dv">200</span>, <span class="co"># bootstrap</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">probs =</span> <span class="fu">seq</span>(<span class="fl">0.05</span>, <span class="fl">0.95</span>, <span class="fl">0.05</span>),</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">xformla =</span> <span class="sc">~</span> spei_wc_n_2 <span class="sc">+</span> spei_wc_n_1 <span class="sc">+</span> spei_wc_n <span class="sc">+</span> hv219 <span class="sc">+</span> hv220</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(cic_res)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>                                                                 did2s_static
-                                    did2s statique (strict vs usage multiple)
-Dependent Var.:                                 wealth_centile_rural_weighted
-                                                                             
-treat_on                                                      -0.7023 (9.450)
-IUCN_groupstrict                                                3.750 (3.032)
-IUCN_groupusage_multiple                                       -1.370 (1.078)
-treat_on x IUCN_groupusage_multiple                           -0.8058 (12.14)
-___________________________________             _____________________________
-S.E.: Clustered                                                     by: hv001
-Observations                                                            4,889
-R2                                                                    0.00753
-Adj. R2                                                               0.00692
----
-Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+<pre><code>
+Quantile Treatment Effect:
+        
+tau QTE Std. Error
+0.05     -1.43    1.88
+0.1  -9.21    2.62
+0.15    -15.35    2.60
+0.2 -15.55    2.33
+0.25    -18.34    2.08
+0.3 -18.61    2.23
+0.35    -20.81    2.25
+0.4 -21.16    2.29
+0.45    -23.54    2.52
+0.5 -23.94    2.34
+0.55    -23.33    2.26
+0.6 -22.56    2.17
+0.65    -21.85    2.02
+0.7 -19.46    1.97
+0.75    -17.27    1.88
+0.8 -14.72    1.77
+0.85    -11.86    1.70
+0.9  -8.05    1.71
+0.95     -5.44    1.58
+
+Average Treatment Effect:   -15.76
+     Std. Error:        1.44</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># -- Event-study (avec binning -5..5, ref = -1 et never-treated)</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>did2s_es <span class="ot">&lt;-</span> <span class="fu">did2s</span>(</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat3,</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">yname =</span> yvar, </span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">first_stage =</span> <span class="sc">~</span> spei_wc_n_2 <span class="sc">+</span>  spei_wc_n_1 <span class="sc">+</span> spei_wc_n <span class="sc">+</span> hv219 <span class="sc">+</span> hv220 <span class="sc">|</span> DHSYEAR,</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">second_stage=</span> <span class="sc">~</span> </span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">i</span>(rel_year_binned, <span class="at">ref =</span> <span class="sc">-</span><span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">i</span>(rel_year_binned, IUCN_group),</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">treatment   =</span> <span class="st">"treat_on"</span>,</span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">cluster_var =</span> <span class="st">"hv001"</span>,</span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights     =</span> <span class="st">"w_all"</span></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="fu">etable</span>(did2s_es, <span class="at">headers =</span> <span class="st">"did2s event-study (-5..5) par statut IUCN"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>                                                                                    did2s_es
-                                                   did2s event-study (-5..5) par statut IUCN
-Dependent Var.:                                                wealth_centile_rural_weighted
-                                                                                            
-rel_year_binned = -5                                                           3.753 (2.685)
-rel_year_binned = -3                                                          -1.408 (1.273)
-rel_year_binned = 0                                                           9.035. (5.073)
-rel_year_binned = 2                                                        -9.758*** (2.924)
-rel_year_binned = -5 x IUCN_group = usage_multiple                            -5.385 (3.867)
-rel_year_binned = -3 x IUCN_group = strict                                     5.140 (6.169)
-rel_year_binned = -1 x IUCN_group = usage_multiple                          22.42*** (4.715)
-rel_year_binned = 0 x IUCN_group = strict                                     -9.695 (10.47)
-rel_year_binned = 2 x IUCN_group = strict                                    18.02** (6.059)
-________________________________________                       _____________________________
-S.E.: Clustered                                                                    by: hv001
-Observations                                                                           4,889
-R2                                                                                   0.01578
-Adj. R2                                                                              0.01417
----
-Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
-</div>
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>tidy_es <span class="ot">&lt;-</span> broom<span class="sc">::</span><span class="fu">tidy</span>(did2s_es, <span class="at">conf.int =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"^rel_year_binned::"</span>, term)) <span class="sc">%&gt;%</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">year =</span> <span class="fu">as.numeric</span>(<span class="fu">sub</span>(<span class="st">"rel_year_binned::(-?</span><span class="sc">\\</span><span class="st">d+).*"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">1"</span>, term)),</span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">type =</span> <span class="fu">case_when</span>(</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"IUCN_group::usage_multiple"</span>, term) <span class="sc">~</span> <span class="st">"diff_usage_multiple"</span>,</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"strict"</span></span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Effet pour les AP stricts</span></span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>strict_effect <span class="ot">&lt;-</span> tidy_es <span class="sc">%&gt;%</span></span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(type <span class="sc">==</span> <span class="st">"strict"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">group =</span> <span class="st">"strict"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(year, estimate, conf.low, conf.high, group)</span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Effet total pour AP à usage multiple</span></span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>usage_effect <span class="ot">&lt;-</span> tidy_es <span class="sc">%&gt;%</span></span>
-<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(type <span class="sc">==</span> <span class="st">"diff_usage_multiple"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">estimate_diff =</span> estimate,</span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>         <span class="at">conf.low_diff =</span> conf.low,</span>
-<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>         <span class="at">conf.high_diff =</span> conf.high) <span class="sc">%&gt;%</span></span>
-<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(strict_effect, <span class="at">by =</span> <span class="st">"year"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> estimate <span class="sc">+</span> estimate_diff,</span>
-<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">conf.low =</span> conf.low <span class="sc">+</span> conf.low_diff,</span>
-<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">conf.high =</span> conf.high <span class="sc">+</span> conf.high_diff,</span>
-<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">group =</span> <span class="st">"usage_multiple"</span></span>
-<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(year, estimate, conf.low, conf.high, group)</span>
-<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot ES did2s</span></span>
-<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>plot_did2s <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(strict_effect, usage_effect)</span>
-<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_did2s, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> estimate, <span class="at">color =</span> group)) <span class="sc">+</span></span>
-<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
-<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> conf.low, <span class="at">ymax =</span> conf.high), <span class="at">width =</span> .<span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Années relatives au 1er traitement (binnées -5..5)"</span>,</span>
-<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Effet estimé"</span>,</span>
-<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Event-study (did2s) - hétérogénéité par statut IUCN"</span>,</span>
-<span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Catégorie IUCN"</span>) <span class="sc">+</span> </span>
-<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggqte</span>(cic_res) <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">x=</span><span class="st">"Quantiles"</span>, <span class="at">y=</span><span class="st">"QTET"</span>, <span class="at">title=</span><span class="st">"CiC QTET: 2008-2021"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -872,130 +800,61 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Test joint de pré-tendances (tous les leads k &lt; 0)</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="co"># On construit un motif regex pour k = -5..-1 présents dans le modèle</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>leads_present <span class="ot">&lt;-</span> plot_did2s<span class="sc">$</span>k[plot_did2s<span class="sc">$</span>k <span class="sc">&lt;</span> <span class="dv">0</span>]</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(leads_present) <span class="sc">&gt;</span> <span class="dv">0</span>){</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  keep_regex <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"^rel_year_binned::("</span>, <span class="fu">paste</span>(leads_present, <span class="at">collapse=</span><span class="st">"|"</span>), <span class="st">")$"</span>)</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(fixest<span class="sc">::</span><span class="fu">wald</span>(did2s_es, <span class="at">keep =</span> keep_regex))</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Outcome: zscore_wealth----------------------------------------------------------</span></span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>yvar <span class="ot">&lt;-</span> <span class="st">"zscore_wealth"</span></span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="co"># did2s (Gardner) : statique + event-study--------------------------------</span></span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a><span class="co"># -- Statique (traitement "on/off")</span></span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>did2s_static <span class="ot">&lt;-</span> <span class="fu">did2s</span>(</span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">data        =</span> dat3,</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">yname       =</span> yvar,</span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">first_stage =</span> <span class="sc">~</span> spei_wc_n_2 <span class="sc">+</span> spei_wc_n_1 <span class="sc">+</span> spei_wc_n <span class="sc">+</span> hv219 <span class="sc">+</span> hv220 <span class="sc">|</span> DHSYEAR,</span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">second_stage=</span> <span class="sc">~</span> treat_on <span class="sc">*</span> IUCN_group,</span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">treatment   =</span> <span class="st">"treat_on"</span>,</span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">cluster_var =</span> <span class="st">"hv001"</span>,</span>
-<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights     =</span> <span class="st">"w_all"</span></span>
-<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a><span class="fu">etable</span>(did2s_static, <span class="at">headers =</span> <span class="st">"did2s statique (strict vs usage multiple)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="do">## placebo</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="do">## Placebo: 1997 -&gt; 2008</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>dat_placebo <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DHSYEAR <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1997</span>, <span class="dv">2008</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">treat =</span> <span class="fu">as.integer</span>(GROUP <span class="sc">==</span> <span class="st">"Treatment"</span>))</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="co"># (Optional) sanity check:</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="co"># with(dat_placebo, table(DHSYEAR, treat))</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>cic_pre <span class="ot">&lt;-</span>  <span class="fu">suppressWarnings</span>(<span class="fu">CiC</span>(</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">formla =</span> wealth_centile_rural_simple <span class="sc">~</span> treat,</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">t =</span> <span class="dv">2008</span>, <span class="at">tmin1 =</span> <span class="dv">1997</span>, <span class="at">tname =</span> <span class="st">"DHSYEAR"</span>,</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_placebo,</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">panel =</span> <span class="cn">FALSE</span>, <span class="co"># repeated cross-sections</span></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">se =</span> <span class="cn">TRUE</span>, <span class="at">iters =</span> <span class="dv">100</span>, <span class="co"># bootstrap</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">probs =</span> <span class="fu">seq</span>(<span class="fl">0.05</span>, <span class="fl">0.95</span>, <span class="fl">0.05</span>),</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">xformla =</span> <span class="sc">~</span> spei_wc_n_2 <span class="sc">+</span> spei_wc_n_1 <span class="sc">+</span> spei_wc_n <span class="sc">+</span> hv219 <span class="sc">+</span> hv220</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(cic_pre)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>                                                                 did2s_static
-                                    did2s statique (strict vs usage multiple)
-Dependent Var.:                                                 zscore_wealth
-                                                                             
-treat_on                                                     0.0289* (0.0117)
-IUCN_groupstrict                                             -0.0093 (0.0071)
-IUCN_groupusage_multiple                                      0.0034 (0.0026)
-treat_on x IUCN_groupusage_multiple                          -0.0288 (0.0186)
-___________________________________                          ________________
-S.E.: Clustered                                                     by: hv001
-Observations                                                            4,889
-R2                                                                    -3.9e-5
-Adj. R2                                                              -0.00065
----
-Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+<pre><code>
+Quantile Treatment Effect:
+        
+tau QTE Std. Error
+0.05    14.50    3.44
+0.1 14.84    2.64
+0.15    16.88    2.61
+0.2 20.19    3.12
+0.25    19.74    3.81
+0.3 19.54    4.35
+0.35    18.68    4.24
+0.4 17.07    4.12
+0.45    16.17    4.04
+0.5 15.51    5.06
+0.55    10.45    6.03
+0.6  5.05    6.27
+0.65     0.10    6.71
+0.7 -4.42    6.07
+0.75    -8.24    6.01
+0.8 -7.50    5.64
+0.85    -8.14    5.18
+0.9 -6.39    4.50
+0.95    -8.58    5.92
+
+Average Treatment Effect:   6.69
+     Std. Error:        3.37</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># -- Event-study (avec binning -5..5, ref = -1 et never-treated)</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>did2s_es <span class="ot">&lt;-</span> <span class="fu">did2s</span>(</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat3,</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">yname =</span> yvar, </span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">first_stage =</span> <span class="sc">~</span> spei_wc_n_2 <span class="sc">+</span>  spei_wc_n_1 <span class="sc">+</span> spei_wc_n <span class="sc">+</span> hv219 <span class="sc">+</span> hv220 <span class="sc">|</span> DHSYEAR,</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">second_stage=</span> <span class="sc">~</span> </span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">i</span>(rel_year_binned, <span class="at">ref =</span> <span class="sc">-</span><span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">i</span>(rel_year_binned, IUCN_group),</span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">treatment   =</span> <span class="st">"treat_on"</span>,</span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">cluster_var =</span> <span class="st">"hv001"</span>,</span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">weights     =</span> <span class="st">"w_all"</span></span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a><span class="fu">etable</span>(did2s_es, <span class="at">headers =</span> <span class="st">"did2s event-study (-5..5) par statut IUCN"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>                                                                                    did2s_es
-                                                   did2s event-study (-5..5) par statut IUCN
-Dependent Var.:                                                                zscore_wealth
-                                                                                            
-rel_year_binned = -5                                                        -0.0075 (0.0074)
-rel_year_binned = -3                                                        -0.0005 (0.0041)
-rel_year_binned = 0                                                         -0.0171 (0.0108)
-rel_year_binned = 2                                                          0.0154 (0.0107)
-rel_year_binned = -5 x IUCN_group = usage_multiple                           0.0137 (0.0106)
-rel_year_binned = -3 x IUCN_group = strict                                  -0.0182 (0.0186)
-rel_year_binned = -1 x IUCN_group = usage_multiple                       -0.0764*** (0.0158)
-rel_year_binned = 0 x IUCN_group = strict                                  0.0362** (0.0114)
-rel_year_binned = 2 x IUCN_group = strict                                    0.0049 (0.0110)
-________________________________________                                 ___________________
-S.E.: Clustered                                                                    by: hv001
-Observations                                                                           4,889
-R2                                                                                   0.00013
-Adj. R2                                                                             -0.00151
----
-Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
-</div>
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>tidy_es <span class="ot">&lt;-</span> broom<span class="sc">::</span><span class="fu">tidy</span>(did2s_es, <span class="at">conf.int =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"^rel_year_binned::"</span>, term)) <span class="sc">%&gt;%</span></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">year =</span> <span class="fu">as.numeric</span>(<span class="fu">sub</span>(<span class="st">"rel_year_binned::(-?</span><span class="sc">\\</span><span class="st">d+).*"</span>, <span class="st">"</span><span class="sc">\\</span><span class="st">1"</span>, term)),</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">type =</span> <span class="fu">case_when</span>(</span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"IUCN_group::usage_multiple"</span>, term) <span class="sc">~</span> <span class="st">"diff_usage_multiple"</span>,</span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"strict"</span></span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Effet pour les AP stricts</span></span>
-<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>strict_effect <span class="ot">&lt;-</span> tidy_es <span class="sc">%&gt;%</span></span>
-<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(type <span class="sc">==</span> <span class="st">"strict"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">group =</span> <span class="st">"strict"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(year, estimate, conf.low, conf.high, group)</span>
-<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Effet total pour AP à usage multiple</span></span>
-<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>usage_effect <span class="ot">&lt;-</span> tidy_es <span class="sc">%&gt;%</span></span>
-<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(type <span class="sc">==</span> <span class="st">"diff_usage_multiple"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">estimate_diff =</span> estimate,</span>
-<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>         <span class="at">conf.low_diff =</span> conf.low,</span>
-<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>         <span class="at">conf.high_diff =</span> conf.high) <span class="sc">%&gt;%</span></span>
-<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(strict_effect, <span class="at">by =</span> <span class="st">"year"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> estimate <span class="sc">+</span> estimate_diff,</span>
-<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">conf.low =</span> conf.low <span class="sc">+</span> conf.low_diff,</span>
-<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">conf.high =</span> conf.high <span class="sc">+</span> conf.high_diff,</span>
-<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">group =</span> <span class="st">"usage_multiple"</span></span>
-<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(year, estimate, conf.low, conf.high, group)</span>
-<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot ES did2s</span></span>
-<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a>plot_did2s <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(strict_effect, usage_effect)</span>
-<span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(plot_did2s, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> estimate, <span class="at">color =</span> group)) <span class="sc">+</span></span>
-<span id="cb27-36"><a href="#cb27-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
-<span id="cb27-37"><a href="#cb27-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb27-38"><a href="#cb27-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> conf.low, <span class="at">ymax =</span> conf.high), <span class="at">width =</span> .<span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb27-39"><a href="#cb27-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Années relatives au 1er traitement (binnées -5..5)"</span>,</span>
-<span id="cb27-40"><a href="#cb27-40" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Effet estimé"</span>,</span>
-<span id="cb27-41"><a href="#cb27-41" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Event-study (did2s) - hétérogénéité par statut IUCN"</span>,</span>
-<span id="cb27-42"><a href="#cb27-42" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"Catégorie IUCN"</span>) <span class="sc">+</span> </span>
-<span id="cb27-43"><a href="#cb27-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggqte</span>(cic_pre) <span class="sc">+</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Quantiles"</span>, <span class="at">y =</span> <span class="st">"QTET"</span>,</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Placebo CiC QTET: 1997-2008 - buffer 10 km"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -1004,77 +863,147 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </figure>
 </div>
 </div>
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Test joint de pré-tendances (tous les leads k &lt; 0)</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="co"># On construit un motif regex pour k = -5..-1 présents dans le modèle</span></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>leads_present <span class="ot">&lt;-</span> plot_did2s<span class="sc">$</span>k[plot_did2s<span class="sc">$</span>k <span class="sc">&lt;</span> <span class="dv">0</span>]</span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">length</span>(leads_present) <span class="sc">&gt;</span> <span class="dv">0</span>){</span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  keep_regex <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"^rel_year_binned::("</span>, <span class="fu">paste</span>(leads_present, <span class="at">collapse=</span><span class="st">"|"</span>), <span class="st">")$"</span>)</span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(fixest<span class="sc">::</span><span class="fu">wald</span>(did2s_es, <span class="at">keep =</span> keep_regex))</span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
-<section id="quantile-treatment-effects" class="level3" data-number="9.4.1">
-<h3 data-number="9.4.1" class="anchored" data-anchor-id="quantile-treatment-effects"><span class="header-section-number">9.4.1</span> Quantile treatment effects</h3>
+<p>Pour l’estimation principale (2008-2021), l’ATE est fortement négatif et très significatif (-17.9 centiles!). Les effets négatifs se retrouvent sur l’ensemble de la distribution, mais sont particulièrement marqués pour les centiles les plus faibles. Cela conforterait fortement l’hypothèse 2 (les AP renforcent les inégalités), mais c’est surprenant que ce soit à ce point marqué sur l’ensemble de la distribution alors que le DiD sur le wealth centile n’était pas significatif (Hypothèse 1).</p>
+<p>Pour le test placebo, la courbe n’est pas exactement plate : différence significative sur les bas revenus (supérieurs chez les traitements) et inférieure sur les bas revenus.</p>
+</section>
+</section>
+<section id="heterogeneity" class="level2" data-number="9.5">
+<h2 data-number="9.5" class="anchored" data-anchor-id="heterogeneity"><span class="header-section-number">9.5</span> Heterogeneity</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Testing Quantile treatment effects --------------------------------------</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(qte)</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Avec CiC -------------------</span></span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="do">## Traitement 2008 -&gt; 2021</span></span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>dat_2per <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span></span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DHSYEAR <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2008</span>, <span class="dv">2021</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">treat =</span> <span class="fu">as.integer</span>(GROUP <span class="sc">==</span> <span class="st">"Treatment"</span>))</span>
-<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>cic_res <span class="ot">&lt;-</span> <span class="fu">suppressWarnings</span>(<span class="fu">CiC</span>(</span>
-<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">formla =</span> wealth_centile_rural_weighted <span class="sc">~</span> treat,</span>
-<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">t =</span> <span class="dv">2021</span>, <span class="at">tmin1 =</span> <span class="dv">2008</span>, <span class="at">tname =</span> <span class="st">"DHSYEAR"</span>,</span>
-<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_2per,</span>
-<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">panel =</span> <span class="cn">FALSE</span>, <span class="co"># repeated cross-sections</span></span>
-<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">se =</span> <span class="cn">TRUE</span>, <span class="at">iters =</span> <span class="dv">200</span>, <span class="co"># bootstrap</span></span>
-<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">probs =</span> <span class="fu">seq</span>(<span class="fl">0.05</span>, <span class="fl">0.95</span>, <span class="fl">0.05</span>),</span>
-<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">xformla =</span> <span class="sc">~</span> spei_wc_n_2 <span class="sc">+</span> spei_wc_n_1 <span class="sc">+</span> spei_wc_n <span class="sc">+</span> hv219 <span class="sc">+</span> hv220</span>
-<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(cic_res)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Création du groupe IUCN </span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>dat3 <span class="ot">&lt;-</span> dat3 <span class="sc">%&gt;%</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(IUCN_CAT), <span class="sc">!</span><span class="fu">is.na</span>(treat_on)) <span class="sc">%&gt;%</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">IUCN_group =</span> <span class="fu">case_when</span>(</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    IUCN_CAT <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Ia"</span>, <span class="st">"Ib"</span>, <span class="st">"II"</span>, <span class="st">"III"</span>, <span class="st">"IV"</span>) <span class="sc">~</span> <span class="st">"strict"</span>,</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    IUCN_CAT <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"V"</span>, <span class="st">"VI"</span>) <span class="sc">~</span> <span class="st">"usage_multiple"</span>, </span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_character_</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">IUCN_group =</span> <span class="fu">factor</span>(IUCN_group, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"strict"</span>, <span class="st">"usage_multiple"</span>)),</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">rel_year_binned =</span> <span class="fu">factor</span>(rel_year_binned, <span class="at">levels =</span> <span class="sc">-</span><span class="dv">5</span><span class="sc">:</span><span class="dv">5</span>)</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(IUCN_group))</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>run_did2s_es <span class="ot">&lt;-</span> <span class="cf">function</span>(data, yvar) {</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># DID Statique</span></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>  did2s_static <span class="ot">&lt;-</span> <span class="fu">did2s</span>(</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">data        =</span> data,</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">yname       =</span> yvar,</span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_stage =</span> <span class="sc">~</span> spei_wc_n_2 <span class="sc">+</span> spei_wc_n_1 <span class="sc">+</span> spei_wc_n <span class="sc">+</span> hv219 <span class="sc">+</span> hv220 <span class="sc">|</span> DHSYEAR,</span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">second_stage =</span> <span class="sc">~</span> treat_on <span class="sc">*</span> IUCN_group,</span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">treatment   =</span> <span class="st">"treat_on"</span>,</span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">cluster_var =</span> <span class="st">"hv001"</span>,</span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">weights     =</span> <span class="st">"w_all"</span></span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">etable</span>(did2s_static, <span class="at">headers =</span> <span class="fu">paste</span>(<span class="st">"did2s statique -"</span>, yvar)))</span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a><span class="co"># DID event study</span></span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a>  did2s_es <span class="ot">&lt;-</span> <span class="fu">did2s</span>(</span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> data,</span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">yname =</span> yvar, </span>
+<span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_stage =</span> <span class="sc">~</span> spei_wc_n_2 <span class="sc">+</span> spei_wc_n_1 <span class="sc">+</span> spei_wc_n <span class="sc">+</span> hv219 <span class="sc">+</span> hv220 <span class="sc">|</span> DHSYEAR,</span>
+<span id="cb24-35"><a href="#cb24-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">second_stage =</span> <span class="sc">~</span> <span class="fu">i</span>(rel_year_binned, IUCN_group, <span class="at">ref =</span> <span class="sc">-</span><span class="dv">1</span>),</span>
+<span id="cb24-36"><a href="#cb24-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">treatment   =</span> <span class="st">"treat_on"</span>,</span>
+<span id="cb24-37"><a href="#cb24-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">cluster_var =</span> <span class="st">"hv001"</span>,</span>
+<span id="cb24-38"><a href="#cb24-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">weights     =</span> <span class="st">"w_all"</span></span>
+<span id="cb24-39"><a href="#cb24-39" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb24-40"><a href="#cb24-40" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-41"><a href="#cb24-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">etable</span>(did2s_es, </span>
+<span id="cb24-42"><a href="#cb24-42" aria-hidden="true" tabindex="-1"></a>               <span class="at">headers =</span> <span class="fu">paste</span>(<span class="st">"did2s event-study (-5..5) par statut IUCN - buffer 10km"</span>, yvar)))</span>
+<span id="cb24-43"><a href="#cb24-43" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-44"><a href="#cb24-44" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Extraction des coefficients</span></span>
+<span id="cb24-45"><a href="#cb24-45" aria-hidden="true" tabindex="-1"></a>  tidy_es <span class="ot">&lt;-</span> broom<span class="sc">::</span><span class="fu">tidy</span>(did2s_es, <span class="at">conf.int =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-46"><a href="#cb24-46" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"^rel_year_binned::"</span>, term)) <span class="sc">%&gt;%</span></span>
+<span id="cb24-47"><a href="#cb24-47" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb24-48"><a href="#cb24-48" aria-hidden="true" tabindex="-1"></a>      <span class="at">year =</span> <span class="fu">as.numeric</span>(stringr<span class="sc">::</span><span class="fu">str_extract</span>(term, <span class="st">"(?&lt;=::)-?[0-9]+"</span>)),</span>
+<span id="cb24-49"><a href="#cb24-49" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb24-50"><a href="#cb24-50" aria-hidden="true" tabindex="-1"></a>      <span class="co"># identifier strict vs usage_multiple</span></span>
+<span id="cb24-51"><a href="#cb24-51" aria-hidden="true" tabindex="-1"></a>      <span class="at">group =</span> <span class="fu">case_when</span>(</span>
+<span id="cb24-52"><a href="#cb24-52" aria-hidden="true" tabindex="-1"></a>        <span class="fu">grepl</span>(<span class="st">"usage_multiple"</span>, term, <span class="at">ignore.case =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="st">"usage_multiple"</span>,</span>
+<span id="cb24-53"><a href="#cb24-53" aria-hidden="true" tabindex="-1"></a>        <span class="fu">grepl</span>(<span class="st">"strict"</span>, term, <span class="at">ignore.case =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="st">"strict"</span>,</span>
+<span id="cb24-54"><a href="#cb24-54" aria-hidden="true" tabindex="-1"></a>        <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_character_</span></span>
+<span id="cb24-55"><a href="#cb24-55" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb24-56"><a href="#cb24-56" aria-hidden="true" tabindex="-1"></a>      <span class="at">outcome =</span> yvar</span>
+<span id="cb24-57"><a href="#cb24-57" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb24-58"><a href="#cb24-58" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(group))</span>
+<span id="cb24-59"><a href="#cb24-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-60"><a href="#cb24-60" aria-hidden="true" tabindex="-1"></a>  <span class="co">#Plot</span></span>
+<span id="cb24-61"><a href="#cb24-61" aria-hidden="true" tabindex="-1"></a>  plot_title <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"Event-study (did2s) -"</span>, yvar, <span class="st">"</span><span class="sc">\n</span><span class="st">Hétérogénéité par statut IUCN - buffer 10km"</span>)</span>
+<span id="cb24-62"><a href="#cb24-62" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-63"><a href="#cb24-63" aria-hidden="true" tabindex="-1"></a>  g <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(tidy_es, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> estimate, <span class="at">color =</span> group)) <span class="sc">+</span></span>
+<span id="cb24-64"><a href="#cb24-64" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb24-65"><a href="#cb24-65" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb24-66"><a href="#cb24-66" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> conf.low, <span class="at">ymax =</span> conf.high), <span class="at">width =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb24-67"><a href="#cb24-67" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(</span>
+<span id="cb24-68"><a href="#cb24-68" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> <span class="st">"Années relatives au 1er traitement (binnées -5..5) - buffer 10 km"</span>,</span>
+<span id="cb24-69"><a href="#cb24-69" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> <span class="st">"Effet estimé"</span>,</span>
+<span id="cb24-70"><a href="#cb24-70" aria-hidden="true" tabindex="-1"></a>      <span class="at">title =</span> plot_title,</span>
+<span id="cb24-71"><a href="#cb24-71" aria-hidden="true" tabindex="-1"></a>      <span class="at">color =</span> <span class="st">"Catégorie IUCN"</span></span>
+<span id="cb24-72"><a href="#cb24-72" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb24-73"><a href="#cb24-73" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">14</span>)</span>
+<span id="cb24-74"><a href="#cb24-74" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-75"><a href="#cb24-75" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(g)</span>
+<span id="cb24-76"><a href="#cb24-76" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-77"><a href="#cb24-77" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Test de pré-tendances</span></span>
+<span id="cb24-78"><a href="#cb24-78" aria-hidden="true" tabindex="-1"></a>  leads <span class="ot">&lt;-</span> tidy_es <span class="sc">%&gt;%</span> <span class="fu">filter</span>(year <span class="sc">&lt;</span> <span class="dv">0</span>)</span>
+<span id="cb24-79"><a href="#cb24-79" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-80"><a href="#cb24-80" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">nrow</span>(leads) <span class="sc">&gt;</span> <span class="dv">0</span>){</span>
+<span id="cb24-81"><a href="#cb24-81" aria-hidden="true" tabindex="-1"></a>    keep_regex <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"^rel_year_binned::("</span>, <span class="fu">paste</span>(<span class="fu">unique</span>(leads<span class="sc">$</span>year), <span class="at">collapse=</span><span class="st">"|"</span>), <span class="st">"):"</span>)</span>
+<span id="cb24-82"><a href="#cb24-82" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span>(<span class="fu">wald</span>(did2s_es, <span class="at">keep =</span> keep_regex))</span>
+<span id="cb24-83"><a href="#cb24-83" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb24-84"><a href="#cb24-84" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb24-85"><a href="#cb24-85" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">list</span>(</span>
+<span id="cb24-86"><a href="#cb24-86" aria-hidden="true" tabindex="-1"></a>    <span class="at">static =</span> did2s_static,</span>
+<span id="cb24-87"><a href="#cb24-87" aria-hidden="true" tabindex="-1"></a>    <span class="at">es     =</span> did2s_es,</span>
+<span id="cb24-88"><a href="#cb24-88" aria-hidden="true" tabindex="-1"></a>    <span class="at">coef   =</span> tidy_es,</span>
+<span id="cb24-89"><a href="#cb24-89" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot   =</span> g</span>
+<span id="cb24-90"><a href="#cb24-90" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb24-91"><a href="#cb24-91" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb24-92"><a href="#cb24-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-93"><a href="#cb24-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-94"><a href="#cb24-94" aria-hidden="true" tabindex="-1"></a>res_wealth <span class="ot">&lt;-</span> <span class="fu">run_did2s_es</span>(dat3, <span class="st">"wealth_centile_rural_weighted"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>
-Quantile Treatment Effect:
-        
-tau QTE Std. Error
-0.05     -1.20    1.74
-0.1  -9.48    2.64
-0.15    -15.24    2.57
-0.2 -16.29    2.27
-0.25    -18.10    2.19
-0.3 -18.85    2.26
-0.35    -21.17    2.37
-0.4 -21.41    2.38
-0.45    -24.00    2.64
-0.5 -23.94    2.36
-0.55    -23.40    2.23
-0.6 -22.16    2.20
-0.65    -21.30    2.05
-0.7 -19.19    1.95
-0.75    -17.22    1.83
-0.8 -14.43    1.73
-0.85    -11.51    1.66
-0.9  -7.66    1.64
-0.95     -5.16    1.55
-
-Average Treatment Effect:   -15.76
-     Std. Error:        1.46</code></pre>
+<pre><code>                                                                      did2s_static
+                                    did2s statique - wealth_centile_rural_weighted
+Dependent Var.:                                      wealth_centile_rural_weighted
+                                                                                  
+treat_on                                                           -0.5813 (9.508)
+IUCN_groupstrict                                                     3.691 (3.061)
+IUCN_groupusage_multiple                                            -1.348 (1.089)
+treat_on x IUCN_groupusage_multiple                                 -1.556 (12.54)
+___________________________________                  _____________________________
+S.E.: Clustered                                                          by: hv001
+Observations                                                                 4,889
+R2                                                                         0.00745
+Adj. R2                                                                    0.00684
+---
+Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+                                                                                                                                did2s_es
+                                                   did2s event-study (-5..5) par statut IUCN - buffer 10km wealth_centile_rural_weighted
+Dependent Var.:                                                                                            wealth_centile_rural_weighted
+                                                                                                                                        
+rel_year_binned = -5 x IUCN_group = strict                                                                                 3.645 (2.687)
+rel_year_binned = -5 x IUCN_group = usage_multiple                                                                        -1.591 (1.274)
+rel_year_binned = -3 x IUCN_group = strict                                                                                 3.934 (5.255)
+rel_year_binned = -3 x IUCN_group = usage_multiple                                                                        -1.384 (1.278)
+rel_year_binned = 0 x IUCN_group = strict                                                                                -0.3570 (10.73)
+rel_year_binned = 0 x IUCN_group = usage_multiple                                                                         9.464. (5.139)
+rel_year_binned = 2 x IUCN_group = strict                                                                                  7.983 (5.681)
+rel_year_binned = 2 x IUCN_group = usage_multiple                                                                      -10.96*** (2.898)
+________________________________________                                                                   _____________________________
+S.E.: Clustered                                                                                                                by: hv001
+Observations                                                                                                                       4,889
+R2                                                                                                                               0.01202
+Adj. R2                                                                                                                          0.01060
+---
+Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggqte</span>(cic_res) <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">x=</span><span class="st">"Quantiles"</span>, <span class="at">y=</span><span class="st">"QTET"</span>, <span class="at">title=</span><span class="st">"CiC QTET: 2008-2021"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -1082,64 +1011,63 @@ Average Treatment Effect:   -15.76
 </figure>
 </div>
 </div>
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="do">## placebo</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="do">## Placebo: 1997 -&gt; 2008</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>dat_placebo <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span></span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DHSYEAR <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1997</span>, <span class="dv">2008</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">treat =</span> <span class="fu">as.integer</span>(GROUP <span class="sc">==</span> <span class="st">"Treatment"</span>))</span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="co"># (Optional) sanity check:</span></span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="co"># with(dat_placebo, table(DHSYEAR, treat))</span></span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>cic_pre <span class="ot">&lt;-</span>  <span class="fu">suppressWarnings</span>(<span class="fu">CiC</span>(</span>
-<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">formla =</span> wealth_centile_rural_simple <span class="sc">~</span> treat,</span>
-<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">t =</span> <span class="dv">2008</span>, <span class="at">tmin1 =</span> <span class="dv">1997</span>, <span class="at">tname =</span> <span class="st">"DHSYEAR"</span>,</span>
-<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> dat_placebo,</span>
-<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">panel =</span> <span class="cn">FALSE</span>, <span class="co"># repeated cross-sections</span></span>
-<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">se =</span> <span class="cn">TRUE</span>, <span class="at">iters =</span> <span class="dv">100</span>, <span class="co"># bootstrap</span></span>
-<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">probs =</span> <span class="fu">seq</span>(<span class="fl">0.05</span>, <span class="fl">0.95</span>, <span class="fl">0.05</span>),</span>
-<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">xformla =</span> <span class="sc">~</span> spei_wc_n_2 <span class="sc">+</span> spei_wc_n_1 <span class="sc">+</span> spei_wc_n <span class="sc">+</span> hv219 <span class="sc">+</span> hv220</span>
-<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(cic_pre)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 <div class="cell-output cell-output-stdout">
-<pre><code>
-Quantile Treatment Effect:
-        
-tau QTE Std. Error
-0.05    15.75    3.38
-0.1 17.04    2.46
-0.15    18.09    2.43
-0.2 21.57    2.85
-0.25    23.71    3.32
-0.3 23.13    4.16
-0.35    21.83    4.23
-0.4 19.65    4.21
-0.45    17.77    4.11
-0.5 17.59    4.56
-0.55    13.79    5.87
-0.6  8.25    6.10
-0.65     3.17    6.45
-0.7 -1.96    5.69
-0.75    -5.05    5.52
-0.8 -5.86    5.36
-0.85    -8.39    4.93
-0.9 -7.15    3.65
-0.95    -6.85    4.74
+<pre><code>Wald test, H0: joint nullity of rel_year_binned::-5:IUCN_group::strict, rel_year_binned::-5:IUCN_group::usage_multiple, rel_year_binned::-3:IUCN_group::strict and rel_year_binned::-3:IUCN_group::usage_multiple
+ stat = 0.756033, p-value = 0.553848, on 4 and 4,881 DoF, VCOV: Corrected Clustered (hv001).$stat
+[1] 0.7560327
 
-Average Treatment Effect:   8.76
-     Std. Error:        3.20</code></pre>
+$p
+[1] 0.5538482
+
+$df1
+[1] 4
+
+$df2
+[1] 4881
+
+$vcov
+[1] "Corrected Clustered (hv001)"</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggqte</span>(cic_pre) <span class="sc">+</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Quantiles"</span>, <span class="at">y =</span> <span class="st">"QTET"</span>,</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="st">"Placebo CiC QTET: 1997-2008"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>res_zscore <span class="ot">&lt;-</span> <span class="fu">run_did2s_es</span>(dat3, <span class="st">"zscore_wealth"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                                      did2s_static
+                                    did2s statique - zscore_wealth
+Dependent Var.:                                      zscore_wealth
+                                                                  
+treat_on                                          0.0285* (0.0115)
+IUCN_groupstrict                                  -0.0091 (0.0071)
+IUCN_groupusage_multiple                           0.0033 (0.0026)
+treat_on x IUCN_groupusage_multiple               -0.0277 (0.0185)
+___________________________________               ________________
+S.E.: Clustered                                          by: hv001
+Observations                                                 4,889
+R2                                                        -4.37e-5
+Adj. R2                                                   -0.00066
+---
+Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+                                                                                                                did2s_es
+                                                   did2s event-study (-5..5) par statut IUCN - buffer 10km zscore_wealth
+Dependent Var.:                                                                                            zscore_wealth
+                                                                                                                        
+rel_year_binned = -5 x IUCN_group = strict                                                              -0.0074 (0.0074)
+rel_year_binned = -5 x IUCN_group = usage_multiple                                                      0.0061. (0.0035)
+rel_year_binned = -3 x IUCN_group = strict                                                              -0.0180 (0.0157)
+rel_year_binned = -3 x IUCN_group = usage_multiple                                                      -0.0006 (0.0041)
+rel_year_binned = 0 x IUCN_group = strict                                                               0.0192. (0.0103)
+rel_year_binned = 0 x IUCN_group = usage_multiple                                                       -0.0166 (0.0110)
+rel_year_binned = 2 x IUCN_group = strict                                                               0.0196* (0.0088)
+rel_year_binned = 2 x IUCN_group = usage_multiple                                                        0.0160 (0.0111)
+________________________________________                                                                ________________
+S.E.: Clustered                                                                                                by: hv001
+Observations                                                                                                       4,889
+R2                                                                                                               1.67e-5
+Adj. R2                                                                                                         -0.00142
+---
+Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -1147,12 +1075,31 @@ Average Treatment Effect:   8.76
 </figure>
 </div>
 </div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Wald test, H0: joint nullity of rel_year_binned::-5:IUCN_group::strict, rel_year_binned::-5:IUCN_group::usage_multiple, rel_year_binned::-3:IUCN_group::strict and rel_year_binned::-3:IUCN_group::usage_multiple
+ stat = 1.33023, p-value = 0.256094, on 4 and 4,881 DoF, VCOV: Corrected Clustered (hv001).$stat
+[1] 1.330228
+
+$p
+[1] 0.2560938
+
+$df1
+[1] 4
+
+$df2
+[1] 4881
+
+$vcov
+[1] "Corrected Clustered (hv001)"</code></pre>
 </div>
-<p>Pour l’estimation principale (2008-2021), l’ATE est fortement négatif et très significatif (-17.9 centiles!). Les effets négatifs se retrouvent sur l’ensemble de la distribution, mais sont particulièrement marqués pour les centiles les plus faibles. Cela conforterait fortement l’hypothèse 2 (les AP renforcent les inégalités), mais c’est surprenant que ce soit à ce point marqué sur l’ensemble de la distribution alors que le DiD sur le wealth centile n’était pas significatif (Hypothèse 1).</p>
-<p>Pour le test placebo, la courbe n’est pas exactement plate : différence significative sur les bas revenus (supérieurs chez les traitements) et inférieure sur les bas revenus.</p>
+</div>
+<p><u><strong>Outcome</strong></u>: Wealth_centile_rural</p>
+<p>L’estimation du DID statique montre qu’être situé dans un rayon de 10 km autour d’une aire protégée (que ce soit pour les aires strictes ou pour les aires à usage multiple) n’a pas d’effet significatif sur le centile de richesse.</p>
+<p>L’analyse en event study confirme également dans l’ensemble l’absence d’effet significatif avant le traitement. L’hypothèse de tendances parallèles est donc respectée. Toutefois, deux après le traitement (rel_year_binned = 2), les ménages proches d’une aire protégée à usage multiple connaissent également une diminution significative de leur centile de richesse (coefficient = -10.96*).</p>
+<p><u><strong>Outcome:</strong></u> zscore_wealth</p>
+<p>L’estimation DID statique indique que les ménages dans la zone traitée (cluster situé dans un rayon de 10 km) voient leur richesse augmenter légèrement après la création des aires protégées(treat_on = 0.02585*). Toutefois, les différences selon le statut IUCN ne sont pas significatives dans le modèle. En analysant l’étude par event study, le résultat montre qu’il n’y a aucun effet significatif entre les groupes avant la création des aires protégées. Mais au bout de 2 ans après la création des aires protégées, les aires protégées strictes montrent un effet positif significatif sur le score standardisé de l’indice de richesse des ménages situés dans un rayon de 10 km. Les aires protégées à usage multiple montrent également un effet positif, mais non significatif.</p>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->

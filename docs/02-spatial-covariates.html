@@ -301,10 +301,10 @@ div.csl-indent {
 </header>
 
 
-<p>Ce document vise à charger les données géophysiques des ménages à l’aide du package R mapme.biodiversity (<a href="https://mapme-initiative.github.io/mapme.biodiversity/index.html" class="uri">https://mapme-initiative.github.io/mapme.biodiversity/index.html</a>) <span class="citation" data-cites="görgen2022">Görgen and Bhandari (<a href="11-references.html#ref-görgen2022" role="doc-biblioref">2022</a>)</span>. Ce package va automatiser la récupération de données volumineuses au format raster et leur traitement pour produire une série d’indicateurs appliqués à des polygones.</p>
+<p>Ce document vise à charger les données géophysiques des ménages à l’aide du package R mapme.biodiversity (<a href="https://mapme-initiative.github.io/mapme.biodiversity/index.html" class="uri">https://mapme-initiative.github.io/mapme.biodiversity/index.html</a>) <span class="citation" data-cites="görgen2022">Görgen and Bhandari (<a href="#ref-görgen2022" role="doc-biblioref">2022</a>)</span>. Ce package va automatiser la récupération de données volumineuses au format raster et leur traitement pour produire une série d’indicateurs appliqués à des polygones.</p>
 <section id="données-dhs" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="données-dhs"><span class="header-section-number">3.1</span> Données DHS</h2>
-<p>Avant le chargement des données des clusters GPS, nous définissons les systèmes de coordonnées. Les coordonnées GPS sont fournies dans le système de référence géographique WGS 84 (EPSG: 4326). Toutefois, pour effectuer des calculs précis de distances ou de surfaces, nous utilisons le système de projection officiel de Madagascar, qui est le Laborde (EPSG: 29702). On travaille en 4326 puis on le transforme en 29702 lorsque les opérations métriques sont nécessaires. Après le chargement des données, certains clusters n’ont pas de coordonnées valides (0,0). On les retire pour éviter des erreurs dans les calculs géospatiaux. On regroupe ensuite les clusters de l’année 1997, 2008 et 2021 dans un seul objet spatial pour faciliter les opérations ultérieures. Puis, on applique un buffer zone de 10 km autour de chaque cluster, qui serviront à extraire les données géophysiques et à analyser les expositions à certaines zones.</p>
+<p>Avant le chargement des données des clusters GPS, nous définissons les systèmes de coordonnées. Les coordonnées GPS sont fournies dans le système de référence géographique WGS 84 (EPSG: 4326). Toutefois, pour effectuer des calculs précis de distances ou de surfaces, nous utilisons le système de projection officiel de Madagascar, qui est le Laborde (EPSG: 29702). On travaille en 4326 puis on le transforme en 29702 lorsque les opérations métriques sont nécessaires. Après le chargement des données, certains clusters n’ont pas de coordonnées valides (0,0). On les retire pour éviter des erreurs dans les calculs géospatiaux. On regroupe ensuite les clusters de l’année 1997, 2008, 2011, 2013, 2016 et 2021 et 2021 dans un seul objet spatial pour faciliter les opérations ultérieures. Puis, on applique un buffer zone de 10 km autour de chaque cluster, qui serviront à extraire les données géophysiques et à analyser les expositions à certaines zones.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -445,11 +445,11 @@ Geodetic CRS:  WGS 84</code></pre>
 <h1 data-number="4"><span class="header-section-number">4</span> Chargement des données géophysiques des ménages</h1>
 <p>Nous allons charger et extraire les données sur les données géophysiques des ménages qui serviront de variables d’appariement et de variables de contrôle pour l’analyse. Ces covariables sont des covariables succeptibles d’influencer le traitement (aires protégées créées à proximité du ménage) et le résultat (wealth index et inégalité des ménages):</p>
 <ul>
-<li><p>Le couvert forestier en 2000 <span class="citation" data-cites="hansen2013">Hansen et al. (<a href="11-references.html#ref-hansen2013" role="doc-biblioref">2013</a>)</span></p></li>
-<li><p>La pente et l’altitude <span class="citation" data-cites="nasajpl2020">NASA JPL (<a href="11-references.html#ref-nasajpl2020" role="doc-biblioref">2020</a>)</span></p></li>
-<li><p>La densité de population en 2000 <span class="citation" data-cites="worldpop2018">WorldPop and CIESIN (<a href="11-references.html#ref-worldpop2018" role="doc-biblioref">2018</a>)</span></p></li>
-<li><p>L’accessibilité en 2000 <span class="citation" data-cites="uchida2011">Uchida and Nelson (<a href="11-references.html#ref-uchida2011" role="doc-biblioref">2011</a>)</span></p></li>
-<li><p>Les données worldclim <span class="citation" data-cites="vicente-serrano2010">Vicente-Serrano, Beguería, and López-Moreno (<a href="11-references.html#ref-vicente-serrano2010" role="doc-biblioref">2010</a>)</span></p></li>
+<li><p>Le couvert forestier en 2000 <span class="citation" data-cites="hansen2013">Hansen et al. (<a href="#ref-hansen2013" role="doc-biblioref">2013</a>)</span></p></li>
+<li><p>La pente et l’altitude <span class="citation" data-cites="nasajpl2020">NASA JPL (<a href="#ref-nasajpl2020" role="doc-biblioref">2020</a>)</span></p></li>
+<li><p>La densité de population en 2000 <span class="citation" data-cites="worldpop2018">WorldPop and CIESIN (<a href="#ref-worldpop2018" role="doc-biblioref">2018</a>)</span></p></li>
+<li><p>L’accessibilité en 2000 <span class="citation" data-cites="uchida2011">Uchida and Nelson (<a href="#ref-uchida2011" role="doc-biblioref">2011</a>)</span></p></li>
+<li><p>Les données worldclim <span class="citation" data-cites="vicente-serrano2010">Vicente-Serrano, Beguería, and López-Moreno (<a href="#ref-vicente-serrano2010" role="doc-biblioref">2010</a>)</span></p></li>
 </ul>
 <p>Afin d’automatiser le téléchargement et la gestion de ces données spatiales, nous configurons notre environnement de travail à l’aide de mapme.biodiversity. Nous utilisons la fonction get_resources () pour cela en démarrant un chronomètre avec le package tictoc pour suivre le temps d’exécution du bloc de code.</p>
 <div class="cell">
@@ -467,7 +467,7 @@ Geodetic CRS:  WGS 84</code></pre>
 <span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all  <span class="sc">%&gt;%</span> </span>
 <span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get_resources</span>(<span class="fu">get_gfw_treecover</span>())</span>
 <span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>() <span class="co"># 620,11 sec elapsed</span></span>
 <span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Perte de couvert</span></span>
 <span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
@@ -475,7 +475,7 @@ Geodetic CRS:  WGS 84</code></pre>
 <span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all <span class="sc">%&gt;%</span> </span>
 <span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_resources</span>(<span class="fu">get_gfw_lossyear</span>()) </span>
 <span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>() <span class="co"># 266,57 sec elapsed</span></span>
 <span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co"># NASA SRTM</span></span>
 <span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
@@ -483,50 +483,52 @@ Geodetic CRS:  WGS 84</code></pre>
 <span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all <span class="sc">%&gt;%</span> </span>
 <span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_resources</span>(<span class="fu">get_nasa_srtm</span>()) </span>
 <span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>() <span class="co"># 4578,35 sec elapsed</span></span>
 <span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Worldpop 2000</span></span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a><span class="co">#tic()</span></span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a><span class="fu">with_progress</span>({</span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all <span class="sc">%&gt;%</span></span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get_resources</span>(<span class="fu">get_worldpop</span>(<span class="at">years =</span> <span class="dv">2000</span>))</span>
-<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a><span class="co">#toc()</span></span>
-<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Accesibility</span></span>
-<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
-<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a><span class="fu">with_progress</span>({</span>
-<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all <span class="sc">%&gt;%</span> </span>
-<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_resources</span>(<span class="fu">get_accessibility_2000</span>()) </span>
-<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Maximum temperatures</span></span>
-<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
-<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a><span class="fu">with_progress</span>({</span>
-<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all <span class="sc">%&gt;%</span> <span class="fu">get_resources</span>(</span>
-<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get_worldclim_max_temperature</span>(<span class="at">years =</span> <span class="dv">1980</span><span class="sc">:</span><span class="dv">2021</span>, <span class="at">resolution =</span> <span class="st">"2.5m"</span>)</span>
-<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a><span class="co"># Minimum temperatures</span></span>
-<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
-<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a><span class="fu">with_progress</span>({</span>
-<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all <span class="sc">%&gt;%</span> <span class="fu">get_resources</span>(</span>
-<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get_worldclim_min_temperature</span>(<span class="at">years =</span> <span class="dv">1980</span><span class="sc">:</span><span class="dv">2021</span>, <span class="at">resolution =</span> <span class="st">"2.5m"</span>)</span>
-<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
-<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Precipitations</span></span>
-<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
-<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a><span class="fu">with_progress</span>({</span>
-<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all <span class="sc">%&gt;%</span> <span class="fu">get_resources</span>(</span>
-<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get_worldclim_precipitation</span>(<span class="at">years =</span> <span class="dv">1980</span><span class="sc">:</span><span class="dv">2021</span>, <span class="at">resolution =</span> <span class="st">"2.5m"</span>)</span>
-<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">timeout =</span> <span class="dv">7200</span>)  </span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a><span class="fu">with_progress</span>({</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all <span class="sc">%&gt;%</span></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get_resources</span>(<span class="fu">get_worldpop</span>(<span class="at">years =</span> <span class="dv">2000</span>))</span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Accesibility</span></span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a><span class="fu">with_progress</span>({</span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all <span class="sc">%&gt;%</span> </span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_resources</span>(<span class="fu">get_accessibility_2000</span>()) </span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>()</span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Maximum temperatures</span></span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a><span class="fu">with_progress</span>({</span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all <span class="sc">%&gt;%</span> <span class="fu">get_resources</span>(</span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get_worldclim_max_temperature</span>(<span class="at">years =</span> <span class="dv">1980</span><span class="sc">:</span><span class="dv">2021</span>, <span class="at">resolution =</span> <span class="st">"2.5m"</span>)</span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>() <span class="co"># 17746 sec elapsed</span></span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a><span class="co"># Minimum temperatures</span></span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a><span class="fu">with_progress</span>({</span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all <span class="sc">%&gt;%</span> <span class="fu">get_resources</span>(</span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get_worldclim_min_temperature</span>(<span class="at">years =</span> <span class="dv">1980</span><span class="sc">:</span><span class="dv">2021</span>, <span class="at">resolution =</span> <span class="st">"2.5m"</span>)</span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>() </span>
+<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a><span class="co"># Precipitations</span></span>
+<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a><span class="fu">tic</span>()</span>
+<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a><span class="fu">with_progress</span>({</span>
+<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a>  buffer_all <span class="ot">&lt;-</span> buffer_all <span class="sc">%&gt;%</span> <span class="fu">get_resources</span>(</span>
+<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get_worldclim_precipitation</span>(<span class="at">years =</span> <span class="dv">1980</span><span class="sc">:</span><span class="dv">2021</span>, <span class="at">resolution =</span> <span class="st">"2.5m"</span>)</span>
+<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb14-74"><a href="#cb14-74" aria-hidden="true" tabindex="-1"></a><span class="fu">toc</span>() <span class="co"># 17 855,95 sec elapsed</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -555,7 +557,7 @@ Geodetic CRS:  WGS 84</code></pre>
 <span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>        <span class="fu">calc_temperature_max_wc</span>(<span class="at">engine =</span> <span class="st">"extract"</span>, <span class="at">stats =</span> <span class="st">"mean"</span>)</span>
 <span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>      )</span>
 <span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>() <span class="co"># 11984.55 sec elapsed</span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>() <span class="co"># 20 391,84 sec elapsed</span></span>
 <span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Minimum temperatures</span></span>
 <span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tic</span>()</span>
@@ -565,7 +567,7 @@ Geodetic CRS:  WGS 84</code></pre>
 <span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>         <span class="fu">calc_temperature_min_wc</span>( <span class="at">engine =</span> <span class="st">"extract"</span>, <span class="at">stats =</span> <span class="st">"mean"</span>)</span>
 <span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>      )</span>
 <span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>() <span class="co"># 12588.37 sec | 9660.17 sec elapsed </span></span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>() <span class="co"># 28 357,5 sec elapsed </span></span>
 <span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Precipitations</span></span>
@@ -576,7 +578,7 @@ Geodetic CRS:  WGS 84</code></pre>
 <span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a>        <span class="fu">calc_precipitation_wc</span>(<span class="at">engine =</span> <span class="st">"extract"</span>, <span class="at">stats =</span> <span class="st">"mean"</span>)</span>
 <span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a>      )</span>
 <span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>() <span class="co"># 17857.13 sec | 8883.61 sec elapsed </span></span>
+<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>() <span class="co"># 19636.08 sec elapsed </span></span>
 <span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb15-44"><a href="#cb15-44" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Forest cover rate in 2000</span></span>
@@ -587,7 +589,7 @@ Geodetic CRS:  WGS 84</code></pre>
 <span id="cb15-49"><a href="#cb15-49" aria-hidden="true" tabindex="-1"></a>        <span class="fu">calc_treecover_area</span>(<span class="at">years =</span> <span class="dv">2000</span>, <span class="at">min_size =</span> <span class="dv">1</span>, <span class="at">min_cover =</span> <span class="dv">10</span>)</span>
 <span id="cb15-50"><a href="#cb15-50" aria-hidden="true" tabindex="-1"></a>      )</span>
 <span id="cb15-51"><a href="#cb15-51" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>()   <span class="co"># 548.69 sec | 2519.61 sec elapsed</span></span>
+<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>()   <span class="co"># 2602.96 sec elapsed</span></span>
 <span id="cb15-53"><a href="#cb15-53" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb15-54"><a href="#cb15-54" aria-hidden="true" tabindex="-1"></a>  <span class="co"># slope </span></span>
 <span id="cb15-55"><a href="#cb15-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tic</span>()</span>
@@ -597,7 +599,7 @@ Geodetic CRS:  WGS 84</code></pre>
 <span id="cb15-59"><a href="#cb15-59" aria-hidden="true" tabindex="-1"></a>        <span class="fu">calc_slope</span>(<span class="at">engine =</span> <span class="st">"extract"</span>, <span class="at">stats =</span> <span class="st">"mean"</span>)</span>
 <span id="cb15-60"><a href="#cb15-60" aria-hidden="true" tabindex="-1"></a>      )</span>
 <span id="cb15-61"><a href="#cb15-61" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb15-62"><a href="#cb15-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>() <span class="co"># 365.87 sec | 2557.28 sec elapsed    </span></span>
+<span id="cb15-62"><a href="#cb15-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>() <span class="co"># 2398.6 sec elapsed    </span></span>
 <span id="cb15-63"><a href="#cb15-63" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb15-64"><a href="#cb15-64" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Elevation</span></span>
 <span id="cb15-65"><a href="#cb15-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tic</span>()</span>
@@ -607,7 +609,7 @@ Geodetic CRS:  WGS 84</code></pre>
 <span id="cb15-69"><a href="#cb15-69" aria-hidden="true" tabindex="-1"></a>        <span class="fu">calc_elevation</span>(<span class="at">engine =</span> <span class="st">"extract"</span>, <span class="at">stats =</span> <span class="st">"mean"</span>)</span>
 <span id="cb15-70"><a href="#cb15-70" aria-hidden="true" tabindex="-1"></a>      )</span>
 <span id="cb15-71"><a href="#cb15-71" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb15-72"><a href="#cb15-72" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>() <span class="co"># 283.51 sec | 2672.57 sec elapsed  </span></span>
+<span id="cb15-72"><a href="#cb15-72" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>() <span class="co"># 4396,93 sec elapsed  </span></span>
 <span id="cb15-73"><a href="#cb15-73" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb15-74"><a href="#cb15-74" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Population density</span></span>
 <span id="cb15-75"><a href="#cb15-75" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tic</span>()</span>
@@ -617,7 +619,7 @@ Geodetic CRS:  WGS 84</code></pre>
 <span id="cb15-79"><a href="#cb15-79" aria-hidden="true" tabindex="-1"></a>        <span class="fu">calc_population_count</span>(<span class="at">engine =</span> <span class="st">"extract"</span>, <span class="at">stats =</span> <span class="st">"mean"</span>)</span>
 <span id="cb15-80"><a href="#cb15-80" aria-hidden="true" tabindex="-1"></a>      )</span>
 <span id="cb15-81"><a href="#cb15-81" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb15-82"><a href="#cb15-82" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>() <span class="co"># 83.55 sec | 1877.78 sec elapsed</span></span>
+<span id="cb15-82"><a href="#cb15-82" aria-hidden="true" tabindex="-1"></a>  <span class="fu">toc</span>() <span class="co"># 5233,48 sec elapsed</span></span>
 <span id="cb15-83"><a href="#cb15-83" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb15-84"><a href="#cb15-84" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Accessibility</span></span>
 <span id="cb15-85"><a href="#cb15-85" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tic</span>()</span>
@@ -641,7 +643,7 @@ Geodetic CRS:  WGS 84</code></pre>
 <p>Nous obtenons un dataframe contenant le couvert forestier en 2000, la pente et l’altitude, la densité de population, l’accessibilité, la température maximale et minimale, ainsi que la précipitation.</p>
 
 
-<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-görgen2022" class="csl-entry" role="listitem">
 Görgen, Darius A., and Om Prakash Bhandari. 2022. <span>“Efficient Monitoring of Global Biodiversity Portfolios,”</span> April. <a href="https://doi.org/10.32614/CRAN.package.mapme.biodiversity">https://doi.org/10.32614/CRAN.package.mapme.biodiversity</a>.
 </div>
