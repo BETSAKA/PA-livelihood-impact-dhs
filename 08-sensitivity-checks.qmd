@@ -37,9 +37,9 @@ mdg_crs <- 29702
 
 # On charge les données gps 
 gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp")
-gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp") 
-gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp") 
-gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp") 
+gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp")
+gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp")
+gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp")
 gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp")
 gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
 
@@ -1674,6 +1674,78 @@ Pour le placebo (1997-2008), Les ménages les plus pauvres semblent peu affecté
 Cette partie vérifie l'hypothèse 3 portant sur l'hétérogénéité des effets selon le type de gouvernance des aires protégées.
 
 ```{r}
+# DID 2x2-----------------------------------------------------
+dat2 <- dat_5km %>%
+  mutate(
+    treat_strict = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("Ia","Ib",
+                                                                     "II","III",
+                                                                     "IV")),
+    treat_multi  = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("V","VI"))
+  )
+
+
+# Placebo ---------------------------------------------------
+pre <- dat2 %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+# Strict
+f_pre_strict <- as.formula(paste(
+  yvar, "~ treat_strict + post + treat_strict:post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre_strict <- feols(f_pre_strict, data = pre, weights = ~ w_all, cluster = ~ hv001)
+
+# Multi
+f_pre_multi <- as.formula(paste(
+  yvar, "~ treat_multi + post + treat_multi:post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre_multi <- feols(f_pre_multi, data = pre, weights = ~ w_all, cluster = ~ hv001)
+
+# Main estimation ---------------------------
+
+main <- dat2 %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_strict <- feols(f_pre_strict, data = main, weights = ~ w_all, cluster = ~ hv001)
+m_main_multi  <- feols(f_pre_multi, data = main, weights = ~ w_all, cluster = ~ hv001)
+
+
+did_row <- function(model, year_post, term){
+  summary(model) %>% broom::tidy() %>%
+    filter(term == !!term) %>%
+    transmute(year = year_post, estimate, se = std.error)
+}
+
+did_df <- bind_rows(
+  did_row(m_pre_strict, 2008, "treat_strict:post") %>% mutate(type = "strict"),
+  did_row(m_main_strict, 2021, "treat_strict:post") %>% mutate(type = "strict"),
+  did_row(m_pre_multi, 2008, "treat_multi:post") %>% mutate(type = "multi"),
+  did_row(m_main_multi, 2021, "treat_multi:post") %>% mutate(type = "multi")
+) %>%
+  mutate(
+    period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
+                    levels = c("1997–2008","2008–2021")),
+    lo = estimate - 1.96*se,
+    hi = estimate + 1.96*se
+  )
+
+
+pd <- position_dodge(width = 0.2)
+
+ggplot(did_df, aes(x = period, y = estimate, colour = type)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 3, position = pd) +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = .2, position = pd) +
+  labs(x = NULL, y = "Effet DID (centile de richesse)",
+       title = "DID 2×2 par type d’AP (strict vs usage multiple)")
+
+
+# did2s (Gardner) : statique + event-study--------------------------------
 # Création du groupe IUCN 
 dat3 <- dat3 %>%
   filter(!is.na(IUCN_CAT), !is.na(treat_on)) %>%
@@ -1768,11 +1840,7 @@ run_did2s_es <- function(data, yvar) {
 
 
 res_wealth <- run_did2s_es(dat3, "wealth_centile_rural_weighted")
-res_zscore <- run_did2s_es(dat3, "zscore_wealth")
-
 ```
-
-[**Outcome**]{.underline}: Wealth_centile_rural
 
 L'estimation du DID statique montre qu'être situé dans un rayon de 5 km autour d'une aire protégée (que ce soit pour les aires strictes ou pour les aires à usage multiple) n'a pas d'effet significatif sur le centile de richesse.
 
@@ -1780,17 +1848,23 @@ L'analyse en event study confirme également l'absence d'effet significatif avan
 
 A savoir que le résultat ne comprennent que les bins allant -5 à +2, car les bins +3, +4 et +5 n'ont pas assez d'observations pour certaines combinaisons et ne peuvent d'être estimer.
 
-[**Outcome:**]{.underline} zscore_wealth
-
-L'estimation DID statique indique que le fait de vivre dans un rayon de 5 km des aires protégées n'a pas d'effet significatif sur le zscore de richesse. Les effets diffèrent un peu entre les aires strictes et les aires à usages multiples.
-
-De même pour l'analyse par event study, l'effet du traitement n'est pas non plus significatif. Les effets oscillent autour de 0, indiquant que les ménages proches des aires protégées ne deviennent ni plus riche ni plus pauvres, en termes de richesse standardisée après traitement.
-
 ### Test pour une distance de 15km
 
 #### Assignation du traitement
 
 ```{r}
+# Library
+library(tidyverse) 
+library(haven) 
+library(sf) 
+library(tmap) 
+library(gt)  
+library(geodata) 
+library(writexl)
+library(units) 
+library(leaflet) 
+library(readxl) 
+library(glue)
 # Buffer de 15 km
 buffer_dist <- 15000
 
@@ -3331,6 +3405,78 @@ Pour le placebo (1997-2008), Les ménages les plus pauvres semblent peu affecté
 ##### Heterogeneity
 
 ```{r}
+# DID 2x2-----------------------------------------------------
+dat2 <- dat %>%
+  mutate(
+    treat_strict = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("Ia","Ib",
+                                                                     "II","III",
+                                                                     "IV")),
+    treat_multi  = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("V","VI"))
+  )
+
+
+# Placebo ---------------------------------------------------
+pre <- dat2 %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+# Strict
+f_pre_strict <- as.formula(paste(
+  yvar, "~ treat_strict + post + treat_strict:post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre_strict <- feols(f_pre_strict, data = pre, weights = ~ w_all, cluster = ~ hv001)
+
+# Multi
+f_pre_multi <- as.formula(paste(
+  yvar, "~ treat_multi + post + treat_multi:post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre_multi <- feols(f_pre_multi, data = pre, weights = ~ w_all, cluster = ~ hv001)
+
+# Main estimation ---------------------------
+
+main <- dat2 %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_strict <- feols(f_pre_strict, data = main, weights = ~ w_all, cluster = ~ hv001)
+m_main_multi  <- feols(f_pre_multi, data = main, weights = ~ w_all, cluster = ~ hv001)
+
+
+did_row <- function(model, year_post, term){
+  summary(model) %>% broom::tidy() %>%
+    filter(term == !!term) %>%
+    transmute(year = year_post, estimate, se = std.error)
+}
+
+did_df <- bind_rows(
+  did_row(m_pre_strict, 2008, "treat_strict:post") %>% mutate(type = "strict"),
+  did_row(m_main_strict, 2021, "treat_strict:post") %>% mutate(type = "strict"),
+  did_row(m_pre_multi, 2008, "treat_multi:post") %>% mutate(type = "multi"),
+  did_row(m_main_multi, 2021, "treat_multi:post") %>% mutate(type = "multi")
+) %>%
+  mutate(
+    period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
+                    levels = c("1997–2008","2008–2021")),
+    lo = estimate - 1.96*se,
+    hi = estimate + 1.96*se
+  )
+
+
+pd <- position_dodge(width = 0.2)
+
+ggplot(did_df, aes(x = period, y = estimate, colour = type)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 3, position = pd) +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = .2, position = pd) +
+  labs(x = NULL, y = "Effet DID (centile de richesse)",
+       title = "DID 2×2 par type d’AP (strict vs usage multiple)")
+
+
+# did2s (Gardner) : statique + event-study--------------------------------
 # Création du groupe IUCN 
 dat3 <- dat3 %>%
   filter(!is.na(IUCN_CAT), !is.na(treat_on)) %>%
@@ -3728,13 +3874,7 @@ plot_zscore <- plot_event_study(
 plot_zscore
 ```
 
--   [**Outcome:**]{.underline} wealth index
-
 Avant correction multiple, les coefficients ne montrent pas de tendance stable d'amélioration ou de détérioration de l'indice de richesse. Après le contrôle du risque de faux positifs, seul un effet négatif marqué sur l'indice de richesse demeure statistiquement significatif, suggérant un effet transitoire d'appauvrissement après deux ans de la mise en place des aires protégées. Les ménages localisés à 10 km des aires protégées ont dû subir un choc économique ponctuel (choc d'implémentation ou perte d'accès aux ressources ou transition socio-économique avant ajustement), plutôt qu'une tendance persistante.
-
--   [**Outcome:**]{.underline} zscore du wealth index
-
-Après correction FDR, aucune des estimations ne demeure statistiquement significative. Les signaux positifs observés dans l'estimation classique pourraient refléter des fluctuations aléatoires plutôt qu'un effet causal robuste.
 
 ## Pseudo Panel
 

@@ -8,7 +8,9 @@ editor_options:
 
 ## Objectives
 
-Le document présente l'estimation en double différence des groupes de traitement et de contrôle pour la période 2008 à 2021. Le principe est de comparer l'indice de richesse des ménages de contrôle et de traitement à une période antérieure et à une période postérieure à la mise en place des aires protégées.
+Le document présente l'estimation en double différence des groupes de traitement et de contrôle pour la période 2008 à 2021. Le principe est de comparer l'indice de richesse des ménages de contrôle et de traitement à une période antérieure et à une période postérieure à la mise en place des aires protégées. La période de pré-traitement sera la période de 1997 à 2008, et la période de post-traitement sera la période 2008 et 2021. Le groupe de traitement sont les ménages vivant à moins de 10km des aires protégées créées entre 2008 et 2021. Le groupe de contrôle sont les ménages vivant à plus de 10km des aires protégées créées jusqu'en 2021. Les ménages vivant à moins de 10km d'une aire protégée créée avant 2008 seront exclus de l'analyse.
+
+Dans nos estimations par DID, nous avons utilisé des erreurs standards robustes aux corrélations intra-grappes. Cette estimation permet de gérer la dépendance des observations au sein des grappes. Le but est d'ajuster les erreurs standards en tenant compte des corrélations intra-grappes présentes au sein des groupes par l'échantillonnage de la variable de résultat @abadie2021. Cet ajustement se calcule sur la base des résidus du modèle et d'une estimation de variance intra-cluster. On calcule les résidus à partir du modèle de régression puis on utilise ces résidus pour construire une matrice variance-covariance robuste. La matrice va ajuster la corrélation intra-grappe en tenant compte la structure corporelle des erreurs.
 
 Reminder, we have the following hypothesis:
 
@@ -17,10 +19,6 @@ Reminder, we have the following hypothesis:
 -   H2-effect on inequalities: PA exacerbate economic inequalities, as better-off or better-connected individuals capture most of the benefits (tourism jobs, development projects).
 
 -   H3-heterogeneity: Impacts vary across PA depending on governance, community participation, and management approaches.
-
-## Data preparation
-
-La période de pré-traitement sera la période de 1997 à 2008, et la période de post-traitement sera la période 2008 et 2021. Le groupe de traitement sont les ménages vivant à moins de 10km des aires protégées créées entre 2008 et 2021. Le groupe de contrôle sont les ménages vivant à plus de 10km des aires protégées créées jusqu'en 2021. Les ménages vivant à moins de 10km d'une aire protégée créée avant 2008 seront exclus de l'analyse.
 
 ## Overall effect on livelihoods
 
@@ -214,8 +212,9 @@ ggplot(plot_did2s, aes(k, estimate)) +
   geom_point() +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
   labs(x = "Années relatives au 1er traitement (binnées -5..5)",
-       y = "Effet estimé",
-       title = "Event-study (did2s) - buffer de 10 km")
+       y = "Effet DID sur le centile de richesse (pondéré)",
+       title = "Event-study (did2s) - buffer de 10 km") + 
+  scale_x_continuous(breaks = c(-5,-4,-3,-2,-1,0,1,2,3,4,5))
 
 # Test joint de pré-tendances (tous les leads k < 0)
 # On construit un motif regex pour k = -5..-1 présents dans le modèle
@@ -229,67 +228,9 @@ if(length(leads_present) > 0){
 
 L'estimation en "statique" donne un coefficient de \~1 centile (0.99), avec une erreur type de 2.1, ce qui indique un résultat non significatif. L'analyse en série temporelle avec binning ±5 ans. Etaye l'hypothèse de tendances parallèle. Les estimations en post semblent apparaître, mais ne semblent pas persister. Cela abonde dans le sens d'un impact faible et non-significatif. De possibles avancées à court-terme (\~3 ans après la création de l'AP), mais pas soutenues dans le temps.
 
-## Effect on inequalities
-
-### Staggered DiD
-
-```{r}
-
-yvar <- "zscore_wealth"
-
-# did2s (Gardner) : statique + event-study--------------------------------
-# -- Statique (traitement "on/off")
-did2s_static <- did2s(
-  data        = dat3,
-  yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage= ~ i(treat_on, ref = FALSE),
-  treatment   = "treat_on",
-  cluster_var = "hv001",
-  weights     = "w_all"
-)
-etable(did2s_static, headers = "did2s statique")
-
-# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
-did2s_es <- did2s(
-  data        = dat3,
-  yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage= ~ i(rel_year_binned, ref = c(-1, Inf)),
-  treatment   = "treat_on",
-  cluster_var = "hv001",
-  weights     = "w_all"
-)
-etable(did2s_es, headers = "did2s event-study (-5..5)")
-
-# Plot ES did2s
-plot_did2s <- broom::tidy(did2s_es, conf.int = TRUE) %>%
-  filter(grepl("^rel_year_binned::", term)) %>%
-  mutate(k = as.numeric(sub("^rel_year_binned::", "", term))) %>%
-  arrange(k)
-
-ggplot(plot_did2s, aes(k, estimate)) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_point() +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
-  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
-       y = "Effet estimé",
-       title = "Event-study (did2s) - buffer 10 km")
-
-# Test joint de pré-tendances (tous les leads k < 0)
-# On construit un motif regex pour k = -5..-1 présents dans le modèle
-leads_present <- plot_did2s$k[plot_did2s$k < 0]
-if(length(leads_present) > 0){
-  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
-  print(fixest::wald(did2s_es, keep = keep_regex))
-}
-```
-
-Rien de très significatif non plus.
-
 ### Quantile treatment effects
 
-Le quantile treatment effect mesure l'effet du traitement à différents points de la distribution de la variable de résultat, le zscore du wealth index. Il montre comment le traitement affecte les ménages les plus pauvres (quantiles bas), la classe moyenne et les ménages les plus aisés (quantiles élevés).
+Le quantile treatment effect mesure l'effet du traitement à différents points de la distribution de la variable de résultat, le wealth index. Il montre comment le traitement affecte les ménages les plus pauvres (quantiles bas), la classe moyenne et les ménages les plus aisés (quantiles élevés).
 
 ```{r}
 # Testing Quantile treatment effects --------------------------------------
@@ -346,9 +287,70 @@ ggqte(cic_pre) +
 
 Pour l'estimation principale (2008-2021), l'ATE est fortement négatif et très significatif (-17.9 centiles!). Les effets négatifs se retrouvent sur l'ensemble de la distribution, mais sont particulièrement marqués pour les centiles les plus faibles. Cela conforterait fortement l'hypothèse 2 (les AP renforcent les inégalités), mais c'est surprenant que ce soit à ce point marqué sur l'ensemble de la distribution alors que le DiD sur le wealth centile n'était pas significatif (Hypothèse 1).
 
-Pour le test placebo, la courbe n'est pas exactement plate : différence significative sur les bas revenus (supérieurs chez les traitements) et inférieure sur les bas revenus.
+Pour le test placebo, la courbe n'est pas exactement plate : il existe donc des différences significatives entre les groupes. Les ménages pauvres des zones traitées avaient déjà des niveaux de richesse différents de ceux des zones controles. Ces différences suggèrent une hétérogénéité entre les groupes.
+
+## Effect on inequalities
+
+### Staggered DiD
+
+```{r}
+
+yvar <- "zscore_wealth"
+
+# did2s (Gardner) : statique + event-study--------------------------------
+# -- Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(treat_on, ref = FALSE),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_static, headers = "did2s statique")
+
+# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
+did2s_es <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(rel_year_binned, ref = c(-1, Inf)),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_es, headers = "did2s event-study (-5..5)")
+
+# Plot ES did2s
+plot_did2s <- broom::tidy(did2s_es, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_binned::", term)) %>%
+  mutate(k = as.numeric(sub("^rel_year_binned::", "", term))) %>%
+  arrange(k)
+
+ggplot(plot_did2s, aes(k, estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
+  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
+       y = "Effet DID sur le centile de richesse (pondéré)",
+       title = "Event-study (did2s) - buffer 10 km") + 
+  scale_x_continuous(breaks = c(-5,-4,-3,-2,-1,0,1,2,3,4,5))
+
+# Test joint de pré-tendances (tous les leads k < 0)
+# On construit un motif regex pour k = -5..-1 présents dans le modèle
+leads_present <- plot_did2s$k[plot_did2s$k < 0]
+if(length(leads_present) > 0){
+  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
+  print(fixest::wald(did2s_es, keep = keep_regex))
+}
+```
+
+L'hypothèse des tendances parallèles est vérifié car l'hypothèse nulle n'est pas rejeté (p-value = 0.06379954 \> 0.05). Après la mise en place de l'aire protégée, un effet positif apparaît deux ans après l'intervention (rel_year = 2: 0.0221\*\*\*), puis devient particulièrement marqué au bout de trois ans (rel_year = 3: 0.0302\*). Toutefois, cet effet disparaît au bout de cinq ans, indiquant que l'effet n'est pas durable. Le R² et R² ajusté montrent que la part de variance expliquée par le traitement est minimale.
 
 ## Heterogeneity
+
+L’étude des effets hétérogènes vise à déterminer quelles catégories de ménages bénéficient davantage – ou moins – de la création des aires protégées, et sous quelles conditions. Pour cela, nous analysons l'influence de la gouvernance en distinguant les aires protégées dites « strictes » (statuts IUCN I-IV) et les aires « multi-usages » (statuts IUCN V-VI).
 
 ```{r}
 # DID 2x2-----------------------------------------------------
@@ -361,7 +363,7 @@ dat2 <- dat %>%
   )
 
 
-# Placebo --------------------------------------------------------------
+# Placebo ---------------------------------------------------
 pre <- dat2 %>%
   filter(DHSYEAR %in% c(1997, 2008)) %>%
   mutate(post = as.integer(DHSYEAR == 2008))
@@ -491,11 +493,12 @@ run_did2s_es <- function(data, yvar) {
     geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
     labs(
       x = "Années relatives au 1er traitement (binnées -5..5) - buffer 10 km",
-      y = "Effet estimé",
+      y = "Effet DID (centile de richesse)",
       title = plot_title,
       color = "Catégorie IUCN"
     ) +
-    theme_minimal(base_size = 14)
+    theme_minimal(base_size = 14)+ 
+  scale_x_continuous(breaks = c(-5,-4,-3,-2,-1,0,1,2,3,4,5))
   
   print(g)
   
@@ -517,16 +520,8 @@ run_did2s_es <- function(data, yvar) {
 
 
 res_wealth <- run_did2s_es(dat3, "wealth_centile_rural_weighted")
-res_zscore <- run_did2s_es(dat3, "zscore_wealth")
-
 ```
 
-[**Outcome**]{.underline}: Wealth_centile_rural
+L'estimation du DID statique montre que, pour la période placebo, les aires protégées à usage multiple présentent un effet positif d'environ cinq centiles de richesse, tandis que les aires protégées strictes affichent un effet négatif. Dans les deux cas, les intervalles de confiance chevauchent zéro, indiquant que les effets ne sont pas significatifs. Pour la période de traitement (2008-2021), les effets estimés pour les aires protégées à usage multiple sont proches de zéro et légèrement négatif pour les aires protégées à usage stricte.
 
-L'estimation du DID statique montre qu'être situé dans un rayon de 10 km autour d'une aire protégée (que ce soit pour les aires strictes ou pour les aires à usage multiple) n'a pas d'effet significatif sur le centile de richesse.
-
-L'analyse en event study confirme également dans l'ensemble l'absence d'effet significatif avant le traitement. L'hypothèse de tendances parallèles est donc respectée. Toutefois, deux après le traitement (rel_year_binned = 2), les ménages proches d'une aire protégée à usage multiple connaissent également une diminution significative de leur centile de richesse (coefficient = -10.96\*).
-
-[**Outcome:**]{.underline} zscore_wealth
-
-L'estimation DID statique indique que les ménages dans la zone traitée (cluster situé dans un rayon de 10 km) voient leur richesse augmenter légèrement après la création des aires protégées(treat_on = 0.02585\*). Toutefois, les différences selon le statut IUCN ne sont pas significatives dans le modèle. En analysant l'étude par event study, le résultat montre qu'il n'y a aucun effet significatif entre les groupes avant la création des aires protégées. Mais au bout de 2 ans après la création des aires protégées, les aires protégées strictes montrent un effet positif significatif sur le score standardisé de l'indice de richesse des ménages situés dans un rayon de 10 km. Les aires protégées à usage multiple montrent également un effet positif, mais non significatif.
+L'analyse en event study confirme dans l'ensemble l'absence d'effet significatif avant le traitement, qui valide l'hypothèse de tendances parallèles. A l'année 0, les estimations indiquent un effet moyen positif pour les aires protégées à usage multiple, tandis que les aires à usage strictes présentent une tendance plutôt négative. Deux ans après le traitement (rel_year_binned = 2), la situation s'inverse. Les ménages proches d'une aire protégée à usage multiple connaissent une diminution significative de leur centile de richesse (coefficient = -10.96\*) mais ceux près des aires protégées à usage stricte connaissent une tendance positive, mais non significative (coefficient = 7.983).

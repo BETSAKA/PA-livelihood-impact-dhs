@@ -20,9 +20,9 @@ library(sf) # Analyse spatiale
 library(readr)
 
 # On charge les données
-wdpa_before_2008 <- st_read("data/derived/wdpa_before_2008.csv", quiet = TRUE) 
+wdpa_before_2008 <- st_read("data/derived/wdpa_before_2008.csv") 
 
-wdpa_from_2008 <- read.csv("data/derived/wdpa_from_2008.csv", quiet = TRUE)
+wdpa_from_2008 <- read.csv("data/derived/wdpa_from_2008.csv")
 
 # Fonction utilitaire pour produire les statistiques d'une période
 get_descriptive_stats <- function(data, periode_label) {
