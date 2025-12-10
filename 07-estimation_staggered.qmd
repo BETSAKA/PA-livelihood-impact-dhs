@@ -8,11 +8,19 @@ editor_options:
 
 ## Objectives
 
+Le document présente l'estimation en double différence des groupes de traitement et de contrôle pour la période 2008 à 2021. Le principe est de comparer l'indice de richesse des ménages de contrôle et de traitement à une période antérieure et à une période postérieure à la mise en place des aires protégées.
+
 Reminder, we have the following hypothesis:
 
 -   H1-overall effect on livelihoods: PA reduce the living standards of nearby households by restricting access to natural resources, with insufficient compensation or benefits.
+
 -   H2-effect on inequalities: PA exacerbate economic inequalities, as better-off or better-connected individuals capture most of the benefits (tourism jobs, development projects).
+
 -   H3-heterogeneity: Impacts vary across PA depending on governance, community participation, and management approaches.
+
+## Data preparation
+
+La période de pré-traitement sera la période de 1997 à 2008, et la période de post-traitement sera la période 2008 et 2021. Le groupe de traitement sont les ménages vivant à moins de 10km des aires protégées créées entre 2008 et 2021. Le groupe de contrôle sont les ménages vivant à plus de 10km des aires protégées créées jusqu'en 2021. Les ménages vivant à moins de 10km d'une aire protégée créée avant 2008 seront exclus de l'analyse.
 
 ## Overall effect on livelihoods
 
@@ -147,7 +155,7 @@ ggplot(did_df, aes(x = period, y = estimate)) +
        title = "DID 2×2 avec IC clusterisés (hv001) - buffer 10 km")
 ```
 
-Le test placebo donne une estimation avec un coefficient faible (+1.8 centile) et non significatif: pas de différence détectée avant intervention dans les tendances du groupe traitement et du groupe contrôle. L'estimation du traitement préente une plus grande magnitude (-4.1 centiles), mais il reste non significatif. Les ménages vivant près des AP semblent connaître, un niveau de bien-être légèrement inférieur à celui des ménages contrôle, mais l'effet n'est pas significatif. A ce stade, l'analyse ne confirme pas l'hypothèse 1 (que les AP réduice le niveau de vie) : le sens de la relation est négatif, mais on ne peut pas rejeter l'hypothèse nulle. L'intervalle de confiance couvre encore largement 0, ce qui signifie qu'on a une précision insuffisante pour détecter un effet. L'effet est donc soit nul, soit inférieur à notre capacité de détection. Dans le PAP, on avait estimé que l'effet devrait être d'au moins 7.5 centiles pour pouvoir être détecté.
+Le test placebo donne une estimation avec un coefficient faible (+1.8 centile) et non significatif: pas de différence détectée avant intervention dans les tendances du groupe traitement et du groupe contrôle. L'estimation du traitement présente une plus grande magnitude (-4.1 centiles), mais il reste non significatif. Les ménages vivant près des AP semblent connaître, un niveau de bien-être légèrement inférieur à celui des ménages contrôle, mais l'effet n'est pas significatif. A ce stade, l'analyse ne confirme pas l'hypothèse 1 (que les AP réduise le niveau de vie) : le sens de la relation est négatif, mais on ne peut pas rejeter l'hypothèse nulle. L'intervalle de confiance couvre encore largement 0, ce qui signifie qu'on a une précision insuffisante pour détecter un effet. L'effet est donc soit nul, soit inférieur à notre capacité de détection. Dans le PAP, on avait estimé que l'effet devrait être d'au moins 7.5 centiles pour pouvoir être détecté.
 
 ### Staggered diff-in-diff
 
@@ -155,9 +163,9 @@ In our PAP, we stated:
 
 > "The MIS data can therefore be mobilized for this study. However, the periods covered by MIS only allow for comparisons beyond a simple “before” and “after” framework, which complicates the analysis and necessitates methods with limited methodological consensus. Since 2020, the state of the art in difference-in-difference methods has been challenged by the recognition that classical two-way fixed effects methods can yield spurious results when the effects of an intervention are heterogeneous and assessed over multiple periods. Since then, a dozen alternative approaches have been developed, but econometricians continue to debate their reliability (Roth et al. 2023). To avoid undermining the credibility of our results, we will initially limit ourselves to two study periods (DHS 2008 and 2021). Only if this approach lacks sufficient statistical power will we consider incorporating additional data. \[...\] Additionally, if we incorporate data from MIS 1997, MIS 2011, and MIS 2013, we could apply an estimator suitable for staggered adoption and multiple study periods accounting for potential heterogeneous treatment effects (Borusyak, Jaravel, and Spiess 2024). This will only be performed if power is insufficient with two periods of data."
 
-Pour l'instant, je n'arrive pas à appliquer l'approche de Borusyak, Jaravel et Spiess avec des données en coupes répétées (pas du panel) avec le package R didimputation. En théorie cette méthode peut s'appliquer à des données "repeated cross sections" et il semblerait qu'un package STATA le fasse. Mais je n'ai pas STATA pour tester. On va donc appliquer la méthode de Gardner, qui en principe est très proche (avec des intervalles de confiance un peu plus large).
+Pour l'instant, on n'arrive pas à appliquer l'approche de @borusyak2024 avec des données en coupes répétées (pas du panel) avec le package R didimputation. En théorie cette méthode peut s'appliquer à des données "repeated cross sections" et il semblerait qu'un package STATA le fasse. Mais nous ne disposons pas de STATA pour tester. On va donc appliquer la méthode de Gardner, qui en principe est très proche (avec des intervalles de confiance un peu plus large).
 
-Nota bene : Afin de stabiliser les estimations de l’event-study, nous avons appliqué un binning des années relatives au traitement, regroupant toutes les observations au-delà de ±5 années dans des catégories communes. Ce choix est motivé par l’espacement irrégulier des enquêtes disponibles, qui implique que certaines valeurs de temps relatif sont représentées par très peu d’observations et produisent des coefficients instables. Comme le soulignent Borusyak, Jaravel et Spiess (2024, p. 22) : “*In practice, it is common to bin distant leads and lags into a single category, both to improve statistical precision and to avoid presenting very noisy and uninformative coefficients.*” Cette approche permet ainsi de réduire le bruit aux extrêmes et de se concentrer sur l’interprétation des dynamiques principales autour du traitement.
+Nota bene : Afin de stabiliser les estimations de l’event-study, nous avons appliqué un binning des années relatives au traitement, regroupant toutes les observations au-delà de ±5 années dans des catégories communes. Ce choix est motivé par l’espacement irrégulier des enquêtes disponibles, qui implique que certaines valeurs de temps relatif sont représentées par très peu d’observations et produisent des coefficients instables. Comme le soulignent Borusyak, Jaravel et Spiess (2024, p. 22) : “*In practice, it is common to bin distant leads and lags into a single category, both to improve statistical precision and to avoid presenting very noisy and uninformative coefficients.*” Cette approche permet ainsi de réduire le bruit aux extrêmes et de se concentrer sur l’interprétation des dynamiques principales autour du traitement.s
 
 ```{r}
 # did2s (Gardner) : statique + event-study--------------------------------
@@ -343,6 +351,78 @@ Pour le test placebo, la courbe n'est pas exactement plate : différence signifi
 ## Heterogeneity
 
 ```{r}
+# DID 2x2-----------------------------------------------------
+dat2 <- dat %>%
+  mutate(
+    treat_strict = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("Ia","Ib",
+                                                                     "II","III",
+                                                                     "IV")),
+    treat_multi  = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("V","VI"))
+  )
+
+
+# Placebo --------------------------------------------------------------
+pre <- dat2 %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+# Strict
+f_pre_strict <- as.formula(paste(
+  yvar, "~ treat_strict + post + treat_strict:post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre_strict <- feols(f_pre_strict, data = pre, weights = ~ w_all, cluster = ~ hv001)
+
+# Multi
+f_pre_multi <- as.formula(paste(
+  yvar, "~ treat_multi + post + treat_multi:post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre_multi <- feols(f_pre_multi, data = pre, weights = ~ w_all, cluster = ~ hv001)
+
+# Main estimation ---------------------------
+
+main <- dat2 %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_strict <- feols(f_pre_strict, data = main, weights = ~ w_all, cluster = ~ hv001)
+m_main_multi  <- feols(f_pre_multi, data = main, weights = ~ w_all, cluster = ~ hv001)
+
+
+did_row <- function(model, year_post, term){
+  summary(model) %>% broom::tidy() %>%
+    filter(term == !!term) %>%
+    transmute(year = year_post, estimate, se = std.error)
+}
+
+did_df <- bind_rows(
+  did_row(m_pre_strict, 2008, "treat_strict:post") %>% mutate(type = "strict"),
+  did_row(m_main_strict, 2021, "treat_strict:post") %>% mutate(type = "strict"),
+  did_row(m_pre_multi, 2008, "treat_multi:post") %>% mutate(type = "multi"),
+  did_row(m_main_multi, 2021, "treat_multi:post") %>% mutate(type = "multi")
+) %>%
+  mutate(
+    period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
+                    levels = c("1997–2008","2008–2021")),
+    lo = estimate - 1.96*se,
+    hi = estimate + 1.96*se
+  )
+
+
+pd <- position_dodge(width = 0.2)
+
+ggplot(did_df, aes(x = period, y = estimate, colour = type)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 3, position = pd) +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = .2, position = pd) +
+  labs(x = NULL, y = "Effet DID (centile de richesse)",
+       title = "DID 2×2 par type d’AP (strict vs usage multiple)")
+
+
+# did2s (Gardner) : statique + event-study--------------------------------
 # Création du groupe IUCN 
 dat3 <- dat3 %>%
   filter(!is.na(IUCN_CAT), !is.na(treat_on)) %>%
