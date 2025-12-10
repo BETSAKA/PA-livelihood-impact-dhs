@@ -127,11 +127,16 @@ Nous appliquons la même procédure pour l'ensemble des clusters étudiés.
 
 ```{r}
 # SPEI for all clusters 
+quiet <- function(x) {
+  tmp <- capture.output(res <- x, file = NULL)
+  res
+}
+
 spatial_covars_spei <- spatial_covars_spei %>%
   mutate(
     spei_wc = pmap(
       list(temperature_min_wc, temperature_max_wc, precipitation_wc, lat),
-      ~ compute_spei_annual(..1, ..2, ..3, ..4)
+      ~ quiet(compute_spei_annual(..1, ..2, ..3, ..4))
     )
   )
 

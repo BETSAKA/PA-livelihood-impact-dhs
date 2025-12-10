@@ -35,12 +35,12 @@ standard_crs <- 4326
 mdg_crs <- 29702 
 
 # On charge les données
-gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp")
-gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp") 
-gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp") 
-gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp") 
-gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp")
-gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
+gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp", quiet = TRUE)
+gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp", quiet = TRUE) 
+gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp", quiet = TRUE) 
+gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp", quiet = TRUE) 
+gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp", quiet = TRUE)
+gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp", quiet = TRUE)
 
 # Fonction qui vérifie que les coordonnées ne sont pas nulles
 check_coordinates <- function(dhs_gps, country_polygon, negate = FALSE) {
@@ -171,9 +171,7 @@ Nous utilisons la fonction calc_indicators() du package pour calculer les indica
 
 ```{r}
 
-if (file.exists("data/derived/spatial_covars_staggered.rds")) {
-  cat("Le fichier spatial_covars_staggered.rds existe déjà")
-} else {
+if (!file.exists("data/derived/spatial_covars_staggered.rds")) {
   cat("Fichier introuvable, début du traitement...\n")
   
   # Créer un plan pour paralléliser les calculs
