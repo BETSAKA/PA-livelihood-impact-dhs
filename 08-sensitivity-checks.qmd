@@ -2546,7 +2546,7 @@ spatial_covars_spei_15km <- spatial_covars_spei_15km %>%
   )
 
 spei_df <- spatial_covars_spei_15km %>%
-  select(DHSCLUST, spei_wc) %>%
+  dplyr::select(DHSCLUST, spei_wc) %>%
   unnest(spei_wc)
 
 ggplot(spei_df, aes(x = year, y = spei_mean, group = DHSCLUST)) +
@@ -2558,15 +2558,15 @@ ggplot(spei_df, aes(x = year, y = spei_mean, group = DHSCLUST)) +
 
 # Chaque élément spei_wc devient une table {datetime, variable, unit, value}
 spatial_covars_spei_15km <- spatial_covars_spei_15km %>%
-  mutate(
+  dplyr::mutate(
     spei_wc = map(spei_wc, ~ .x %>%
-      mutate(
+      dplyr::mutate(
         datetime = as.Date(paste0(.data$year, "-01-01")),
         variable = "spei_scale12_mean",
         unit     = "annual",
         value    = .data$spei_mean
       ) %>%
-      select(datetime, variable, unit, value))
+      dplyr::select(datetime, variable, unit, value))
   )
 
 # Sauvegarde (cohérente avec le reste de tes scripts)
@@ -2583,7 +2583,7 @@ Dans l'ensemble, la série oscille autour de zéro, alternant des périodes humi
 # Covariates spatio-temporelles + classification de traitement
 spatial_covars_spei_15km <- readRDS("data/derived/spatial_covars_spei_staggered_15km.rds")
 all_covars <- spatial_covars_spei_15km %>%
-  select(DHSYEAR, DHSCLUST, URBAN_RURA, treecover_area, slope, elevation,
+  dplyr::select(DHSYEAR, DHSCLUST, URBAN_RURA, treecover_area, slope, elevation,
          population_count, traveltime_2000, spei_wc)
 
 all_class_15km <- read.csv("data/derived/cluster_treatment_classification_staggered_15km.csv")
@@ -2605,47 +2605,47 @@ build_year <- function(hr_object,
   
   # Joindre covariates spatiaux + classification de groupes
   base <- hh_rural %>%
-    left_join(hr, by = c("hv001", "hv002")) %>%
-    left_join(
-      all_covars %>% filter(DHSYEAR == year) %>% select(-DHSYEAR),
+    dplyr::left_join(hr, by = c("hv001", "hv002")) %>%
+    dplyr::left_join(
+      all_covars %>% dplyr::filter(DHSYEAR == year) %>% dplyr::select(-DHSYEAR),
       by = c("hv001" = "DHSCLUST")
     ) %>%
-    left_join(
-      all_class_15km %>% filter(DHSYEAR == year) %>% select(-DHSYEAR),
+    dplyr::left_join(
+      all_class_15km %>% dplyr::filter(DHSYEAR == year) %>% dplyr::select(-DHSYEAR),
       by = c("hv001" = "DHSCLUST")
     ) %>%
-    mutate(DHSYEAR = year) %>%
+    dplyr::mutate(DHSYEAR = year) %>%
     relocate(DHSYEAR, .before = everything())
   
   # Désimbriquer les covars imbriquées et appliquer la fenêtre temporelle SPEI
   #    moyenne par (hv001, hv002) pour chaque indicateur_année
   df_long <- base %>%
-    select(hv001, hv002, any_of(vars_to_nest)) %>%
+    dplyr::select(hv001, hv002, any_of(vars_to_nest)) %>%
     pivot_longer(cols = any_of(vars_to_nest),
                  names_to = "indicator", values_to = "data") %>%
     unnest(data) %>%
-    filter(indicator != "spei_wc" | year(datetime) %in% spei_years) %>%
-    mutate(year_indicator = paste0(indicator, "_", year(datetime))) %>%
-    select(hv001, hv002, year_indicator, value)
+    dplyr::filter(indicator != "spei_wc" | year(datetime) %in% spei_years) %>%
+    dplyr::mutate(year_indicator = paste0(indicator, "_", year(datetime))) %>%
+    dplyr::select(hv001, hv002, year_indicator, value)
   
   df_wide <- df_long %>%
     pivot_wider(names_from = year_indicator, values_from = value,
                 names_glue = "{year_indicator}") %>%
-    group_by(hv001, hv002) %>%
+    dplyr::group_by(hv001, hv002) %>%
     summarise(across(everything(), ~ mean(.x, na.rm = TRUE)), .groups = "drop")
   
   # Table finale (une ligne par ménage hv001/hv002)
   out <- base %>%
-    select(-any_of(vars_to_nest)) %>%
+    dplyr::select(-any_of(vars_to_nest)) %>%
     distinct(hv001, hv002, .keep_all = TRUE) %>%
-    left_join(df_wide, by = c("hv001", "hv002"))
+    dplyr::left_join(df_wide, by = c("hv001", "hv002"))
   
   out
 }
 
 # Application
 
-hr_1997_final_15km <- read_dta("data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA") %>%
+hr_1997_final_15km <- haven::read_dta("data/raw/dhs/DHS_1997/MDHR31DT/MDHR31FL.DTA") %>%
   build_year(year = 1997,
              hh_rural_path = "data/derived/hh_1997_rural_simpler.rds",
              spei_years = 1995:1997)
@@ -2677,7 +2677,7 @@ hr_2021_final_15km <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA") %>
 
 # Consolidation
 
-hr_consolidated_15km <- bind_rows(
+hr_consolidated_15km <- dplyr::bind_rows(
   hr_1997_final_15km,
   hr_2008_final_15km,
   hr_2011_final_15km,
@@ -2709,8 +2709,8 @@ La méthode de matching est appliquée pour rendre comparable les groupes trait�
 
 prep_matching <- function(df_final) {
   out <- df_final %>%
-    filter(GROUP %in% c("Treatment","Control")) %>%
-    mutate(treatment = if_else(GROUP == "Treatment", 1L, 0L))
+    dplyr::filter(GROUP %in% c("Treatment","Control")) %>%
+    dplyr::mutate(treatment = if_else(GROUP == "Treatment", 1L, 0L))
   
   missing_cols <- setdiff(matching_variables, names(out))
   if (length(missing_cols) > 0) {
@@ -2900,8 +2900,8 @@ hr_list <- setNames(
 check_balance_before <- function(df, year, matching_variables) {
   
   data <- df %>%
-    filter(GROUP %in% c("Treatment", "Control")) %>%
-    mutate(treatment = if_else(GROUP == "Treatment", 1, 0))
+    dplyr::filter(GROUP %in% c("Treatment", "Control")) %>%
+    dplyr::mutate(treatment = if_else(GROUP == "Treatment", 1, 0))
 
   formula <- reformulate(matching_variables, response = "treatment")
   
@@ -2923,7 +2923,7 @@ check_balance_before <- function(df, year, matching_variables) {
 
   smd_table <- balance_df %>%
     dplyr::select(Variable, SMD = all_of(smd_col)) %>%
-    mutate(
+    dplyr::mutate(
       Year = year,
       Equilibre = if_else(abs(SMD) <= 0.1, "Équilibré", "Déséquilibré")
     ) %>%
@@ -2936,7 +2936,7 @@ balance_results <- lapply(names(hr_list), function(y) {
   check_balance_before(hr_list[[y]], as.numeric(y), matching_variables)
 })
 
-balance_results <- bind_rows(balance_results)
+balance_results <- dplyr::bind_rows(balance_results)
 
 balance_results
 
@@ -2953,8 +2953,8 @@ data_list <- list(
 
   density_plot <- function(data, year, matching_variables){
     data %>%
-      filter(GROUP %in% c("Treatment", "Control")) %>%
-      mutate(GROUP =factor(GROUP, levels = c("Control", "Treatment"))) %>%
+      dplyr::filter(GROUP %in% c("Treatment", "Control")) %>%
+      dplyr::mutate(GROUP =factor(GROUP, levels = c("Control", "Treatment"))) %>%
     pivot_longer(cols = all_of(matching_variables), names_to = "variable", values_to = "value") %>%
     ggplot(aes(x = value, fill = GROUP)) +
     geom_density(alpha = 0.5, color = "black", linewidth = 0.7, adjust = 0.7) +
@@ -3106,14 +3106,14 @@ d97_15km <- read_rds("data/derived/data_matched_1997_15km.rds") %>%
   rename(spei_wc_n_2 = spei_wc_1995,
          spei_wc_n_1 = spei_wc_1996,
          spei_wc_n   = spei_wc_1997) %>%
-  mutate(hv219 = zap_labels(hv219), # hhh sex (1/2)
+  dplyr::mutate(hv219 = zap_labels(hv219), # hhh sex (1/2)
          hv220 = zap_labels(hv220)) # hhh age (num)
 
 d08_15km <- read_rds("data/derived/data_matched_2008_15km.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2006,
          spei_wc_n_1 = spei_wc_2007,
          spei_wc_n   = spei_wc_2008) %>%
-  mutate(hv219 = zap_labels(hv219),
+  dplyr::mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
 d11_15km <- read_rds("data/derived/data_matched_2011_15km.rds") %>%
@@ -3134,20 +3134,20 @@ d16_15km <- read_rds("data/derived/data_matched_2016_15km.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2014,
          spei_wc_n_1 = spei_wc_2015,
          spei_wc_n   = spei_wc_2016) %>%
-  mutate(hv219 = zap_labels(hv219),
+  dplyr::mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
 d21_15km <- read_rds("data/derived/data_matched_2021_15km.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2019,
          spei_wc_n_1 = spei_wc_2020,
          spei_wc_n   = spei_wc_2021) %>%
-  mutate(hv219 = zap_labels(hv219),
+  dplyr::mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
 # Préparation des données
 dat_15km <- bind_rows(d97_15km, d08_15km, d11_15km, d13_15km, d16_15km, d21_15km) %>%
   filter(GROUP %in% c("Treatment","Control")) %>%
-  mutate(
+  dplyr::mutate(
     hv219   = factor(hv219, levels = c(1,2), labels = c("Homme","Femme")), # sexe (cat.)
     hv220   = as.numeric(hv220),                                           # âge
     treat   = as.integer(GROUP == "Treatment"),
@@ -3172,8 +3172,8 @@ yvar <- "wealth_centile_rural_weighted"
 
 # Placebo 1997–2008
 pre_15km <- dat_15km %>%
-  filter(DHSYEAR %in% c(1997, 2008)) %>%
-  mutate(post = as.integer(DHSYEAR == 2008),
+  dplyr::filter(DHSYEAR %in% c(1997, 2008)) %>%
+  dplyr::mutate(post = as.integer(DHSYEAR == 2008),
          treat_post = treat * post)
 
 f_pre <- as.formula(paste(
@@ -3185,8 +3185,8 @@ m_pre <- feols(f_pre, data = pre_15km, weights = ~ w_all, cluster = ~ hv001)
 
 # Traitement 2008–2021
 main <- dat_15km %>%
-  filter(DHSYEAR %in% c(2008, 2021)) %>%
-  mutate(post = as.integer(DHSYEAR == 2021),
+  dplyr::filter(DHSYEAR %in% c(2008, 2021)) %>%
+  dplyr::mutate(post = as.integer(DHSYEAR == 2021),
          treat_post = treat * post)
 
 f_main <- f_pre  # même formule
@@ -3198,10 +3198,10 @@ etable(m_pre, m_main, headers = c("Placebo 97–08", "Traitement 08–21"))
 # Extraction compacte des deux effets DID
 did_row <- function(model, year_post, vc = ~ hv001, term = "treat_post"){
   summary(model, vcov = vc) %>% broom::tidy() %>%
-    filter(term == !!term) %>%
+    dplyr::filter(term == !!term) %>%
     transmute(year = year_post, estimate, se = std.error)
 }
-did_df <- bind_rows(
+did_df <- dplyr::bind_rows(
   did_row(m_pre, 2008),
   did_row(m_main, 2021)
 ) %>%
@@ -3223,7 +3223,7 @@ ggplot(did_df, aes(x = period, y = estimate)) +
 library(did2s)
 
 dat3 <- dat_15km %>%
-  mutate(
+  dplyr::mutate(
     treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
     rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
     # Binning prudent pour stabilité (-5..5)
@@ -3256,8 +3256,8 @@ etable(did2s_es, headers = "did2s event-study (-5..5) - buffer 15 km")
 
 # Plot ES did2s
 plot_did2s <- broom::tidy(did2s_es, conf.int = TRUE) %>%
-  filter(grepl("^rel_year_binned::", term)) %>%
-  mutate(k = as.numeric(sub("^rel_year_binned::", "", term))) %>%
+  dplyr::filter(grepl("^rel_year_binned::", term)) %>%
+  dplyr::mutate(k = as.numeric(sub("^rel_year_binned::", "", term))) %>%
   arrange(k)
 
 ggplot(plot_did2s, aes(k, estimate)) +
@@ -3280,6 +3280,66 @@ if(length(leads_present) > 0){
 Dans l'ensemble, les analyses DID 2x2 et staggered DID montrent que la création d'aires protégées n'a pas entraîné de changements significatifs sur le centile de richesse des ménages à 15 km des aires protégées.
 
 Les tests placebo (1997-2008) montre l'absence de d'effet avant la création des aires protégées, renforçant la crédibilité causale. Toutefois, on observe un léger effet positif moyen des aires protégées sur le centile de richesse dans les années 1 à 3 années suivant sa mise en place. Ces effets sont sont ni robustes ni durable.
+
+###### Quantile treatment effect
+
+```{r}
+# Quantile treatment effects
+# Testing Quantile treatment effect------------------------------
+library(qte)
+
+# Avec CiC -------------------
+
+## Traitement 2008 -> 2021
+set.seed(123)
+dat_2per <- dat_15km %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(treat = as.integer(GROUP == "Treatment"))
+
+cic_res <- suppressWarnings(CiC(
+  formla = wealth_centile_rural_weighted ~ treat,
+  t = 2021, tmin1 = 2008, tname = "DHSYEAR",
+  data = dat_2per,
+  panel = FALSE, # repeated cross-sections
+  se = TRUE, iters = 200, # bootstrap
+  probs = seq(0.05, 0.95, 0.05),
+  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+))
+
+summary(cic_res)
+ggqte(cic_res) + labs(x="Quantiles", y="QTET", title="CiC QTET: 2008-2021")
+
+## placebo------------------------------------------------------
+
+## Placebo: 1997 -> 2008
+dat_placebo <- dat_15km %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(treat = as.integer(GROUP == "Treatment"))
+
+# (Optional) sanity check:
+# with(dat_placebo, table(DHSYEAR, treat))
+
+cic_pre <-  suppressWarnings(CiC(
+  formla = wealth_centile_rural_simple ~ treat,
+  t = 2008, tmin1 = 1997, tname = "DHSYEAR",
+  data = dat_placebo,
+  panel = FALSE, # repeated cross-sections
+  se = TRUE, iters = 100, # bootstrap
+  probs = seq(0.05, 0.95, 0.05),
+  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+))
+
+summary(cic_pre)
+
+ggqte(cic_pre) +
+  labs(x = "Quantiles", y = "QTET",
+       title = "Placebo CiC QTET: 1997-2008")
+
+```
+
+Pour l'estimation principale (2008-2021), les résultats de QTE indiquent un effet négatif sur l'ensemble de la distribution de la richesse des ménages. Toutefois, l'impact du traitement n'est pas homogène pour toutes les classes. Il est plus marqué pour les classes moyennes (quantile variant de 0.30 à 0.60 avec des effets entre -20 et -23), tandis qu'il est plus faible ches les ménages les plus pauvres et les plus riches. L'effet moyen du traitement (ATE = -16.36) confirme une baisse significative du niveau de richesse associée à la proximité des aires protégées créées après 2008. Ces résultats suggèrent que la mise en place des aires protégées renforcent les inégalités.
+
+Pour le placebo (1997-2008), Les ménages les plus pauvres semblent peu affectés, voire légèrement bénéficiaires de la mise en place des aires protégées, avec des QTE positifs.
 
 ##### Effect on inequalities
 
@@ -3342,71 +3402,11 @@ L'estimation DID 2x2 montre que l'effet moyen d'être dans un cluster traité (s
 
 Le modèle event study ne met en évidence aucune tendance significative avant la mise en place des aires protégées. L'hypothèse des tendances parallèles est vérifié car l'hypothèse nulle est rejeté (p-value = 0.6222184 \> 0.05). Après la mise en place de l'aire protégée, un effet positif émerge deux ans après l'intervention (rel_year = 2: 0.0190\*\*\*). Toutefois, cet effet disparaît au bout de trois ans, indiquant que l'effet n'est pas durable. Le R² et R² ajusté montrent que la part de variance expliquée par le traitement est minimale.
 
-###### Quantile treatment effect
-
-```{r}
-# Quantile treatment effects
-# Testing Quantile treatment effect------------------------------
-library(qte)
-
-# Avec CiC -------------------
-
-## Traitement 2008 -> 2021
-set.seed(123)
-dat_2per <- dat_15km %>%
-  filter(DHSYEAR %in% c(2008, 2021)) %>%
-  mutate(treat = as.integer(GROUP == "Treatment"))
-
-cic_res <- suppressWarnings(CiC(
-  formla = wealth_centile_rural_weighted ~ treat,
-  t = 2021, tmin1 = 2008, tname = "DHSYEAR",
-  data = dat_2per,
-  panel = FALSE, # repeated cross-sections
-  se = TRUE, iters = 200, # bootstrap
-  probs = seq(0.05, 0.95, 0.05),
-  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
-))
-
-summary(cic_res)
-ggqte(cic_res) + labs(x="Quantiles", y="QTET", title="CiC QTET: 2008-2021")
-
-## placebo------------------------------------------------------
-
-## Placebo: 1997 -> 2008
-dat_placebo <- dat_15km %>%
-  filter(DHSYEAR %in% c(1997, 2008)) %>%
-  mutate(treat = as.integer(GROUP == "Treatment"))
-
-# (Optional) sanity check:
-# with(dat_placebo, table(DHSYEAR, treat))
-
-cic_pre <-  suppressWarnings(CiC(
-  formla = wealth_centile_rural_simple ~ treat,
-  t = 2008, tmin1 = 1997, tname = "DHSYEAR",
-  data = dat_placebo,
-  panel = FALSE, # repeated cross-sections
-  se = TRUE, iters = 100, # bootstrap
-  probs = seq(0.05, 0.95, 0.05),
-  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
-))
-
-summary(cic_pre)
-
-ggqte(cic_pre) +
-  labs(x = "Quantiles", y = "QTET",
-       title = "Placebo CiC QTET: 1997-2008")
-
-```
-
-Pour l'estimation principale (2008-2021), les résultats de QTE indiquent un effet négatif sur l'ensemble de la distribution de la richesse des ménages. Toutefois, l'impact du traitement n'est pas homogène pour toutes les classes. Il est plus marqué pour les classes moyennes (quantile variant de 0.30 à 0.60 avec des effets entre -20 et -23), tandis qu'il est plus faible ches les ménages les plus pauvres et les plus riches. L'effet moyen du traitement (ATE = -16.36) confirme une baisse significative du niveau de richesse associée à la proximité des aires protégées créées après 2008. Ces résultats suggèrent que la mise en place des aires protégées renforcent les inégalités.
-
-Pour le placebo (1997-2008), Les ménages les plus pauvres semblent peu affectés, voire légèrement bénéficiaires de la mise en place des aires protégées, avec des QTE positifs (quantiles variant de 5.53 à .
-
 ##### Heterogeneity
 
 ```{r}
 # DID 2x2-----------------------------------------------------
-dat2 <- dat %>%
+dat2 <- dat_15km %>%
   mutate(
     treat_strict = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("Ia","Ib",
                                                                      "II","III",
@@ -3768,7 +3768,7 @@ qte_df
 # Correction FDR BH 
 results_H2 <- list(
   DID_p_value = p_H2_did,
-  EventStudy_Table = ev %>% select(term, estimate, std.error),
+  EventStudy_Table = ev %>% dplyr::select(term, estimate, std.error),
   QTE_table = qte_df 
 )
 results_H2 
