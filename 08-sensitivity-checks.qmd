@@ -124,7 +124,7 @@ buffer_5km_from_2008 <- wdpa_from_2008  %>%
   st_transform(standard_crs)
 
 # Visualisation des cartes---------------------
-tmap_mode("view")
+tmap_mode("plot")
 
 tm_shape(contour_mada) + 
   tm_borders(col = "black", lwd = 1) +
@@ -1888,7 +1888,7 @@ buffer_15km_from_2008 <- wdpa_from_2008  %>%
   st_transform(standard_crs)
 
 # Visualisation des cartes---------------------
-tmap_mode("view")
+tmap_mode("plot")
 
 tm_shape(contour_mada) + 
   tm_borders(col = "black", lwd = 1) +
