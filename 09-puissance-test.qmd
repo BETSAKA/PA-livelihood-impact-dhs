@@ -6,7 +6,11 @@ editor_options:
 
 # Introduction
 
+Ce document vise à explorer les données de traitement et de résultats pour l'étude de l'impact des aires protégées sur les conditions de vie des ménages. On compte et visualise le nombre d'aire protégée concerné par l'étude et on effectue un calcul de puissance pour estimer l'effet minimum détectable de l'étude.
+
 ## Chargement des données
+
+Nous utilisons comme données sur les aires protégées les données de World Database Protected Areas (WDPA).
 
 ```{r}
 
@@ -15,20 +19,84 @@ library(gt)
 library(lme4)
 library(pwr)
 library(fixest)
+library(readr)
+library(haven) 
+library(sf) 
+library(tmap) 
+library(gt)  
+library(codebook)
+library(writexl)
+library(wdpar)
+
+# Load data about protected areas 
+wdpa_terrestre_mod <- st_read("data/derived/wdpa_terrestre_mod.shp")
+
+wdpa_before_2008 <- read_csv("data/derived/wdpa_before_2008.csv")
+
+wdpa_after_2008 <- read_csv("data/derived/wdpa_from_2008.csv")
 
 # Cluster classification
-cluster_treatment_classification <- read.csv("data/derived/cluster_treatment_classification.csv")
+cluster_treatment_classification <- read.csv("data/derived/cluster_treatment_classification_staggered.csv")
 
+
+# Load data before matching
 hr_1997_final <- readRDS("data/derived/hr_1997_final.rds")
-hr_2008_final <- readRDS( bn;"data/derived/hr_2008_final.rds")
+hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
+hr_2011_final <- readRDS("data/derived/hr_2011_final.rds")
+hr_2013_final <- readRDS("data/derived/hr_2013_final.rds")
+hr_2016_final <- readRDS("data/derived/hr_2016_final.rds")
 hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
+```
 
+L'étude va se focaliser sur les aires protégées créées entre 2008 et 2021. Un tableau croisé présente la comparaison entre celles créées avant et après cette période, en indiquant à la fois les nombres d'aires protégées et leurs superficies.
+
+```{r}
+# Definition de la fonction
+pivot_year <- 2008
+
+summary_table <- wdpa_terrestre_mod %>%
+  st_drop_geometry() %>%
+  mutate(Creation_Period = if_else(STATUS_ < pivot_year,
+                                   paste("Avant", pivot_year),
+                                   paste("À partir de", pivot_year))) %>%
+  group_by(Creation_Period) %>%
+  summarise(
+    Count = n(),
+    Area_km2 = sum(are_km2, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+# Formatage du tableau avec gt
+gt_table <- gt(summary_table) %>%
+  tab_header(
+    title = paste("Aires protégées par période de création (Année pivot = ", pivot_year, ")"),
+    subtitle = "Zones terrestres uniquement"
+  ) %>%
+  cols_label(
+    Creation_Period = "Période de Création",
+    Count = "Nombre d'AP",
+    Area_km2 = "Surface km²"
+  ) %>%
+  fmt_number(
+    columns = c(Count, Area_km2),
+    decimals = 0
+  )
+
+gt_table
 ```
 
 ## Calcul de la puissance statistique pour les ménages ruraux
 
-```{r}
+Le calcul de puissance statistique vise à déterminer la probabilité que l'étude détecte un effet réel si cet effet existe. La puissance est généralement fixée à 0.8, signifiant qu'il y a 80 % de chances de détecter un effet s'il est présent. Le seuil de signification est souvent fixé à 0.05, indiquant un risque de 5 % de conclure à tort qu'un effet existe.
 
+L'effet minimal détectable (MDE en anglais) est la plus petite différence que l'étude peut détecter entre les groupes de traitement et de contrôle avec les paramètres la puissance et le seuil de spécification retenus. Cet effet est mesuré en utilisant la taille de l'effet standardisées, ou le d de Cohen. Le d de Cohen est défini par la formule:
+
+où sont les moyennes des groupes de traitement et de contrôle, et est l'écart-type combiné des deux groupes.
+
+Nous utilisons les valeurs du groupe de traitement pour les deux groupes car le processus d'appariement n'a pas encore été effectué. Nous supposons que le groupe de contrôle, une fois apparié, sera similaire au groupe de traitement en termes de variabilité et de taille d'échantillon.
+
+```{r}
 
 # Extraire les clusters traités en 2021
 treatment_clusters_2021 <- cluster_treatment_classification %>%
@@ -122,3 +190,13 @@ compute_power_stats(hr_2021_final, "wealth_centile_rural_simple") %>%
   tab_footnote("Variable de résultat = wealth_centile_rural_simple, indice de niveau de vie commun 
                aux milieux urbains et ruraux.")
 ```
+
+L'interprétation des résultats pour le calcul de puissance basé sur l'indice de richesse est la suivante:
+
+-   L'ICC (Intra-cluster Correlation) est de 0,5360, ce qui indique une forte corrélation intra-grappes. Cela signifie qu'une grande partie de la variabilité de l'indice de richesse est attribuable aux différences entre les aires d'enquête.
+
+-   L'écart-type ajusté de 29,8548 indique la dispersion des scores de l'indice de richesse autour de la moyenne. Etant donné que l'indice varie entre 1 et 5, cet écrat-type est relativement important.
+
+-   Le d de Cohen de 0.1334 renvoie à un effet d'une ampleur modérée selon les normes conventionnelles. Cela signifie qu'une différence significative devrait être détectable entre les groupes de traitement et de contrôle après le processus de matching. Il faut cependant le convertir en unités de résultat pour se faire une idée.
+
+-   Le MDE en unités de résultat est de 3,8504, ce qui indique que l'étude est capable de détecter un changement minim
