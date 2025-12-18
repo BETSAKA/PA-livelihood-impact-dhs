@@ -97,73 +97,110 @@ write_csv(desc_AP_combined, "data/derived/tableau_descriptive_AP.csv")
 
 ## Statistiques descriptives du wealth index et du z-score du wealth index
 
+Cette partie présente les statistiques descriptives des variables de résultat par la production des tableaux de distribution et des boxplots par année.
+
+Rappelons que:
+
+-   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
+
+-   [Groupe de contrôle]{.underline}: Ménages localisées dans les clusters à plus de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
+
+-   [Groupe à exclure]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aire protégées créées avant 2008 et dans la zone urbaine
+
 ```{r}
+
+library(purrr)
+library(knitr)
+library(ggplot2)
+
+# Préparation des données
+cluster_classification <- read_csv("data/derived/cluster_treatment_classification_staggered.csv", 
+show_col_types = FALSE) %>%
+  select(DHSYEAR, DHSCLUST, GROUP)
+
+
 make_desc_wealth <- function(year){
   
-  file_path <- paste0("data/derived/hh_", year, "_rural_simpler.rds")
-  hh_data <- readRDS(file_path)
+  readRDS(paste0("data/derived/hh_", year, "_rural_simpler.rds")) %>%
+    rename(DHSCLUST = hv001) %>%
+    mutate(across(where(haven::is.labelled), haven::as_factor)) %>%
+             left_join(
+               cluster_classification %>% filter(DHSYEAR == year),
+               by = "DHSCLUST"
+             ) %>%
+             mutate(DHSYEAR =year)
   
-  # Wealth index en centile
-  desc_centile <- hh_data %>%
-    summarise(
-      n_centile = sum(!is.na(wealth_centile_rural_simple)),
-      mean_centile = mean(wealth_centile_rural_simple, na.rm = TRUE),
-      sd_centile = sd(wealth_centile_rural_simple, na.rm = TRUE),
-      median_centile = median(wealth_centile_rural_simple, na.rm = TRUE),
-      min_centile = min(wealth_centile_rural_simple, na.rm = TRUE),
-      max_centile = max(wealth_centile_rural_simple, na.rm = TRUE)
-    ) %>%
-    mutate(
-      year = year,
-      variable = "Wealth index en centile"
-    ) %>%
-    select(year, variable, everything())
-  
-  # Z-score Wealth index 
-  desc_zscore <- hh_data %>%
-    summarise(
-      n_zscore = sum(!is.na(zscore_wealth)),
-      mean_zscore = mean(zscore_wealth, na.rm = TRUE),
-      sd_zscore = sd(zscore_wealth, na.rm = TRUE),
-      median_zscore = median(zscore_wealth, na.rm = TRUE),
-      min_zscore = min(zscore_wealth, na.rm = TRUE),
-      max_zscore = max(zscore_wealth, na.rm = TRUE)
-    ) %>%
-    mutate(
-      year = year,
-      variable = "Z-score wealth index"
-      ) %>%
-    select(year, variable, everything())
-  
-  list(centile = desc_centile, zscore = desc_zscore)
-}
+  }
 
+# Fonction générique: statistiques descriptives 
+wealth_summary <- function(data, var, label){
+  
+  data %>%
+    group_by(GROUP) %>%
+    summarise(
+      n = sum(!is.na({{var}})),
+      mean = mean({{var}}, na.rm = TRUE),
+      sd = sd({{var}}, na.rm = TRUE),
+      median = median({{var}}, na.rm = TRUE),
+      p25 = quantile({{var}}, 0.25, na.rm = TRUE),
+      p75 = quantile({{var}}, 0.75, na.rm = TRUE),
+      min = min({{var}}, na.rm = TRUE),
+      max = max({{var}}, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    mutate(
+      variable = label)
+}
+  
 years <- c(1997, 2008, 2011, 2013, 2016, 2021)
 
-desc_list <- map(years, make_desc_wealth)
+desc_all <- map_dfr(years, function(year){
+  
+  hh <- make_desc_wealth(year)
+  
+  bind_rows(
+    wealth_summary(hh, wealth_centile_rural_simple, "Wealth index (centile)")
+  ) %>%
+    mutate(DHSYEAR = year)
+})
 
-desc_centile_all <- map_dfr(desc_list, "centile") %>%
-  mutate(across(where(is.numeric), ~round(.x, 2)))
-
-desc_zscore_all <- map_dfr(desc_list, "zscore")%>%
-  mutate(across(where(is.numeric), ~round(.x, 2)))
-
-write_xlsx(
-  list(
-    "wealth_index_centile" = desc_centile_all, 
-    "zscore_wealth_index" = desc_zscore_all
-  ),
-  "data/derived/descriptive_wealth_rural.xlsx"
+kable(
+  desc_all,
+  caption = "Statistiques descriptives du wealth index rural par groupe et par année",
+  digits = 2
 )
 
-kable(
-  desc_centile_all,
-  caption = "Statistiques descriptives - wealth index rural en centile", digits = 2)
+wealth_plot_data <- map_dfr(years, make_desc_wealth) %>%
+  mutate(
+    DHSYEAR = factor(DHSYEAR),
+    GROUP = factor(GROUP, levels = c("Control", "Treatment", "Excluded"))
+  )
 
-kable(
-  desc_zscore_all,
-  caption = "Statistiques descriptives - zscore wealth index", digits = 2)
+# Boxplots - Wealth index en centile
+ggplot(wealth_plot_data,
+       aes(x = GROUP, y = wealth_centile_rural_simple, fill = GROUP)) +
+  geom_boxplot(outlier.alpha = 0.3) +
+  facet_wrap(~ DHSYEAR) +
+  labs(
+    title = "Distribution du wealth index rural (centile)",
+    x = "Groupe",
+    y = "wealth index (centile)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
 
+# Box plot - z-score wealth index en centile
+ggplot(wealth_plot_data, 
+       aes(x = GROUP, y = zscore_wealth, fill = GROUP)) +
+  geom_boxplot(outlier.alpha = 0.3) +
+  facet_wrap(~ DHSYEAR) +
+  labs(
+    title = " Distribution du zscore du wealth index",
+    x = "Groupe",
+    y = "Z-score du wealth index"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
 ```
 
 ## Statistiques descriptives des variables utilisées dans le modèle
@@ -273,7 +310,4 @@ kable(
                              
 ```
 
-
 ## Statistiques descriptives (partie estimation)
-
-
