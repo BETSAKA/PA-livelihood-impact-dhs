@@ -203,6 +203,10 @@ ggplot(wealth_plot_data,
   theme(legend.position = "none")
 ```
 
+Pour chaque année, nous présentons les distributions du wealth index en centile et son z-score, qui diffèrent selon le groupe: traitement, contrôle et exclu.
+
+Sur l'ensemble de la période d'étude, le groupe exclu se trouve dans la partie supérieure de la distribution nationale de richesse avec une moyenne nettement supérieure à 50 et une médiane entre 63 et 77. Sa distribution est globalement décalée vers le haut (p25 élevé). En revanche, les groupes contrôles et traitement présentent des profils de richesse très proches, avec des moyennes comprises entre 47 et 50 et des médianes allant de 46 à 51. Cela suggère qu'il n'existe pas de différence entre les groupes, néanmoins, les écart-types des deux groupes indiquent une forte hétérogénéité des niveaux de vie.
+
 ## Statistiques descriptives des variables utilisées dans le modèle
 
 ```{r}
