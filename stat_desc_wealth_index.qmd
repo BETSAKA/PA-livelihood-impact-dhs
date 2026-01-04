@@ -1,0 +1,406 @@
+---
+title: "stat_desc_wealth_index"
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+## Statistiques descriptives du wealth index et du z-score du wealth index
+
+Cette partie présente les statistiques descriptives des variables de résultat par la production des tableaux de distribution et des boxplots par année.
+
+Rappelons que:
+
+-   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
+
+-   [Groupe de contrôle]{.underline}: Ménages localisées dans les clusters à plus de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
+
+-   [Groupe à exclure]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aire protégées créées avant 2008 et dans la zone urbaine
+
+```{r}
+library(tidyverse) # Manipulation et visualisation des données
+library(writexl) # Pour faire une sortie sous Excel
+library(psych) # Pour des analyses statistiques descriptives et psychométrique 
+library(knitr) # génération de rapports dynamiques 
+library(sf) # Analyse spatiale
+library(readr)
+library(purrr)
+library(knitr)
+library(ggplot2)
+
+# Préparation des données
+cluster_classification <- read_csv("data/derived/cluster_treatment_classification_staggered.csv", 
+show_col_types = FALSE) %>%
+  select(DHSYEAR, DHSCLUST, GROUP)
+
+
+make_desc_wealth <- function(year){
+  
+  readRDS(paste0("data/derived/hh_", year, "_rural_simpler.rds")) %>%
+    rename(DHSCLUST = hv001) %>%
+    mutate(across(where(haven::is.labelled), haven::as_factor)) %>%
+             left_join(
+               cluster_classification %>% filter(DHSYEAR == year),
+               by = "DHSCLUST"
+             ) %>%
+             mutate(DHSYEAR =year)
+  
+  }
+
+# Fonction générique: statistiques descriptives 
+wealth_summary <- function(data, var, label){
+  
+  data %>%
+    group_by(GROUP) %>%
+    summarise(
+      n = sum(!is.na({{var}})),
+      mean = mean({{var}}, na.rm = TRUE),
+      sd = sd({{var}}, na.rm = TRUE),
+      median = median({{var}}, na.rm = TRUE),
+      p25 = quantile({{var}}, 0.25, na.rm = TRUE),
+      p75 = quantile({{var}}, 0.75, na.rm = TRUE),
+      min = min({{var}}, na.rm = TRUE),
+      max = max({{var}}, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    mutate(
+      variable = label)
+}
+  
+years <- c(1997, 2008, 2011, 2013, 2016, 2021)
+
+desc_all <- map_dfr(years, function(year){
+  
+  hh <- make_desc_wealth(year)
+  
+  bind_rows(
+    wealth_summary(hh, wealth_centile_rural_simple, "Wealth index (centile)")
+  ) %>%
+    mutate(DHSYEAR = year)
+})
+
+kable(
+  desc_all,
+  caption = "Statistiques descriptives du wealth index rural par groupe et par année",
+  digits = 2
+)
+
+wealth_plot_data <- map_dfr(years, make_desc_wealth) %>%
+  mutate(
+    DHSYEAR = factor(DHSYEAR),
+    GROUP = factor(GROUP, levels = c("Control", "Treatment", "Excluded"))
+  )
+
+# Boxplots - Wealth index en centile
+ggplot(wealth_plot_data,
+       aes(x = GROUP, y = wealth_centile_rural_simple, fill = GROUP)) +
+  geom_boxplot(outlier.alpha = 0.3) +
+  facet_wrap(~ DHSYEAR) +
+  labs(
+    title = "Distribution du wealth index rural (centile)",
+    x = "Groupe",
+    y = "wealth index (centile)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# Box plot - z-score wealth index en centile
+ggplot(wealth_plot_data, 
+       aes(x = GROUP, y = zscore_wealth, fill = GROUP)) +
+  geom_boxplot(outlier.alpha = 0.3) +
+  facet_wrap(~ DHSYEAR) +
+  labs(
+    title = " Distribution du zscore du wealth index",
+    x = "Groupe",
+    y = "Z-score du wealth index"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+Pour chaque année, nous présentons les distributions du wealth index en centile et son z-score, qui diffèrent selon le groupe: traitement, contrôle et exclu.
+
+Sur l'ensemble de la période d'étude, le groupe exclu se trouve dans la partie supérieure de la distribution nationale de richesse avec une moyenne nettement supérieure à 50 et une médiane entre 63 et 77. Sa distribution est globalement décalée vers le haut (p25 élevé). En revanche, les groupes contrôles et traitement présentent des profils de richesse très proches, avec des moyennes comprises entre 47 et 50 et des médianes allant de 46 à 51. Cela suggère qu'il n'existe pas de différence entre les groupes, néanmoins, les écart-types des deux groupes indiquent une forte hétérogénéité des niveaux de vie.
+
+## Rééchelonnage de l'indice de richesse et du zscore de richesse
+
+Les centiles de wealth index sont calculées avant matching sur l'ensemble des ménages ruraux. Mais l'analyse ne porte pas sur l'ensemble des ménages ruraux, elle porte sur les ménages ménages matchés. Si le matching conduit à exclure une partie de la distribution, alors on a un "tassement" de nos centiles de wealth index : certains centiles ont disparu et on a moins de variabilité dans notre échantillon d'analyse. Il convient de recalculer les centiles du wealth index, non pas au niveau de la population rurale, mais au niveau de la population matchée.
+
+```{r}
+# Load data
+d97 <- read_rds("data/derived/data_matched_1997.rds")
+d08 <- read_rds("data/derived/data_matched_2008.rds")
+d11 <- read_rds("data/derived/data_matched_2011.rds")
+d13 <- read_rds("data/derived/data_matched_2013.rds")
+d16 <- read_rds("data/derived/data_matched_2016.rds")
+d21 <- read_rds("data/derived/data_matched_2021.rds")
+
+# Recalcul des centiles pour chaque année 
+d97 <- d97 %>%
+  mutate(
+    wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d08 <- d08 %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d11 <- d11 %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d13 <- d13 %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d16 <- d16 %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d21 <- d21 %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+# Enregistrement
+write_rds(d97, "data/derived/data_matched_1997_rescaled.rds")
+write_rds(d08, "data/derived/data_matched_2008_rescaled.rds")
+write_rds(d11, "data/derived/data_matched_2011_rescaled.rds")
+write_rds(d13, "data/derived/data_matched_2013_rescaled.rds")
+write_rds(d16, "data/derived/data_matched_2016_rescaled.rds")
+write_rds(d21, "data/derived/data_matched_2021_rescaled.rds")
+
+```
+
+## Estimation
+
+## Overall effect on livelihoods
+
+```{r}
+# 2X2 DiD
+library(tidyverse)
+library(haven)
+library(fixest)
+library(didimputation)
+library(broom)
+library(ggplot2)
+
+# Chargement des données
+d97 <- read_rds("data/derived/data_matched_1997_rescaled.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_1995,
+         spei_wc_n_1 = spei_wc_1996,
+         spei_wc_n   = spei_wc_1997) %>%
+  mutate(hv219 = zap_labels(hv219), # hhh sex (1/2)
+         hv220 = zap_labels(hv220)) # hhh age (num)
+
+d08 <- read_rds("data/derived/data_matched_2008_rescaled.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2006,
+         spei_wc_n_1 = spei_wc_2007,
+         spei_wc_n   = spei_wc_2008) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d11 <- read_rds("data/derived/data_matched_2011_rescaled.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2009,
+         spei_wc_n_1 = spei_wc_2010,
+         spei_wc_n   = spei_wc_2011) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d13 <- read_rds("data/derived/data_matched_2013_rescaled.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2011,
+         spei_wc_n_1 = spei_wc_2012,
+         spei_wc_n   = spei_wc_2013) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d16 <- read_rds("data/derived/data_matched_2016_rescaled.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2014,
+         spei_wc_n_1 = spei_wc_2015,
+         spei_wc_n   = spei_wc_2016) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+d21 <- read_rds("data/derived/data_matched_2021_rescaled.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2019,
+         spei_wc_n_1 = spei_wc_2020,
+         spei_wc_n   = spei_wc_2021) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
+# Préparation des données
+dat <- bind_rows(d97, d08, d11, d13, d16, d21) %>%
+  filter(GROUP %in% c("Treatment","Control")) %>%
+  mutate(
+    hv219   = factor(hv219, levels = c(1,2), labels = c("Homme","Femme")), # sexe (cat.)
+    hv220   = as.numeric(hv220),                                           # âge
+    treat   = as.integer(GROUP == "Treatment"),
+    w_svy   = hv005 / 1e6,
+    w_all   = w_svy * weights, # poids d'enquête × poids de matching (si 'weights' existe)
+    id      = row_number(),
+    # Map des années de statut -> première année d'observation post (treatment_phase)
+    treatment_phase = case_when(
+      STATUS_YR == 2010 ~ 2011,
+      STATUS_YR == 2012 ~ 2013,
+      STATUS_YR == 2015 ~ 2016,
+      STATUS_YR == 2017 ~ 2021,
+      is.na(STATUS_YR)  ~ 0,
+      TRUE               ~ STATUS_YR
+    )
+  )
+
+# Outcome h
+yvar <- "wealth_centile_rural_weighted"
+
+# fixest DID 2×2: placebo 1997–2008, traitement 2008–2021 ------------------
+
+# Placebo 1997–2008
+pre <- dat %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(post = as.integer(DHSYEAR == 2008),
+         treat_post = treat * post)
+
+f_pre <- as.formula(paste(
+  yvar, "~ treat + post + treat_post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre <- feols(f_pre, data = pre, weights = ~ w_all, cluster = ~ hv001)
+
+# Traitement 2008–2021
+main <- dat %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(post = as.integer(DHSYEAR == 2021),
+         treat_post = treat * post)
+
+f_main <- f_pre  # même formule
+
+m_main <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ hv001)
+
+etable(m_pre, m_main, headers = c("Placebo 97–08", "Traitement 08–21"))
+
+# Extraction compacte des deux effets DID
+did_row <- function(model, year_post, vc = ~ hv001, term = "treat_post"){
+  summary(model, vcov = vc) %>% broom::tidy() %>%
+    filter(term == !!term) %>%
+    transmute(year = year_post, estimate, se = std.error)
+}
+did_df <- bind_rows(
+  did_row(m_pre, 2008),
+  did_row(m_main, 2021)
+) %>%
+  mutate(period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
+                         levels = c("1997–2008", "2008–2021")),
+         lo = estimate - 1.96*se,
+         hi = estimate + 1.96*se)
+
+ggplot(did_df, aes(x = period, y = estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = .2) +
+  geom_point(size = 3) +
+  labs(x = NULL, y = "Effet DID sur le centile de richesse (pondéré)",
+       title = "DID 2×2 avec IC clusterisés (hv001) - buffer 10 km")
+```
+
+## Effect on inequalities
+
+```{r}
+library(did2s)
+
+dat3 <- dat %>%
+  mutate(
+    treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
+    rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
+    # Binning prudent pour stabilité (-5..5)
+    rel_year_binned = pmax(pmin(rel_year, 5), -5)
+  )
+
+
+yvar <- "zscore_wealth"
+
+# did2s (Gardner) : statique + event-study--------------------------------
+# -- Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = dat3,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(treat_on, ref = FALSE),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+etable(did2s_static, headers = "did2s statique")
+```
+
+## Heterogeneity
+
+```{r}
+# DID 2x2-----------------------------------------------------
+dat2 <- dat %>%
+  mutate(
+    treat_strict = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("Ia","Ib",
+                                                                     "II","III",
+                                                                     "IV")),
+    treat_multi  = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("V","VI"))
+  )
+
+
+# Placebo ---------------------------------------------------
+pre <- dat2 %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+# Strict
+f_pre_strict <- as.formula(paste(
+  yvar, "~ treat_strict + post + treat_strict:post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre_strict <- feols(f_pre_strict, data = pre, weights = ~ w_all, cluster = ~ hv001)
+
+# Multi
+f_pre_multi <- as.formula(paste(
+  yvar, "~ treat_multi + post + treat_multi:post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre_multi <- feols(f_pre_multi, data = pre, weights = ~ w_all, cluster = ~ hv001)
+
+# Main estimation ---------------------------
+
+main <- dat2 %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_strict <- feols(f_pre_strict, data = main, weights = ~ w_all, cluster = ~ hv001)
+m_main_multi  <- feols(f_pre_multi, data = main, weights = ~ w_all, cluster = ~ hv001)
+
+
+did_row <- function(model, year_post, term){
+  summary(model) %>% broom::tidy() %>%
+    filter(term == !!term) %>%
+    transmute(year = year_post, estimate, se = std.error)
+}
+
+did_df <- bind_rows(
+  did_row(m_pre_strict, 2008, "treat_strict:post") %>% mutate(type = "strict"),
+  did_row(m_main_strict, 2021, "treat_strict:post") %>% mutate(type = "strict"),
+  did_row(m_pre_multi, 2008, "treat_multi:post") %>% mutate(type = "multi"),
+  did_row(m_main_multi, 2021, "treat_multi:post") %>% mutate(type = "multi")
+) %>%
+  mutate(
+    period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
+                    levels = c("1997–2008","2008–2021")),
+    lo = estimate - 1.96*se,
+    hi = estimate + 1.96*se
+  )
+
+
+pd <- position_dodge(width = 0.2)
+
+ggplot(did_df, aes(x = period, y = estimate, colour = type)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 3, position = pd) +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = .2, position = pd) +
+  labs(x = NULL, y = "Effet DID (centile de richesse)",
+       title = "DID 2×2 par type d’AP (strict vs usage multiple)")
+```
