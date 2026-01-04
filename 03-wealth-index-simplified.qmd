@@ -8,7 +8,7 @@ editor_options:
 
 This section documents the process of reconstructing and analyzing wealth indexes for a forthcoming study focusing on rural populations in Madagascar. Wealth indexes, particularly the wealth index factor scores, are critical for assessing household living standards and analyzing inequalities.
 
-The wealth index, provided in DHS, is constructed using principal components analysis  on household characteristics such as asset ownership, housing materials, and access to water and sanitation facilities. We want a centile classification specific to rural households.
+The wealth index, provided in DHS, is constructed using principal components analysis on household characteristics such as asset ownership, housing materials, and access to water and sanitation facilities. We want a centile classification specific to rural households.
 
 ## Verification that rural wealth centiles can be derived from existing DHS data
 
