@@ -273,7 +273,4 @@ kable(
                              
 ```
 
-
 ## Statistiques descriptives (partie estimation)
-
-
