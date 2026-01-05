@@ -135,7 +135,7 @@ d13 <- read_rds("data/derived/data_matched_2013.rds")
 d16 <- read_rds("data/derived/data_matched_2016.rds")
 d21 <- read_rds("data/derived/data_matched_2021.rds")
 
-# Recalcul des centiles pour chaque année 
+# Rééchelonner le wealth_centile_rural_simple
 d97 <- d97 %>%
   mutate(
     wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
@@ -160,6 +160,31 @@ d16 <- d16 %>%
 d21 <- d21 %>%
   mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
     zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+# Rééchelonner le wealth_centile_rural_weighted
+library(Hmisc)
+
+recompute_weighted_centile <- function(df, 
+                                       wealth_var = "wealth_centile_rural_weighted",
+                                       weight_var = "hv005"){
+  w_rank <- wtd.rank(
+    df[[wealth_var]],
+    weights = df[[weight_var]],
+    normwt = TRUE
+  )
+  
+  df %>%
+    mutate(
+      wealth_centile_rural_weighted = w_rank / max(w_rank, na.rm = TRUE) * 100
+    )
+}
+
+d97 <- recompute_weighted_centile(d97)
+d08 <- recompute_weighted_centile(d08)
+d11 <- recompute_weighted_centile(d11)
+d13 <- recompute_weighted_centile(d13)
+d16 <- recompute_weighted_centile(d16)
+d21 <- recompute_weighted_centile(d21)
 
 # Enregistrement
 write_rds(d97, "data/derived/data_matched_1997_rescaled.rds")
