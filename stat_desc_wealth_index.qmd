@@ -196,6 +196,149 @@ write_rds(d21, "data/derived/data_matched_2021_rescaled.rds")
 
 ```
 
+## Rééchelonnage de l'indice de richesse et du zscore de richesse pour 5 km 
+
+```{r}
+# Load data
+d97_5km <- read_rds("data/derived/data_matched_1997_5km.rds")
+d08_5km <- read_rds("data/derived/data_matched_2008_5km.rds")
+d11_5km <- read_rds("data/derived/data_matched_2011_5km.rds")
+d13_5km <- read_rds("data/derived/data_matched_2013_5km.rds")
+d16_5km <- read_rds("data/derived/data_matched_2016_5km.rds")
+d21_5km <- read_rds("data/derived/data_matched_2021_5km.rds")
+
+# Rééchelonner le wealth_centile_rural_simple
+d97_5km <- d97_5km %>%
+  mutate(
+    wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d08_5km <- d08_5km %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d11_5km <- d11_5km %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d13_5km <- d13_5km %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d16_5km <- d16_5km %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d21_5km <- d21_5km %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+# Rééchelonner le wealth_centile_rural_weighted
+library(Hmisc)
+
+recompute_weighted_centile <- function(df, 
+                                       wealth_var = "wealth_centile_rural_weighted",
+                                       weight_var = "hv005"){
+  w_rank <- wtd.rank(
+    df[[wealth_var]],
+    weights = df[[weight_var]],
+    normwt = TRUE
+  )
+  
+  df %>%
+    mutate(
+      wealth_centile_rural_weighted = w_rank / max(w_rank, na.rm = TRUE) * 100
+    )
+}
+
+d97_5km <- recompute_weighted_centile(d97_5km)
+d08_5km <- recompute_weighted_centile(d08_5km)
+d11_5km <- recompute_weighted_centile(d11_5km)
+d13_5km <- recompute_weighted_centile(d13_5km)
+d16_5km <- recompute_weighted_centile(d16_5km)
+d21_5km <- recompute_weighted_centile(d21_5km)
+
+# Enregistrement
+write_rds(d97_5km, "data/derived/data_matched_1997_5km_rescaled.rds")
+write_rds(d08_5km, "data/derived/data_matched_2008_5km_rescaled.rds")
+write_rds(d11_5km, "data/derived/data_matched_2011_5km_rescaled.rds")
+write_rds(d13_5km, "data/derived/data_matched_2013_5km_rescaled.rds")
+write_rds(d16_5km, "data/derived/data_matched_2016_5km_rescaled.rds")
+write_rds(d21_5km, "data/derived/data_matched_2021_5km_rescaled.rds")
+
+```
+
+## Rééchelonnage de l'indice de richesse et du zscore de richesse pour 15 km 
+
+```{r}
+# Load data
+d97_15km <- read_rds("data/derived/data_matched_1997_15km.rds")
+d08_15km <- read_rds("data/derived/data_matched_2008_15km.rds")
+d11_15km <- read_rds("data/derived/data_matched_2011_15km.rds")
+d13_15km <- read_rds("data/derived/data_matched_2013_15km.rds")
+d16_15km <- read_rds("data/derived/data_matched_2016_15km.rds")
+d21_15km <- read_rds("data/derived/data_matched_2021_15km.rds")
+
+# Rééchelonner le wealth_centile_rural_simple
+d97_15km <- d97_15km %>%
+  mutate(
+    wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d08_15km <- d08_15km %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d11_15km <- d11_15km %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d13_15km <- d13_15km %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d16_15km <- d16_15km %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+d21_15km <- d21_15km %>%
+  mutate(wealth_centile_rural_simple = percent_rank(wealth_centile_rural_simple) * 100,
+    zscore_wealth = scale(wealth_centile_rural_simple)[,1])
+
+# Rééchelonner le wealth_centile_rural_weighted
+library(Hmisc)
+
+recompute_weighted_centile <- function(df, 
+                                       wealth_var = "wealth_centile_rural_weighted",
+                                       weight_var = "hv005"){
+  w_rank <- wtd.rank(
+    df[[wealth_var]],
+    weights = df[[weight_var]],
+    normwt = TRUE
+  )
+  
+  df %>%
+    mutate(
+      wealth_centile_rural_weighted = w_rank / max(w_rank, na.rm = TRUE) * 100
+    )
+}
+
+d97_15km <- recompute_weighted_centile(d97_15km)
+d08_15km <- recompute_weighted_centile(d08_15km)
+d11_15km <- recompute_weighted_centile(d11_15km)
+d13_15km <- recompute_weighted_centile(d13_15km)
+d16_15km <- recompute_weighted_centile(d16_15km)
+d21_15km <- recompute_weighted_centile(d21_15km)
+
+# Enregistrement
+write_rds(d97_15km, "data/derived/data_matched_1997_15km_rescaled.rds")
+write_rds(d08_15km, "data/derived/data_matched_2008_15km_rescaled.rds")
+write_rds(d11_15km, "data/derived/data_matched_2011_15km_rescaled.rds")
+write_rds(d13_15km, "data/derived/data_matched_2013_15km_rescaled.rds")
+write_rds(d16_15km, "data/derived/data_matched_2016_15km_rescaled.rds")
+write_rds(d21_15km, "data/derived/data_matched_2021_15km_rescaled.rds")
+```
+
 ## Estimation
 
 ## Overall effect on livelihoods
