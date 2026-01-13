@@ -308,8 +308,8 @@ data_list <- list(
     scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
     labs(
       title = paste("Covariate distribution before matching(", year, ")", sep = ""),
-      x = "Valeur de la covariable",
-      y = "Densité",
+      x = "Covariate value",
+      y = "Density",
       fill = "Group"
     ) + 
     theme_minimal()
@@ -377,7 +377,7 @@ check_balance_after <- function(data_matched, year, matching_variables, plot_dir
     ) + 
       geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
       theme_minimal() +
-      labs(x = "Quantiles théoriques", y = "Quantiles observés", color = "Groupe") + 
+      labs(x = "Theoretical quantiles", y = "Observed quantiles", color = "Group") + 
       theme(plot.title = element_text(hjust = 0.5))
     
     
@@ -513,7 +513,7 @@ balance_after_table <- imap_dfr(bal_after, function(bt, year) {
       Year = as.integer(year),
       Variable,
       SMD = Diff.Adj,
-      Equilibre = if_else(abs(Diff.Adj) <= 0.1, "Équilibré", "Déséquilibré")
+      Equilibre = if_else(abs(Diff.Adj) <= 0.1, "Balanced", "unbalanced")
     )
 })
 
@@ -532,15 +532,66 @@ balance_long <- imap_dfr(bal_after, function(bt, year) {
     )
 })
 
-# A inclure dans le manuscrit
+# A inclure dans le manuscrit-----
+# 2008
 balance_long %>%
   filter(Year == 2008) %>%
   print()
 
+
 # Pour les annexes
 print(balance_long)
 
-write.csv(balance_after_table, "balance_after_table.csv", row.names = FALSE)
-write.csv(balance_long, "balance_long.csv", row.names = FALSE)
+
+# Pour tous les années confondues
+make_balance_table <- function(data, year, folder = "data/derived") {
+  df_year <- data %>% filter(Year == year)
+  
+  tab <- df_year %>%
+    gt() %>%
+    tab_header(
+      title = "Covariates balance after matching",
+      subtitle = paste("Year", year)
+    ) %>%
+    cols_label(
+      Year = "Year",
+      Variable = "Variable",
+      SMD_before = "SMD before",
+      SMD_after  = "SMD after"
+    )
+  
+  if (!is.null(csv_path)) {
+    write.csv(df_year, csv_path, row.names = FALSE)
+  }
+  
+  return(tab)
+}
+
+# Générer les tableaux pour 1997, 2008 et 2021
+tab_1997 <- make_balance_table(balance_long, 1997, "balance_long_1997.csv")
+tab_2008 <- make_balance_table(balance_long, 2008, "balance_long_2008.csv")
+tab_2021 <- make_balance_table(balance_long, 2021, "balance_long_2021.csv")
+
+# Afficher les tableaux
+tab_1997
+tab_2008
+tab_2021
+
+
+# Tableau pour tous les années confondues
+balance_long %>%
+  gt() %>%
+  tab_header(
+    title = "Covariates balance after matching",
+    subtitle = "All year combined"
+  ) %>%
+  cols_label(
+    Year = "Year",
+    Variable = "Variable",
+    SMD_before = "SMD before",
+    SMD_after  = "SMD after"
+  )
+
+write.csv(balance_long,"data/derived/balance_long_all.csv", row.names = FALSE)
 
 ```
