@@ -110,31 +110,67 @@ wealth_plot_data <- map_dfr(years, make_desc_wealth) %>%
 ggplot(
   wealth_plot_data %>%
     filter(!is.na(wealth_centile_rural_simple)),
-       aes(x = GROUP, y = wealth_centile_rural_simple, fill = GROUP)) +
-  geom_boxplot(outlier.alpha = 0.3) +
-  facet_wrap(~ DHSYEAR) +
-  labs(
-    title = "Distribution du wealth index rural (centile)",
-    x = "Groupe",
-    y = "wealth index (centile)"
+  aes(x = GROUP, y = wealth_centile_rural_simple, fill = GROUP)
+) +
+  geom_boxplot(
+    outlier.alpha = 0.25,
+    width = 0.7
   ) +
-  theme_minimal() +
-  theme(legend.position = "none")
+  facet_wrap(~ DHSYEAR, nrow = 2) +
+  scale_fill_manual(
+    name = "Groupe",
+    values = c(
+      "Control"   = scales::alpha("blue", 0.6),
+      "Treatment" = scales::alpha("red",  0.6),
+      "Excluded"  = scales::alpha("grey", 0.6)
+    )
+  ) +
+  labs(
+    title = "Distribution of the rural wealth index (percentile)",
+    subtitle = "Comparison by group and DHS year",
+    x = "Group",
+    y = "Wealth index (percentile)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "right",
+    strip.text = element_text(face = "bold"),
+    panel.spacing = unit(1, "lines")
+  )
 
-# Box plot - z-score wealth index en centile
+
+# Boxplots - Zscore du Wealth index en centile
 ggplot(
   wealth_plot_data %>%
     filter(!is.na(zscore_wealth)),
-       aes(x = GROUP, y = zscore_wealth, fill = GROUP)) +
-  geom_boxplot(outlier.alpha = 0.3) +
-  facet_wrap(~ DHSYEAR) +
-  labs(
-    title = " Distribution du zscore du wealth index",
-    x = "Groupe",
-    y = "Z-score du wealth index"
+  aes(x = GROUP, y = zscore_wealth, fill = GROUP)
+) +
+  geom_boxplot(
+    outlier.alpha = 0.25,
+    width = 0.7
   ) +
-  theme_minimal() +
-  theme(legend.position = "none")
+  facet_wrap(~ DHSYEAR, nrow = 2) +
+  scale_fill_manual(
+    name = "Groupe",
+    values = c(
+      "Control"   = scales::alpha("blue", 0.6),
+      "Treatment" = scales::alpha("red",  0.6),
+      "Excluded"  = scales::alpha("grey", 0.6)
+    )
+  ) +
+  labs(
+    title = "Distribution of the wealth index zscore",
+    subtitle = "Comparison by group et by DHS year",
+    x = "Group",
+    y = "wealth index zscore"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "right",
+    strip.text = element_text(face = "bold"),
+    panel.spacing = unit(1, "lines")
+  )
+
 
 wealth_plot_data %>% 
   count(DHSYEAR, GROUP)
