@@ -282,8 +282,8 @@ pivot_year <- 2008
 summary_table <- wdpa_terrestre_mod %>%
   st_drop_geometry() %>%
   mutate(Creation_Period = if_else(STATUS_YR < pivot_year,
-                                   paste("Avant", pivot_year),
-                                   paste("À partir de", pivot_year))) %>%
+                                   paste("Before", pivot_year),
+                                   paste("Starting in", pivot_year))) %>%
   group_by(Creation_Period) %>%
   summarise(
     Count = n(),
@@ -295,13 +295,13 @@ summary_table <- wdpa_terrestre_mod %>%
 # Formatage du tableau avec gt
 gt_table <- gt(summary_table) %>%
   tab_header(
-    title = paste("Aires protégées par période de création (Année pivot = ", pivot_year, ")"),
-    subtitle = "Zones terrestres uniquement"
+    title = paste("Protected Areas by period (Reference year = ", pivot_year, ")"),
+    subtitle = "terrestrial areas only"
   ) %>%
   cols_label(
-    Creation_Period = "Période de Création",
-    Count = "Nombre d'AP",
-    Area_km2 = "Surface km²"
+    Creation_Period = "Creation Period",
+    Count = "PA number",
+    Area_km2 = "Area (km²)"
   ) %>%
   fmt_number(
     columns = c(Count, Area_km2),
@@ -309,6 +309,10 @@ gt_table <- gt(summary_table) %>%
   )
 
 gt_table
+
+# Enregistre le tableau en CSV
+write.csv(summary_table, "data/derived/summary_table.csv", row.names = FALSE)
+
 ```
 
 ## Classification des clusters
