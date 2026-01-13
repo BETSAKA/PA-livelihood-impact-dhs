@@ -27,40 +27,53 @@ library(readr)
 library(purrr)
 library(knitr)
 library(ggplot2)
+library(haven)
 
-# Préparation des données
-cluster_classification <- read_csv("data/derived/cluster_treatment_classification_staggered.csv", 
-show_col_types = FALSE) %>%
-  select(DHSYEAR, DHSCLUST, GROUP)
+# Préparation de la classification des clusters
+cluster_classification <- read_csv(
+  "data/derived/cluster_treatment_classification_staggered.csv",
+  show_col_types = FALSE
+) %>%
+  select(DHSYEAR, DHSCLUST, GROUP) %>%
+  mutate(
+    DHSCLUST = as.integer(DHSCLUST),
+    DHSYEAR = as.integer(DHSYEAR)
+  )
 
-
+# Fonction de préparation des données ménages 
 make_desc_wealth <- function(year){
   
   readRDS(paste0("data/derived/hh_", year, "_rural_simpler.rds")) %>%
     rename(DHSCLUST = hv001) %>%
+    mutate(
+      DHSCLUST = as.integer(DHSCLUST),
+      DHSYEAR = as.integer(year)
+    ) %>%
     mutate(across(where(haven::is.labelled), haven::as_factor)) %>%
-             left_join(
-               cluster_classification %>% filter(DHSYEAR == year),
-               by = "DHSCLUST"
-             ) %>%
-             mutate(DHSYEAR =year)
-  
-  }
+    left_join(
+      cluster_classification,
+      by = c("DHSCLUST", "DHSYEAR")
+    ) %>%
+    mutate(
+      GROUP = replace_na(GROUP, "Excluded")
+    )
+}
 
 # Fonction générique: statistiques descriptives 
 wealth_summary <- function(data, var, label){
   
   data %>%
+    filter(!is.na({{ var }})) %>%
     group_by(GROUP) %>%
     summarise(
-      n = sum(!is.na({{var}})),
-      mean = mean({{var}}, na.rm = TRUE),
-      sd = sd({{var}}, na.rm = TRUE),
-      median = median({{var}}, na.rm = TRUE),
-      p25 = quantile({{var}}, 0.25, na.rm = TRUE),
-      p75 = quantile({{var}}, 0.75, na.rm = TRUE),
-      min = min({{var}}, na.rm = TRUE),
-      max = max({{var}}, na.rm = TRUE),
+      n = n(),
+      mean = mean({{var}}),
+      sd = sd({{var}}),
+      median = median({{var}}),
+      p25 = quantile({{var}}, 0.25),
+      p75 = quantile({{var}}, 0.75),
+      min = min({{var}}),
+      max = max({{var}}),
       .groups = "drop"
     ) %>%
     mutate(
@@ -73,8 +86,10 @@ desc_all <- map_dfr(years, function(year){
   
   hh <- make_desc_wealth(year)
   
-  bind_rows(
-    wealth_summary(hh, wealth_centile_rural_simple, "Wealth index (centile)")
+   wealth_summary(
+    hh,
+    wealth_centile_rural_simple,
+    "Wealth index (centile)"
   ) %>%
     mutate(DHSYEAR = year)
 })
@@ -92,7 +107,9 @@ wealth_plot_data <- map_dfr(years, make_desc_wealth) %>%
   )
 
 # Boxplots - Wealth index en centile
-ggplot(wealth_plot_data,
+ggplot(
+  wealth_plot_data %>%
+    filter(!is.na(wealth_centile_rural_simple)),
        aes(x = GROUP, y = wealth_centile_rural_simple, fill = GROUP)) +
   geom_boxplot(outlier.alpha = 0.3) +
   facet_wrap(~ DHSYEAR) +
@@ -105,7 +122,9 @@ ggplot(wealth_plot_data,
   theme(legend.position = "none")
 
 # Box plot - z-score wealth index en centile
-ggplot(wealth_plot_data, 
+ggplot(
+  wealth_plot_data %>%
+    filter(!is.na(zscore_wealth)),
        aes(x = GROUP, y = zscore_wealth, fill = GROUP)) +
   geom_boxplot(outlier.alpha = 0.3) +
   facet_wrap(~ DHSYEAR) +
@@ -116,6 +135,15 @@ ggplot(wealth_plot_data,
   ) +
   theme_minimal() +
   theme(legend.position = "none")
+
+wealth_plot_data %>% 
+  count(DHSYEAR, GROUP)
+
+wealth_plot_data %>%
+  summarise(
+    total_obs = n(),
+    missing_group = sum(is.na(GROUP))
+  )
 ```
 
 Pour chaque année, nous présentons les distributions du wealth index en centile et son z-score, qui diffèrent selon le groupe: traitement, contrôle et exclu.
