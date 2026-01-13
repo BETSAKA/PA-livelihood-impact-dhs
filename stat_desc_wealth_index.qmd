@@ -86,25 +86,35 @@ desc_all <- map_dfr(years, function(year){
   
   hh <- make_desc_wealth(year)
   
-   wealth_summary(
-    hh,
-    wealth_centile_rural_simple,
-    "Wealth index (centile)"
+  bind_rows(
+    wealth_summary(
+      hh,
+      wealth_centile_rural_simple,
+      "Wealth index (centile)"
+    ),
+    wealth_summary(
+      hh,
+      zscore_wealth,
+      "Wealth index (z-score)"
+    )
   ) %>%
     mutate(DHSYEAR = year)
 })
 
+
 kable(
   desc_all,
-  caption = "Statistiques descriptives du wealth index rural par groupe et par année",
+  caption = "Statistiques descriptives du wealth index rural (centile et z-score) par groupe et par année",
   digits = 2
 )
+
 
 wealth_plot_data <- map_dfr(years, make_desc_wealth) %>%
   mutate(
     DHSYEAR = factor(DHSYEAR),
     GROUP = factor(GROUP, levels = c("Control", "Treatment", "Excluded"))
   )
+
 
 # Boxplots - Wealth index en centile
 ggplot(
