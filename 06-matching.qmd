@@ -489,3 +489,58 @@ wrap_plots(plots[grep("^slope_2000", names(plots))], ncol = 3)
 ```
 
 L'histogramme compare les moyennes des variables de contrôle après le matching entre les groupes de traitement (en bleu) et de contrôle (en vert) pour chaque année.
+
+```{r}
+library(gt)
+
+# SMD
+yrs <- c(1997, 2008, 2011, 2013, 2016, 2021)
+
+bal_after <- lapply(yrs, function(y){
+  m_out <- readRDS(glue("data/derived/matching_result_{y}.rds"))
+  bt <- bal.tab(m_out, un = TRUE, abs = TRUE, m.threshold = 0.1)
+  saveRDS(bt, glue("data/derived/bal_tab_{y}.rds"))
+  bt
+})
+names(bal_after) <- yrs
+
+balance_after_table <- imap_dfr(bal_after, function(bt, year) {
+  
+  bt$Balance %>%
+    as.data.frame() %>%
+    rownames_to_column("Variable") %>%
+    transmute(
+      Year = as.integer(year),
+      Variable,
+      SMD = Diff.Adj,
+      Equilibre = if_else(abs(Diff.Adj) <= 0.1, "Équilibré", "Déséquilibré")
+    )
+})
+
+print(balance_after_table)
+
+balance_long <- imap_dfr(bal_after, function(bt, year) {
+  
+  bt$Balance %>%
+    as.data.frame() %>%
+    rownames_to_column("Variable") %>%
+    transmute(
+      Year = as.integer(year),
+      Variable,
+      SMD_before = Diff.Un,
+      SMD_after  = Diff.Adj
+    )
+})
+
+# A inclure dans le manuscrit
+balance_long %>%
+  filter(Year == 2008) %>%
+  print()
+
+# Pour les annexes
+print(balance_long)
+
+write.csv(balance_after_table, "balance_after_table.csv", row.names = FALSE)
+write.csv(balance_long, "balance_long.csv", row.names = FALSE)
+
+```
