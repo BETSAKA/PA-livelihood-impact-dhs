@@ -196,7 +196,7 @@ write_rds(d21, "data/derived/data_matched_2021_rescaled.rds")
 
 ```
 
-## Rééchelonnage de l'indice de richesse et du zscore de richesse pour 5 km 
+## Rééchelonnage de l'indice de richesse et du zscore de richesse pour 5 km
 
 ```{r}
 # Load data
@@ -268,7 +268,7 @@ write_rds(d21_5km, "data/derived/data_matched_2021_5km_rescaled.rds")
 
 ```
 
-## Rééchelonnage de l'indice de richesse et du zscore de richesse pour 15 km 
+## Rééchelonnage de l'indice de richesse et du zscore de richesse pour 15 km
 
 ```{r}
 # Load data
