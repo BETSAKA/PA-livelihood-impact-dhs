@@ -83,13 +83,15 @@ On charge et nettoie le jeu de données des aires protégées de WDPA, en ne gar
 ```{r}
 library(wdpar)
 
+# Load WDPA data
 wdpa <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
-  wdpa_clean() |> 
+ # wdpa_clean() |> # This might cause to drop existing PAs!
   filter(STATUS == "Designated") %>%
   mutate(MARINE = recode(MARINE,
-                           "terrestrial" = "Terrestre",
-                         "marine" = "Marine",
-                         "partial" = "Mixte"))
+                         "0" = "Terrestre",
+                         "1" = "Mixte",
+                         "2" = "Marine")) %>%
+  filter(st_geometry_type(.) %in% c("POLYGON", "MULTIPOLYGON"))
 
 # Load boundary
 contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
