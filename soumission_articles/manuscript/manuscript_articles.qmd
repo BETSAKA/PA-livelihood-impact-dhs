@@ -61,10 +61,21 @@ bibliography: references.bib
   
 format: 
   typst: 
+    fig-cap-location: top
+    
+    
+    fig-caption:
+      size: 10pt
+      
+      
+    fig-subcaption: 
+      size:8pt
+    
     fontsize: 12pt 
     linestretch: 1.5
     number-sections: true
-    
+
+
 abstract: |
   Protected Areas are the most widely used tool for biodiversity conservation. However, their implementation raises concerns about the well-being of local populations, especially when they are very poor and dependent on natural resources, as is the case in Madagascar. We are using geolocated socioeconomic surveys spanning a period of protected area creation (2008-2021), and extending the analysis to the previous period (1997-2008) in order to verify the credibility od the comparison. Socio-environmental indicators derived from spatial data are used to match rural areas with similar probabilities of being affected by the creation of protected areas, before estimating the effects using an approach combining matching and difference-in-difference. The analysis, conducted in accordance with a pre-analysis plan submitted prior to any analysis, shows that our empirical model would have detected average effects of at least 7.5 percentiles of the wealth index for rural households. The results indicate that, over the period considered, the creation of protected areas had no statistically significant average effect on the well-being of households located within 10 km of protected areas created after 2008, as measured by the intra-cluster dispersion of this index. Robustness test conducted using other survey sources support this conclusion. Further work is needed to determine whether this lack of effect reflects a trade-off between positive and negative impacts, high heterogeneity of effects, or limited implementation of conservation measures in a context of weak governance and underfunding of protected areas. 
   
@@ -110,39 +121,65 @@ When new PA are created in Madagascar, compensation mechanisms for local populat
 
 Our firts set of results therefore consists of determining whether PA in Madagascar, by limiting access to natural resources, have negative impacts on the standard of living of households living nearby, which often exceed the benefits of compensation and ecosystem services, with more adverse effects than in other countries. 
 
-The impact mechanisms represented in @fig-theory-change are likely to affect households differently depending on their prior characteristics. Compensation measures are generally implemented in the form of projects to promote income-generating activities (agriculture, livestock, handicrafts) in surrounding communities [@Poudyal2018]. In the context of such development projects, individuals known as “development brokers” frequently emerge as intermediaries between local communities and implementing organizations. By mobilizing their social networks and specific skills, these brokers manage to capture a disproportionate share of the benefits of interventions, whether in form of income or access to exclusive opportunities. This dynamic can reinforce pre-existing inequalities within communities, limiting the access of the most vulnerable households to the expected benefits of compensation programs. 
+The impact mechanisms represented in @fig-theory-change are likely to affect households differently depending on their prior characteristics, which would increase inequality (hypothesis 2). Compensation measures are generally implemented in the form of projects to promote income-generating activities (agriculture, livestock, handicrafts) in surrounding communities [@Poudyal2018a]. In the context of such development projects, individuals known as “development brokers” frequently emerge as intermediaries between local communities and implementing organizations. By mobilizing their social networks and specific skills, these brokers manage to capture a disproportionate share of the benefits of interventions, whether in form of income or access to exclusive opportunities. This dynamic can reinforce pre-existing inequalities within communities, limiting the access of the most vulnerable households to the expected benefits of compensation programs. Although tourism development is often presented as an opportunity for economic growth, it also tends to exacerbate socioeconomic inequalities, particularly in developing countries. Adeniyi et al. [@Adeniyi2024] show that in Southern Africa, tourism can initially exacerbate inequalities by concentrating benefits in the most attractive regions, while leaving marginalized communities out of the economic benefits. According to Ghosh and Mitra [@Ghosh2021], the relationship between tourism and inequality follows an inverted Kuznets curve in developing countries, when tourism remains moderate, its growth reduces inequalities, but when tourism becomes massive, further expansion worsens inequalities. Finally, Xuanming et al. [@Xuanming2024] point out that while tourism helps to improve certain socioeconomic indicators, it can also generate inflationary pressures and strain local resources, particularly affecting the most vulnerable households. PA could therefore exacerbate economic inequalities among neighboring communities by creating opportunities that mainly benefit individuals with a higher educational level or a dominant position in the community, allowing them access to rents and jobs related to tourism nd associated activities. 
 
-Although tourism development is often presented as an opportunity for economic growth, it also tends to exacerbate socioeconomic inequalities, particularly in developing countries. Adeniyi et al. (2024) show that in Southern Africa, tourism can initially exacerbate inequalities by concentrating benefits in the most attractive regions, while leaving marginalized communities out of the economic benefits. According to Ghosh and Mitra (2021), the relationship between tourism and inequality follows an inverted Kuznets curve in developing countries, when tourism remains moderate, its growth reduces inequalities, but when tourism becomes massive, further expansion worsens inequalities. Finally, Xuanming et al. (2024) point out that while tourism helps to improve certain socioeconomic indicators, it can also generate inflationary pressures and strain local resources, particularly affecting the most vulnerable households. 
+IUCN status of PA[^1] are frequently used to explain differences in effectiveness between them. For example, Naidoo et al. [@Naidoo2019] show that multiple-use PA (statuses V and VI) tend to have more beneficial effects than strict areas (statuses I to IV), partly due to greater flexibility in integrating local needs. Beyond status alone, governance plays a central role. Eklund et al [@Eklund2017] highlight the importance of transparent and inclusive structures to maximize the positive effects of PA on conservation and social justice. They call for management approaches to be adapted to local contexts, with greater involvement of communities in decision-making processes, to better reconcile conservation and development objectives. 
 
-IUCN status of PA are frequently used to explain differences in effectiveness between them. For example, Naidoo et al. [@Naidoo2019] show that multiple-use PA (statuses V and VI) tend to have more beneficial effects than strict areas (statuses I to IV), partly due to greater flexibility in integrating local needs. Beyond status alone, governance plays a central role. Eklund et al [Eklund2017] highlight the importance of transparent and inclusive structures to maximize the positive effects of PA on conservation and social justice. Similarly, Eklund et al [@Eklund2019] call for management approaches to be adapted to local contexts, with greater involvement of communities in decision-making processes, to better reconcile conservation and development objectives. 
+[^1]: https://www.google.com/url?q=https://portals.iucn.org/library/efiles/documents/PAPS-016-Fr.pdf&sa=D&source=docs&ust=1768418520379026&usg=AOvVaw26wfaFnma2KaAr7cxRAz-5
 
-This diversity is particularly evident in Madagascar. Although governed by similar formal statuses, PA follow different paths depending on the local context and the way in which they are implemented. Froger and Méral [@Froger2009] show that the early initiatives of shared governance, gradually introduced with in-depth mediation efforts, achieved encouraging results by strengthening local community support. However, from the 2000s onward, the accelerated deployment of management transfers, driven by quantitative targets, often led to hasty and less contextually adapted implementations, undermining the effectiveness of these mechanisms. These experiences demonstrate that, beyond the PA status, their establishment period, management approach, and level of community participation significantly influence their socioeconomic impacts(hypothesis 3).
+This diversity is particularly evident in Madagascar. Although governed by similar formal statuses, PA follow different paths depending on the local context and the way in which they are implemented. Froger and Méral [@Froger2009] show that the early initiatives of shared governance, gradually introduced with in-depth mediation efforts, achieved encouraging results by strengthening local community support. However, from the 2000s onward, the accelerated deployment of management transfers, driven by quantitative targets, often led to hasty and less contextually adapted implementations, undermining the effectiveness of these mechanisms. These experiences demonstrate that, beyond the PA status, their establishment period, management approach, and level of community participation significantly influence their socioeconomic impacts. We therefore anticipate that The impacts of PA on well-being and inequalities are heterogeneous, and some PA with good levels of local community participation manage to generate greater benefits and distribute them more equitably (hypothesis 3). 
+
+Based on this theory of change, we define two main outcome variables to explain changes in living outcome variables to explain changes in living standards: household living standards (main variable) and the standardized Z-score of the wealth index (secondary variable). 
+
+Household living standard will be the outcome variable used to determine the overall impact of PA, and the standardized Z-score of the wealth index will explain inequalities in living standards across the localities surveyed. We also use vraibles that may be predictive of the outcome under study. The appropriate covariates for our model are variables that are likely to influence both the probability of treatment (whether a PA has been created near the household) and the outcome (household living standard and inequalities between households). The literature shows that PA tend to be created in less dense, less accessible, higher and steeper regions [@Joppa2010]. These variables may also affect living standards: areas that are more dense, flat, low-lying and accessible (in terms of travel time and geography) tend to be wealthier [@Gallup1999]. We propose five variables (forest cover in 2000, slope, elevation, population density in 2000, and accessibility in 2000). 
+
 
 ## Data {#data}
-Considering the long-term, large-scale, complex, and politically sensitive nature of the intervention to be evaluated, along with the availability of relevant data at the national level, experimentation appears neither feasible not appropriate. As a result, our study is observational in nature. It uses secondary data on the socioeconomic conditions of households, their geographical environment and their location in relation to PA. 
+Considering the long-term, large-scale, complex, and politically sensitive nature of the intervention to be evaluated, we use secondary data on the socioeconomic conditions of households, their geographical environment and their location in relation to PA. 
+
 
 ### Protected areas {#protectedareas}
+This study evaluates the impact of terrestrial PA creation on rural household well-being between 2008 and 2021. These time frames was chosen on the basis of the availability of geolocalised data on household living conditions and coincide with a period of strong expansion of PA in the country, as shown in @fig-evo-pa
 
 
+![Evolution of protected areas in Madagascar and study period ](figures/evo_pa.png){#fig-evo-pa width=70%}
+
+::: {.small}
+**Source:** Authors’ calculations based on data from the Service de la Gouvernance des Aires Protégées (SGAP),  
+Ministère de l’Environnement et du Développement Durable (MEDD).
+
+**Note:** This graph shows the evolution of PA creation in Madagascar since its creation in 1927 (under the colonial administration) until 2024. From 1927 until the early 2000s, PA were characterized by strict conservation (IUCN categories I, II and IV). At the IUCN Parks Summit in Durban in 2003, the Malagasy government committed to trippling the area PA, which led to the creation of new PA with 28 provisional creation decrees published between April 2006 and December 2007 and a global decree bringing the number of new PA to 97 in 2008. The final decree was not issued until 2015, which led to the creation of new PA thereafter. 
+:::
+
+Our study analyze the impact of PA surrounding the well being over 13 years (2008-2021). We are using 2008 as the reference year. So, the population considered as treated encompasses households living in rural areas within 10 km of a PA created between 2008 and 2021, according to the GPS coordinates provided in the Demographic Health Surveys (DHS) data[^2]. Households in the control group are those living in a rural area more than 10 km away from a PA created between 2008 and 2021, and they exhibit very similar characteristics or share significant traits with households in the treatment group.We decided to exclude rural populations living within 10 km of PA created before 2008, as they are considered treated before the study period; and in urban areas. 
+
+[^2]: These GPS coordinates correspond to the centroids of the enumeration areas surveyed. To protect respondent confidentiality, these coordinates are first randomly shifted using the following procedure: An offset angle between 0 and 360 is randomly drawn, and then an offset distance is randomly drawn, between 0 and 2 km in urban areas and between 0 and 5 km in rural areas. For 1% of rural clusters, the distance drawn is between 0 and 10 km [@Skiles2013]
+
+We classified PA according to their group affiliation 
 
 
+![Classification of household clusters according their group affiliation ](figures/map-clust.png){#fig-map-clust width=70%}
+
+**Source:** Authors based on GPS data from DHS clusters
 
 
+**Note:** Households in the treatment group are those located in clusters less than 10 km from PA created since 2008 in rural areas (shown in red) and households in clusters more than 10 km from PA created since 2008 in rural areas (shown in blue). Rural populations living within 10 km of PA created before 2008 and in urban areas are excluded from the study (shown in black)
 
 
+Table 1 show the distribution of PA (by number and area) according to the period in which they were created by final decree, taking 2008 as the reference year. In the treatment period (2008 to 2021), 137 PA were created, covering 75,191 km². 
 
 
 ### Household socioeconomic conditions {#householdsocioeconomicconditions} 
-The data on household living conditions used for this study comes from surveys conducted by the “Institut National de la Statistique de Madagascar” (INSTAT) as part of the Demographic Health Surveys (DHS)[^1].This data covers a wide range of topics, including demographic characteristics, living conditions, health, education, sanitation, and hygiene. They were conducted based on surveys from 1997, 2008, and 2021, containing 650 clusters in 2021[^2], 585 in 2008[^3], and 268 in 1997[^4].
+The data on household living conditions used for this study comes from surveys conducted by the “Institut National de la Statistique de Madagascar” (INSTAT) as part of the Demographic Health Surveys (DHS)[^3].This data covers a wide range of topics, including demographic characteristics, living conditions, health, education, sanitation, and hygiene. They were conducted based on surveys from 1997, 2008, and 2021, containing 650 clusters in 2021[^4], 585 in 2008[^5], and 268 in 1997[^6].
 
 
-[^1]: The DHS surveys are based on a two-stage stratified sampling method. The population of interest is divided into 23 study areas corresponding to Madagascar's 22 regions, the capital Antananarivo(considered separately), an the Analamanga region without the capital (to isolate the impact of the capital on regional results). With the exception of the capital two strata were created in each study area. At the first level, enumeration ares (also called 'clusters') are randomly selected within each domain, with a probability proportional to the population of the cluster according to the latest census. At the second level, a sample of households is randomly selected within these clusters to participate in the survey programs
+[^3]: The DHS surveys are based on a two-stage stratified sampling method. The population of interest is divided into 23 study areas corresponding to Madagascar's 22 regions, the capital Antananarivo(considered separately), an the Analamanga region without the capital (to isolate the impact of the capital on regional results). With the exception of the capital two strata were created in each study area. At the first level, enumeration ares (also called 'clusters') are randomly selected within each domain, with a probability proportional to the population of the cluster according to the latest census. At the second level, a sample of households is randomly selected within these clusters to participate in the survey programs
 
-[^2]: 657 clusters were drawn with probability proportional to size. After implementation in the field, 650 of the 657 clusters initially selected were actually visited]
+[^4]: 657 clusters were drawn with probability proportional to size. After implementation in the field, 650 of the 657 clusters initially selected were actually visited]
 
-[^3]: 600 clusters were drawn with probability proportional to size. Of the 600 clusters selected, 596 could be surveyed. However, nine other clusters had invalid GPS coordinates, resulting in a total of 585 clusters for 2008
+[^5]: 600 clusters were drawn with probability proportional to size. Of the 600 clusters selected, 596 could be surveyed. However, nine other clusters had invalid GPS coordinates, resulting in a total of 585 clusters for 2008
 
-[^4]: 270 clusters were drawn with probability proportional to size. Of the 270 clusters selected, 269 could be surveyed. However, one cluster had invalid GPS coordinates, resulting in a total of 585 clusters for 2008. 
+[^6]: 270 clusters were drawn with probability proportional to size. Of the 270 clusters selected, 269 could be surveyed. However, one cluster had invalid GPS coordinates, resulting in a total of 585 clusters for 2008. 
 
 These data are used to construct the variables for the impact assessment model. In this analysis, two outcome variables are considered: household living standards (primary variable) and inequalities in living standards at the level of the surveyed localities (secondary variable). 
 
@@ -167,18 +204,77 @@ $$
 These data also provide us with control variables: age and sex of the head of the household.These characteristics determine the economic opportunities and resource management capacity of households [@LoBue2022]. These variables reduce the unexplained variability of the model and thus enable a more accurate estimate of the treatment. 
 
 
+### Household geophysical environment {#householdgeophysicalenvironment}
+Household geophysical environment data will be obtained using the R package mapme.biodiversity [@Gorgen2022]. This package automates the retrieval and processing of large raster-format data to produce a series of indicators applied to user-defined polygons for specified periods, which are presented and defined. 
 
-### Household geophysical environment {#householdgeophysical environment}
+We propose the following list: 
+
+    • Forest cover rates in 2000
+correspond to the percentage coverage by vegetation with a height of 5 meters or more [@Hansen2013]. This variable is provided by the Global Forest Change dataset, which indicates for each pixel of one arc-second (approximately 30 meters at the equator) an estimate of forest cover in 2000 [@Hansen2013]. In Madagascar, as in other countries, PA have been preferentially created by targeting forest zones [@Wilson2006; @Carvalho2020]. Globally, Naidoo [@Naidoo2019] indicates that forest cover in an area is negatively correlated with the living standards of its inhabitants. 
+
+    • Slope and elevation
+are calculated using a digital terrain model from NASA-SRTM ( Shuttle Radar Topography data), which provides an elevation estimate for arc-second pixels [@NASAJPL2020]. Slope is measured as a percentage for each plot, while elevation is measured in meters. These topological variables influence the location of PA [@Joppa2010], as well as the agricultural potential of an area and therefore the living standards of rural populations [@CanavireBacarreza2013].
+    
+    • Population density in 2000
+corresponds to the estimated number of inhabitants per km² based on Worldpop data. Worldpop data provide estimates of population density for the year 2000 at a spatial resolution of about 1 km. They use modeling techniques and combines census data with various geospatial datasets[@WorldPop2018].
+    
+    • Accessibility in 2000
+corresponds to the estimated travel time for households to the nearest cities, measured in minutes. These accessibility data to cities are compiled by the Joint Research Center (JRC), with 2000 as the reference year [@Uchida2011]. Accessibility to cities determines the ability to benefit from the services, products and opportunities they offer and is therefore a key factor in determining living standards in rural areas [@Weiss2018; @INSTAT2020]. 
+
+Each of these variables will be calculated for a circle of 10 km radius around the GPS coordinates of the survey cluster. All households in the same cluster have the same values for forest cover rate in 2000, slope and elevation, population density in 2000 and accessibility in 2000. 
+
+We also integrate the Standardized Precipitation Evapotranspiration Index (SPEI) [@VicenteSerrano2010] for the year preceding the survey. This index is calculated based on a long-term reference (1981-2010) to quantify excess or deficit of rainfall. We use the SPEI for the year prior to the survey. The SPEI is calculated from monthly precipitation and minimum and maximum temperature data from worldclim, using an improved version of the Hargreaves method defined by [@Droogers2002], as implemented in the SPEI R package [@VicenteSerrano2010]. This variable will be calculated for a circle with a radius of 10 km around the GPS coordinates of the cluster.
+
+The data from this source will constitue our matching variables. Matching covariates are used to select units not exposed to conservation (control groups) that are comparable to the exposed units (treatment group). They are appropriate for the matching process are variables likely to influence both the probability of treatment (whether a PA has been created near the household) and the outcome (household living standard and inequalities among households). 
 
 
 ## Descriptive statistics {#descriptivestatistics}
+
+@fig-distr-wi shows that the control and treatment groups have very similar wealth profiles, with averages between 47 and 50, and medians ranging from 46 to 51. In contrast, the excluded group is at the top of the national distribution of wealth, with an average well above 50 and a median between 63 and 77. Its distribution is generally skewed upwards (high p25). This suggests that there is no difference between the control and treatment groups; however, the standard deviations of the two groups indicate a high degree of heterogeneity in household living standards.  
+
+
+![Distribution of the rural wealth index (percentile) ](figures/distr_wi.png){#fig-distr-wi width=70%}
+**Note:** The graph shows boxplots of the wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). On average, for all years of the study, the wealth index of the two groups is roughly similar. 
+
+
+![Distribution of the Zscore rural wealth index (percentile) ](figures/distr_zs.png){#fig-distr-zs width=70%}
+
 
 
 ## Empirical strategic {#empiricalstrategic}
 
 ### Matching methods {#matchingmethods}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 ### Difference-in-difference {#difference-in-difference}
+We assess the PA impact 
+
+
+The simplified equation for the difference-in-difference [@Daw2018] is as follows:
+ 						(1)
+With the parameters defined as:
+ : Wealth index for household  in year  (1997, 2008 or 2021)
+ : Intercept, representing the baseline wealth index
+ : Coefficient associated with the variable 
+ : Binary variable that takes the value of 1 for households  affected by a PA (treatment households) and 0 for households  not affected by PA (control households)
+ : Coefficient associated with the variable 
+ : Binary variable that takes the value of 1 for the post-treatment year 2021 and 0 for the pre-treatment year 2008
+ : Coefficient of interest representing the effect of PA on household living standards in 2008 and 2021
+ : Interaction term between treatment and period that is equal to 1 for treatment households  after the treatment year  and 0 for the other households.
+ : Error term
+
 
 
 ### Robustness and sensitivity tests {#robustnessandsensitivity}
