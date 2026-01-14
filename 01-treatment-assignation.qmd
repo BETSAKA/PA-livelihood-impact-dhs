@@ -103,8 +103,9 @@ wdpa <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
   mutate(MARINE = recode(MARINE,
                          "0" = "Terrestre",
                          "1" = "Mixte",
-                         "2" = "Marine")) %>%
-  filter(st_geometry_type(.) %in% c("POLYGON", "MULTIPOLYGON"))
+                         "2" = "Marine"),
+        GEOMETRY_TYPE = st_geometry_type(.)) %>%
+  filter(GEOMETRY_TYPE %in% c("POLYGON", "MULTIPOLYGON"),)
 
 # Load boundary
 contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
@@ -158,7 +159,7 @@ wdpa %>%
 
 # Tableau personnalisé 
 wdpa_tb_sel <- wdpa_tb %>%
-  select(WDPAID, ORIG_NAME, DESIG, DESIG_TYPE, IUCN_CAT, MARINE, REP_AREA, STATUS, STATUS_YR, GOV_TYPE, OWN_TYPE, MANG_AUTH, VERIF, GEOMETRY_TYPE, AREA_KM2)
+  select(WDPAID, ORIG_NAME, DESIG, DESIG_TYPE, IUCN_CAT, MARINE, REP_AREA, STATUS, STATUS_YR, GOV_TYPE, OWN_TYPE, MANG_AUTH, VERIF, GEOMETRY_TYPE)
 
 write_xlsx(wdpa_tb_sel, "data/derived/WDPA_selection_MDG.xlsx")
 
