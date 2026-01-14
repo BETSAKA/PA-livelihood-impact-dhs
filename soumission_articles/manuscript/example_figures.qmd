@@ -82,6 +82,8 @@ Voici les codes à copier-coller pour les intégrer dans ton document quarto.
 Les options de rendu sont notés par des balises précédées de #| au déébut de chaque chunk R
 Il est aussi possible de gérer ces options globalement en les mettant dans le cartouche yaml au début du document quarto, mais là on va faire simple.
 
+Attention car les chemins d'accès sont différents selon d'où tu lances le render (en cliquant sur render dans RStudio ou en lançant dans le terminal : dans certains cas, il faut ajouter ou enlever soumission_articles/manuscript au début des chemins d'accès aux fichiers).
+
 Nota bene sur la mise en forme dans quarto.
 
 
@@ -105,23 +107,108 @@ library(tidyverse,  warn.conflicts = FALSE)
 
 h1_2x2_plot <- read_rds("figures/h1_2x2_plot.rds")
 
-h1_2x2_plot
+# # Pour rajouter le titre au-dessus du graph en plus de la caption en dessous
+# h1_2x2_plot
 
-# # Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
-# h1_2x2_plot + 
-#     ggtitle(element_blank())
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h1_2x2_plot + 
+    ggtitle(element_blank())
 ```
 
-#### Staggered DiD
+#### Staggered DiD: static
+
+Static effect
 
 ```{r}
+#| label: tbl-h1-staggered-static
+#| tbl-cap: "Static treatment effect estimates on well-being"
+#| warning: false
+#| message: false
+#| echo: false
 
+h1_staggered_static_tb <- read_rds("../table/h1_staggered_static_tb.rds")
+h1_staggered_static_tb
 ```
 
+#### Staggered DiD: dynamic event study
 
+(NB: see if this goes here or in the methods section)
+For the event study, each observation is indexed by its relative year to treatment, defined as the difference between the survey year and the year in which the protected area was established for treated locations. This transformation allows outcomes to be compared along a common event time dimension across cohorts. Because surveys are conducted at irregular intervals and some relative years are represented by very few observations, we group relative years into two-year bins. For example, relative years −2 and −1 are grouped together, as are +4 and +5. Observations occurring more than ten years before or after treatment are further aggregated into open-ended bins, as shown in @tbl-rel-years. This binning strategy increases the number of observations contributing to each event-time coefficient, reduces noise at the extremes, and improves the stability and interpretability of the estimated dynamic effects.
 
+**A inclure dans l'annexe**
+```{r}
+#| label: tbl-rel-years
+#| tbl-cap: "Binning of relative years-to-treatment for the event study"
+#| warning: false
+#| message: false
+#| echo: false
+
+gt_tab <- read_rds("../table/rel_year_table.rds")
+
+# Voir la doc de tinytable si tu veux modifier la mise en forme
+gt_tab
+```
+
+Event study results. You can refer to the figure by mentionning its name as @fig-h1-event-study.
+
+```{r}
+#| label: fig-h1-event-study
+#| fig-cap: "Impact on well-being: Event-study with 2-year bins"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+h1_event_study_plot <- read_rds("figures/h1_event_study_plot.rds")
+
+# h1_event_study_plot
+
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h1_event_study_plot + 
+    ggtitle(element_blank())
+```
 
 ### Effect on inequalities
+
+#### Impact in 2x2 DiD
+
+```{r}
+#| label: fig-h2-2x2
+#| fig-cap: "Impact on inequalities: 2x2 DiD impact on local population (< 10km)"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+h2_2x2_plot <- read_rds("figures/h2_2x2_plot.rds")
+
+# # Pour rajouter le titre au-dessus du graph en plus de la caption en dessous
+# h2_2x2_plot
+
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h2_2x2_plot + 
+    ggtitle(element_blank())
+```
+
+#### Staggered DiD: static
+
+Static effect
+
+```{r}
+#| label: tbl-h2-staggered-static
+#| tbl-cap: "Static treatment effect estimates on inequalities"
+#| warning: false
+#| message: false
+#| echo: false
+
+h2_staggered_static_tb <- read_rds("../table/h2_staggered_static_tb.rds")
+h2_staggered_static_tb
+```
+
 
 ### Heterogeneity
 
