@@ -156,9 +156,7 @@ h1_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate)) +
   labs(x = NULL, y = "Effect on wealth index centile",
        title = "Impact on well-being: 2x2 DiD impact on local population (< 10km)")
        
-ggsave("soumission_articles/figures/h1_2x2_plot.png", plot = h1_2x2_plot, width = 6, height = 3.5, dpi = 300)
-
-h1_2x2_plot 
+write_rds(h1_2x2_plot, "soumission_articles/manuscript/figures/h1_2x2_plot.rds")
 ```
 
 Le test placebo donne une estimation avec un coefficient faible (+1.8 centile) et non significatif: pas de différence détectée avant intervention dans les tendances du groupe traitement et du groupe contrôle. L'estimation du traitement présente une plus grande magnitude (-4.1 centiles), mais il reste non significatif. Les ménages vivant près des AP semblent connaître, un niveau de bien-être légèrement inférieur à celui des ménages contrôle, mais l'effet n'est pas significatif. A ce stade, l'analyse ne confirme pas l'hypothèse 1 (que les AP réduise le niveau de vie) : le sens de la relation est négatif, mais on ne peut pas rejeter l'hypothèse nulle. L'intervalle de confiance couvre encore largement 0, ce qui signifie qu'on a une précision insuffisante pour détecter un effet. L'effet est donc soit nul, soit inférieur à notre capacité de détection. Dans le PAP, on avait estimé que l'effet devrait être d'au moins 7.5 centiles pour pouvoir être détecté.
@@ -298,6 +296,8 @@ colnames(ttab) <- c(
   "N clusters",
   "N observations"
 )
+
+write_rds(ttab, "soumission_articles/table/rel_year_table.rds")
 
 ttab
 ```
