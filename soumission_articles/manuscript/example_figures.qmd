@@ -1,0 +1,128 @@
+---
+title: "Socioeconomic Impact Evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys"
+author:  
+  - name: Iriana Razafimahenina
+    affiliations:
+      - ref: univ_tana
+      - ref: univ_paris
+      - ref: ird
+      
+  - name: Florent Bédécarrats
+    affiliations:
+      - ref: uvsq
+      - ref: umi
+      
+  - name: Ingrid Dallmann
+    affiliations: [afd]
+  
+  - name: Holimalala Randriamanampisoa
+    affiliations:
+      - ref: univ_tana
+      - ref: cered
+      - ref: umi
+
+affiliations:
+  - id: univ_tana
+    name: "University of Antananarivo, Madagascar"
+    url: https://www.univ-antananarivo.mg
+    
+  
+  - id: univ_paris
+    name: "University of Paris-Saclay, France"
+    url: https://www.universite-paris-saclay.fr
+    
+  
+  - id: ird
+    name: "French National Research Institute for Sustainable Development(IRD), Madagascar"
+    url: https://www.ird.fr
+    
+  
+  - id: uvsq
+    name: "University of Saint Quentin en Yvelines, France"
+    url: https://www.uvsq.fr
+    
+  
+  - id: umi
+    name: "UMI-Sustainability and Resilience (SOURCE), IRD, France"
+    url: https://www.umi-source.uvsq.fr
+    
+    
+  - id: afd
+    name: "Agence Française de Développement(AFD), France"
+    
+  
+  - id: cered
+    name: Development Centre for Economic Studies and Research (CERED) Madagascar
+    
+    
+editor: visual
+  
+  
+format: 
+  typst: 
+    fontsize: 12pt 
+    linestretch: 1.5
+    number-sections: true
+    
+abstract: |
+  Protected Areas are the most widely used tool for biodiversity conservation. However, their implementation raises concerns about the well-being of local populations, especially when they are very poor and dependent on natural resources, as is the case in Madagascar. We are using geolocated socioeconomic surveys spanning a period of protected area creation (2008-2021), and extending the analysis to the previous period (1997-2008) in order to verify the credibility od the comparison. Socio-environmental indicators derived from spatial data are used to match rural areas with similar probabilities of being affected by the creation of protected areas, before estimating the effects using an approach combining matching and difference-in-difference. The analysis, conducted in accordance with a pre-analysis plan submitted prior to any analysis, shows that our empirical model would have detected average effects of at least 7.5 percentiles of the wealth index for rural households. The results indicate that, over the period considered, the creation of protected areas had no statistically significant average effect on the well-being of households located within 10 km of protected areas created after 2008, as measured by the intra-cluster dispersion of this index. Robustness test conducted using other survey sources support this conclusion. Further work is needed to determine whether this lack of effect reflects a trade-off between positive and negative impacts, high heterogeneity of effects, or limited implementation of conservation measures in a context of weak governance and underfunding of protected areas. 
+  
+Keywords: Biodiversity Conservation, Well-being, Demographic and Health surveys, Genetic matching, difference-in-difference, Madagascar
+
+JEL codes: Q57, I31, C31, Q56, O55
+
+note: |
+  Study pre-registration: On Open Science Framework (OSF) with the title
+  "Conservation and development: Socioeconomic Impact Evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys"
+---
+
+J'ai inclus les graphs et tables sous formes d'objets R dans soumission_articles/figures et soumission_articles/tables
+Voici les codes à copier-coller pour les intégrer dans ton document quarto.
+
+Les options de rendu sont notés par des balises précédées de #| au déébut de chaque chunk R
+Il est aussi possible de gérer ces options globalement en les mettant dans le cartouche yaml au début du document quarto, mais là on va faire simple.
+
+Nota bene sur la mise en forme dans quarto.
+
+
+## Results
+
+### Overall impact on livelihoods
+
+#### Impact in 2x2 DiD
+
+```{r}
+#| label: fig-h1-2x2
+#| fig-cap: "Impact on well-being: 2x2 DiD impact on local population (< 10km)"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+library(tidyverse,  warn.conflicts = FALSE)
+
+h1_2x2_plot <- read_rds("figures/h1_2x2_plot.rds")
+
+h1_2x2_plot
+
+# # Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+# h1_2x2_plot + 
+#     ggtitle(element_blank())
+```
+
+#### Staggered DiD
+
+```{r}
+
+```
+
+
+
+
+### Effect on inequalities
+
+### Heterogeneity
+
+
