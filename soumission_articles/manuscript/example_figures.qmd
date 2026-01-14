@@ -209,7 +209,85 @@ h2_staggered_static_tb <- read_rds("../table/h2_staggered_static_tb.rds")
 h2_staggered_static_tb
 ```
 
+#### Staggered DiD: dynamic event study
+
+```{r}
+#| label: fig-h2-event-study
+#| fig-cap: "Impact on inequalities: Event-study with 2-year bins"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+h2_event_study_plot <- read_rds("figures/h2_event_study_plot.rds")
+
+# h2_event_study_plot
+
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h2_event_study_plot + 
+    ggtitle(element_blank())
+```
+
 
 ### Heterogeneity
 
+#### Impact in 2x2 DiD
+
+```{r}
+#| label: fig-h3-2x2
+#| fig-cap: "Heterogeneity of impact on well-being"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+h3_2x2_plot <- read_rds("figures/h3_2x2_plot.rds")
+
+# # Pour rajouter le titre au-dessus du graph en plus de la caption en dessous
+# h2_2x2_plot
+
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h3_2x2_plot + 
+    ggtitle(element_blank())
+```
+
+#### Staggered DiD: static
+
+Static effect
+
+```{r}
+#| label: tbl-h3-staggered-static
+#| tbl-cap: "Heterogeneity in static treatment effect estimates on well-being"
+#| warning: false
+#| message: false
+#| echo: false
+
+h3_staggered_static_tb <- read_rds("../table/h3_staggered_static_tb.rds")
+h3_staggered_static_tb
+```
+
+#### Staggered DiD: dynamic event study
+
+```{r}
+#| label: fig-h3-event-study
+#| fig-cap: "Heterogeneity of impacts on well-being: Event-study with 2-year bins"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+h3_event_study_plot <- read_rds("figures/h3_event_study_plot.rds")
+
+# h2_event_study_plot
+
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h3_event_study_plot + 
+    ggtitle(element_blank())
+```
 

@@ -197,7 +197,7 @@ dat2 <- dat %>%
       rel_year_clipped <=  9  ~  4,
       TRUE                    ~  5
     ),
-    GROUP = case_when(GROUP == "Treatment" ~ "Treat.",
+    GROUP2 = case_when(GROUP == "Treatment" ~ "Treat.",
                       GROUP == "Control"   ~ "Ctrl.")
   ) 
 
@@ -224,7 +224,7 @@ bin_label <- function(k) {
 # Build the combined table
 tab_rel <- dat2 %>%
   mutate(cluster_uid = interaction(DHSYEAR, cluster_uid, drop = TRUE)) %>%
-  group_by(rel_year, rel_year_2yr, GROUP) %>%
+  group_by(rel_year, rel_year_2yr, GROUP2) %>%
   summarise(
     n_clusters_rel = n_distinct(cluster_uid),
     n_obs_rel = n(),
@@ -233,7 +233,7 @@ tab_rel <- dat2 %>%
 
 tab_bin <- dat2 %>%
   mutate(cluster_uid = interaction(DHSYEAR, cluster_uid, drop = TRUE)) %>%
-  group_by(rel_year_2yr, GROUP) %>%
+  group_by(rel_year_2yr, GROUP2) %>%
   summarise(
     n_clusters_bin = n_distinct(cluster_uid),
     n_obs_bin = n(),
@@ -241,9 +241,9 @@ tab_bin <- dat2 %>%
   )
 
 tab_both <- tab_rel %>%
-  left_join(tab_bin, by = c("rel_year_2yr", "GROUP")) %>%
-  arrange(rel_year_2yr, GROUP, rel_year) %>%
-  group_by(rel_year_2yr, GROUP) %>%
+  left_join(tab_bin, by = c("rel_year_2yr", "GROUP2")) %>%
+  arrange(rel_year_2yr, GROUP2, rel_year) %>%
+  group_by(rel_year_2yr, GROUP2) %>%
   mutate(
     block_n = n(),
     block_first = row_number() == 1,
@@ -257,7 +257,7 @@ tab_both <- tab_rel %>%
   ungroup() %>%
   select(
     rel_year,
-    GROUP,
+    GROUP2,
     n_clusters_rel,
     n_obs_rel,
     rel_year_2yr = rel_year_2yr_show,
@@ -268,12 +268,16 @@ tab_both <- tab_rel %>%
     rel_year_2yr_sort = rel_year_2yr
   )
 
+tab_print <- tab_both %>% 
+  select( rel_year, GROUP2, n_clusters_rel, n_obs_rel, rel_year_2yr, n_clusters_bin, 
+  n_obs_bin, block_n, block_first, rel_year_2yr_sort )
+
 gt_tab <- tab_print %>%
   select(-block_n, -block_first, -rel_year_2yr_sort) %>%
   gt() %>%
   cols_label(
     rel_year = "Rel. year",
-    GROUP = "Group",
+    GROUP2 = "Group",
     n_clusters_rel = "Clusters",
     n_obs_rel = "Obs.",
     rel_year_2yr = "Bin",
@@ -290,7 +294,7 @@ gt_tab <- tab_print %>%
   ) %>%
   cols_align(
     align = "left",
-    columns = c(rel_year, GROUP, rel_year_2yr)
+    columns = c(rel_year, GROUP2, rel_year_2yr)
   ) %>%
   cols_align(
     align = "right",
@@ -462,7 +466,7 @@ did2s_static_h2 <- did2s(
 
 h2_staggered_static_tb <- modelsummary(list("did2s (static)" = did2s_static_h2))
 write_rds(h2_staggered_static_tb, "soumission_articles/table/h2_staggered_static_tb.rds")
-
+h2_staggered_static_tb
 ```
 
 Now the event study
@@ -505,7 +509,7 @@ plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
   mutate(k = factor(k, levels = c("-5","-4","-3","-2","0","1","2","3","4","5","never"))) %>%
   arrange(k)
 
-p <- ggplot(plot_did2s_2yr, aes(k, estimate)) +
+h2_event_study_plot <- ggplot(plot_did2s_2yr, aes(k, estimate)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_point() +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
@@ -516,10 +520,12 @@ p <- ggplot(plot_did2s_2yr, aes(k, estimate)) +
   ) + 
   scale_x_discrete(labels = bin_label)
 
+write_rds(h2_event_study_plot, "soumission_articles/manuscript/figures/h2_event_study_plot.rds")
+
 # Return relevant objects
 list(
   did2s_tidy = plot_did2s_2yr,
-  plot = p
+  plot = h2_event_study_plot
 )
 ```
 
@@ -541,7 +547,7 @@ is_strict <- function(x) x %in% iucn_sets$strict
 is_multi  <- function(x) x %in% iucn_sets$multi
 
 # DID 2x2-----------------------------------------------------
-dat3 <- dat2 %>%
+dat3 <- dat %>%
   mutate(
     treat_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
     treat_multi  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))
@@ -625,12 +631,16 @@ did_df <- bind_rows(
 
 pd <- position_dodge(width = 0.2)
 
-ggplot(did_df, aes(x = period, y = estimate, colour = type)) +
+h3_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate, colour = type)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_point(size = 3, position = pd) +
   geom_errorbar(aes(ymin = lo, ymax = hi), width = .2, position = pd) +
   labs(x = NULL, y = "Effet DID (centile de richesse)",
        title = "DID 2×2 par type d’AP (strict vs usage multiple)")
+
+write_rds(h3_2x2_plot, "soumission_articles/manuscript/figures/h3_2x2_plot.rds")
+
+h3_2x2_plot 
 ```
 
 
@@ -669,13 +679,14 @@ did2s_static_multi <- did2s(
   weights      = "w_all"
 )
 
-etable(
-  did2s_static_strict,
-  did2s_static_multi,
-  did2s_static,
-  headers = c("Strict only", "Multi only", "Both")
+h3_staggered_static_tb <- modelsummary(list(
+  "Strict only" = did2s_static_strict,
+  "Multi only"  = did2s_static_multi,
+  "Both"        = did2s_static
+  )
 )
-
+write_rds(h3_staggered_static_tb, "soumission_articles/table/h3_staggered_static_tb.rds")
+h3_staggered_static_tb
 ```
 
 Strict only shows a positive point estimate, about + 6.4 centiles, with a standard error of 3.4. This is marginally significant and suggests a weak positive association between proximity to strict PAs and the wealth index, relative to controls. Multi-purpose PAs show a small negative estimate, but not statistically distinguishable from zero.
@@ -758,7 +769,7 @@ es_all <- bind_rows(
 
 pd <- position_dodge(width = 0.3)
 
-p <- ggplot(es_all, aes(k, estimate, colour = type)) +
+h3_event_study_plot <- ggplot(es_all, aes(k, estimate, colour = type)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_point(position = pd) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2, position = pd) +
@@ -769,10 +780,13 @@ p <- ggplot(es_all, aes(k, estimate, colour = type)) +
   ) +
   scale_x_discrete(labels = bin_label)
 
+write_rds(h3_event_study_plot, "soumission_articles/manuscript/figures/h3_event_study_plot.rds")
+
+
 list(
   models = list(strict = did2s_es_2yr_strict, multi = did2s_es_2yr_multi, both = did2s_es_2yr_both),
   tidy   = es_all,
-  plot   = p
+  plot   = h3_event_study_plot
 )
 
 ```
