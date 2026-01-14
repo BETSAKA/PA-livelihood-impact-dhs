@@ -195,7 +195,7 @@ The Z-Score $Z_i$  for each household $i$ is calculated from the wealth index us
 $$
 Z_i = \frac{W_i - \mu_W}{\sigma_W}
 $$
-
+(1)
 
  where $W_i$ is the wealth index for household $i$, $μ_W$ represents the average wealth index for all households surveyed in each rural cluster, and $σ_W$ is the standard deviation of households in the cluster. 
 
@@ -256,28 +256,77 @@ We assess the PA impact on household living standards and inequalities using the
 
 This method relies on the parallel trends assumption,according to which treated and untreated areas evolved similarly prior to the intervention. To validate this hypothesis, we will use as a reference, among the rural households surveyed in 1997, those living in an area located within or less than 10 km of a PA created between 2008 and 2021 (placebo treatment group) and those matched to them using the method described above (placebo control group). We will conduct a placebo test by performing a DID estimation between these groups for the period 1997-2008. If the result of this placebo test is zero or statistically insignificant, the hypothesis of parallel trends is validated. 
 
+In our DID estimates, we use robust standard errors for intra-cluster correlations to manage the dependence of observations within clusters. The aim is to adjust the standard errors by taking into account the intra-cluster correlations present within groups by sampling the outcome variable [@Abadie2021]. This adjustment is calculated based on the model residuals ans an estimate of the intra-cluster variance. We calculate the residuals from the regression model and then use these residuals to construct a ribust variance-covariance matrix. The matrix will adjust the intra-cluster correlation by taking into account the error structure. 
 
 The simplified equation for the difference-in-difference [@Daw2018] is as follows:
- 						(1)
-With the parameters defined as:
- : Wealth index for household  in year  (1997, 2008 or 2021)
- : Intercept, representing the baseline wealth index
- : Coefficient associated with the variable 
- : Binary variable that takes the value of 1 for households  affected by a PA (treatment households) and 0 for households  not affected by PA (control households)
- : Coefficient associated with the variable 
- : Binary variable that takes the value of 1 for the post-treatment year 2021 and 0 for the pre-treatment year 2008
- : Coefficient of interest representing the effect of PA on household living standards in 2008 and 2021
- : Interaction term between treatment and period that is equal to 1 for treatment households  after the treatment year  and 0 for the other households.
- : Error term
+ 	
+$$
+Y_{it} = \alpha_0 + \beta_1 \text{Treatment}_i + \beta_2 \text{Post}_t + \delta D_{it} + \varepsilon_{it}
+$$				                  (2)
 
+With the parameters defined as:
+
+ $Y_{i t}$: Wealth index for household $i$ in year $t$ (1997, 2008 or 2021)
+ 
+ 
+ $α_0$: Intercept, representing the baseline wealth index
+ 
+ $β_1$: Coefficient associated with the variable $Treatment_i$
+ 
+ $Treatment_i$: Binary variable that takes the value of 1 for households $i$ affected by a PA (treatment households) and 0 for households $i$ not affected by PA (control households)
+ 
+ $β_2$:  : Coefficient associated with the variable $Post_t$
+ 
+ $Post_t$: Binary variable that takes the value of 1 for the post-treatment year 2021 and 0 for the pre-treatment year 2008
+ 
+ $δ$: Coefficient of interest representing the effect of PA on household living standards $i$ in year $t$
+ 
+ $D_{i t}$: Interaction term between $Treatment_i$ and $Post_t$; It is equal to 1 for treatment households $i$ after the treatment year $t$ and 0 for the other households.
+ 
+$ε_{i t}$: Error term
 
 
 ### Robustness and sensitivity tests {#robustnessandsensitivity}
+We implement a series of robustness tests predefined in the pre-analysis plan published prior to the results(published on OSF in March 2025). 
+
+We re-estimate all effects using distances of 5 km and 15 km to ensure the reliability and validation of our methodology. The confidence intervals may be too wide to obtain meaningful conclusions when restricting the study area to 5 km, but comparing the coefficients will allow us to assess the consistency of the results based on the radius. 
+
+
+We apply Benjamini-Hochber's [@Benjamini1995] False Discovery Rate method to test hypothesis 2 (Pa impact on insequalities between households) and hypothesis 3 (effect on the importance of the PA governance model). These tests are performed to mitigate the risk of incorrectly inferring significant effects by controlling the average proportion of false positives among the results reported as significant. Hypothesis 2 is evaluated using the Z-score outcome variable of the wealth index, and hypothesis 3 is evaluated using the IUCN status of PA. 
+
+
+In the analysis, the outcome variable may be correlated with unobserved factors or shocks at the household level. Fixed effects methods can correct for many of these factors, but only repeated cross-sectional data area available here. However, this difficulty can be circumvented by using a pseudo-panel approach to estimate fixed effects models at the household cohort level [@Deaton1985]
+
+The model is as follows:
+
+$$
+\overline{Y}_{ct} = \theta_c + D_{ct} + \sum_{k=2015}^{2021} \beta \overline{Dist}_{ct} \mathbb{1}(t = k) + \delta \overline{X}_{ct} + \epsilon_i
+$$                                     
+                                    (3)
+${{Y}_{c t}}$: Average value of the household $i$ wealth index
+within the cohort $c$ at the period $t$
+
+${θ}_{c}$: Fixed effect controlling for the unobservable variables that remain constant over time at the cohort level
+
+${D}_{c t}$: Time-fixed effects at cohort level
+
+${{Dist}_{ct}}$: Average distance between the location of households
+and the boundaries of PA ( where ${{Dist}_{ct}} ∢ 10 km$ within the
+cohort $c$ for year $t$
+
+${{X}_{c t}}$: Average of the control variables (rainfall, drought) at cohort level c
+
+${ϵ}_{i}$: Error terms for individuals $i$
+
+
+However, genetic matching and Doubly Robust DID estimation on a cross-section do not control for unobserved characteristics that may simultaneously affect PA and the outcome variabel (wealth index). To assess the robustness of the results in the face of these potential biases resulting from unobserved confounding variables, we perform a sensitivity analysis using Rosenbaum's method @Rosenbaum2002(form: "prose"), (pp.~105–170)
 
 
 ## Resultats {#resultats}
 
 ### Matching between treatment and control {#matchingbetweentreatmentandcontrol}
+The distribution analysis of covariates prior to matching shows a significant imbalance between the treatment and control groups table). After matching, for all variables in each year, the SMD improvedcoviates improved. However, the population density varaible in 2000 remains difficult to balance perfectly. This is because PA are not randomly distributed to balance perfectly. This is because PA are not randomly distributed across the landscape: those managed for biodiversity conservation are generally located in more isolated and less populated areas, while those managed for mixed uses are surrounded by denser populationS. A Chung [@Chung2018] point out: "Population density around protected areas managed for mixed puposes is also higher than around protected areas managed primarily for biosiversity conservation. 'This heterogeneity between the human contexts surrounding different types of protected areas creates a lack of overlap in the distribution of population density between the tratment and control groups, making this variable difficult to balance perfectly, even after matching. Nevertheless, we achiev an acceptable balance of covariates (Annexe). The biophysical and domestic characteristic of each household in the treatment and control groups are now comparable. We apply the DID method to our study. 
+
 
 ### Overall impact on livelihoods {#overallimpactonlivelihoods}
 
