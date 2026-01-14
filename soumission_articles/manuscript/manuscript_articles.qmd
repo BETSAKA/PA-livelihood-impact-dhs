@@ -23,36 +23,36 @@ author:
 
 affiliations:
   - id: univ_tana
-    name: "University of Antananarivo, Madagascar"
+    name: "Université d'Antananarivo"
     url: https://www.univ-antananarivo.mg
     
   
   - id: univ_paris
-    name: "University of Paris-Saclay, France"
+    name: "Université Paris-Saclay"
     url: https://www.universite-paris-saclay.fr
     
   
   - id: ird
-    name: "French National Research Institute for Sustainable Development(IRD), Madagascar"
+    name: "IRD"
     url: https://www.ird.fr
     
   
   - id: uvsq
-    name: "University of Saint Quentin en Yvelines, France"
+    name: "UVSQ"
     url: https://www.uvsq.fr
     
   
   - id: umi
-    name: "UMI-Sustainability and Resilience (SOURCE), IRD, France"
+    name: "UMI-SOURCE"
     url: https://www.umi-source.uvsq.fr
     
     
   - id: afd
-    name: "Agence Française de Développement(AFD), France"
+    name: "AFD"
     
   
   - id: cered
-    name: Development Centre for Economic Studies and Research (CERED) Madagascar
+    name: CERED
     
     
 editor: visual
