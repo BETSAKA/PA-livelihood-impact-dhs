@@ -6,7 +6,7 @@ editor_options:
 
 # Treatment assignation
 
-Les clusters d'enquêtes DHS (1997, 2008, 2011, 2013, 2016 et 2021) sont classés par rapport à leur distance aux aires protégées (AP) et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
+Les clusters d'enquêtes DHS (1997, 2008 et 2021), MIS (2011, 2013, 2016) et MICS (2018) sont classés par rapport à leur distance aux aires protégées (AP) et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
 
 -   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
 
@@ -43,10 +43,22 @@ gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp", quiet
 gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp", quiet = TRUE) 
 gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp", quiet = TRUE)
 gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp", quiet = TRUE)
+gps_2018_initial <- st_read("data/raw/mics/2018/GPS Datasets/MadagascarMICS2018GPS.shp")  %>%
+  select(DHSYEAR = SVYYEARS,
+         DHSCLUST = HH1,
+         URBAN_RURA = HH6,
+         LATNUM = LATITUDE,
+         LONGNUM = LONGITUDE) %>%
+  mutate(URBAN_RURA = case_when(
+    URBAN_RURA == "Urban" ~ "U",
+    URBAN_RURA == "Rural" ~ "R",
+    .default = NA_character_
+  ))
 
 tmap_mode("plot")
 bind_rows(gps_1997_initial, gps_2008_initial, gps_2011_initial,
-          gps_2013_initial,  gps_2016_initial, gps_2021_initial) %>%
+          gps_2013_initial,  gps_2016_initial, gps_2018_initial,
+          gps_2021_initial) %>%
   tm_shape() + tm_dots() + tm_facets("DHSYEAR")
 
 ```
@@ -69,6 +81,7 @@ gps_2008 <- check_coordinates(gps_2008_initial, contour_mada)
 gps_2011 <- check_coordinates(gps_2011_initial, contour_mada)
 gps_2013 <- check_coordinates(gps_2013_initial, contour_mada)
 gps_2016 <- check_coordinates(gps_2016_initial, contour_mada)
+gps_2018 <- check_coordinates(gps_2018_initial, contour_mada)
 gps_2021 <- check_coordinates(gps_2021_initial, contour_mada)
 ```
 
@@ -83,13 +96,50 @@ On charge et nettoie le jeu de données des aires protégées de WDPA, en ne gar
 ```{r}
 library(wdpar)
 
+# Load the work implemented in: https://betsaka.github.io/conservation-dynamic-madagascar/03_legal_docs.html
+legal_texts <- read_rds("data/legal_texts.rds")
+
+# Use the legal analysis made from CNLEGIS to identify early protections
+# that are not registered in WDPA: 
+legal_years <- legal_texts |>
+  filter(str_detect(type_decision, "creation_definitive|mise_protection_temporaire")) |>
+  mutate(
+    date_texte = as.Date(date_texte),
+    legal_year = year(date_texte)
+  ) |>
+  group_by(WDPAID) |>
+  summarize(
+    legal_year = min(legal_year, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+# Load WDPA data
 wdpa <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
-  wdpa_clean() |> 
-  filter(STATUS == "Designated") %>%
+ # wdpa_clean() |> # This might cause to drop existing PAs!
+ # Include PAs that exist according to the legal analysis
+  filter(STATUS == "Designated" | WDPAID %in% legal_years$WDPAID) %>%
   mutate(MARINE = recode(MARINE,
-                           "terrestrial" = "Terrestre",
-                         "marine" = "Marine",
-                         "partial" = "Mixte"))
+                         "0" = "Terrestre",
+                         "1" = "Mixte",
+                         "2" = "Marine"),
+        GEOMETRY_TYPE = st_geometry_type(.)) %>%
+  filter(GEOMETRY_TYPE %in% c("POLYGON", "MULTIPOLYGON"),)
+
+# Make sure join keys have compatible types
+legal_years <- legal_years |> mutate(WDPAID = as.numeric(WDPAID))
+wdpa <- wdpa |> mutate(WDPAID = as.numeric(WDPAID))
+
+# Join and replace STATUS_YR where a legal year exists
+wdpa <- wdpa |>
+  left_join(legal_years, by = "WDPAID") |>
+  mutate(
+    STATUS_YR = if_else(!is.na(legal_year), as.integer(legal_year), STATUS_YR)
+  ) |>
+  select(-legal_year)
+
+# To check if some are unmatched (on priciple none should be)
+legal_unmatched <- legal_years |> anti_join(st_drop_geometry(wdpa), by = "WDPAID")
 
 # Load boundary
 contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
@@ -143,7 +193,7 @@ wdpa %>%
 
 # Tableau personnalisé 
 wdpa_tb_sel <- wdpa_tb %>%
-  select(WDPAID, ORIG_NAME, DESIG, DESIG_TYPE, IUCN_CAT, MARINE, REP_AREA, STATUS, STATUS_YR, GOV_TYPE, OWN_TYPE, MANG_AUTH, VERIF, GEOMETRY_TYPE, AREA_KM2)
+  select(WDPAID, ORIG_NAME, DESIG, DESIG_TYPE, IUCN_CAT, MARINE, REP_AREA, STATUS, STATUS_YR, GOV_TYPE, OWN_TYPE, MANG_AUTH, VERIF, GEOMETRY_TYPE)
 
 write_xlsx(wdpa_tb_sel, "data/derived/WDPA_selection_MDG.xlsx")
 
@@ -282,8 +332,8 @@ pivot_year <- 2008
 summary_table <- wdpa_terrestre_mod %>%
   st_drop_geometry() %>%
   mutate(Creation_Period = if_else(STATUS_YR < pivot_year,
-                                   paste("Avant", pivot_year),
-                                   paste("À partir de", pivot_year))) %>%
+                                   paste("Before", pivot_year),
+                                   paste("Starting in", pivot_year))) %>%
   group_by(Creation_Period) %>%
   summarise(
     Count = n(),
@@ -295,13 +345,13 @@ summary_table <- wdpa_terrestre_mod %>%
 # Formatage du tableau avec gt
 gt_table <- gt(summary_table) %>%
   tab_header(
-    title = paste("Aires protégées par période de création (Année pivot = ", pivot_year, ")"),
-    subtitle = "Zones terrestres uniquement"
+    title = paste("Protected Areas by period (Reference year = ", pivot_year, ")"),
+    subtitle = "terrestrial areas only"
   ) %>%
   cols_label(
-    Creation_Period = "Période de Création",
-    Count = "Nombre d'AP",
-    Area_km2 = "Surface km²"
+    Creation_Period = "Creation Period",
+    Count = "PA number",
+    Area_km2 = "Area (km²)"
   ) %>%
   fmt_number(
     columns = c(Count, Area_km2),
@@ -309,6 +359,10 @@ gt_table <- gt(summary_table) %>%
   )
 
 gt_table
+
+# Enregistre le tableau en CSV
+write.csv(summary_table, "data/derived/summary_table.csv", row.names = FALSE)
+
 ```
 
 ## Classification des clusters
@@ -383,6 +437,8 @@ gps_2013_class <- classify_clusters_with_pa(gps_2013, buffer_10km_before_2008,
                                             wdpa_from_2008)
 gps_2016_class <- classify_clusters_with_pa(gps_2016, buffer_10km_before_2008,
                                             wdpa_from_2008)
+gps_2018_class <- classify_clusters_with_pa(gps_2018, buffer_10km_before_2008,
+                                            wdpa_from_2008)
 gps_2021_class <- classify_clusters_with_pa(gps_2021, buffer_10km_before_2008,
                                             wdpa_from_2008)
 
@@ -393,6 +449,7 @@ gps_all_class <- bind_rows(
   gps_2011_class,
   gps_2013_class,
   gps_2016_class,
+  gps_2018_class,
   gps_2021_class
 )
 
@@ -561,9 +618,21 @@ years_all <- sort(unique(gps_all_class$DHSYEAR))
 
 # Compte ménages (toutes observations) 
 households_counts_all <- map_dfr(years_all, function(y) {
+  
+  # Load data depending on year
+  if (y == 2018) {
+    hr <- read_spss("data/raw/mics/2018/SPSS datasets/hh.sav") %>%
+      transmute(
+        hv001 = HH1,
+        hv002 = HH2,
+        DHSYEAR = y
+      )
+  } else {
   # HR de l'année
   hr <- load_dhs_data(dhs_folder, y, "HR") %>%
-    mutate(DHSYEAR = y)  # pour la jointure avec la classification
+    mutate(DHSYEAR = y) %>%
+      select(hv001, hv002, DHSYEAR)
+  }
 
   # Classification des grappes de l'année
   cl_y <- gps_all_class %>%
