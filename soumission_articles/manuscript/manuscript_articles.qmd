@@ -232,34 +232,29 @@ The data from this source will constitue our matching variables. Matching covari
 
 @fig-distr-wi shows that the control and treatment groups have very similar wealth profiles, with averages between 47 and 50, and medians ranging from 46 to 51. In contrast, the excluded group is at the top of the national distribution of wealth, with an average well above 50 and a median between 63 and 77. Its distribution is generally skewed upwards (high p25). This suggests that there is no difference between the control and treatment groups; however, the standard deviations of the two groups indicate a high degree of heterogeneity in household living standards.  
 
-
 ![Distribution of the rural wealth index (percentile) ](figures/distr_wi.png){#fig-distr-wi width=70%}
-**Note:** The graph shows boxplots of the wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). On average, for all years of the study, the wealth index of the two groups is roughly similar. 
+ 
 
 
 ![Distribution of the Zscore rural wealth index (percentile) ](figures/distr_zs.png){#fig-distr-zs width=70%}
 
+**Source:** Authors based on GPS data from DHS clusters
+
+**Note:** The graph shows boxplots of the wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). On average, for all years of the study, the wealth index of the two groups is roughly similar.
+
+Dans le tableau A.5, en annexe, nous présentons les statistiques descriptives de notre échantillon. 
 
 
 ## Empirical strategic {#empiricalstrategic}
 
 ### Matching methods {#matchingmethods}
-
-
-
-
-
-
-
-
-
-
-
-
+Our evalautive approach is based on a counterfactual measure that estimates the causal effect of the treatment, in case the implementation of PA.  This approach is based on a comparison between a treatment group (household living in rural areas within or less than 10 km of PA) and a control group (households living in rural areas more than 10 km from PA created after 2008)[@Schleicher2020; @Desbureaux2021]. The study thus fits within the framework of Rubin's causal model [@Rubin1974], according to which there are several hypothetical outcomes depending on exposure to the treatment. To ensure comparability between groups, we apply the genetic matching (GenMatch) from the R MachtIt package to pair each unit in the treatment group with a unit in the control group that has the same observable characteristics [@Ho2007]. This approach uses a single distance measure, 'Mahalanobis distance matching', to quantify the similarity between the two groups of observations, while taking into account the correlations between covariates and their covariances [@Diamond2013]. It increases the credibility of the results and reduces endogeneity issues [@Ma2020]. We also apply a caliper of 0.25 standard deviation of the Mahalanobis distance to avoid creating pairs with overly large differences  [@Rosenbaum1983]. The validity of this estimation depends on the balance between the treatment and control groups before and after matching. Before matching, we check the balance using the Standardized Mean Difference (SMD), which measures the difference between the means of the covariates in the two groups. After matching, a visual test is performed on the quality of the matching using a quantile-quantile plot. 
 
 
 ### Difference-in-difference {#difference-in-difference}
-We assess the PA impact 
+We assess the PA impact on household living standards and inequalities using the difference-in-difference (DID) method. The DID principle is to compare the wealth index of control and treatment households before and after the establishment of PA(note that our treatment begins in 2008). 
+
+This method relies on the parallel trends assumption,according to which treated and untreated areas evolved similarly prior to the intervention. To validate this hypothesis, we will use as a reference, among the rural households surveyed in 1997, those living in an area located within or less than 10 km of a PA created between 2008 and 2021 (placebo treatment group) and those matched to them using the method described above (placebo control group). We will conduct a placebo test by performing a DID estimation between these groups for the period 1997-2008. If the result of this placebo test is zero or statistically insignificant, the hypothesis of parallel trends is validated. 
 
 
 The simplified equation for the difference-in-difference [@Daw2018] is as follows:
