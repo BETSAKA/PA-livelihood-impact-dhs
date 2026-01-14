@@ -382,75 +382,76 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>    <span class="at">w_all   =</span> w_svy <span class="sc">*</span> weights, <span class="co"># poids d'enquête × poids de matching (si 'weights' existe)</span></span>
 <span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>    <span class="at">id      =</span> <span class="fu">row_number</span>(),</span>
 <span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Map des années de statut -&gt; première année d'observation post (treatment_phase)</span></span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>    <span class="at">treatment_phase =</span> <span class="fu">case_when</span>(</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>      GROUP <span class="sc">==</span> <span class="st">"Control"</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>      STATUS_YR <span class="sc">==</span> <span class="dv">2009</span> <span class="sc">~</span> <span class="dv">2011</span>,</span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>      STATUS_YR <span class="sc">==</span> <span class="dv">2010</span> <span class="sc">~</span> <span class="dv">2011</span>,</span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>      STATUS_YR <span class="sc">==</span> <span class="dv">2012</span> <span class="sc">~</span> <span class="dv">2013</span>,</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>      STATUS_YR <span class="sc">==</span> <span class="dv">2015</span> <span class="sc">~</span> <span class="dv">2016</span>,</span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>      STATUS_YR <span class="sc">==</span> <span class="dv">2017</span> <span class="sc">~</span> <span class="dv">2018</span>,</span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(STATUS_YR)  <span class="sc">~</span> <span class="dv">0</span>,</span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>               <span class="sc">~</span> STATUS_YR</span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>    <span class="at">treat_on =</span> <span class="fu">as.integer</span>(treatment_phase <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;</span> DHSYEAR <span class="sc">&gt;=</span> treatment_phase),</span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>    <span class="at">rel_year =</span> <span class="fu">if_else</span>(treatment_phase <span class="sc">&gt;</span> <span class="dv">0</span>, DHSYEAR <span class="sc">-</span> treatment_phase, <span class="cn">Inf</span>),</span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>    <span class="at">rel_year_binned =</span> <span class="fu">case_when</span>(</span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.infinite</span>(rel_year) <span class="sc">~</span> <span class="cn">Inf</span>,</span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">pmax</span>(<span class="fu">pmin</span>(rel_year, <span class="dv">5</span>), <span class="sc">-</span><span class="dv">5</span>)</span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a><span class="co"># Outcome h</span></span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a>yvar <span class="ot">&lt;-</span> <span class="st">"wealth_centile_rural_weighted"</span></span>
-<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a><span class="co"># fixest DID 2×2: placebo 1997–2008, traitement 2008–2021 ------------------</span></span>
-<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a><span class="co"># Placebo 1997–2008</span></span>
-<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a>pre <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span></span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DHSYEAR <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1997</span>, <span class="dv">2008</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">post =</span> <span class="fu">as.integer</span>(DHSYEAR <span class="sc">==</span> <span class="dv">2008</span>),</span>
-<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>         <span class="at">treat_post =</span> treat <span class="sc">*</span> post)</span>
-<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>f_pre <span class="ot">&lt;-</span> <span class="fu">as.formula</span>(<span class="fu">paste</span>(</span>
-<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>  yvar, <span class="st">"~ treat + post + treat_post +"</span>,</span>
-<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>  <span class="st">"spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"</span></span>
-<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a>m_pre <span class="ot">&lt;-</span> <span class="fu">feols</span>(f_pre, <span class="at">data =</span> pre, <span class="at">weights =</span> <span class="sc">~</span> w_all, <span class="at">cluster =</span> <span class="sc">~</span> hv001)</span>
-<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a><span class="co"># Traitement 2008–2021</span></span>
-<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a>main <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span></span>
-<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DHSYEAR <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2008</span>, <span class="dv">2021</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">post =</span> <span class="fu">as.integer</span>(DHSYEAR <span class="sc">==</span> <span class="dv">2021</span>),</span>
-<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>         <span class="at">treat_post =</span> treat <span class="sc">*</span> post)</span>
-<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>f_main <span class="ot">&lt;-</span> f_pre  <span class="co"># même formule</span></span>
-<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>m_main <span class="ot">&lt;-</span> <span class="fu">feols</span>(f_main, <span class="at">data =</span> main, <span class="at">weights =</span> <span class="sc">~</span> w_all, <span class="at">cluster =</span> <span class="sc">~</span> hv001)</span>
-<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a><span class="fu">etable</span>(m_pre, m_main, <span class="at">headers =</span> <span class="fu">c</span>(<span class="st">"Placebo 97–08"</span>, <span class="st">"Traitement 08–21"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>    <span class="co"># treatment_phase = STATUS_YR</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>    <span class="at">treatment_phase =</span> <span class="fu">case_when</span>(</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>      GROUP <span class="sc">==</span> <span class="st">"Control"</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>      STATUS_YR <span class="sc">==</span> <span class="dv">2009</span> <span class="sc">~</span> <span class="dv">2011</span>,</span>
+<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>      STATUS_YR <span class="sc">==</span> <span class="dv">2010</span> <span class="sc">~</span> <span class="dv">2011</span>,</span>
+<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>      STATUS_YR <span class="sc">==</span> <span class="dv">2012</span> <span class="sc">~</span> <span class="dv">2013</span>,</span>
+<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a>      STATUS_YR <span class="sc">==</span> <span class="dv">2015</span> <span class="sc">~</span> <span class="dv">2016</span>,</span>
+<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a>      STATUS_YR <span class="sc">==</span> <span class="dv">2017</span> <span class="sc">~</span> <span class="dv">2018</span>,</span>
+<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(STATUS_YR)  <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>               <span class="sc">~</span> STATUS_YR</span>
+<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a>    <span class="at">treat_on =</span> <span class="fu">as.integer</span>(treatment_phase <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;</span> DHSYEAR <span class="sc">&gt;=</span> treatment_phase),</span>
+<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>    <span class="at">rel_year =</span> <span class="fu">if_else</span>(treatment_phase <span class="sc">&gt;</span> <span class="dv">0</span>, DHSYEAR <span class="sc">-</span> treatment_phase, <span class="cn">Inf</span>),</span>
+<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a>    <span class="at">rel_year_binned =</span> <span class="fu">case_when</span>(</span>
+<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.infinite</span>(rel_year) <span class="sc">~</span> <span class="cn">Inf</span>,</span>
+<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">pmax</span>(<span class="fu">pmin</span>(rel_year, <span class="dv">5</span>), <span class="sc">-</span><span class="dv">5</span>)</span>
+<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a><span class="co"># Outcome h</span></span>
+<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a>yvar <span class="ot">&lt;-</span> <span class="st">"wealth_centile_rural_weighted"</span></span>
+<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a><span class="co"># fixest DID 2×2: placebo 1997–2008, traitement 2008–2021 ------------------</span></span>
+<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a><span class="co"># Placebo 1997–2008</span></span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>pre <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span></span>
+<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DHSYEAR <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1997</span>, <span class="dv">2008</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">post =</span> <span class="fu">as.integer</span>(DHSYEAR <span class="sc">==</span> <span class="dv">2008</span>),</span>
+<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>         <span class="at">treat_post =</span> treat <span class="sc">*</span> post)</span>
+<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a>f_pre <span class="ot">&lt;-</span> <span class="fu">as.formula</span>(<span class="fu">paste</span>(</span>
+<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a>  yvar, <span class="st">"~ treat + post + treat_post +"</span>,</span>
+<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a>  <span class="st">"spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"</span></span>
+<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a>m_pre <span class="ot">&lt;-</span> <span class="fu">feols</span>(f_pre, <span class="at">data =</span> pre, <span class="at">weights =</span> <span class="sc">~</span> w_all, <span class="at">cluster =</span> <span class="sc">~</span> hv001)</span>
+<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a><span class="co"># Traitement 2008–2021</span></span>
+<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>main <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span></span>
+<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DHSYEAR <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2008</span>, <span class="dv">2021</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">post =</span> <span class="fu">as.integer</span>(DHSYEAR <span class="sc">==</span> <span class="dv">2021</span>),</span>
+<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a>         <span class="at">treat_post =</span> treat <span class="sc">*</span> post)</span>
+<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a>f_main <span class="ot">&lt;-</span> f_pre  <span class="co"># même formule</span></span>
+<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a>m_main <span class="ot">&lt;-</span> <span class="fu">feols</span>(f_main, <span class="at">data =</span> main, <span class="at">weights =</span> <span class="sc">~</span> w_all, <span class="at">cluster =</span> <span class="sc">~</span> hv001)</span>
+<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a><span class="fu">etable</span>(m_pre, m_main, <span class="at">headers =</span> <span class="fu">c</span>(<span class="st">"Placebo 97–08"</span>, <span class="st">"Traitement 08–21"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>                                        m_pre                        m_main
                               Placebo 97–08            Traitement 08–21
 Dependent Var.: wealth_centile_rural_weighted wealth_centile_rural_weighted
                                                                            
-Constant                     44.81*** (4.192)              40.35*** (2.955)
-treat                          -2.834 (4.228)                -1.786 (3.683)
-post                           -3.892 (5.948)              23.45*** (4.422)
-treat_post                      1.403 (5.613)                -1.724 (4.359)
-spei_wc_n_2                     5.927 (4.004)                -3.202 (3.279)
-spei_wc_n_1                   -0.5034 (2.525)             -8.250*** (2.098)
-spei_wc_n                       1.435 (4.225)              18.36*** (2.370)
-hv219Femme                    -0.5760 (1.040)            -2.853*** (0.7892)
-hv220                      0.1065*** (0.0258)            0.1042*** (0.0186)
+Constant                     47.18*** (7.312)              36.54*** (3.146)
+treat                          -4.341 (7.515)                -1.850 (4.439)
+post                           -12.51 (9.107)              20.34*** (5.869)
+treat_post                      3.297 (8.814)                 1.743 (5.748)
+spei_wc_n_2                     4.973 (7.274)                -6.617 (4.649)
+spei_wc_n_1                    -1.494 (3.615)              -8.422** (2.646)
+spei_wc_n                       4.649 (6.261)              18.02*** (2.919)
+hv219Femme                     -2.025 (1.444)            -5.503*** (0.9553)
+hv220                      0.1247*** (0.0348)            0.0969*** (0.0242)
 _______________ _____________________________ _____________________________
 S.E.: Clustered                     by: hv001                     by: hv001
-Observations                            6,831                        11,686
-R2                                    0.00806                       0.07923
-Adj. R2                               0.00690                       0.07860
+Observations                            3,672                         6,960
+R2                                    0.02510                       0.09796
+Adj. R2                               0.02297                       0.09693
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -519,12 +520,12 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                                did2s statique
 Dependent Var.: wealth_centile_rural_weighted
                                              
-treat_on = 1                    2.676 (2.080)
+treat_on = 1                    1.324 (2.433)
 _______________ _____________________________
 S.E.: Clustered                     by: hv001
-Observations                           22,501
-R2                                    0.00176
-Adj. R2                               0.00176
+Observations                           12,639
+R2                                    0.00043
+Adj. R2                               0.00043
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -547,18 +548,19 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                          did2s event-study (-5..5)
 Dependent Var.:      wealth_centile_rural_weighted
                                                   
-rel_year_binned = -5               -0.2003 (1.419)
-rel_year_binned = -3                -2.887 (2.167)
-rel_year_binned = -2               -5.325. (2.915)
-rel_year_binned = 0                 6.808. (3.592)
-rel_year_binned = 2                  2.255 (3.902)
-rel_year_binned = 3                 9.081. (4.780)
-rel_year_binned = 5                 0.2325 (2.816)
+rel_year_binned = -5                 1.175 (2.065)
+rel_year_binned = -3                -5.035 (3.293)
+rel_year_binned = -2                -8.059 (5.135)
+rel_year_binned = 0                 -1.409 (5.005)
+rel_year_binned = 1              -30.91*** (2.913)
+rel_year_binned = 2                 0.5395 (4.692)
+rel_year_binned = 3                -0.9441 (11.76)
+rel_year_binned = 5                  2.741 (2.981)
 ____________________ _____________________________
 S.E.: Clustered                          by: hv001
-Observations                                22,501
-R2                                         0.00608
-Adj. R2                                    0.00581
+Observations                                12,639
+R2                                         0.00749
+Adj. R2                                    0.00694
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -597,17 +599,17 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Wald test, H0: joint nullity of rel_year_binned::-5, rel_year_binned::-3 and rel_year_binned::-2
- stat = 1.75604, p-value = 0.153216, on 3 and 22,494 DoF, VCOV: Corrected Clustered (hv001).$stat
-[1] 1.756044
+ stat = 1.66275, p-value = 0.172717, on 3 and 12,631 DoF, VCOV: Corrected Clustered (hv001).$stat
+[1] 1.662754
 
 $p
-[1] 0.1532165
+[1] 0.1727166
 
 $df1
 [1] 3
 
 $df2
-[1] 22494
+[1] 12631
 
 $vcov
 [1] "Corrected Clustered (hv001)"</code></pre>
@@ -643,12 +645,12 @@ $vcov
                  did2s statique
 Dependent Var.:   zscore_wealth
                                
-treat_on = 1    0.0009 (0.0062)
+treat_on = 1    0.0081 (0.0071)
 _______________ _______________
 S.E.: Clustered       by: hv001
-Observations             22,501
-R2                      -4.4e-5
-Adj. R2                 -4.4e-5
+Observations             12,639
+R2                     -3.69e-5
+Adj. R2                -3.69e-5
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -671,18 +673,19 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                      did2s event-study (-5..5)
 Dependent Var.:                  zscore_wealth
                                               
-rel_year_binned = -5          0.0086* (0.0039)
-rel_year_binned = -3           0.0009 (0.0060)
-rel_year_binned = -2           0.0271 (0.0174)
-rel_year_binned = 0           -0.0009 (0.0117)
-rel_year_binned = 2            0.0016 (0.0333)
-rel_year_binned = 3           0.0284* (0.0142)
-rel_year_binned = 5            0.0004 (0.0069)
-____________________          ________________
+rel_year_binned = -5          0.0113. (0.0067)
+rel_year_binned = -3          -0.0042 (0.0078)
+rel_year_binned = -2           0.0104 (0.0290)
+rel_year_binned = 0            0.0130 (0.0161)
+rel_year_binned = 1        -0.0792*** (0.0091)
+rel_year_binned = 2            0.0267 (0.0276)
+rel_year_binned = 3           -0.0146 (0.0153)
+rel_year_binned = 5            0.0078 (0.0086)
+____________________       ___________________
 S.E.: Clustered                      by: hv001
-Observations                            22,501
-R2                                     2.68e-5
-Adj. R2                               -0.00024
+Observations                            12,639
+R2                                     0.00011
+Adj. R2                               -0.00045
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -721,17 +724,17 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Wald test, H0: joint nullity of rel_year_binned::-5, rel_year_binned::-3 and rel_year_binned::-2
- stat = 2.50965, p-value = 0.056847, on 3 and 22,494 DoF, VCOV: Corrected Clustered (hv001).$stat
-[1] 2.509653
+ stat = 1.12753, p-value = 0.336354, on 3 and 12,631 DoF, VCOV: Corrected Clustered (hv001).$stat
+[1] 1.127533
 
 $p
-[1] 0.05684675
+[1] 0.3363539
 
 $df1
 [1] 3
 
 $df2
-[1] 22494
+[1] 12631
 
 $vcov
 [1] "Corrected Clustered (hv001)"</code></pre>
@@ -772,28 +775,28 @@ $vcov
 Quantile Treatment Effect:
         
 tau QTE Std. Error
-0.05     -4.58    2.38
-0.1 -10.81    2.72
-0.15    -17.66    3.18
-0.2 -18.95    2.58
-0.25    -20.74    2.30
-0.3 -22.05    2.44
-0.35    -24.68    2.53
-0.4 -25.64    2.54
-0.45    -28.51    2.47
-0.5 -27.95    2.19
-0.55    -28.25    2.12
-0.6 -26.98    1.85
-0.65    -26.00    1.72
-0.7 -23.59    1.65
-0.75    -20.73    1.69
-0.8 -17.73    1.70
-0.85    -15.45    1.68
-0.9 -12.27    1.59
-0.95     -9.65    1.53
+0.05    -0.31    1.17
+0.1 -2.15    2.18
+0.15    -3.15    2.50
+0.2 -4.53    3.35
+0.25    -5.04    3.50
+0.3 -6.64    3.04
+0.35    -7.46    3.06
+0.4 -6.81    2.98
+0.45    -5.83    2.99
+0.5 -6.61    2.99
+0.55    -4.74    3.20
+0.6 -6.36    3.44
+0.65    -6.29    3.35
+0.7 -7.17    2.91
+0.75    -8.42    2.58
+0.8 -7.76    2.25
+0.85    -7.81    2.29
+0.9 -5.76    2.30
+0.95    -4.04    2.18
 
-Average Treatment Effect:   -19.51
-     Std. Error:        1.51</code></pre>
+Average Treatment Effect:   -5.39
+     Std. Error:        1.86</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -835,28 +838,28 @@ Average Treatment Effect:   -19.51
 Quantile Treatment Effect:
         
 tau QTE Std. Error
-0.05     17.022   3.911
-0.1  15.121   2.447
-0.15     16.945   2.628
-0.2  19.346   3.356
-0.25     18.850   4.139
-0.3  16.292   4.674
-0.35     15.528   4.690
-0.4  13.770   4.456
-0.45     13.616   4.332
-0.5  11.568   4.732
-0.55     10.253   5.283
-0.6   5.472   5.188
-0.65      4.016   5.084
-0.7  -0.087   5.075
-0.75     -5.272   5.334
-0.8  -7.921   6.155
-0.85    -10.318   5.675
-0.9 -11.809   4.909
-0.95    -16.652   8.555
+0.05     10.28    4.33
+0.1  11.54    3.54
+0.15     13.03    4.05
+0.2  12.65    5.02
+0.25      9.12    5.75
+0.3   6.08    6.23
+0.35      4.13    6.81
+0.4   0.67    7.80
+0.45     -1.23    8.99
+0.5  -7.97   10.14
+0.55    -13.47    9.86
+0.6 -19.20    9.17
+0.65    -23.98    8.48
+0.7 -23.98    7.36
+0.75    -18.51    6.63
+0.8 -15.67    5.49
+0.85    -11.44    5.72
+0.9  -8.13    8.16
+0.95    -13.75   18.52
 
-Average Treatment Effect:   5.91
-     Std. Error:        3.50</code></pre>
+Average Treatment Effect:   -5.57
+     Std. Error:        5.99</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>

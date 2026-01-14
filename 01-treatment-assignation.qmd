@@ -68,6 +68,8 @@ clusters_dhs <- bind_rows(gps_1997_initial, gps_2008_initial, gps_2011_initial,
   tm_shape(contour_mada) + tm_polygons() +
   tm_shape(clusters_dhs) + tm_dots() + tm_facets("DHSYEAR")
 
+legal_texts <- read_rds("data/legal_texts.rds")
+table(legal_texts$type_decision)
 ```
 
 Nous obtenons une carte distincte pour chaque année d'enquête. Sur chaque carte figure des points, dans laquelle chaque point représente un cluster d'enquête, correspondant aux coordonnées GPS fournies par DHS.
@@ -103,13 +105,45 @@ Les données de SAPM sont codées en EPSG 9001, que l'on transforme en 4326 pour
 ```{r}
 library(wdpar)
 
+# Use the legal analysis made from CNLEGIS to identify early protections
+# that are not registered in WDPA: 
+legal_years <- legal_texts |>
+  filter(str_detect(type_decision, "creation_definitive|mise_protection_temporaire")) |>
+  mutate(
+    date_texte = as.Date(date_texte),
+    legal_year = year(date_texte)
+  ) |>
+  group_by(WDPAID) |>
+  summarize(
+    legal_year = min(legal_year, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Load WDPA data
 wdpa <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
-  wdpa_clean() |> 
-  filter(STATUS == "Designated") %>%
+ # wdpa_clean() |> # This might cause to drop existing PAs!
+  filter(STATUS == "Designated" | WDPAID %in% legal_years$WDPAID) %>%
   mutate(MARINE = recode(MARINE,
-                           "terrestrial" = "Terrestre",
-                         "marine" = "Marine",
-                         "partial" = "Mixte"))
+                         "0" = "Terrestre",
+                         "1" = "Mixte",
+                         "2" = "Marine")) %>%
+  filter(st_geometry_type(.) %in% c("POLYGON", "MULTIPOLYGON"))
+
+# Make sure join keys have compatible types
+legal_years <- legal_years |> mutate(WDPAID = as.numeric(WDPAID))
+wdpa <- wdpa |> mutate(WDPAID = as.numeric(WDPAID))
+
+# Join and replace STATUS_YR where a legal year exists
+wdpa <- wdpa |>
+  left_join(legal_years, by = "WDPAID") |>
+  mutate(
+    STATUS_YR = if_else(!is.na(legal_year), as.integer(legal_year), STATUS_YR)
+  ) |>
+  select(-legal_year)
+
+# To check if some are unmatched (on priciple none should be)
+legal_unmatched <- legal_years |> anti_join(st_drop_geometry(wdpa), by = "WDPAID")
+
 
 # Load boundary
 contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
@@ -149,9 +183,11 @@ On peut aussi générer un format tabulaire pour visualiser les données.
 
 # Tableau complet
 wdpa_tb <- wdpa %>%
-  st_drop_geometry()
+  mutate(GEOMETRY_TYPE = st_geometry_type(.),
+         AREA_KM2 = st_area(.)) %>%
+  st_drop_geometry() 
 
-dir.create("derived")
+dir.create("data/derived")
 
 write_xlsx(wdpa_tb, "data/derived/WDPA_WDOECM_Jul2025_Public_MDG.xlsx")
 

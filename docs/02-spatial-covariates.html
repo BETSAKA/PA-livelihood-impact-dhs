@@ -309,7 +309,7 @@ div.csl-indent {
 
 <section id="introduction" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="introduction"><span class="header-section-number">3.1</span> Introduction</h2>
-<p>Ce document vise à charger les données géophysiques des ménages à l’aide du package R mapme.biodiversity (<a href="https://mapme-initiative.github.io/mapme.biodiversity/index.html" class="uri">https://mapme-initiative.github.io/mapme.biodiversity/index.html</a>) <span class="citation" data-cites="görgen2022">Görgen and Bhandari (<a href="#ref-görgen2022" role="doc-biblioref">2022</a>)</span>. Ce package va automatiser la récupération de données volumineuses au format raster et leur traitement pour produire une série d’indicateurs appliqués à des polygones.</p>
+<p>Ce document vise à charger les données géophysiques des ménages à l’aide du package R mapme.biodiversity (<a href="https://mapme-initiative.github.io/mapme.biodiversity/index.html" class="uri">https://mapme-initiative.github.io/mapme.biodiversity/index.html</a>) <span class="citation" data-cites="görgen2022">Görgen and Bhandari (<a href="11-references.html#ref-görgen2022" role="doc-biblioref">2022</a>)</span>. Ce package va automatiser la récupération de données volumineuses au format raster et leur traitement pour produire une série d’indicateurs appliqués à des polygones.</p>
 </section>
 <section id="données-dhs" class="level2" data-number="3.2">
 <h2 data-number="3.2" class="anchored" data-anchor-id="données-dhs"><span class="header-section-number">3.2</span> Données DHS</h2>
@@ -479,11 +479,11 @@ Geodetic CRS:  WGS 84</code></pre>
 <h1 data-number="4"><span class="header-section-number">4</span> Chargement des données géophysiques des ménages</h1>
 <p>Nous allons charger et extraire les données sur les données géophysiques des ménages qui serviront de variables d’appariement et de variables de contrôle pour l’analyse. Ces covariables sont des covariables succeptibles d’influencer le traitement (aires protégées créées à proximité du ménage) et le résultat (wealth index et inégalité des ménages):</p>
 <ul>
-<li><p>Le couvert forestier en 2000 <span class="citation" data-cites="hansen2013">Hansen et al. (<a href="#ref-hansen2013" role="doc-biblioref">2013</a>)</span> (Hansen et al.2013)</p></li>
-<li><p>La pente et l’altitude <span class="citation" data-cites="nasajpl2020">NASA JPL (<a href="#ref-nasajpl2020" role="doc-biblioref">2020</a>)</span> (NASA SRTM)</p></li>
-<li><p>La densité de population en 2000 <span class="citation" data-cites="worldpop2018">WorldPop and CIESIN (<a href="#ref-worldpop2018" role="doc-biblioref">2018</a>)</span> (Worldpop)</p></li>
-<li><p>L’accessibilité en 2000 <span class="citation" data-cites="uchida2011">Uchida and Nelson (<a href="#ref-uchida2011" role="doc-biblioref">2011</a>)</span> (JRC, Uchida et Nelson 2011)</p></li>
-<li><p>Les données worldclim <span class="citation" data-cites="vicente-serrano2010">Vicente-Serrano, Beguería, and López-Moreno (<a href="#ref-vicente-serrano2010" role="doc-biblioref">2010</a>)</span> (Vicente-Serrano, Beguería, et López-Moreno 2010)</p></li>
+<li><p>Le couvert forestier en 2000 <span class="citation" data-cites="hansen2013">Hansen et al. (<a href="11-references.html#ref-hansen2013" role="doc-biblioref">2013</a>)</span> (Hansen et al.2013)</p></li>
+<li><p>La pente et l’altitude <span class="citation" data-cites="nasajpl2020">NASA JPL (<a href="11-references.html#ref-nasajpl2020" role="doc-biblioref">2020</a>)</span> (NASA SRTM)</p></li>
+<li><p>La densité de population en 2000 <span class="citation" data-cites="worldpop2018">WorldPop and CIESIN (<a href="11-references.html#ref-worldpop2018" role="doc-biblioref">2018</a>)</span> (Worldpop)</p></li>
+<li><p>L’accessibilité en 2000 <span class="citation" data-cites="uchida2011">Uchida and Nelson (<a href="11-references.html#ref-uchida2011" role="doc-biblioref">2011</a>)</span> (JRC, Uchida et Nelson 2011)</p></li>
+<li><p>Les données worldclim <span class="citation" data-cites="vicente-serrano2010">Vicente-Serrano, Beguería, and López-Moreno (<a href="11-references.html#ref-vicente-serrano2010" role="doc-biblioref">2010</a>)</span> (Vicente-Serrano, Beguería, et López-Moreno 2010)</p></li>
 </ul>
 <p>On définit notre environnement de travail pour automatiser le téléchargement et le stockage des données spatiales à l’aide de mapme.biodiversity. Nous utilisons la fonction get_resources () pour cela en démarrant un chronomètre avec le package tictoc pour mesurer le temps d’exécution du bloc de code.</p>
 <div class="cell">
@@ -675,7 +675,7 @@ Geodetic CRS:  WGS 84</code></pre>
 <p>Nous obtenons un dataframe contenant le couvert forestier en 2000, la pente et l’altitude, la densité de population, l’accessibilité, la température maximale et minimale, ainsi que la précipitation.</p>
 
 
-<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list" style="display: none">
 <div id="ref-görgen2022" class="csl-entry" role="listitem">
 Görgen, Darius A., and Om Prakash Bhandari. 2022. <span>“Efficient Monitoring of Global Biodiversity Portfolios,”</span> April. <a href="https://doi.org/10.32614/CRAN.package.mapme.biodiversity">https://doi.org/10.32614/CRAN.package.mapme.biodiversity</a>.
 </div>
