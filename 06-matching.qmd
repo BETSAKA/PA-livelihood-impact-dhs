@@ -169,7 +169,7 @@ need_overwrite <- function(year) {
 }
 
 # --- Exécution avec progression ---
-yrs <- c(1997, 2008, 2011, 2013, 2016, 2021)
+yrs <- c(1997, 2008, 2011, 2013, 2016, 2018, 2021)
 
 
 res_list <- vector("list", length(yrs))
