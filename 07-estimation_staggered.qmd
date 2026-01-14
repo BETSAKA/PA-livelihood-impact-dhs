@@ -96,14 +96,7 @@ dat <- bind_rows(d97, d08, d11, d13, d16, d18, d21) %>%
     w_svy   = hv005 / 1e6,
     w_all   = w_svy * weights, # poids d'enquête × poids de matching (si 'weights' existe)
     id      = row_number(),
-    # Map des années de statut -> première année d'observation post (treatment_phase)
-    treatment_phase = case_when(
-      STATUS_YR == 2010 ~ 2011,
-      STATUS_YR == 2012 ~ 2013,
-      STATUS_YR == 2015 ~ 2016,
-      STATUS_YR == 2017 ~ 2021,
-      is.na(STATUS_YR)  ~ 0,
-      TRUE               ~ STATUS_YR
+    treatment_phase = STATUS_YR
     )
   )
 
