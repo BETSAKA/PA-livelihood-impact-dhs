@@ -96,16 +96,50 @@ On charge et nettoie le jeu de données des aires protégées de WDPA, en ne gar
 ```{r}
 library(wdpar)
 
+# Load the work implemented in: https://betsaka.github.io/conservation-dynamic-madagascar/03_legal_docs.html
+legal_texts <- read_rds("data/legal_texts.rds")
+
+# Use the legal analysis made from CNLEGIS to identify early protections
+# that are not registered in WDPA: 
+legal_years <- legal_texts |>
+  filter(str_detect(type_decision, "creation_definitive|mise_protection_temporaire")) |>
+  mutate(
+    date_texte = as.Date(date_texte),
+    legal_year = year(date_texte)
+  ) |>
+  group_by(WDPAID) |>
+  summarize(
+    legal_year = min(legal_year, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
 # Load WDPA data
 wdpa <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
  # wdpa_clean() |> # This might cause to drop existing PAs!
-  filter(STATUS == "Designated") %>%
+ # Include PAs that exist according to the legal analysis
+  filter(STATUS == "Designated" | WDPAID %in% legal_years$WDPAID) %>%
   mutate(MARINE = recode(MARINE,
                          "0" = "Terrestre",
                          "1" = "Mixte",
                          "2" = "Marine"),
         GEOMETRY_TYPE = st_geometry_type(.)) %>%
   filter(GEOMETRY_TYPE %in% c("POLYGON", "MULTIPOLYGON"),)
+
+# Make sure join keys have compatible types
+legal_years <- legal_years |> mutate(WDPAID = as.numeric(WDPAID))
+wdpa <- wdpa |> mutate(WDPAID = as.numeric(WDPAID))
+
+# Join and replace STATUS_YR where a legal year exists
+wdpa <- wdpa |>
+  left_join(legal_years, by = "WDPAID") |>
+  mutate(
+    STATUS_YR = if_else(!is.na(legal_year), as.integer(legal_year), STATUS_YR)
+  ) |>
+  select(-legal_year)
+
+# To check if some are unmatched (on priciple none should be)
+legal_unmatched <- legal_years |> anti_join(st_drop_geometry(wdpa), by = "WDPAID")
 
 # Load boundary
 contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
