@@ -35,6 +35,10 @@ library(fixest)
 library(didimputation)
 library(broom)
 library(ggplot2)
+library(gt)
+library(gtExtras)
+library(did2s)
+library(modelsummary)
 
 # Chargement des données
 d97 <- read_rds("data/derived/data_matched_1997.rds") %>%
@@ -72,6 +76,13 @@ d16 <- read_rds("data/derived/data_matched_2016.rds") %>%
   mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
+d18 <- read_rds("data/derived/data_matched_2018.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2016,
+         spei_wc_n_1 = spei_wc_2017,
+         spei_wc_n   = spei_wc_2018) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
 d21 <- read_rds("data/derived/data_matched_2021.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2019,
          spei_wc_n_1 = spei_wc_2020,
@@ -80,7 +91,7 @@ d21 <- read_rds("data/derived/data_matched_2021.rds") %>%
          hv220 = zap_labels(hv220))
 
 # Préparation des données
-dat <- bind_rows(d97, d08, d11, d13, d16, d21) %>%
+dat <- bind_rows(d97, d08, d11, d13, d16, d18, d21) %>%
   filter(GROUP %in% c("Treatment","Control")) %>%
   mutate(
     hv219   = factor(hv219, levels = c(1,2), labels = c("Homme","Femme")), # sexe (cat.)
@@ -89,16 +100,9 @@ dat <- bind_rows(d97, d08, d11, d13, d16, d21) %>%
     w_svy   = hv005 / 1e6,
     w_all   = w_svy * weights, # poids d'enquête × poids de matching (si 'weights' existe)
     id      = row_number(),
-    # Map des années de statut -> première année d'observation post (treatment_phase)
-    treatment_phase = case_when(
-      STATUS_YR == 2010 ~ 2011,
-      STATUS_YR == 2012 ~ 2013,
-      STATUS_YR == 2015 ~ 2016,
-      STATUS_YR == 2017 ~ 2021,
-      is.na(STATUS_YR)  ~ 0,
-      TRUE               ~ STATUS_YR
+    treatment_phase = STATUS_YR,
+    cluster_uid = interaction(DHSYEAR, hv001, drop = TRUE)
     )
-  )
 
 # Outcome h
 yvar <- "wealth_centile_rural_weighted"
@@ -116,7 +120,7 @@ f_pre <- as.formula(paste(
   "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
 ))
 
-m_pre <- feols(f_pre, data = pre, weights = ~ w_all, cluster = ~ hv001)
+m_pre <- feols(f_pre, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
 
 # Traitement 2008–2021
 main <- dat %>%
@@ -126,12 +130,12 @@ main <- dat %>%
 
 f_main <- f_pre  # même formule
 
-m_main <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ hv001)
+m_main <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
 
 etable(m_pre, m_main, headers = c("Placebo 97–08", "Traitement 08–21"))
 
 # Extraction compacte des deux effets DID
-did_row <- function(model, year_post, vc = ~ hv001, term = "treat_post"){
+did_row <- function(model, year_post, vc = ~ cluster_uid, term = "treat_post"){
   summary(model, vcov = vc) %>% broom::tidy() %>%
     filter(term == !!term) %>%
     transmute(year = year_post, estimate, se = std.error)
@@ -140,8 +144,294 @@ did_df <- bind_rows(
   did_row(m_pre, 2008),
   did_row(m_main, 2021)
 ) %>%
-  mutate(period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
-                         levels = c("1997–2008", "2008–2021")),
+  mutate(period = factor(ifelse(year == 2008, "1997–2008 (placebo)", "2008–2021 (effect)"),
+                         levels = c("1997–2008 (placebo)", "2008–2021 (effect)")),
+         lo = estimate - 1.96*se,
+         hi = estimate + 1.96*se)
+
+h1_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = .2) +
+  geom_point(size = 3) +
+  labs(x = NULL, y = "Effect on wealth index centile",
+       title = "Impact on well-being: 2x2 DiD impact on local population (< 10km)")
+       
+ggsave("soumission_articles/figures/h1_2x2_plot.png", plot = h1_2x2_plot, width = 6, height = 3.5, dpi = 300)
+
+h1_2x2_plot 
+```
+
+Le test placebo donne une estimation avec un coefficient faible (+1.8 centile) et non significatif: pas de différence détectée avant intervention dans les tendances du groupe traitement et du groupe contrôle. L'estimation du traitement présente une plus grande magnitude (-4.1 centiles), mais il reste non significatif. Les ménages vivant près des AP semblent connaître, un niveau de bien-être légèrement inférieur à celui des ménages contrôle, mais l'effet n'est pas significatif. A ce stade, l'analyse ne confirme pas l'hypothèse 1 (que les AP réduise le niveau de vie) : le sens de la relation est négatif, mais on ne peut pas rejeter l'hypothèse nulle. L'intervalle de confiance couvre encore largement 0, ce qui signifie qu'on a une précision insuffisante pour détecter un effet. L'effet est donc soit nul, soit inférieur à notre capacité de détection. Dans le PAP, on avait estimé que l'effet devrait être d'au moins 7.5 centiles pour pouvoir être détecté.
+
+### Staggered diff-in-diff
+
+#### Survey years and binning
+
+In our PAP, we stated:
+
+> "The MIS data can therefore be mobilized for this study. However, the periods covered by MIS only allow for comparisons beyond a simple “before” and “after” framework, which complicates the analysis and necessitates methods with limited methodological consensus. Since 2020, the state of the art in difference-in-difference methods has been challenged by the recognition that classical two-way fixed effects methods can yield spurious results when the effects of an intervention are heterogeneous and assessed over multiple periods. Since then, a dozen alternative approaches have been developed, but econometricians continue to debate their reliability (Roth et al. 2023). To avoid undermining the credibility of our results, we will initially limit ourselves to two study periods (DHS 2008 and 2021). Only if this approach lacks sufficient statistical power will we consider incorporating additional data. \[...\] Additionally, if we incorporate data from MIS 1997, MIS 2011, and MIS 2013, we could apply an estimator suitable for staggered adoption and multiple study periods accounting for potential heterogeneous treatment effects (Borusyak, Jaravel, and Spiess 2024). This will only be performed if power is insufficient with two periods of data."
+
+We also add MICS 2018, as it presents the same design as MIS and DHS surveys, and has 17 870 surveyed households in a year for which we have no other data source. It enables us to have a more complete coverage of pre-and post year.
+
+```{r}
+library(tinytable)
+
+# compute relative years and binned relative years
+dat2 <- dat %>%
+  mutate(
+    treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
+    rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
+    rel_year_clipped = case_when(
+      is.infinite(rel_year) ~ NA_real_,
+      TRUE ~ pmax(pmin(rel_year, 10), -10)
+    ),
+    rel_year_2yr = case_when(
+      is.na(rel_year_clipped) ~ NA_integer_,
+      rel_year_clipped <= -9  ~ -5,
+      rel_year_clipped <= -7  ~ -4,
+      rel_year_clipped <= -5  ~ -3,
+      rel_year_clipped <= -3  ~ -2,
+      rel_year_clipped <= -1  ~ -1,
+      rel_year_clipped <=  1  ~  0,
+      rel_year_clipped <=  3  ~  1,
+      rel_year_clipped <=  5  ~  2,
+      rel_year_clipped <=  7  ~  3,
+      rel_year_clipped <=  9  ~  4,
+      TRUE                    ~  5
+    )
+  )
+
+## Label for binned years
+bin_label <- function(k) {
+  dplyr::case_when(
+    is.na(k) ~ NA_character_,
+    k == -5L ~ "min to -9",
+    k == -4L ~ "-8 to -7",
+    k == -3L ~ "-6 to -5",
+    k == -2L ~ "-4 to -3",
+    k == -1L ~ "-2 to -1",
+    k ==  0L ~ "0 to 1",
+    k ==  1L ~ "2 to 3",
+    k ==  2L ~ "4 to 5",
+    k ==  3L ~ "6 to 7",
+    k ==  4L ~ "8 to 9",
+    k ==  5L ~ "10 to max",
+    TRUE     ~ as.character(k)
+  )
+}
+
+
+# Build the combined table
+tab_rel <- dat2 %>%
+  mutate(cluster_uid = interaction(DHSYEAR, cluster_uid, drop = TRUE)) %>%
+  group_by(rel_year, rel_year_2yr, GROUP) %>%
+  summarise(
+    n_clusters_rel = n_distinct(cluster_uid),
+    n_obs_rel = n(),
+    .groups = "drop"
+  )
+
+tab_bin <- dat2 %>%
+  mutate(cluster_uid = interaction(DHSYEAR, cluster_uid, drop = TRUE)) %>%
+  group_by(rel_year_2yr, GROUP) %>%
+  summarise(
+    n_clusters_bin = n_distinct(cluster_uid),
+    n_obs_bin = n(),
+    .groups = "drop"
+  )
+
+tab_both <- tab_rel %>%
+  left_join(tab_bin, by = c("rel_year_2yr", "GROUP")) %>%
+  arrange(rel_year_2yr, GROUP, rel_year) %>%
+  group_by(rel_year_2yr, GROUP) %>%
+  mutate(
+    block_n = n(),
+    block_first = row_number() == 1,
+    rel_year_2yr_lab = bin_label(rel_year_2yr),
+
+    # show bin totals only once per block
+    rel_year_2yr_show   = if_else(block_n > 1 & !block_first, "", rel_year_2yr_lab),
+    n_clusters_bin_show = if_else(block_n > 1 & !block_first, NA_integer_, n_clusters_bin),
+    n_obs_bin_show      = if_else(block_n > 1 & !block_first, NA_integer_, n_obs_bin)
+  ) %>%
+  ungroup() %>%
+  select(
+    rel_year,
+    GROUP,
+    n_clusters_rel,
+    n_obs_rel,
+    rel_year_2yr = rel_year_2yr_show,
+    n_clusters_bin = n_clusters_bin_show,
+    n_obs_bin = n_obs_bin_show,
+    block_n,
+    block_first,
+    rel_year_2yr_sort = rel_year_2yr
+  )
+
+## Create tinytable
+tab_print <- tab_both %>%
+  select(
+    rel_year, GROUP, n_clusters_rel, n_obs_rel,
+    rel_year_2yr, n_clusters_bin, n_obs_bin,
+    block_n, block_first, rel_year_2yr_sort
+  )
+
+ttab <- tt(tab_print %>% select(-block_n, -block_first, -rel_year_2yr_sort))
+
+idx_first <- which(tab_print$block_first & tab_print$block_n >= 2L)
+
+for (i in idx_first) {
+  span <- as.integer(tab_print$block_n[i])
+  ttab <- ttab |>
+    style_tt(i = i, j = 5, rowspan = span, alignv = "m") |>
+    style_tt(i = i, j = 6, rowspan = span, alignv = "m") |>
+    style_tt(i = i, j = 7, rowspan = span, alignv = "m")
+}
+
+# Styling
+colnames(ttab) <- c(
+  "Relative year to treatment",
+  "Group",
+  "N clusters",
+  "N observations",
+  "Binned relative year to treatment",
+  "N clusters",
+  "N observations"
+)
+
+ttab
+```
+
+
+Pour l'instant, on n'arrive pas à appliquer l'approche de @borusyak2024 avec des données en coupes répétées (pas du panel) avec le package R didimputation. En théorie cette méthode peut s'appliquer à des données "repeated cross sections" et il semblerait qu'un package STATA le fasse. Mais nous ne disposons pas de STATA pour tester. On va donc appliquer la méthode de Gardner, qui en principe est très proche (avec des intervalles de confiance un peu plus large).
+
+Nota bene : Afin de stabiliser les estimations de l’event-study, nous avons appliqué un binning des années relatives au traitement, regroupant toutes les observations au-delà de ±5 années dans des catégories communes. Ce choix est motivé par l’espacement irrégulier des enquêtes disponibles, qui implique que certaines valeurs de temps relatif sont représentées par très peu d’observations et produisent des coefficients instables. Comme le soulignent Borusyak, Jaravel et Spiess (2024, p. 22) : “*In practice, it is common to bin distant leads and lags into a single category, both to improve statistical precision and to avoid presenting very noisy and uninformative coefficients.*” Cette approche permet ainsi de réduire le bruit aux extrêmes et de se concentrer sur l’interprétation des dynamiques principales autour du traitement.s
+
+## Estimation statique
+
+```{r}
+# Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = dat2,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(treat_on, ref = FALSE),
+  treatment   = "treat_on",
+  cluster_var = "cluster_uid",
+  weights     = "w_all"
+)
+
+
+
+modelsummary(did2s_static)
+```
+
+Now the event study
+
+```{r}
+
+dat2 <- dat2 |>
+  mutate(
+    rel_year_2yr2 = case_when(
+      is.na(rel_year_2yr) ~ "never",
+      TRUE ~ as.character(rel_year_2yr)
+    ),
+    rel_year_2yr2 = factor(
+      rel_year_2yr2,
+      levels = c("-5","-4","-3","-2","-1","0","1","2","3","4","5","never")
+    )
+  )
+
+did2s_es_2yr <- did2s(
+  data        = dat2,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(rel_year_2yr2, ref = c("-1", "never")),
+  treatment   = "treat_on",
+  cluster_var = "hv001",
+  weights     = "w_all"
+)
+
+etable(did2s_es_2yr, headers = "did2s event-study (2-yr bins ±10)")
+
+# Tidy coefficients and plot
+plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_2yr::", term)) %>%
+  mutate(k = as.numeric(sub("^rel_year_2yr::", "", term))) %>%
+  arrange(k)
+
+plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_2yr2::", term)) %>%          # <- fix
+  mutate(k = sub("^rel_year_2yr2::", "", term)) %>%    # keep as string (includes "never")
+  mutate(k = factor(k, levels = c("-5","-4","-3","-2","0","1","2","3","4","5","never"))) %>%
+  arrange(k)
+
+p <- ggplot(plot_did2s_2yr, aes(k, estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
+  labs(
+    x = "Year-to-treatment (binned by 2 and at ±10 years)",
+    y = "Estimated effect on wealth centile",
+    title = "Impact on well-being: Event-study with 2-year bins"
+  ) + 
+  scale_x_discrete(labels = bin_label)
+
+# Return relevant objects
+list(
+  did2s_tidy = plot_did2s_2yr,
+  plot = p
+)
+```
+
+
+## Effect on inequalities
+
+### Estimation en 2x2 DiD
+
+```{r}
+# Outcome
+yvar <- "zscore_wealth"
+
+# fixest DID 2×2: placebo 1997–2008, traitement 2008–2021 ------------------
+
+# Placebo 1997–2008
+pre <- dat %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(post = as.integer(DHSYEAR == 2008),
+         treat_post = treat * post)
+
+f_pre <- as.formula(paste(
+  yvar, "~ treat + post + treat_post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre <- feols(f_pre, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
+
+# Traitement 2008–2021
+main <- dat %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(post = as.integer(DHSYEAR == 2021),
+         treat_post = treat * post)
+
+f_main <- f_pre  # même formule
+
+m_main <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
+
+etable(m_pre, m_main, headers = c("Placebo 97–08", "Traitement 08–21"))
+
+# Extraction compacte des deux effets DID
+did_row <- function(model, year_post, vc = ~ cluster_uid, term = "treat_post"){
+  summary(model, vcov = vc) %>% broom::tidy() %>%
+    filter(term == !!term) %>%
+    transmute(year = year_post, estimate, se = std.error)
+}
+did_df <- bind_rows(
+  did_row(m_pre, 2008),
+  did_row(m_main, 2021)
+) %>%
+  mutate(period = factor(ifelse(year == 2008, "1997–2008 (placebo)", "2008–2021 (effect)"),
+                         levels = c("1997–2008 (placebo)", "2008–2021 (effect)")),
          lo = estimate - 1.96*se,
          hi = estimate + 1.96*se)
 
@@ -149,249 +439,164 @@ ggplot(did_df, aes(x = period, y = estimate)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_errorbar(aes(ymin = lo, ymax = hi), width = .2) +
   geom_point(size = 3) +
-  labs(x = NULL, y = "Effet DID sur le centile de richesse (pondéré)",
-       title = "DID 2×2 avec IC clusterisés (hv001) - buffer 10 km")
+  labs(x = NULL, y = "Effect on z-score of wealth index centile",
+       title = "Impact on inequalities: 2x2 DiD impact on local population (< 10km)")
 ```
 
-Le test placebo donne une estimation avec un coefficient faible (+1.8 centile) et non significatif: pas de différence détectée avant intervention dans les tendances du groupe traitement et du groupe contrôle. L'estimation du traitement présente une plus grande magnitude (-4.1 centiles), mais il reste non significatif. Les ménages vivant près des AP semblent connaître, un niveau de bien-être légèrement inférieur à celui des ménages contrôle, mais l'effet n'est pas significatif. A ce stade, l'analyse ne confirme pas l'hypothèse 1 (que les AP réduise le niveau de vie) : le sens de la relation est négatif, mais on ne peut pas rejeter l'hypothèse nulle. L'intervalle de confiance couvre encore largement 0, ce qui signifie qu'on a une précision insuffisante pour détecter un effet. L'effet est donc soit nul, soit inférieur à notre capacité de détection. Dans le PAP, on avait estimé que l'effet devrait être d'au moins 7.5 centiles pour pouvoir être détecté.
-
-### Staggered diff-in-diff
-
-In our PAP, we stated:
-
-> "The MIS data can therefore be mobilized for this study. However, the periods covered by MIS only allow for comparisons beyond a simple “before” and “after” framework, which complicates the analysis and necessitates methods with limited methodological consensus. Since 2020, the state of the art in difference-in-difference methods has been challenged by the recognition that classical two-way fixed effects methods can yield spurious results when the effects of an intervention are heterogeneous and assessed over multiple periods. Since then, a dozen alternative approaches have been developed, but econometricians continue to debate their reliability (Roth et al. 2023). To avoid undermining the credibility of our results, we will initially limit ourselves to two study periods (DHS 2008 and 2021). Only if this approach lacks sufficient statistical power will we consider incorporating additional data. \[...\] Additionally, if we incorporate data from MIS 1997, MIS 2011, and MIS 2013, we could apply an estimator suitable for staggered adoption and multiple study periods accounting for potential heterogeneous treatment effects (Borusyak, Jaravel, and Spiess 2024). This will only be performed if power is insufficient with two periods of data."
-
-Pour l'instant, on n'arrive pas à appliquer l'approche de @borusyak2024 avec des données en coupes répétées (pas du panel) avec le package R didimputation. En théorie cette méthode peut s'appliquer à des données "repeated cross sections" et il semblerait qu'un package STATA le fasse. Mais nous ne disposons pas de STATA pour tester. On va donc appliquer la méthode de Gardner, qui en principe est très proche (avec des intervalles de confiance un peu plus large).
-
-Nota bene : Afin de stabiliser les estimations de l’event-study, nous avons appliqué un binning des années relatives au traitement, regroupant toutes les observations au-delà de ±5 années dans des catégories communes. Ce choix est motivé par l’espacement irrégulier des enquêtes disponibles, qui implique que certaines valeurs de temps relatif sont représentées par très peu d’observations et produisent des coefficients instables. Comme le soulignent Borusyak, Jaravel et Spiess (2024, p. 22) : “*In practice, it is common to bin distant leads and lags into a single category, both to improve statistical precision and to avoid presenting very noisy and uninformative coefficients.*” Cette approche permet ainsi de réduire le bruit aux extrêmes et de se concentrer sur l’interprétation des dynamiques principales autour du traitement.s
+## Estimation statique
 
 ```{r}
-# did2s (Gardner) : statique + event-study--------------------------------
-library(did2s)
+# Statique (traitement "on/off")
+did2s_static <- did2s(
+  data        = dat2,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage= ~ i(treat_on, ref = FALSE),
+  treatment   = "treat_on",
+  cluster_var = "cluster_uid",
+  weights     = "w_all"
+)
 
-dat3 <- dat %>%
+etable(did2s_static, headers = "Static estimation on z-score of wealth index")
+
+```
+
+Now the event study
+
+```{r}
+
+dat2 <- dat2 |>
   mutate(
-    treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
-    rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
-    # Binning prudent pour stabilité (-5..5)
-    rel_year_binned = pmax(pmin(rel_year, 5), -5)
+    rel_year_2yr2 = case_when(
+      is.na(rel_year_2yr) ~ "never",
+      TRUE ~ as.character(rel_year_2yr)
+    ),
+    rel_year_2yr2 = factor(
+      rel_year_2yr2,
+      levels = c("-5","-4","-3","-2","-1","0","1","2","3","4","5","never")
+    )
   )
 
-# -- Statique (traitement "on/off")
-did2s_static <- did2s(
-  data        = dat3,
+did2s_es_2yr <- did2s(
+  data        = dat2,
   yname       = yvar,
   first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage= ~ i(treat_on, ref = FALSE),
+  second_stage= ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment   = "treat_on",
   cluster_var = "hv001",
   weights     = "w_all"
 )
-etable(did2s_static, headers = "did2s statique")
 
-# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
-did2s_es <- did2s(
-  data        = dat3,
-  yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage= ~ i(rel_year_binned, ref = c(-1, Inf)),
-  treatment   = "treat_on",
-  cluster_var = "hv001",
-  weights     = "w_all"
-)
-etable(did2s_es, headers = "did2s event-study (-5..5)")
+etable(did2s_es_2yr, headers = "did2s event-study (2-yr bins ±10)")
 
-# Plot ES did2s
-plot_did2s <- broom::tidy(did2s_es, conf.int = TRUE) %>%
-  filter(grepl("^rel_year_binned::", term)) %>%
-  mutate(k = as.numeric(sub("^rel_year_binned::", "", term))) %>%
+# Tidy coefficients and plot
+plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_2yr::", term)) %>%
+  mutate(k = as.numeric(sub("^rel_year_2yr::", "", term))) %>%
   arrange(k)
 
-ggplot(plot_did2s, aes(k, estimate)) +
+plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_2yr2::", term)) %>%          # <- fix
+  mutate(k = sub("^rel_year_2yr2::", "", term)) %>%    # keep as string (includes "never")
+  mutate(k = factor(k, levels = c("-5","-4","-3","-2","0","1","2","3","4","5","never"))) %>%
+  arrange(k)
+
+p <- ggplot(plot_did2s_2yr, aes(k, estimate)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_point() +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
-  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
-       y = "Effet DID sur le centile de richesse (pondéré)",
-       title = "Event-study (did2s) - buffer de 10 km") + 
-  scale_x_continuous(breaks = c(-5,-4,-3,-2,-1,0,1,2,3,4,5))
+  labs(
+    x = "Year-to-treatment (binned by 2 and at ±10 years)",
+    y = "Estimated effect on z-score of wealth centile",
+    title = "Impact on inequalities: Event-study with 2-year bins"
+  ) + 
+  scale_x_discrete(labels = bin_label)
 
-# Test joint de pré-tendances (tous les leads k < 0)
-# On construit un motif regex pour k = -5..-1 présents dans le modèle
-leads_present <- plot_did2s$k[plot_did2s$k < 0]
-if(length(leads_present) > 0){
-  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
-  print(fixest::wald(did2s_es, keep = keep_regex))
-}
-
-```
-
-L'estimation en "statique" donne un coefficient de \~1 centile (0.99), avec une erreur type de 2.1, ce qui indique un résultat non significatif. L'analyse en série temporelle avec binning ±5 ans. Etaye l'hypothèse de tendances parallèle. Les estimations en post semblent apparaître, mais ne semblent pas persister. Cela abonde dans le sens d'un impact faible et non-significatif. De possibles avancées à court-terme (\~3 ans après la création de l'AP), mais pas soutenues dans le temps.
-
-### Quantile treatment effects
-
-Le quantile treatment effect mesure l'effet du traitement à différents points de la distribution de la variable de résultat, le wealth index. Il montre comment le traitement affecte les ménages les plus pauvres (quantiles bas), la classe moyenne et les ménages les plus aisés (quantiles élevés).
-
-```{r}
-# Testing Quantile treatment effects --------------------------------------
-library(qte)
-
-# Avec CiC -------------------
-
-## Traitement 2008 -> 2021
-set.seed(123)
-dat_2per <- dat %>%
-  filter(DHSYEAR %in% c(2008, 2021)) %>%
-  mutate(treat = as.integer(GROUP == "Treatment"))
-
-cic_res <- suppressWarnings(CiC(
-  formla = wealth_centile_rural_weighted ~ treat,
-  t = 2021, tmin1 = 2008, tname = "DHSYEAR",
-  data = dat_2per,
-  panel = FALSE, # repeated cross-sections
-  se = TRUE, iters = 200, # bootstrap
-  probs = seq(0.05, 0.95, 0.05),
-  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
-))
-
-summary(cic_res)
-ggqte(cic_res) + labs(x="Quantiles", y="QTET", title="CiC QTET: 2008-2021")
-
-## placebo
-
-## Placebo: 1997 -> 2008
-dat_placebo <- dat %>%
-  filter(DHSYEAR %in% c(1997, 2008)) %>%
-  mutate(treat = as.integer(GROUP == "Treatment"))
-
-# (Optional) sanity check:
-# with(dat_placebo, table(DHSYEAR, treat))
-
-cic_pre <-  suppressWarnings(CiC(
-  formla = wealth_centile_rural_simple ~ treat,
-  t = 2008, tmin1 = 1997, tname = "DHSYEAR",
-  data = dat_placebo,
-  panel = FALSE, # repeated cross-sections
-  se = TRUE, iters = 100, # bootstrap
-  probs = seq(0.05, 0.95, 0.05),
-  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
-))
-
-summary(cic_pre)
-
-ggqte(cic_pre) +
-  labs(x = "Quantiles", y = "QTET",
-       title = "Placebo CiC QTET: 1997-2008 - buffer 10 km")
-
-```
-
-Pour l'estimation principale (2008-2021), l'ATE est fortement négatif et très significatif (-17.9 centiles!). Les effets négatifs se retrouvent sur l'ensemble de la distribution, mais sont particulièrement marqués pour les centiles les plus faibles. Cela conforterait fortement l'hypothèse 2 (les AP renforcent les inégalités), mais c'est surprenant que ce soit à ce point marqué sur l'ensemble de la distribution alors que le DiD sur le wealth centile n'était pas significatif (Hypothèse 1).
-
-Pour le test placebo, la courbe n'est pas exactement plate : il existe donc des différences significatives entre les groupes. Les ménages pauvres des zones traitées avaient déjà des niveaux de richesse différents de ceux des zones controles. Ces différences suggèrent une hétérogénéité entre les groupes.
-
-## Effect on inequalities
-
-### Staggered DiD
-
-```{r}
-
-yvar <- "zscore_wealth"
-
-# did2s (Gardner) : statique + event-study--------------------------------
-# -- Statique (traitement "on/off")
-did2s_static <- did2s(
-  data        = dat3,
-  yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage= ~ i(treat_on, ref = FALSE),
-  treatment   = "treat_on",
-  cluster_var = "hv001",
-  weights     = "w_all"
+# Return relevant objects
+list(
+  did2s_tidy = plot_did2s_2yr,
+  plot = p
 )
-etable(did2s_static, headers = "did2s statique")
-
-# -- Event-study (avec binning -5..5, ref = -1 et never-treated)
-did2s_es <- did2s(
-  data        = dat3,
-  yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage= ~ i(rel_year_binned, ref = c(-1, Inf)),
-  treatment   = "treat_on",
-  cluster_var = "hv001",
-  weights     = "w_all"
-)
-etable(did2s_es, headers = "did2s event-study (-5..5)")
-
-# Plot ES did2s
-plot_did2s <- broom::tidy(did2s_es, conf.int = TRUE) %>%
-  filter(grepl("^rel_year_binned::", term)) %>%
-  mutate(k = as.numeric(sub("^rel_year_binned::", "", term))) %>%
-  arrange(k)
-
-ggplot(plot_did2s, aes(k, estimate)) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_point() +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
-  labs(x = "Années relatives au 1er traitement (binnées -5..5)",
-       y = "Effet DID sur le centile de richesse (pondéré)",
-       title = "Event-study (did2s) - buffer 10 km") + 
-  scale_x_continuous(breaks = c(-5,-4,-3,-2,-1,0,1,2,3,4,5))
-
-# Test joint de pré-tendances (tous les leads k < 0)
-# On construit un motif regex pour k = -5..-1 présents dans le modèle
-leads_present <- plot_did2s$k[plot_did2s$k < 0]
-if(length(leads_present) > 0){
-  keep_regex <- paste0("^rel_year_binned::(", paste(leads_present, collapse="|"), ")$")
-  print(fixest::wald(did2s_es, keep = keep_regex))
-}
 ```
-
-L'hypothèse des tendances parallèles est vérifié car l'hypothèse nulle n'est pas rejeté (p-value = 0.06379954 \> 0.05). Après la mise en place de l'aire protégée, un effet positif apparaît deux ans après l'intervention (rel_year = 2: 0.0221\*\*\*), puis devient particulièrement marqué au bout de trois ans (rel_year = 3: 0.0302\*). Toutefois, cet effet disparaît au bout de cinq ans, indiquant que l'effet n'est pas durable. Le R² et R² ajusté montrent que la part de variance expliquée par le traitement est minimale.
 
 ## Heterogeneity
 
 L’étude des effets hétérogènes vise à déterminer quelles catégories de ménages bénéficient davantage – ou moins – de la création des aires protégées, et sous quelles conditions. Pour cela, nous analysons l'influence de la gouvernance en distinguant les aires protégées dites « strictes » (statuts IUCN I-IV) et les aires « multi-usages » (statuts IUCN V-VI).
 
+### 2x2 DiD par type d’aire protégée
+
 ```{r}
+yvar <- "wealth_centile_rural_weighted"
+
+iucn_sets <- list(
+  strict = c("Ia","Ib","II","III","IV"),
+  multi  = c("V","VI")
+)
+
+is_strict <- function(x) x %in% iucn_sets$strict
+is_multi  <- function(x) x %in% iucn_sets$multi
+
 # DID 2x2-----------------------------------------------------
-dat2 <- dat %>%
+dat3 <- dat2 %>%
   mutate(
-    treat_strict = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("Ia","Ib",
-                                                                     "II","III",
-                                                                     "IV")),
-    treat_multi  = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("V","VI"))
+    treat_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
+    treat_multi  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))
   )
 
-
 # Placebo ---------------------------------------------------
-pre <- dat2 %>%
-  filter(DHSYEAR %in% c(1997, 2008)) %>%
-  mutate(post = as.integer(DHSYEAR == 2008))
 
 # Strict
+
+pre_strict <- dat3 %>%
+  filter(
+    DHSYEAR %in% c(1997, 2008),
+    treat_strict == 1 | (GROUP == "Control")
+  ) %>%
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+
 f_pre_strict <- as.formula(paste(
   yvar, "~ treat_strict + post + treat_strict:post +",
   "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
 ))
 
-m_pre_strict <- feols(f_pre_strict, data = pre, weights = ~ w_all, cluster = ~ hv001)
+m_pre_strict <- feols(f_pre_strict, data = pre_strict, weights = ~ w_all, cluster = ~ hv001)
 
 # Multi
+pre_multi <- dat3 %>%
+  filter(
+    DHSYEAR %in% c(1997, 2008),
+    treat_multi == 1 | (GROUP == "Control")
+  ) %>%
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+
 f_pre_multi <- as.formula(paste(
   yvar, "~ treat_multi + post + treat_multi:post +",
   "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
 ))
 
-m_pre_multi <- feols(f_pre_multi, data = pre, weights = ~ w_all, cluster = ~ hv001)
+m_pre_multi <- feols(f_pre_multi, data = pre_multi, weights = ~ w_all, cluster = ~ hv001)
 
 # Main estimation ---------------------------
 
-main <- dat2 %>%
-  filter(DHSYEAR %in% c(2008, 2021)) %>%
+main_strict <- dat3 %>%
+  filter(
+    DHSYEAR %in% c(2008, 2021),
+    treat_strict == 1 | (GROUP == "Control")
+  ) %>%
   mutate(post = as.integer(DHSYEAR == 2021))
 
-m_main_strict <- feols(f_pre_strict, data = main, weights = ~ w_all, cluster = ~ hv001)
-m_main_multi  <- feols(f_pre_multi, data = main, weights = ~ w_all, cluster = ~ hv001)
+m_main_strict <- feols(f_pre_strict, data = main_strict, weights = ~ w_all, cluster = ~ hv001)
+
+main_multi <- dat3 %>%
+  filter(
+    DHSYEAR %in% c(2008, 2021),
+    treat_multi == 1 | (GROUP == "Control")
+  ) %>%
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_multi  <- feols(f_pre_multi, data = main_multi, weights = ~ w_all, cluster = ~ hv001)
 
 
 did_row <- function(model, year_post, term){
@@ -422,106 +627,152 @@ ggplot(did_df, aes(x = period, y = estimate, colour = type)) +
   geom_errorbar(aes(ymin = lo, ymax = hi), width = .2, position = pd) +
   labs(x = NULL, y = "Effet DID (centile de richesse)",
        title = "DID 2×2 par type d’AP (strict vs usage multiple)")
-
-
-# did2s (Gardner) : statique + event-study--------------------------------
-# Création du groupe IUCN 
-dat3 <- dat3 %>%
-  filter(!is.na(IUCN_CAT), !is.na(treat_on)) %>%
-  mutate(
-    IUCN_group = case_when(
-    IUCN_CAT %in% c("Ia", "Ib", "II", "III", "IV") ~ "strict",
-    IUCN_CAT %in% c("V", "VI") ~ "usage_multiple", 
-    TRUE ~ NA_character_
-  ),
-  IUCN_group = factor(IUCN_group, levels = c("strict", "usage_multiple")),
-  rel_year_binned = factor(rel_year_binned, levels = -5:5)
-  ) %>%
-  filter(!is.na(IUCN_group))
-
-run_did2s_es <- function(data, yvar) {
-  
-  # DID Statique
-  did2s_static <- did2s(
-    data        = data,
-    yname       = yvar,
-    first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-    second_stage = ~ treat_on * IUCN_group,
-    treatment   = "treat_on",
-    cluster_var = "hv001",
-    weights     = "w_all"
-  )
-  print(etable(did2s_static, headers = paste("did2s statique -", yvar)))
-  
-# DID event study
-  
-  did2s_es <- did2s(
-    data = data,
-    yname = yvar, 
-    first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-    second_stage = ~ i(rel_year_binned, IUCN_group, ref = -1),
-    treatment   = "treat_on",
-    cluster_var = "hv001",
-    weights     = "w_all"
-  )
-  
-  print(etable(did2s_es, 
-               headers = paste("did2s event-study (-5..5) par statut IUCN - buffer 10km", yvar)))
-  
-    # Extraction des coefficients
-  tidy_es <- broom::tidy(did2s_es, conf.int = TRUE) %>%
-    filter(grepl("^rel_year_binned::", term)) %>%
-    mutate(
-      year = as.numeric(stringr::str_extract(term, "(?<=::)-?[0-9]+")),
-      
-      # identifier strict vs usage_multiple
-      group = case_when(
-        grepl("usage_multiple", term, ignore.case = TRUE) ~ "usage_multiple",
-        grepl("strict", term, ignore.case = TRUE) ~ "strict",
-        TRUE ~ NA_character_
-      ),
-      outcome = yvar
-    ) %>%
-    filter(!is.na(group))
-
-  #Plot
-  plot_title <- paste0("Event-study (did2s) -", yvar, "\nHétérogénéité par statut IUCN - buffer 10km")
-  
-  g <- ggplot(tidy_es, aes(x = year, y = estimate, color = group)) +
-    geom_hline(yintercept = 0, linetype = "dashed") +
-    geom_point(size = 2) +
-    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
-    labs(
-      x = "Années relatives au 1er traitement (binnées -5..5) - buffer 10 km",
-      y = "Effet DID (centile de richesse)",
-      title = plot_title,
-      color = "Catégorie IUCN"
-    ) +
-    theme_minimal(base_size = 14)+ 
-  scale_x_continuous(breaks = c(-5,-4,-3,-2,-1,0,1,2,3,4,5))
-  
-  print(g)
-  
-  # Test de pré-tendances
-  leads <- tidy_es %>% filter(year < 0)
-  
-  if(nrow(leads) > 0){
-    keep_regex <- paste0("^rel_year_binned::(", paste(unique(leads$year), collapse="|"), "):")
-    print(wald(did2s_es, keep = keep_regex))
-  }
-  
-  return(list(
-    static = did2s_static,
-    es     = did2s_es,
-    coef   = tidy_es,
-    plot   = g
-  ))
-}
-
-
-res_wealth <- run_did2s_es(dat3, "wealth_centile_rural_weighted")
 ```
 
-L'estimation du DID statique montre que, pour la période placebo, les aires protégées à usage multiple présentent un effet positif d'environ cinq centiles de richesse, tandis que les aires protégées strictes affichent un effet négatif. Dans les deux cas, les intervalles de confiance chevauchent zéro, indiquant que les effets ne sont pas significatifs. Pour la période de traitement (2008-2021), les effets estimés pour les aires protégées à usage multiple sont proches de zéro et légèrement négatif pour les aires protégées à usage stricte.
 
-L'analyse en event study confirme dans l'ensemble l'absence d'effet significatif avant le traitement, qui valide l'hypothèse de tendances parallèles. A l'année 0, les estimations indiquent un effet moyen positif pour les aires protégées à usage multiple, tandis que les aires à usage strictes présentent une tendance plutôt négative. Deux ans après le traitement (rel_year_binned = 2), la situation s'inverse. Les ménages proches d'une aire protégée à usage multiple connaissent une diminution significative de leur centile de richesse (coefficient = -10.96\*) mais ceux près des aires protégées à usage stricte connaissent une tendance positive, mais non significative (coefficient = 7.983).
+### Estimation statique par type d’aire protégée
+
+
+
+```{r}
+# Strict only
+d_strict <- dat2 %>%
+  mutate(treat_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT))) %>%
+  filter(treat_on == 1 | GROUP == "Control")
+
+did2s_static_strict <- did2s(
+  data         = d_strict,
+  yname        = yvar,
+  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(treat_on, ref = FALSE),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+# Multi only
+d_multi <- dat2 %>%
+  mutate(treat_on = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))) %>%
+  filter(treat_on == 1 | GROUP == "Control")
+
+did2s_static_multi <- did2s(
+  data         = d_multi,
+  yname        = yvar,
+  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(treat_on, ref = FALSE),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+etable(
+  did2s_static_strict,
+  did2s_static_multi,
+  did2s_static,
+  headers = c("Strict only", "Multi only", "Both")
+)
+
+```
+
+Strict only shows a positive point estimate, about + 6.4 centiles, with a standard error of 3.4. This is marginally significant and suggests a weak positive association between proximity to strict PAs and the wealth index, relative to controls. Multi-purpose PAs show a small negative estimate, but not statistically distinguishable from zero.
+
+### Estimation en event-study par type d’aire protégée
+
+```{r}
+
+dat2 <- dat2 |>
+  mutate(
+    rel_year_2yr2 = case_when(is.na(rel_year_2yr) ~ "never", TRUE ~ as.character(rel_year_2yr)),
+    rel_year_2yr2 = factor(rel_year_2yr2, levels = c("-5","-4","-3","-2","-1","0","1","2","3","4","5","never"))
+  )
+
+# Baseline 
+did2s_es_2yr_both <- did2s(
+  data         = dat2,
+  yname        = yvar,
+  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
+  treatment    = "treat_on",
+  cluster_var  = "hv001",
+  weights      = "w_all"
+)
+
+# Strict only 
+d_strict_es <- dat2 |>
+  mutate(treat_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT))) %>%
+  filter(treat_on == 1 | GROUP == "Control")
+
+did2s_es_2yr_strict <- did2s(
+  data         = d_strict_es,
+  yname        = yvar,
+  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
+  treatment    = "treat_on",
+  cluster_var  = "hv001",
+  weights      = "w_all"
+)
+
+# Multi only 
+d_multi_es <- dat2 |>
+  mutate(treat_on = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
+  filter(treat_on == 1 | GROUP == "Control")
+
+did2s_es_2yr_multi <- did2s(
+  data         = d_multi_es,
+  yname        = yvar,
+  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
+  treatment    = "treat_on",
+  cluster_var  = "hv001",
+  weights      = "w_all"
+)
+
+etable(
+  did2s_es_2yr_strict,
+  did2s_es_2yr_multi,
+  did2s_es_2yr_both,
+  headers = c("Strict only", "Multi only", "Both")
+)
+
+# Tidy + plot helper
+tidy_es <- function(mod, type){
+  broom::tidy(mod, conf.int = TRUE) |>
+    filter(grepl("^rel_year_2yr2::", term)) |>
+    mutate(
+      k = sub("^rel_year_2yr2::", "", term),
+      k = factor(k, levels = c("-5","-4","-3","-2","0","1","2","3","4","5","never")),
+      type = type
+    ) |>
+    arrange(k)
+}
+
+es_all <- bind_rows(
+  tidy_es(did2s_es_2yr_strict, "strict"),
+  tidy_es(did2s_es_2yr_multi,  "multi"),
+  tidy_es(did2s_es_2yr_both,   "both")
+)
+
+pd <- position_dodge(width = 0.3)
+
+p <- ggplot(es_all, aes(k, estimate, colour = type)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(position = pd) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2, position = pd) +
+  labs(
+    x = "Year-to-treatment (2-year bins, ±10)",
+    y = "Estimated effect on wealth centile",
+    title = "Event-study (did2s): strict vs multi vs pooled"
+  ) +
+  scale_x_discrete(labels = bin_label)
+
+list(
+  models = list(strict = did2s_es_2yr_strict, multi = did2s_es_2yr_multi, both = did2s_es_2yr_both),
+  tidy   = es_all,
+  plot   = p
+)
+
+```
+
+
+
+The event study estimates are highly unstable once the sample is split by protected area type. At most relative time periods, coefficients are imprecisely estimated and vary substantially across horizons, with occasional statistically significant points that do not follow a coherent temporal pattern. This reflects the fact that, after separating strict and multi use protected areas and restricting the control group accordingly, the number of observations contributing to each type–cohort–period cell becomes small, especially at longer leads and lags. As a result, individual coefficients are driven by a limited set of cohorts and are sensitive to reweighting, making them difficult to interpret as meaningful dynamic effects. In this context, the event study mainly illustrates data limitations rather than well identified temporal responses, and does not support a stable or interpretable dynamic pattern by protected area type.
