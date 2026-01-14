@@ -110,7 +110,7 @@ When new PA are created in Madagascar, compensation mechanisms for local populat
 
 Our firts set of results therefore consists of determining whether PA in Madagascar, by limiting access to natural resources, have negative impacts on the standard of living of households living nearby, which often exceed the benefits of compensation and ecosystem services, with more adverse effects than in other countries. 
 
-The impact mechanisms represented in @fig-therory-change are likely to affect households differently depending on their prior characteristics. Compensation measures are generally implemented in the form of projects to promote income-generating activities (agriculture, livestock, handicrafts) in surrounding communities [@Poudyal2018]. In the context of such development projects, individuals known as “development brokers” frequently emerge as intermediaries between local communities and implementing organizations. By mobilizing their social networks and specific skills, these brokers manage to capture a disproportionate share of the benefits of interventions, whether in form of income or access to exclusive opportunities. This dynamic can reinforce pre-existing inequalities within communities, limiting the access of the most vulnerable households to the expected benefits of compensation programs. 
+The impact mechanisms represented in @fig-theory-change are likely to affect households differently depending on their prior characteristics. Compensation measures are generally implemented in the form of projects to promote income-generating activities (agriculture, livestock, handicrafts) in surrounding communities [@Poudyal2018]. In the context of such development projects, individuals known as “development brokers” frequently emerge as intermediaries between local communities and implementing organizations. By mobilizing their social networks and specific skills, these brokers manage to capture a disproportionate share of the benefits of interventions, whether in form of income or access to exclusive opportunities. This dynamic can reinforce pre-existing inequalities within communities, limiting the access of the most vulnerable households to the expected benefits of compensation programs. 
 
 Although tourism development is often presented as an opportunity for economic growth, it also tends to exacerbate socioeconomic inequalities, particularly in developing countries. Adeniyi et al. (2024) show that in Southern Africa, tourism can initially exacerbate inequalities by concentrating benefits in the most attractive regions, while leaving marginalized communities out of the economic benefits. According to Ghosh and Mitra (2021), the relationship between tourism and inequality follows an inverted Kuznets curve in developing countries, when tourism remains moderate, its growth reduces inequalities, but when tourism becomes massive, further expansion worsens inequalities. Finally, Xuanming et al. (2024) point out that while tourism helps to improve certain socioeconomic indicators, it can also generate inflationary pressures and strain local resources, particularly affecting the most vulnerable households. 
 
@@ -124,7 +124,48 @@ Considering the long-term, large-scale, complex, and politically sensitive natur
 ### Protected areas {#protectedareas}
 
 
+
+
+
+
+
+
+
+
 ### Household socioeconomic conditions {#householdsocioeconomicconditions} 
+The data on household living conditions used for this study comes from surveys conducted by the “Institut National de la Statistique de Madagascar” (INSTAT) as part of the Demographic Health Surveys (DHS)[^1].This data covers a wide range of topics, including demographic characteristics, living conditions, health, education, sanitation, and hygiene. They were conducted based on surveys from 1997, 2008, and 2021, containing 650 clusters in 2021[^2], 585 in 2008[^3], and 268 in 1997[^4].
+
+
+[^1]: The DHS surveys are based on a two-stage stratified sampling method. The population of interest is divided into 23 study areas corresponding to Madagascar's 22 regions, the capital Antananarivo(considered separately), an the Analamanga region without the capital (to isolate the impact of the capital on regional results). With the exception of the capital two strata were created in each study area. At the first level, enumeration ares (also called 'clusters') are randomly selected within each domain, with a probability proportional to the population of the cluster according to the latest census. At the second level, a sample of households is randomly selected within these clusters to participate in the survey programs
+
+[^2]: 657 clusters were drawn with probability proportional to size. After implementation in the field, 650 of the 657 clusters initially selected were actually visited]
+
+[^3]: 600 clusters were drawn with probability proportional to size. Of the 600 clusters selected, 596 could be surveyed. However, nine other clusters had invalid GPS coordinates, resulting in a total of 585 clusters for 2008
+
+[^4]: 270 clusters were drawn with probability proportional to size. Of the 270 clusters selected, 269 could be surveyed. However, one cluster had invalid GPS coordinates, resulting in a total of 585 clusters for 2008. 
+
+These data are used to construct the variables for the impact assessment model. In this analysis, two outcome variables are considered: household living standards (primary variable) and inequalities in living standards at the level of the surveyed localities (secondary variable). 
+
+    • Main outcome variable: Household living standards
+    
+The first outcome variable, household living standard, is estimated from the wealth index, calculated specifically for rural areas (variable coded hv270a in the DHS data). The wealth index is defined in the DHS data catalogue as: “A composite measure of a household's cumulative living standard. The wealth index is calculated using easy-to-collect data on a household’s ownership of selected assets, such as televisions and bicycles; materials used for housing construction; and types of water access and sanitation facilities. Generated with a statistical procedure known as principal components analysis, the wealth index places individual households on a continuous scale of relative wealth. DHS separates all interviewed households into five wealth quintiles to compare the influence of wealth on various population, health and nutrition indicators. As a response to criticism that a single wealth index is too urban in its construction and not able to distinguish the poorest of the poor from other poor households, this variable provides an urban- and rural-specific wealth index” (The DHS Program/ICF 2018). As described above, we will translate this wealth index into an integer between 1 and 100, corresponding to the household’s wealth percentile relative to the distribution of the whole sample. 
+
+    • Secondary outcome variable: inequality of household living standards
+In addition to the evaluation impact of PA on household living standards, we will seek to understand their influence on socioeconomic inequalities within the affected populations. To do this, we propose to use a standardized Z-Score of the wealth index, allowing for the comparison of the relative distribution of wealth around the mean within the study population, at the level of each survey cluster. 
+
+The Z-Score $Z_i$  for each household $i$ is calculated from the wealth index using the following formula: 
+
+$$
+Z_i = \frac{W_i - \mu_W}{\sigma_W}
+$$
+
+
+ where $W_i$ is the wealth index for household $i$, $μ_W$ represents the average wealth index for all households surveyed in each rural cluster, and $σ_W$ is the standard deviation of households in the cluster. 
+
+
+    • Control variable
+These data also provide us with control variables: age and sex of the head of the household.These characteristics determine the economic opportunities and resource management capacity of households [@LoBue2022]. These variables reduce the unexplained variability of the model and thus enable a more accurate estimate of the treatment. 
+
 
 
 ### Household geophysical environment {#householdgeophysical environment}
