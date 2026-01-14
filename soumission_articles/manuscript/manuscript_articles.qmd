@@ -1,0 +1,113 @@
+---
+title: "Socioeconomic Impact Evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys"
+author:  
+  - name: Iriana Razafimahenina
+    affiliations:
+      - ref: univ_tana
+      - ref: univ_paris
+      - ref: ird
+      
+  - name: Florent Bédécarrats
+    affiliations:
+      - ref: uvsq
+      - ref: umi
+      
+  - name: Ingrid Dallmann
+    affiliations: [afd]
+  
+  - name: Holimalala Randriamanampisoa
+    affiliations:
+      - ref: univ_tana
+      - ref: cered
+      - ref: umi
+
+affiliations:
+  - id: univ_tana
+    name: "University of Antananarivo, Madagascar"
+    url: https://www.univ-antananarivo.mg
+    
+  
+  - id: univ_paris
+    name: "University of Paris-Saclay, France"
+    url: https://www.universite-paris-saclay.fr
+    
+  
+  - id: ird
+    name: "French National Research Institute for Sustainable Development(IRD), Madagascar"
+    url: https://www.ird.fr
+    
+  
+  - id: uvsq
+    name: "University of Saint Quentin en Yvelines, France"
+    url: https://www.uvsq.fr
+    
+  
+  - id: umi
+    name: "UMI-Sustainability and Resilience (SOURCE), IRD, France"
+    url: https://www.umi-source.uvsq.fr
+    
+    
+  - id: afd
+    name: "Agence Française de Développement(AFD), France"
+    
+  
+  - id: cered
+    name: Development Centre for Economic Studies and Research (CERED) Madagascar
+    
+    
+editor: visual
+format:
+  typst:
+    fontsize: 12pt
+    linestretch: 1.5
+    number-sections: true
+    
+    
+abstract: |
+  Protected Areas are the most widely used tool for biodiversity conservation. However, their implementation raises concerns about the well-being of local populations, especially when they are very poor and dependent on natural resources, as is the case in Madagascar. We are using geolocated socioeconomic surveys spanning a period of protected area creation (2008-2021), and extending the analysis to the previous period (1997-2008) in order to verify the credibility od the comparison. Socio-environmental indicators derived from spatial data are used to match rural areas with similar probabilities of being affected by the creation of protected areas, before estimating the effects using an approach combining matching and difference-in-difference. The analysis, conducted in accordance with a pre-analysis plan submitted prior to any analysis, shows that our empirical model would have detected average effects of at least 7.5 percentiles of the wealth index for rural households. The results indicate that, over the period considered, the creation of protected areas had no statistically significant average effect on the well-being of households located within 10 km of protected areas created after 2008, as measured by the intra-cluster dispersion of this index. Robustness test conducted using other survey sources support this conclusion. Further work is needed to determine whether this lack of effect reflects a trade-off between positive and negative impacts, high heterogeneity of effects, or limited implementation of conservation measures in a context of weak governance and underfunding of protected areas. 
+  
+Keywords: Biodiversity Conservation, Well-being, Demographic and Health surveys, Genetic matching, difference-in-difference, Madagascar
+
+JEL codes: Q57, I31, C31, Q56, O55
+
+note: |
+  Study pre-registration: On Open Science Framework (OSF) with the title
+  "Conservation and development: Socioeconomic Impact Evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys"
+
+---
+
+## Introduction
+
+The reconciliation between conservation and development has been a long-discussed issue within the scientific community (Adams et al. 2004), but its importance has grown considerably over the past decade with the rapid expansion of preotected ares (PA). This issue is particularly relevant for all 195 COP15 signatory states, which have committed to increasing PA coverage to 30 % of terrestrial land by 2030. 
+
+In theory, PA can have significant impacts on local livelihoods, both positive and negative. They are recognized as an essential tool for biodiversity conservation (Maxwell et al. 2020), but their creation can deprive nearby communities of access to revenue-generating activities based in natural resources (gathering, hunting, fishing, and harvesting medicinal plants), reduce the amount of land available and restrict economic activites (agriculture, livestock, construction) (Kandel et al. 2022). Conversely, they can be accompanied by compensation measures (local development projects, cash transfers), generate economic benefits (jobs in PA, tourism), and enhance ecosystem services (increased water resources, erosion control, fire prevention) (Kandel et al. 2022). 
+
+Despite these ambivalent potential effects, empirical studies that rigorously assess the impact of PA on people’s livelihoods are still rare. Of the 1,043 studies applied to 104 countries reviewed by McKinnon et al. (2016), only 19 used quantitative methods to evaluate impacts on material living conditions or economic well-being. This meta-analysis shows that the results of studies vary widely depending on the methods used, the context studied, and the location. Kandel et al. (2022) have updated and extended this analysis by focusing on a corpus of 30 quantitative evaluations specifically address to the impact of PA on household income. They show that PA can have a positive impact on local economies, but that this effect is generally modest and depends on the local context. This variability in impacts highlights the importance of conducting context-specific studies using robust quantitative methods. 
+Madagascar stands out as a particularly relevant case study for analyzing the relationship between conservation and socioeconomic conditions. The country is the poorest in terms of the first target of the Sustainable Development Goals (SGD 1-1), with the highest proportion of the population living below the international poverty line in the world (Conceição 2024, pp298-299). In 2008, terrestrial PA covered 3.6 % of Madagascar and 9 % of the population lived within 10 km of a PA. Today, they cover 10.8 % and 28 % of the population live within 10 km of PA1. Madagascar is also characterized by a low state capacity (Hanson et Sigman 2021), which makes it difficult to implement conservation and sustainable development policies and the social measures that should accompany them. These gactors, combined with the high dependence of the rural population on natural resources, mean that the impacts of PA are potentially different from those observed in less precarious contexts. 
+However, empirical studies at the national scale are almost non-existent for Madagascar. None of the quantitative impact evaluation identified by McKinnon et al. (2016) covered the country. One of the references consolidated by Kandel et al. (2022) is a multi-country study that includes Madagascar, but it is based on an estimate of an aggregate impact at the commune level and covers only one date. It uses the 1993 census data to match the country’s municipalities (Mammides 2020), without a before-and-after comparison, and in a context where less than 3 % of the territory was covered by PA, most of which had been created several decades earlier. 
+
+In this articles, our contribution to the litterature is twofold, both empirical and methodological. Empirically, this study provides an unprecedented national analysis, covering 137 PA established between 2008 and 2021, to evaluate the socioeconomic impacts of forest conservation in contexts of  poverty and weak governance. Methodologically, it incorporates recent developments in econometrics to adapt these methods to the study PA. The procedure we propose here could be replicated in other countries, starting with the 39 countries that have at least three geolocated DHS surveys. This approach paves the way for a more systematic evaluation of the impact of PA, taking into account the specific context of each country. 
+
+## Données
+
+Description des données DHS, variables, échantillon…
+
+## Méthodologie
+
+Approche empirique, appariement, DID, etc.
+
+## Résultats
+
+Résultats principaux…
+
+## Discussion
+
+Interprétation…
+
+## Conclusion
+
+Conclusion…
+
+---
+
+---
