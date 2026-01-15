@@ -23,36 +23,19 @@ author:
 
 affiliations:
   - id: univ_tana
-    name: "Université d'Antananarivo, Madagascar"
-    url: https://www.univ-antananarivo.mg
-    
-  
+    name: "Université d'Antananarivo"
   - id: univ_paris
-    name: "Université Paris-Saclay, France"
-    url: https://www.universite-paris-saclay.fr
-    
-  
+    name: "Université Paris-Saclay"
   - id: ird
-    name: "French National Research Institute for Sustainable Development(IRD), Madagascar"
-    url: https://www.ird.fr
-    
-  
-  - id: uvsq
-    name: "University of Saint Quentin en Yvelines, France"
-    url: https://www.uvsq.fr
-    
-  
-  - id: umi
-    name: "UMI-Sustainability and Resilience (SOURCE), IRD, France"
-    url: https://www.umi-source.uvsq.fr
-    
-    
-  - id: afd
-    name: "Agence Française de Développement(AFD), France"
-    
-  
+    name: "IRD"
   - id: cered
-    name: Development Centre for Economic Studies and Research (CERED) Madagascar
+    name: "CERED"
+  - id: uvsq
+    name: "UVSQ"
+  - id: umi
+    name: "UMI SOURCE"
+  - id: afd
+    name: "AFD"
     
     
 editor: visual
@@ -61,13 +44,14 @@ bibliography: references.bib
   
 format: 
   typst: 
-    fontsize: 12pt 
-    linestretch: 1.5
-    number-sections: true
+     number-sections: true
+     fig-cap-location: top
+     bibliographystyle: "chicago-author-date"
+  docx: default
 
 
 abstract: |
-  Protected Areas are the most widely used tool for biodiversity conservation. However, their implementation raises concerns about the well-being of local populations, especially when they are very poor and dependent on natural resources, as is the case in Madagascar. We are using geolocated socioeconomic surveys spanning a period of protected area creation (2008-2021), and extending the analysis to the previous period (1997-2008) in order to verify the credibility od the comparison. Socio-environmental indicators derived from spatial data are used to match rural areas with similar probabilities of being affected by the creation of protected areas, before estimating the effects using an approach combining matching and difference-in-difference. The analysis, conducted in accordance with a pre-analysis plan submitted prior to any analysis, shows that our empirical model would have detected average effects of at least 7.5 percentiles of the wealth index for rural households. The results indicate that, over the period considered, the creation of protected areas had no statistically significant average effect on the well-being of households located within 10 km of protected areas created after 2008, as measured by the intra-cluster dispersion of this index. Robustness test conducted using other survey sources support this conclusion. Further work is needed to determine whether this lack of effect reflects a trade-off between positive and negative impacts, high heterogeneity of effects, or limited implementation of conservation measures in a context of weak governance and underfunding of protected areas. 
+  Protected areas are the most widely used instrument for biodiversity conservation, yet their socioeconomic effects on nearby populations remain contested, particularly in low income contexts where livelihoods depend heavily on natural resources. This paper evaluates the impact of terrestrial protected areas on rural household well being in Madagascar, exploiting geolocated socio-demographic surveys covering the period of rapid protected area expansion between 2008 and 2021. To support identification, we draw on an earlier survey wave from 1997 to assess the plausibility of parallel trends prior to treatment. We combine spatially derived socio environmental indicators with genetic matching and difference in differences to construct a credible counterfactual. The study follows a pre analysis plan registered before any outcome analysis, including an ex ante power calculation indicating the ability to detect effects of approximately 7.5 wealth percentiles. We find no statistically significant average effect of protected area creation on the wealth index of households located within 10 km of protected areas established after 2008. A series of robustness checks using alternative data sources and specifications supports this result. The absence of an average effect may reflect offsetting positive and negative mechanisms, heterogeneous impacts across households or sites, or limited implementation capacity in a context of weak governance and chronic underfunding of protected areas.
   
 Keywords: Biodiversity Conservation, Well-being, Demographic and Health surveys, Genetic matching, difference-in-difference, Madagascar
 
@@ -78,28 +62,28 @@ note: |
   "Conservation and development: Socioeconomic Impact Evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys"
 ---
 
-## Introduction
+## Introduction {#introduction}
 
-The reconciliation between conservation and development has been a long-discussed issue within the scientific community [@Adams2004], but its importance has grown considerably over the past decade with the rapid expansion of protected ares (PA). This issue is particularly relevant for all 195 COP15 signatory states, which have committed to increasing PA coverage to 30% of terrestrial land by 2030.
+The reconciliation between conservation and economic development has long debated in the scientific literature [@Adams2004], but the issue has gained renewed prominence over the past decade with the rapid glocal expansion of protected ares (PA). This debate is particularly salient in the context of the Kunming–Montreal Global Biodiversity Framework, under which 195 signatory states committed to protecting 30 percent of terrestrial land by 2030.
 
-In theory, PA can have significant impacts on local livelihoods, both positive and negative. They are recognized as an essential tool for biodiversity conservation [@Maxwell2020], but their creation can deprive nearby communities of access to revenue-generating activities based in natural resources (gathering, hunting, fishing, and harvesting medicinal plants), reduce the amount of land available and restrict economic activities (agriculture, livestock, construction) [@Kandel2022]. Conversely, they can be accompanied by compensation measures (local development projects, cash transfers), generate economic benefits (jobs in PA, tourism), and enhance ecosystem services (increased water resources, erosion control, fire prevention) [@Kandel2022].
+In theory, PAs can affect local livelihoods through multiple and potentially opposing channels. While they are a central instrument for biodiversity conservation [@Maxwell2020], their establishment may restrict access to land and natural resources that support income generating activities such as agriculture, hunting, fishing, or forest product collection. At the same time, protected areas may generate benefits through compensation schemes, employment opportunities linked to conservation or tourism, and the provision of ecosystem services such as water regulation, erosion control, or fire prevention [@Kandel2022].
 
-Despite these ambivalent potential effects, empirical studies that rigorously assess the impact of PA on people's livelihoods are still rare. Of the 1,043 studies applied to 104 countries reviewed by McKinnon et al. [@McKinnon2016], only 19 used quantitative methods to evaluate impacts on material living conditions or economic well-being. This meta-analysis shows that the results of studies vary widely depending on the methods used, the context studied, and the location. Kandel et al.[@Kandel2022] have updated and extended this analysis by focusing on a corpus of 30 quantitative evaluations specifically address to the impact of PA on household income. They show that PA can have a positive impact on local economies, but that this effect is generally modest and depends on the local context. This variability in impacts highlights the importance of conducting context-specific studies using robust quantitative methods.
+Despite these ambivalent mechanisms, rigorous quantitative evidence on the socioeconomic impacts of PAs remains limited, in particular in poor and fragile governance contexts. Among the 1,043 studies reviewed across 104 countries by McKinnon et al. [@McKinnon2016], only 19 used quantitative methods to assess effects on material living conditions or economic well being. More recent syntheses confirm substantial heterogeneity in estimated impacts across contexts and methodologies. Focusing on 30 quantitative evaluations of household income, Kandel et al. [@Kandel2022] find that protected areas are associated with modest average gains, with effects that depend strongly on local conditions. This heterogeneity underscores the need for context specific evaluations using transparent and robust empirical strategies.
 
-Madagascar stands out as a particularly relevant case study for analyzing the relationship between conservation and socioeconomic conditions. The country is the poorest in terms of the first target of the Sustainable Development Goals (SGD 1-1), with the highest proportion of the population living below the international poverty line in the world @Conceicao2024[pp. 298-299]. In 2008, terrestrial PA covered 3.6% of Madagascar and 9% of the population lived within 10 km of a PA. Today, they cover 10.8% and 28% of the population live within 10 km of PA. Madagascar is also characterized by a low state capacity [@Hanson2021], which makes it difficult to implement conservation and sustainable development policies and the social measures that should accompany them. These factors, combined with the high dependence of the rural population on natural resources, mean that the impacts of PA are potentially different from those observed in less precarious contexts.
+Madagascar provides a particularly relevant setting for such an analysis. It ranks among the poorest countries globally under SDG 1.1, with the highest share of the population living below the international poverty line @Conceicao2024[pp. 298-299]. During the study period, terrestrial PA coverage expanded from 3.6 percent of national territory in 2008 to 10.8 percent in 2021, while the share of the population living within 10 km of a PA rose from 9 to 28 percent. At the same time, Madagascar exhibits low state capacity [@Hanson2021], which constrains the implementation of conservation policies and associated social measures. Combined with high rural dependence on natural resources, these features suggest that the socioeconomic impacts of protected areas may differ from those observed in less precarious institutional contexts.
 
-However, empirical studies at the national scale are almost non-existent for Madagascar. None of the quantitative impact evaluation identified by McKinnon et al. [@McKinnon2016] covered the country. One of the references consolidated by Kandel et al. [@Kandel2022] is a multi-country study that includes Madagascar, but it is based on an estimate of an aggregate impact at the commune level and covers only one date. It uses the 1993 census data to match the country’s municipalities [@Mammides2019], without a before-and-after comparison, and in a context where less than 3% of the territory was covered by PA, most of which had been created several decades earlier.
+Yet national scale impact evaluations remain scarce. None of the quantitative studies reviewed by McKinnon et al. [@McKinnon2016] focus on Madagascar. The only study cited by Kandel et al. [@Kandel2022] that includes the country relies on cross sectional municipality level data from the 1993 census [@Mammides2019], predates the major expansion of protected areas, and does not allow for before and after comparisons.
 
-In this articles, our contribution to the litterature is twofold, both empirical and methodological. Empirically, this study provides an unprecedented national analysis, covering 137 PA established between 2008 and 2021, to evaluate the socioeconomic impacts of forest conservation in contexts of poverty and weak governance. Methodologically, it incorporates recent developments in econometrics to adapt these methods to the study PA. The procedure we propose here could be replicated in other countries, starting with the 39 countries that have at least three geolocated DHS surveys. This approach paves the way for a more systematic evaluation of the impact of PA, taking into account the specific context of each country.To avoid any temptation to "specification searching", we planned and documented our analysis procedure prior to conducting the impact assessment, and our analysis plan was submitted with a dated and verifiable certification on the OSF portal in March 2025. 
+This article contributes to the literature in two ways. Empirically, it provides the first national level impact evaluation of terrestrial protected areas in Madagascar, covering 71 protected areas created between 2008 and 2021. Methodologically, it combines recent advances in matching and difference in differences methods with geolocated household survey data to construct a credible counterfactual. To enhance transparency and limit researcher discretion, the empirical strategy was fully specified in a pre analysis plan registered on the Open Science Framework prior to conducting any outcome analysis.Our analysis plan was submitted with a dated and verifiable certification on the OSF portal in Novembre 2024 and updated in March 2025. 
 
-In the following section [@theoryofchange], we present the theory of change to explain the mechanisms through which PA could influence local household well-being, as well as the expecteds effects. Section [@data] describes all of the studies and data used in the analysis. Section [@empiricalstrategic] presents the econometric approaches used to assess the effect of PA on household livelihoods, the effect of PA on inequalities between households, and the heterogeneity of effects according to the type of PA governance. Section [@resultats] presents our main results and proposes a series of robustness tests. Section [@discussionandconclusion] concludes. 
+The remainder of the paper proceeds as follows. Section  [@theoryofchange], presents the conceptual framework and hypotheses. Section [@data] describes the data sources. Section [@empiricalstrategic] outlines the identification strategy and econometric methods. Section  [@empiricalstrategic] presents the econometric approaches used to assess the effect of PA on household livelihoods, the effect of PA on inequalities between households, and the heterogeneity of effects according to the type of PA governance. Section [@resultats] presents our main results and proposes a series of robustness tests. Section [@discussionandconclusion] concludes. 
 
 ## Theory of change {#theoryofchange}
 Our evaluation model is based on a theory of change that links the implementation of PA(treatment) to local household well-being (the targeted results) (@fig-theory-change)
 The objective here is to determine the impact of PA on observed changes in well-being. Kandel et al.[@Kandel2022] report a slightly positive average impact, but highlight a large heterogeneity of results across context. Several parameters are likely to influence impact, as represented graphically in @fig-theory-change, in the form of directed acyclic graph [@Hunermund2023]. If the mechanisms represented affect all residents of a locality in a convergent manner, they should have a significant impact (positive or negative) on the average well being (hypothesis 1). If, on contrary, they affect them in very different ways, they may have no average impact on the well-being, but may increase inequalities (hypothesis 2)
 
-![Logic diagram of the theory of change tested in the study](figures/theory_change.png){#fig-theory-change width=70%}
-
+![Logic diagram of the theory of change tested in the study](figures/theory_change.png){#fig-theory-change width=100%}
+  
 
 The factors likely to lead to a decline in well-being seem particularly significant in the Malagasy context, where the population is predominantly rural and living in extreme poverty (the last assessment was in 2012, with 80.7% of the population below the $2.15 a day threshold at 2017 PPP). Six studies conducted in Madagascar between 1995 and 2006 estimated the opportunity cost of losing access to PA (slash-and-burn agriculture, hunting, gathering, timber, etc.) at between USD 39 and 177 per housejold per year [@Neudert2017]. Golden et al.[@Golden2014] estimated that income from hunting accounted for 57% of household's cash income in areas adjacent to the Makira and Masoala PA. Another survey of people living near Makira estimated the value of pharmaceutical use at USD 30-44 per year per household, based on the subsidized price of equivalent treatments in the Malagasy market [@Golden2012]. 
 
@@ -132,14 +116,10 @@ Considering the long-term, large-scale, complex, and politically sensitive natur
 This study evaluates the impact of terrestrial PA creation on rural household well-being between 2008 and 2021. These time frames was chosen on the basis of the availability of geolocalised data on household living conditions and coincide with a period of strong expansion of PA in the country, as shown in @fig-evo-pa
 
 
-![Evolution of protected areas in Madagascar and study period ](figures/evo_pa.png){#fig-evo-pa width=70%}
+![Evolution of protected areas in Madagascar and study period](figures/evo_pa.png){#fig-evo-pa width=100%}
 
-::: {.small}
-**Source:** Authors’ calculations based on data from the Service de la Gouvernance des Aires Protégées (SGAP),  
-Ministère de l’Environnement et du Développement Durable (MEDD).
+    Notes: This graph shows the evolution of PA creation in Madagascar since its creation in 1927 (under the colonial administration) until 2024. From 1927 until the early 2000s, PA were characterized by strict conservation (IUCN categories I, II and IV). At the IUCN Parks Summit in Durban in 2003, the Malagasy government committed to trippling the area PA, which led to the creation of new PA with 28 provisional creation decrees published between April 2006 and December 2007 and a global decree bringing the number of new PA to 97 in 2008. The final decree was not issued until 2015, which led to the creation of new PA thereafter. The data used to produce the graph comes from Service de la Gouvernance des Aires Protégées (SGAP), du Ministère de l'Environnement et du Développement Durable (MEDD)
 
-**Note:** This graph shows the evolution of PA creation in Madagascar since its creation in 1927 (under the colonial administration) until 2024. From 1927 until the early 2000s, PA were characterized by strict conservation (IUCN categories I, II and IV). At the IUCN Parks Summit in Durban in 2003, the Malagasy government committed to trippling the area PA, which led to the creation of new PA with 28 provisional creation decrees published between April 2006 and December 2007 and a global decree bringing the number of new PA to 97 in 2008. The final decree was not issued until 2015, which led to the creation of new PA thereafter. 
-:::
 
 Our study analyze the impact of PA surrounding the well being over 13 years (2008-2021). We are using 2008 as the reference year. So, the population considered as treated encompasses households living in rural areas within 10 km of a PA created between 2008 and 2021, according to the GPS coordinates provided in the Demographic Health Surveys (DHS) data[^2]. Households in the control group are those living in a rural area more than 10 km away from a PA created between 2008 and 2021, and they exhibit very similar characteristics or share significant traits with households in the treatment group.We decided to exclude rural populations living within 10 km of PA created before 2008, as they are considered treated before the study period; and in urban areas. 
 
@@ -148,15 +128,26 @@ Our study analyze the impact of PA surrounding the well being over 13 years (200
 We classified PA according to their group affiliation 
 
 
-![Classification of household clusters according their group affiliation ](figures/map-clust.png){#fig-map-clust width=70%}
+![Classification of household clusters according their group affiliation ](figures/map-clust.png){#fig-map-clust width=100%}
 
-**Source:** Authors based on GPS data from DHS clusters
-
-
-**Note:** Households in the treatment group are those located in clusters less than 10 km from PA created since 2008 in rural areas (shown in red) and households in clusters more than 10 km from PA created since 2008 in rural areas (shown in blue). Rural populations living within 10 km of PA created before 2008 and in urban areas are excluded from the study (shown in black)
+    Notes: Households in the treatment group are those located in clusters less than 10 km from PA created since 2008 in rural areas (shown in red) and households in clusters more than 10 km from PA created since 2008 in rural areas (shown in blue). Rural populations living within 10 km of PA created before 2008 and in urban areas are excluded from the study (shown in black). The GPS data used comes from DHS clusters. 
 
 
-Table 1 show the distribution of PA (by number and area) according to the period in which they were created by final decree, taking 2008 as the reference year. In the treatment period (2008 to 2021), 137 PA were created, covering 75,191 km². 
+
+Table 1 show the distribution of PA (by number and area) according to the period in which they were created by final decree, taking 2008 as the reference year. In the treatment period (2008 to 2021), 137 PA were created, covering 75,191 km².
+
+Table: **Protected areas by period (reference year = 2008), terrestrial areas only.**
+
+
+
+| Period of creation | PA number | Area (km²) |
+|--------------------|-----------|------------|
+| Before 2008        | 34         | 23.939       |
+| From 2018 onwards  | 103         | 51.252      |
+
+
+_Notes:_ “PA number” refers to the number of protected areas created during each period.  
+Area is expressed in square kilometers (km²). Calculations are based on data from the World Database on Protected Areas (WDPA).
 
 
 ### Household socioeconomic conditions {#householdsocioeconomicconditions} 
@@ -225,14 +216,14 @@ The data from this source will constitue our matching variables. Matching covari
 ![Distribution of the rural wealth index (percentile) ](figures/distr_wi.png){#fig-distr-wi width=70%}
  
 
+    Notes: The graph shows boxplots of the wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). On average, for all years of the study, the wealth index of the two groups is roughly similar.
 
 ![Distribution of the Zscore rural wealth index (percentile) ](figures/distr_zs.png){#fig-distr-zs width=70%}
 
-**Source:** Authors based on GPS data from DHS clusters
+    Notes: The graph shows boxplots of the zscore wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). On average, for all years of the study, the wealth index of the two groups is roughly similar.
+    
 
-**Note:** The graph shows boxplots of the wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). On average, for all years of the study, the wealth index of the two groups is roughly similar.
-
-Dans le tableau A.5, en annexe, nous présentons les statistiques descriptives de notre échantillon. 
+We present the descriptive statistics for our sample in the appendix. 
 
 
 ## Empirical strategic {#empiricalstrategic}
@@ -320,6 +311,8 @@ The distribution analysis of covariates prior to matching shows a significant im
 
 ### Overall impact on livelihoods {#overallimpactonlivelihoods}
 
+#### Estimation DID 2X2
+
 In our estimation DID, we used robust standard errors for intra-cluster correlations that correct for the dependence of observations within clusters. The results reveal that there is no statistically significant difference at the 5% level between treated and control households. Figure presents the results of the double difference estimation of the treatment groups (households within 10 km) and the control groups (households more than 10 km away) for the period 2008-2021. The principle is to compare the wealth index of control and treatment households in a period prior to (1997-2008) and after (2008-2021) the implementation of the PA.
 
 The placebo test or pre-treatment estimate (1997-2008 period) gives an estimate with a low coefficient (+3.9 percentile) that is not significant, concluding that no difference was detected before the intervention (table). The hypothesis of parallell trends is validated, as the wealth indices of the two groups vary simularly and simultaneously before tratment (treatment in 2008)
@@ -354,9 +347,44 @@ h1_2x2_plot +
     Notes: The vertical axis shows the estimated effect of the DID on the wealth percentile (in points). The horizontal axis shows the non significant effet. The placebo period indicates that the error bar crosses the horizontal line at 0(non-significant effect). During the treatment period, the clustered confidence interval is not as wide as that of the placebo, which still encompasses 0 (non significant effect)
 
 
+#### Event study estimation 
+The estimation DID 2X2 indicates that the protected areas cration did not have statistically significant average effects on households. Indeed, our empirical approach did not detect avaerage effects of at least 7.5 percentiles of the wealth index for rural households. We therefore applied an estiimator adapted to staggered adoption and multiple study periods, which takes into account the potential heterogeneous effects of the treatment. We thus integrated data from  Malaria Indicator Surveys (MIS)[^7]: MIS 1997, MIS 2011, and MIS 2013. 
+
+[^7]: Malaria Indicator Surveys (MIS) focuse specifically on malaria related issues, do not include certain health or demographic questions that are included in the DHS surveys. However, all the variables relating to household living conditions that we will use in our study from the DHS surveys are also present in the MIS surveys. 
+
+
+    • Staggered DiD: static
+
+```{r}
+#| label: tbl-h1-staggered-static
+#| tbl-cap: "Static treatment effect estimates on well-being"
+#| warning: false
+#| message: false
+#| echo: false
+
+h1_staggered_static_tb <- read_rds("../table/h1_staggered_static_tb.rds")
+h1_staggered_static_tb
+```
+
+
+
+
+
+
+    • Staggered DiD: dynamic event study
+For the event study, each observation is indexed by its relative year to treatment, defined as the difference between the survey year and the year in which the protected area was established for treated locations. This transformation allows outcomes to be compared along a common event time dimension across cohorts. Because surveys are conducted at irregular intervals and some relative years are represented by very few observations, we group relative years into two-year bins. For example, relative years −2 and −1 are grouped together, as are +4 and +5. Observations occurring more than ten years before or after treatment are further aggregated into open-ended bins, as shown in @tbl-rel-years. This binning strategy increases the number of observations contributing to each event-time coefficient, reduces noise at the extremes, and improves the stability and interpretability of the estimated dynamic effects.  
+
+
+
+
+
+
+
+
+
 ### Effect on inequalities {#effectoninequalities}
 
-DID estimation shows that the average effect of being in a treated cluster did not reduce or accentuate wealth inequalities overall. The placbeo test provides an estimate with non-significant coefficient of + 0.1276 percentiles, which validates the hypothesis of parallel trends. Neither the SPEI climate variable nor the gender of the household head has a significant effect on household living standards inequality. However, only the gender of the head of household has a positive effect. During the treatment period (2008-2021), there was a general increase in inequality between households (post-coefficient = 0.7005, p<0.001) (see table), but the estimated effect remained insignificant. SPEI climate variables have a significant effect, suggesting that climte shocks disproportionately affect the most vulnerable households, accentuating inequalities. The most well-off households can cushion these shocks, creating a divergence. 
+DID estimation shows that the average effect of being in a treated cluster did not reduce or accentuate wealth inequalities overall. The placbeo test provides an estimate with non-significant coefficient of + 0.1276 percentiles, which validates the hypothesis of parallel trends. Neither the SPEI climate variable nor the gender of the household head has a significant effect on household living standards inequality. However, only the gender of the head of household has a positive effect. During the treatment period (2008-2021), there was a general increase in inequality between households (post-coefficient = 0.7005, p<0.001), but the estimated effect remained insignificant. SPEI climate variables have a significant effect, suggesting that climte shocks disproportionately affect the most vulnerable households, accentuating inequalities. The most well-off households can cushion these shocks, creating a divergence. 
 
 
 Furthermore, R² and adjusted R² are close to zero and identical, indicating that the model performs poorly. 
@@ -409,10 +437,7 @@ h3_2x2_plot <- read_rds("figures/h3_2x2_plot.rds")
 h3_2x2_plot + 
     ggtitle(element_blank())
 ```
-    _Notes:
-
-
-
+    Notes: The graphe highlights the change in household livind standards before and after the implementation of PA. Before PA, households living near multi-use PA had a slightly positive wealth percentile compared to those living near strict PA, whose living standards were rather negative. After PA, the wealth percentile of multi-use households decreased to almost 0, while that of strict PA increased.  
 
 
 ### Robustness {#Robustness}
