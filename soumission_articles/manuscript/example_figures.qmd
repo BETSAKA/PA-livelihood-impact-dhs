@@ -76,16 +76,13 @@ note: |
   "Conservation and development: Socioeconomic Impact Evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys"
 ---
 
-J'ai inclus les graphs et tables sous formes d'objets R dans soumission_articles/figures et soumission_articles/tables
-Voici les codes à copier-coller pour les intégrer dans ton document quarto.
+J'ai inclus les graphs et tables sous formes d'objets R dans soumission_articles/figures et soumission_articles/tables Voici les codes à copier-coller pour les intégrer dans ton document quarto.
 
-Les options de rendu sont notés par des balises précédées de #| au déébut de chaque chunk R
-Il est aussi possible de gérer ces options globalement en les mettant dans le cartouche yaml au début du document quarto, mais là on va faire simple.
+Les options de rendu sont notés par des balises précédées de #\| au déébut de chaque chunk R Il est aussi possible de gérer ces options globalement en les mettant dans le cartouche yaml au début du document quarto, mais là on va faire simple.
 
 Attention car les chemins d'accès sont différents selon d'où tu lances le render (en cliquant sur render dans RStudio ou en lançant dans le terminal : dans certains cas, il faut ajouter ou enlever soumission_articles/manuscript au début des chemins d'accès aux fichiers).
 
 Nota bene sur la mise en forme dans quarto.
-
 
 ## Results
 
@@ -132,10 +129,10 @@ h1_staggered_static_tb
 
 #### Staggered DiD: dynamic event study
 
-(NB: see if this goes here or in the methods section)
-For the event study, each observation is indexed by its relative year to treatment, defined as the difference between the survey year and the year in which the protected area was established for treated locations. This transformation allows outcomes to be compared along a common event time dimension across cohorts. Because surveys are conducted at irregular intervals and some relative years are represented by very few observations, we group relative years into two-year bins. For example, relative years −2 and −1 are grouped together, as are +4 and +5. Observations occurring more than ten years before or after treatment are further aggregated into open-ended bins, as shown in @tbl-rel-years. This binning strategy increases the number of observations contributing to each event-time coefficient, reduces noise at the extremes, and improves the stability and interpretability of the estimated dynamic effects.
+(NB: see if this goes here or in the methods section) For the event study, each observation is indexed by its relative year to treatment, defined as the difference between the survey year and the year in which the protected area was established for treated locations. This transformation allows outcomes to be compared along a common event time dimension across cohorts. Because surveys are conducted at irregular intervals and some relative years are represented by very few observations, we group relative years into two-year bins. For example, relative years −2 and −1 are grouped together, as are +4 and +5. Observations occurring more than ten years before or after treatment are further aggregated into open-ended bins, as shown in @tbl-rel-years. This binning strategy increases the number of observations contributing to each event-time coefficient, reduces noise at the extremes, and improves the stability and interpretability of the estimated dynamic effects.
 
 **A inclure dans l'annexe**
+
 ```{r}
 #| label: tbl-rel-years
 #| tbl-cap: "Binning of relative years-to-treatment for the event study"
@@ -230,7 +227,6 @@ h2_event_study_plot +
     ggtitle(element_blank())
 ```
 
-
 ### Heterogeneity
 
 #### Impact in 2x2 DiD
@@ -290,4 +286,3 @@ h3_event_study_plot <- read_rds("figures/h3_event_study_plot.rds")
 h3_event_study_plot + 
     ggtitle(element_blank())
 ```
-

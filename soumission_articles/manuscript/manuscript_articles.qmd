@@ -23,36 +23,36 @@ author:
 
 affiliations:
   - id: univ_tana
-    name: "Université d'Antananarivo"
+    name: "Université d'Antananarivo, Madagascar"
     url: https://www.univ-antananarivo.mg
     
   
   - id: univ_paris
-    name: "Université Paris-Saclay"
+    name: "Université Paris-Saclay, France"
     url: https://www.universite-paris-saclay.fr
     
   
   - id: ird
-    name: "IRD"
+    name: "French National Research Institute for Sustainable Development(IRD), Madagascar"
     url: https://www.ird.fr
     
   
   - id: uvsq
-    name: "UVSQ"
+    name: "University of Saint Quentin en Yvelines, France"
     url: https://www.uvsq.fr
     
   
   - id: umi
-    name: "UMI-SOURCE"
+    name: "UMI-Sustainability and Resilience (SOURCE), IRD, France"
     url: https://www.umi-source.uvsq.fr
     
     
   - id: afd
-    name: "AFD"
+    name: "Agence Française de Développement(AFD), France"
     
   
   - id: cered
-    name: CERED
+    name: Development Centre for Economic Studies and Research (CERED) Madagascar
     
     
 editor: visual
@@ -61,16 +61,6 @@ bibliography: references.bib
   
 format: 
   typst: 
-    fig-cap-location: top
-    
-    
-    fig-caption:
-      size: 10pt
-      
-      
-    fig-subcaption: 
-      size:8pt
-    
     fontsize: 12pt 
     linestretch: 1.5
     number-sections: true
@@ -102,7 +92,7 @@ However, empirical studies at the national scale are almost non-existent for Mad
 
 In this articles, our contribution to the litterature is twofold, both empirical and methodological. Empirically, this study provides an unprecedented national analysis, covering 137 PA established between 2008 and 2021, to evaluate the socioeconomic impacts of forest conservation in contexts of poverty and weak governance. Methodologically, it incorporates recent developments in econometrics to adapt these methods to the study PA. The procedure we propose here could be replicated in other countries, starting with the 39 countries that have at least three geolocated DHS surveys. This approach paves the way for a more systematic evaluation of the impact of PA, taking into account the specific context of each country.To avoid any temptation to "specification searching", we planned and documented our analysis procedure prior to conducting the impact assessment, and our analysis plan was submitted with a dated and verifiable certification on the OSF portal in March 2025. 
 
-In the following section [@theoryofchange], we present the theory of change to explain the mechanisms through which PA could influence local household well-being, as well as the expecteds effects. Section [@data] describes all of the studies and data used in the analysis. Section [@empiricalstrategic] presents the econometric approaches used to assess the effect of PA on household livelihoods, the effect of PA on inequalities between households, and the heterogeneity of effects according to the type of PA governance. Section [@resultats] presents our main results and proposes a series of robustness tests. Section [@Conclusion] concludes. 
+In the following section [@theoryofchange], we present the theory of change to explain the mechanisms through which PA could influence local household well-being, as well as the expecteds effects. Section [@data] describes all of the studies and data used in the analysis. Section [@empiricalstrategic] presents the econometric approaches used to assess the effect of PA on household livelihoods, the effect of PA on inequalities between households, and the heterogeneity of effects according to the type of PA governance. Section [@resultats] presents our main results and proposes a series of robustness tests. Section [@discussionandconclusion] concludes. 
 
 ## Theory of change {#theoryofchange}
 Our evaluation model is based on a theory of change that links the implementation of PA(treatment) to local household well-being (the targeted results) (@fig-theory-change)
@@ -339,28 +329,67 @@ Climatic conditions (SPEI) have no significant effect on rural wealth, and the e
 Although the treatment estimate is larger in magnitude (-2.5 percentiles), the direct effect of the treatment remains insignificant. Households living near PA appear to have slightly lower level of well-being than control households. The analysis does not confirm hypothesis 1, as although the relationship is negative, the confidence interval still largely covers 0. This means that we lack sufficient precision to detect an effect, and therefore cannot reject the null hypothesis. The effect is therefore either zero or below our detection capacity. The statistical power calculation showed that the effect would need to be at least 7.8 percentiles to be detectable (Annexe)
 
 
-Table
+```{r}
+#| label: fig-h1-2x2
+#| fig-cap: "Impact on well-being: 2x2 DiD impact on local population (< 10km)"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
 
+knitr::include_graphics("figures/h1_2x2_plot.png")
+```
 
 ### Effect on inequalities {#effectoninequalities}
 
 DID estimation shows that the average effect of being in a treated cluster did not reduce or accentuate wealth inequalities overall. The placbeo test provides an estimate with non-significant coefficient of + 0.1276 percentiles, which validates the hypothesis of parallel trends. Neither the SPEI climate variable nor the gender of the household head has a significant effect on household living standards inequality. However, only the gender of the head of household has a positive effect. During the treatment period (2008-2021), there was a general increase in inequality between households (post-coefficient = 0.7005, p<0.001) (see table), but the estimated effect remained insignificant. SPEI climate variables have a significant effect, suggesting that climte shocks disproportionately affect the most vulnerable households, accentuating inequalities. The most well-off households can cushion these shocks, creating a divergence. 
 
 
-Table 
-
-
 Furthermore, R² and adjusted R² are close to zero and identical, indicating that the model performs poorly. 
 
 
-Figure 
+```{r}
+#| label: fig-h2-2x2
+#| fig-cap: "Impact on inequalities: 2x2 DiD impact on local population (< 10km)"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
 
+knitr::include_graphics("figures/h1_2x2_plot.png")
+```
 
 
 ### Heterogeneity {#heterogeneity}
 
 The hetereogeneous study effects aims to determine which categories of households benefit more- or less -from the creation of PA and the conditions under which this occurs. 
 We analyzed the influence of PA governance by distinguishing between their IUCN categories 'strict' PA for those in categories I-V, and 'multi-use' PA for those in categories V-VI. The DID estimate for the period 1997-2008 shows that households living near multi-use PA experienced an increase in wealth of around five percentiles, while those living lear strict PA experienced a decrease (Figure). 
+
+
+```{r}
+#| label: fig-h3-2x2
+#| fig-cap: "Heterogeneity of impact on well-being"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+h3_2x2_plot <- read_rds("figures/h3_2x2_plot.rds")
+
+# # Pour rajouter le titre au-dessus du graph en plus de la caption en dessous
+# h2_2x2_plot
+
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h3_2x2_plot + 
+    ggtitle(element_blank())
+```
+
 
 
 ### Robustness {#Robustness}
@@ -378,23 +407,38 @@ Rosenbaum's sensitivity test [@Rosenbaum1983] shows that the results are not rob
 The DID estimates revealed that, on average, female-headed households have a lower wealth percentile (-2.307) than male-headed households (+0.7440). However, the interaction between the treatment and the gender of the household head does not reveal a signifcicant difference between men and women. IN other words, living near PA has no particular effect on gender inequality among household heads. Similarly, no interaction between the treatment and the age of the household head was evident, even though households headed by people aged 45-59 appeared to be significantly wealthier (2.920) than others. 
 
 
-
-
 ## Discussion and conclusion {#discussionandconclusion}
 This study aims to assess the potentially contradictory effects of creating a PA on the household living standards and socioeocnomic inequalities of rural housheolds in Madagascar. The analysis thus seeks to provide avenues for adjusting conservation policies in order to reconcile biodiversity preservation with the needs and rights of local populations. 
 
 Hypothesis 1 assumes that PA, on average, reduce the riparian household living standards. The results suggest that PA neither lead to a decline nor an increase in the wealth index of these households. However, the relationship remains neagtive, meaning the effect is either zero or below our detection capacity. The most likely explanation for this is that restrictions on the use of natural resources lead to a loss of access to supplly services and an absence of compensation mechanisms or unequal sharing of benefits. These findings highlight the need for public authorities ans conservation stkaholders to implement more inclusive measures, such as improving the sharing of tourism revenus, providing targeted cash transfers, in order to prevent increased vulnerability. 
 
-According to the literature, interventions associated 
+According to the literature, interventions associated with protected areas, which are supposed to improve livelihoods and economic well-being, generally tend to produce an unequal distribution of benefits. IN our case, conservation does not significantly exacerbate inequalities (hypothesis 2). THe results show that the inequalities observed are mainly due to socio-demographic and climatic dynamics. Households headed by men are wealthier than those headed by women. This reflects structural inequalities in access to resources, a lack of social recognition, and limited participation and decision-laking in the market. Conversely, households headed by older peolpe are bette off because they generally have accumulated wealth over time and stronger networks, which give them greater economic stability. Finally, climatic conditions play an important role in household living conditions: periods of drought reduce agricultural productivity and undermine livelihoods, whereas favourable conditions increase wealth. In our case, we note that climatic conditions have improved since the establisment of PA. Without inclusive policies, we would see a consolidation of 'local elites' who coul benefit more from environmental benefits. Such a situation would call for the adoption of corrective measures aimed at preventing the concentration of these benefits in the hands of a small group (for example, through local employment quotas or transparent partipatory governance), mechanisms for equitable and participatory redistribution. 
+
+Finally, hypothesis 3 concerns the heterogeneity of effects depending on the type of PA governance; The study reveals that multi-use PA (involving local communities) have positive effect on the wealth index of nearby households, whereas those living near strictly PA experience a negative effect. This difference can be explained by the fact that multi-use areas allow certain forms of sustainable resource exploitation and eocnomic activities such as ecotourism, which promotes local development. In contrast, strictly PA impose severe restrictions on access and use. Therefore, the conclusions of our study could be applied to all participatory models that have been promoted over the last fifteen years. 
+
+These findings will fuel the debate on the compatibility between conservation and poverty reduction. They will help to understand how certain institutiona; configurations or forms of governance mitigate or exacerbate the precariousness of rural households. This thus provides new insights for the empirical analysis of biodiversity protection policies in low-income countries. 
 
 
 
+CRediT authorship contribution statement
+
+Iriana Razafimahenina: conceptualization - formal analysis - Methodology - writing - original draft
+
+Florent Bédécarrats: conceptualization - Data curation - formal analysis - Funding acquisition - investigation -Methodology - Project administration - Resources - Software - Supervision - Validation - writing - original draft -
+
+Ingrid Dallmann:conceptualization - Methodology - Supervision - Validation - Writing - review & editing
+
+
+Holimalala Randriamanampisoa: conceptualization - formal analysis - Project administration -supervision - Validation- Writing - review & editing
+
+
+## Financement
+The study is performed in the framework of the BETSAKA project. The BETSAKA project is cofunded by the Development Impact Lab of the German KfW Development Bank; the Agence Française de Développement (AFD), through the PAIRES program, the French National Research Agency (ANR), and the French Research Institute for Sustainable Development (IRD). 
+
+## Declaration of interest
+One of the authors is an evaluation officer at AFD, and the BETSAKA project is funded by the Evaluation department of both AFD and KfW. While the operational departments of AFD and KfW also fund conservation projects in Madagascar and other countries, the Evaluation departments operate independently. They are committed to rigorous, unbiased studies and are supervised by independent entities within both institutions. 
 
 
 
-
-Conclusion…
-
-## References
 
 ------------------------------------------------------------------------
