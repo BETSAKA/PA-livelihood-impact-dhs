@@ -213,12 +213,13 @@ The data from this source will constitue our matching variables. Matching covari
 
 @fig-distr-wi shows that the control and treatment groups have very similar wealth profiles, with averages between 47 and 50, and medians ranging from 46 to 51. In contrast, the excluded group is at the top of the national distribution of wealth, with an average well above 50 and a median between 63 and 77. Its distribution is generally skewed upwards (high p25). This suggests that there is no difference between the control and treatment groups; however, the standard deviations of the two groups indicate a high degree of heterogeneity in household living standards.  
 
-![Distribution of the rural wealth index (percentile) ](figures/distr_wi.png){#fig-distr-wi width=70%}
+![Distribution of the rural wealth index (percentile) ](figures/distr_wi.png){#fig-distr-wi width=100%}
  
 
     Notes: The graph shows boxplots of the wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). On average, for all years of the study, the wealth index of the two groups is roughly similar.
 
-![Distribution of the Zscore rural wealth index (percentile) ](figures/distr_zs.png){#fig-distr-zs width=70%}
+![Distribution of the Zscore rural wealth index (percentile) ](figures/distr_zs.png){#fig-distr-zs width=100%}
+
 
     Notes: The graph shows boxplots of the zscore wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). On average, for all years of the study, the wealth index of the two groups is roughly similar.
     
@@ -348,7 +349,9 @@ h1_2x2_plot +
 
 
 #### Event study estimation 
-The estimation DID 2X2 indicates that the protected areas cration did not have statistically significant average effects on households. Indeed, our empirical approach did not detect avaerage effects of at least 7.5 percentiles of the wealth index for rural households. We therefore applied an estiimator adapted to staggered adoption and multiple study periods, which takes into account the potential heterogeneous effects of the treatment. We thus integrated data from  Malaria Indicator Surveys (MIS)[^7]: MIS 1997, MIS 2011, and MIS 2013. 
+The estimation DID 2X2 indicates that the protected areas cration did not have statistically significant average effects on households. Indeed, our empirical approach did not detect avaerage effects of at least 7.5 percentiles of the wealth index for rural households. We therefore applied an estiimator adapted to staggered adoption and multiple study periods, which takes into account the potential heterogeneous effects of the treatment [@Borusyak2024]. We thus integrated data from  Malaria Indicator Surveys (MIS)[^7]: MIS 1997, MIS 2011, and MIS 2013. 
+
+We also add MICS 2018, as it presents the same design as MIS and DHS surveys, and has 17 870 surveyed households in a year for which we have no other data source. It enables us to have a more complete coverage of pre-and post year.
 
 [^7]: Malaria Indicator Surveys (MIS) focuse specifically on malaria related issues, do not include certain health or demographic questions that are included in the DHS surveys. However, all the variables relating to household living conditions that we will use in our study from the DHS surveys are also present in the MIS surveys. 
 
@@ -366,14 +369,33 @@ h1_staggered_static_tb <- read_rds("../table/h1_staggered_static_tb.rds")
 h1_staggered_static_tb
 ```
 
-
-
-
+The treatment is associated with a slight increase in the wealth index percentile (+4.5 point), but it's not significant. The estimate is too uncertain to conclude so we do another estimation with event study for assess the impact
 
 
     • Staggered DiD: dynamic event study
-For the event study, each observation is indexed by its relative year to treatment, defined as the difference between the survey year and the year in which the protected area was established for treated locations. This transformation allows outcomes to be compared along a common event time dimension across cohorts. Because surveys are conducted at irregular intervals and some relative years are represented by very few observations, we group relative years into two-year bins. For example, relative years −2 and −1 are grouped together, as are +4 and +5. Observations occurring more than ten years before or after treatment are further aggregated into open-ended bins, as shown in @tbl-rel-years. This binning strategy increases the number of observations contributing to each event-time coefficient, reduces noise at the extremes, and improves the stability and interpretability of the estimated dynamic effects.  
+For the event study, each observation is indexed by its relative year to treatment, defined as the difference between the survey year and the year in which the protected area was established for treated locations. This transformation allows outcomes to be compared along a common event time dimension across cohorts. Because surveys are conducted at irregular intervals and some relative years are represented by very few observations, we group relative years into two-year bins. For example, relative years −2 and −1 are grouped together, as are +4 and +5. Observations occurring more than ten years before or after treatment are further aggregated into open-ended bins, as shown in @tbl-rel-years. This binning strategy increases the number of observations contributing to each event-time coefficient, reduces noise at the extremes, and improves the stability and interpretability of the estimated dynamic effects.
 
+
+```{r}
+#| label: fig-h1-event-study
+#| fig-cap: "Impact on well-being: Event-study with 2-year bins"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+h1_event_study_plot <- read_rds("figures/h1_event_study_plot.rds")
+
+# h1_event_study_plot
+
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h1_event_study_plot + 
+    ggtitle(element_blank())
+```
+
+The result show that the coefficients associated with the treatment periods overlap 0. The parallel trend hypothesis is verified. At the time the PA were implemented, the household wealth index was farily positive? even though the result is not significant. This effect deterorated after two to three years and intensified significantly in the long term. 
 
 
 
