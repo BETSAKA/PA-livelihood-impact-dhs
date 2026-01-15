@@ -304,7 +304,6 @@ write_rds(gt_tab, "soumission_articles/table/rel_year_table.rds")
 gt_tab
 ```
 
-
 Pour l'instant, on n'arrive pas à appliquer l'approche de @borusyak2024 avec des données en coupes répétées (pas du panel) avec le package R didimputation. En théorie cette méthode peut s'appliquer à des données "repeated cross sections" et il semblerait qu'un package STATA le fasse. Mais nous ne disposons pas de STATA pour tester. On va donc appliquer la méthode de Gardner, qui en principe est très proche (avec des intervalles de confiance un peu plus large).
 
 Nota bene : Afin de stabiliser les estimations de l’event-study, nous avons appliqué un binning des années relatives au traitement, regroupant toutes les observations au-delà de ±5 années dans des catégories communes. Ce choix est motivé par l’espacement irrégulier des enquêtes disponibles, qui implique que certaines valeurs de temps relatif sont représentées par très peu d’observations et produisent des coefficients instables. Comme le soulignent Borusyak, Jaravel et Spiess (2024, p. 22) : “*In practice, it is common to bin distant leads and lags into a single category, both to improve statistical precision and to avoid presenting very noisy and uninformative coefficients.*” Cette approche permet ainsi de réduire le bruit aux extrêmes et de se concentrer sur l’interprétation des dynamiques principales autour du traitement.s
@@ -388,7 +387,6 @@ list(
   plot = h1_event_study_plot
 )
 ```
-
 
 ## Effect on inequalities
 
@@ -643,10 +641,7 @@ write_rds(h3_2x2_plot, "soumission_articles/manuscript/figures/h3_2x2_plot.rds")
 h3_2x2_plot 
 ```
 
-
 ### Estimation statique par type d’aire protégée
-
-
 
 ```{r}
 # Strict only
@@ -790,7 +785,5 @@ list(
 )
 
 ```
-
-
 
 The event study estimates are highly unstable once the sample is split by protected area type. At most relative time periods, coefficients are imprecisely estimated and vary substantially across horizons, with occasional statistically significant points that do not follow a coherent temporal pattern. This reflects the fact that, after separating strict and multi use protected areas and restricting the control group accordingly, the number of observations contributing to each type–cohort–period cell becomes small, especially at longer leads and lags. As a result, individual coefficients are driven by a limited set of cohorts and are sensitive to reweighting, making them difficult to interpret as meaningful dynamic effects. In this context, the event study mainly illustrates data limitations rather than well identified temporal responses, and does not support a stable or interpretable dynamic pattern by protected area type.
