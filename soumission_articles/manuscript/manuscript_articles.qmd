@@ -395,16 +395,12 @@ h1_event_study_plot +
     ggtitle(element_blank())
 ```
 
-The result show that the coefficients associated with the treatment periods overlap 0. The parallel trend hypothesis is verified. At the time the PA were implemented, the household wealth index was farily positive? even though the result is not significant. This effect deterorated after two to three years and intensified significantly in the long term. 
-
-
-
-
-
-
+The result show that the coefficients associated with the treatment periods overlap 0. The parallel trend hypothesis is verified. At the time the PA were implemented, the household wealth index was fairly positive. even though the result is not significant. This effect deterorated after two to three years and intensified significantly in the long term. 
 
 
 ### Effect on inequalities {#effectoninequalities}
+
+#### Estimation DID 2X2
 
 DID estimation shows that the average effect of being in a treated cluster did not reduce or accentuate wealth inequalities overall. The placbeo test provides an estimate with non-significant coefficient of + 0.1276 percentiles, which validates the hypothesis of parallel trends. Neither the SPEI climate variable nor the gender of the household head has a significant effect on household living standards inequality. However, only the gender of the head of household has a positive effect. During the treatment period (2008-2021), there was a general increase in inequality between households (post-coefficient = 0.7005, p<0.001), but the estimated effect remained insignificant. SPEI climate variables have a significant effect, suggesting that climte shocks disproportionately affect the most vulnerable households, accentuating inequalities. The most well-off households can cushion these shocks, creating a divergence. 
 
@@ -434,8 +430,52 @@ h2_2x2_plot +
     Notes: The estimated average effect (black dot) is slightly positive for the placebo period, but still not significant (the error bar crosses the horizontal line). During treatment, the estimated average effect is slightly below 0, pointing to a negative effect, but as the clustered confidence interval overlaps 0, the effect is not significant
 
 
+#### Event study estimation 
+
+    • Staggered DiD: static
+The table shows @tbl-h2-staggered-static  that static DID estimates indicate that, on average, households exposed to the treatment are most affected by inequality (-0.007). However, the effect is not significant. 
+  
+  
+```{r}
+#| label: tbl-h2-staggered-static
+#| tbl-cap: "Static treatment effect estimates on inequalities"
+#| warning: false
+#| message: false
+#| echo: false
+
+h2_staggered_static_tb <- read_rds("../table/h2_staggered_static_tb.rds")
+h2_staggered_static_tb
+```
+
+
+    • Staggered DiD: dynamic event study
+  
+The result indicates that the assumption of parallel trends is verified prior to processing. In the short term, the effect is slightly negative five yeard after the PA creation, which does not change in the long term. 
+
+```{r}
+#| label: fig-h2-event-study
+#| fig-cap: "Impact on inequalities: Event-study with 2-year bins"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+h2_event_study_plot <- read_rds("figures/h2_event_study_plot.rds")
+
+# h2_event_study_plot
+
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h2_event_study_plot + 
+    ggtitle(element_blank())
+```
+
+
+
 ### Heterogeneity {#heterogeneity}
 
+#### Estimation DID 2X2
 The hetereogeneous study effects aims to determine which categories of households benefit more- or less -from the creation of PA and the conditions under which this occurs. 
 We analyzed the influence of PA governance by distinguishing between their IUCN categories 'strict' PA for those in categories I-V, and 'multi-use' PA for those in categories V-VI. The DID estimate for the period 1997-2008 shows that households living near multi-use PA experienced an increase in wealth of around five percentiles, while those living lear strict PA experienced a decrease (Figure). 
 
@@ -462,6 +502,48 @@ h3_2x2_plot +
     Notes: The graphe highlights the change in household livind standards before and after the implementation of PA. Before PA, households living near multi-use PA had a slightly positive wealth percentile compared to those living near strict PA, whose living standards were rather negative. After PA, the wealth percentile of multi-use households decreased to almost 0, while that of strict PA increased.  
 
 
+
+#### Event study estimation
+
+    • Staggered DiD: static
+    
+@tbl-h3-staggered-static shows that, on average, households near strict areas are positively impacted by their presence, unlike those near multiple areas. In our theory of change, we saw that the presence of protected areas can lead to job creation in protected areas and the promotion of tourism, which could impact household wealth index. However, these effects are not significant. 
+```{r}
+#| label: tbl-h3-staggered-static
+#| tbl-cap: "Heterogeneity in static treatment effect estimates on well-being"
+#| warning: false
+#| message: false
+#| echo: false
+
+h3_staggered_static_tb <- read_rds("../table/h3_staggered_static_tb.rds")
+h3_staggered_static_tb
+```
+    
+    
+    • Staggered DiD: dynamic event study
+    
+@fig-h3-event-study shows the estimated effects of households near strict PA, multi-use PA or both. For all catgories, prior to treatment, the control and the treatment groups evolved in the same way. 
+At the time of PA's implementation, households near strict area had a rather negative effect, which deteriorated over time but improved after 10 years. As for households near multi-use areas, their wealth index approaches 0 over the years. On average, taking all categories into account, the impact is significantly negative after 10 years. 
+  
+```{r}
+#| label: fig-h3-event-study
+#| fig-cap: "Heterogeneity of impacts on well-being: Event-study with 2-year bins"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+h3_event_study_plot <- read_rds("figures/h3_event_study_plot.rds")
+
+# h2_event_study_plot
+
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h3_event_study_plot + 
+    ggtitle(element_blank())
+```
+
 ### Robustness {#Robustness}
 In this section, we discuss the sensitivity analyses and robustness checks that suppport our main results. First, to verify the robustness of our conclusions, we performed additional analyses using distances of 5 km and 15 km from the AP to define the treated group. We find that the creation of PA did not lead to significant changes in household wealth percentiles for iether distance. In neither cas is the interaction coefficient significant. Conversely, the temporal effect is consistently positive and significant, reflecting a general increase in wealth after 2008, regardless of the distance considered. Climatic variables are also statistically significant, and socio-demographic indicators consistently show that female-headed households have lower wealth and that wealth levels are positively correlated with the age of the household head. The stability of these results across the three distance thresholds suggests that climatic and socio-demographic dynamics largely dominate the effect of proximity to PA. These tests showed that our conclusions are robust to the definition of treated households. 
 
@@ -480,7 +562,7 @@ The DID estimates revealed that, on average, female-headed households have a low
 ## Discussion and conclusion {#discussionandconclusion}
 This study aims to assess the potentially contradictory effects of creating a PA on the household living standards and socioeocnomic inequalities of rural housheolds in Madagascar. The analysis thus seeks to provide avenues for adjusting conservation policies in order to reconcile biodiversity preservation with the needs and rights of local populations. 
 
-Hypothesis 1 assumes that PA, on average, reduce the riparian household living standards. The results suggest that PA neither lead to a decline nor an increase in the wealth index of these households. However, the relationship remains neagtive, meaning the effect is either zero or below our detection capacity. The most likely explanation for this is that restrictions on the use of natural resources lead to a loss of access to supplly services and an absence of compensation mechanisms or unequal sharing of benefits. These findings highlight the need for public authorities ans conservation stkaholders to implement more inclusive measures, such as improving the sharing of tourism revenus, providing targeted cash transfers, in order to prevent increased vulnerability. 
+Hypothesis 1 assumes that PA, on average, reduce the riparian household living standards. The results suggest that PA neither lead to a decline nor an increase in the wealth index of these households. However, the relationship remains negative, meaning the effect is either zero or below our detection capacity. The most likely explanation for this is that restrictions on the use of natural resources lead to a loss of access to supplly services and an absence of compensation mechanisms or unequal sharing of benefits. These findings highlight the need for public authorities ans conservation stkaholders to implement more inclusive measures, such as improving the sharing of tourism revenus, providing targeted cash transfers, in order to prevent increased vulnerability. 
 
 According to the literature, interventions associated with protected areas, which are supposed to improve livelihoods and economic well-being, generally tend to produce an unequal distribution of benefits. IN our case, conservation does not significantly exacerbate inequalities (hypothesis 2). THe results show that the inequalities observed are mainly due to socio-demographic and climatic dynamics. Households headed by men are wealthier than those headed by women. This reflects structural inequalities in access to resources, a lack of social recognition, and limited participation and decision-laking in the market. Conversely, households headed by older peolpe are bette off because they generally have accumulated wealth over time and stronger networks, which give them greater economic stability. Finally, climatic conditions play an important role in household living conditions: periods of drought reduce agricultural productivity and undermine livelihoods, whereas favourable conditions increase wealth. In our case, we note that climatic conditions have improved since the establisment of PA. Without inclusive policies, we would see a consolidation of 'local elites' who coul benefit more from environmental benefits. Such a situation would call for the adoption of corrective measures aimed at preventing the concentration of these benefits in the hands of a small group (for example, through local employment quotas or transparent partipatory governance), mechanisms for equitable and participatory redistribution. 
 
