@@ -330,16 +330,68 @@ The distribution analysis of covariates prior to matching shows a significant im
 
 ### Overall impact on livelihoods {#overallimpactonlivelihoods}
 
+In our estimation DID, we used robust standard errors for intra-cluster correlations that correct for the dependence of observations within clusters. The results reveal that there is no statistically significant difference at the 5% level between treated and control households. Figure presents the results of the double difference estimation of the treatment groups (households within 10 km) and the control groups (households more than 10 km away) for the period 2008-2021. The principle is to compare the wealth index of control and treatment households in a period prior to (1997-2008) and after (2008-2021) the implementation of the PA.
+
+The placebo test or pre-treatment estimate (1997-2008 period) gives an estimate with a low coefficient (+3.9 percentile) that is not significant, concluding that no difference was detected before the intervention (table). The hypothesis of parallell trends is validated, as the wealth indices of the two groups vary simularly and simultaneously before tratment (treatment in 2008)
+
+Climatic conditions (SPEI) have no significant effect on rural wealth, and the effect of household characteristics appears to be minimal. On average, households headed by women are slightly poorer, while those with older members are richer. 
+
+Although the treatment estimate is larger in magnitude (-2.5 percentiles), the direct effect of the treatment remains insignificant. Households living near PA appear to have slightly lower level of well-being than control households. The analysis does not confirm hypothesis 1, as although the relationship is negative, the confidence interval still largely covers 0. This means that we lack sufficient precision to detect an effect, and therefore cannot reject the null hypothesis. The effect is therefore either zero or below our detection capacity. The statistical power calculation showed that the effect would need to be at least 7.8 percentiles to be detectable (Annexe)
+
+
+Table
+
+
 ### Effect on inequalities {#effectoninequalities}
+
+DID estimation shows that the average effect of being in a treated cluster did not reduce or accentuate wealth inequalities overall. The placbeo test provides an estimate with non-significant coefficient of + 0.1276 percentiles, which validates the hypothesis of parallel trends. Neither the SPEI climate variable nor the gender of the household head has a significant effect on household living standards inequality. However, only the gender of the head of household has a positive effect. During the treatment period (2008-2021), there was a general increase in inequality between households (post-coefficient = 0.7005, p<0.001) (see table), but the estimated effect remained insignificant. SPEI climate variables have a significant effect, suggesting that climte shocks disproportionately affect the most vulnerable households, accentuating inequalities. The most well-off households can cushion these shocks, creating a divergence. 
+
+
+Table 
+
+
+Furthermore, R² and adjusted R² are close to zero and identical, indicating that the model performs poorly. 
+
+
+Figure 
+
+
 
 ### Heterogeneity {#heterogeneity}
 
+The hetereogeneous study effects aims to determine which categories of households benefit more- or less -from the creation of PA and the conditions under which this occurs. 
+We analyzed the influence of PA governance by distinguishing between their IUCN categories 'strict' PA for those in categories I-V, and 'multi-use' PA for those in categories V-VI. The DID estimate for the period 1997-2008 shows that households living near multi-use PA experienced an increase in wealth of around five percentiles, while those living lear strict PA experienced a decrease (Figure). 
+
+
 ### Robustness {#Robustness}
+In this section, we discuss the sensitivity analyses and robustness checks that suppport our main results. First, to verify the robustness of our conclusions, we performed additional analyses using distances of 5 km and 15 km from the AP to define the treated group. We find that the creation of PA did not lead to significant changes in household wealth percentiles for iether distance. In neither cas is the interaction coefficient significant. Conversely, the temporal effect is consistently positive and significant, reflecting a general increase in wealth after 2008, regardless of the distance considered. Climatic variables are also statistically significant, and socio-demographic indicators consistently show that female-headed households have lower wealth and that wealth levels are positively correlated with the age of the household head. The stability of these results across the three distance thresholds suggests that climatic and socio-demographic dynamics largely dominate the effect of proximity to PA. These tests showed that our conclusions are robust to the definition of treated households. 
+
+
+Benjamini's [@Benjamini1995] False Discovery rate (FDR) method showed that, prior to multiple tetsing, the coefficients did not show a stable trend of improvement or deterioration in the wealth index. After controlling for the risk of false positives, only a marked negative effect on the wealth index remains statistically significant. This suggests a transient effect of impoverishment. 
+
+
+The pseudo panel approach shows that the average wealth index of household cohorts is influenced by environmental factors. The results indicate that households located at high altitudes and in densely populated areas have a higher wealth index. Forest cover has a positive and significnat effect, while slope and accessibility have a negative effect on the wealth index. In contrast, socioe-demograohic variables have a weakly significant effect, suggesting that spatial and environmental conditions play a more decisive role than individual househol characteristics. 
+
+
+Rosenbaum's sensitivity test [@Rosenbaum1983] shows that the results are not robust in the face of unobserved assignment biases. In 1997, the absence of any systematic difference between households close to and far from PA before the introduction of PA confirms the hypothesis of parallel trends. In 2008, the test suggests a significant effect when assuming no bias ($Γ=1$), but this quickly disappears as soon as a small unmeasured imbalance is introduced ($Γ>1$). The Hodges-Lehmann intervals include zero and the p-value bounds exceed the 0.05 threshold. In 2021, the estimated effect is small and marginally significant, but it is not robust to hidden bias assumptions. Limiting ourselves to these three years, the observed wealth inequalities cannot be causally and robustly attributed to proximity to PA. 
+
+The DID estimates revealed that, on average, female-headed households have a lower wealth percentile (-2.307) than male-headed households (+0.7440). However, the interaction between the treatment and the gender of the household head does not reveal a signifcicant difference between men and women. IN other words, living near PA has no particular effect on gender inequality among household heads. Similarly, no interaction between the treatment and the age of the household head was evident, even though households headed by people aged 45-59 appeared to be significantly wealthier (2.920) than others. 
+
+
+
 
 ## Discussion and conclusion {#discussionandconclusion}
+This study aims to assess the potentially contradictory effects of creating a PA on the household living standards and socioeocnomic inequalities of rural housheolds in Madagascar. The analysis thus seeks to provide avenues for adjusting conservation policies in order to reconcile biodiversity preservation with the needs and rights of local populations. 
+
+Hypothesis 1 assumes that PA, on average, reduce the riparian household living standards. The results suggest that PA neither lead to a decline nor an increase in the wealth index of these households. However, the relationship remains neagtive, meaning the effect is either zero or below our detection capacity. The most likely explanation for this is that restrictions on the use of natural resources lead to a loss of access to supplly services and an absence of compensation mechanisms or unequal sharing of benefits. These findings highlight the need for public authorities ans conservation stkaholders to implement more inclusive measures, such as improving the sharing of tourism revenus, providing targeted cash transfers, in order to prevent increased vulnerability. 
+
+According to the literature, interventions associated 
 
 
-## Conclusion {#Conclusion}
+
+
+
+
 
 Conclusion…
 
