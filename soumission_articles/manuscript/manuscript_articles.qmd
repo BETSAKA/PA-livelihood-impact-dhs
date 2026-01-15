@@ -339,8 +339,20 @@ Although the treatment estimate is larger in magnitude (-2.5 percentiles), the d
 #| message: false
 #| echo: false
 
-knitr::include_graphics("figures/h1_2x2_plot.png")
+library(tidyverse,  warn.conflicts = FALSE)
+
+h1_2x2_plot <- read_rds("figures/h1_2x2_plot.rds")
+
+# # Pour rajouter le titre au-dessus du graph en plus de la caption en dessous
+# h1_2x2_plot
+
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h1_2x2_plot + 
+    ggtitle(element_blank())
 ```
+  
+    Notes: The vertical axis shows the estimated effect of the DID on the wealth percentile (in points). The horizontal axis shows the non significant effet. The placebo period indicates that the error bar crosses the horizontal line at 0(non-significant effect). During the treatment period, the clustered confidence interval is not as wide as that of the placebo, which still encompasses 0 (non significant effect)
+
 
 ### Effect on inequalities {#effectoninequalities}
 
@@ -360,8 +372,16 @@ Furthermore, R² and adjusted R² are close to zero and identical, indicating th
 #| message: false
 #| echo: false
 
-knitr::include_graphics("figures/h1_2x2_plot.png")
+h2_2x2_plot <- read_rds("figures/h2_2x2_plot.rds")
+
+# # Pour rajouter le titre au-dessus du graph en plus de la caption en dessous
+# h2_2x2_plot
+
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h2_2x2_plot + 
+    ggtitle(element_blank())
 ```
+    Notes: The estimated average effect (black dot) is slightly positive for the placebo period, but still not significant (the error bar crosses the horizontal line). During treatment, the estimated average effect is slightly below 0, pointing to a negative effect, but as the clustered confidence interval overlaps 0, the effect is not significant
 
 
 ### Heterogeneity {#heterogeneity}
@@ -389,6 +409,9 @@ h3_2x2_plot <- read_rds("figures/h3_2x2_plot.rds")
 h3_2x2_plot + 
     ggtitle(element_blank())
 ```
+    _Notes:
+
+
 
 
 
@@ -420,7 +443,7 @@ These findings will fuel the debate on the compatibility between conservation an
 
 
 
-CRediT authorship contribution statement
+## CRediT authorship contribution statement
 
 Iriana Razafimahenina: conceptualization - formal analysis - Methodology - writing - original draft
 
