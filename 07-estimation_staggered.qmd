@@ -401,7 +401,6 @@ list(
 )
 ```
 
-
 ## Effect on inequalities
 
 ### Estimation en 2x2 DiD
@@ -655,10 +654,7 @@ write_rds(h3_2x2_plot, "soumission_articles/manuscript/figures/h3_2x2_plot.rds")
 h3_2x2_plot 
 ```
 
-
 ### Estimation statique par type d’aire protégée
-
-
 
 ```{r}
 # Strict only
@@ -802,7 +798,5 @@ list(
 )
 
 ```
-
-
 
 The event study estimates are highly unstable once the sample is split by protected area type. At most relative time periods, coefficients are imprecisely estimated and vary substantially across horizons, with occasional statistically significant points that do not follow a coherent temporal pattern. This reflects the fact that, after separating strict and multi use protected areas and restricting the control group accordingly, the number of observations contributing to each type–cohort–period cell becomes small, especially at longer leads and lags. As a result, individual coefficients are driven by a limited set of cohorts and are sensitive to reweighting, making them difficult to interpret as meaningful dynamic effects. In this context, the event study mainly illustrates data limitations rather than well identified temporal responses, and does not support a stable or interpretable dynamic pattern by protected area type.
