@@ -172,7 +172,7 @@ In our PAP, we stated:
 We also add MICS 2018, as it presents the same design as MIS and DHS surveys, and has 17 870 surveyed households in a year for which we have no other data source. It enables us to have a more complete coverage of pre-and post year.
 
 ```{r}
-library(tinytable)
+
 
 # compute relative years and binned relative years
 dat2 <- dat %>%
@@ -220,90 +220,102 @@ bin_label <- function(k) {
   )
 }
 
+# per-year bars (use unclipped years, otherwise -18 etc collapse to -10)
+year_counts <- dat2 %>%
+  filter(is.finite(rel_year), !is.na(GROUP2)) %>%
+  count(GROUP2, rel_year, name = "n_obs")
 
-# Build the combined table
-tab_rel <- dat2 %>%
-  mutate(cluster_uid = interaction(DHSYEAR, cluster_uid, drop = TRUE)) %>%
-  group_by(rel_year, rel_year_2yr, GROUP2) %>%
+# binned "top bars" + labels
+bin_top <- dat2 %>%
+  filter(is.finite(rel_year), !is.na(rel_year_2yr), !is.na(GROUP2)) %>%
+  group_by(GROUP2, rel_year_2yr) %>%
   summarise(
-    n_clusters_rel = n_distinct(cluster_uid),
-    n_obs_rel = n(),
+    y = dplyr::n(),
+    min_rel = min(rel_year),
+    max_rel = max(rel_year),
+    ymin = 0,
+    ymax = dplyr::n(),
+    xmin = min(rel_year) - 0.5,
+    xmax = max(rel_year) + 0.5,
     .groups = "drop"
-  )
-
-tab_bin <- dat2 %>%
-  mutate(cluster_uid = interaction(DHSYEAR, cluster_uid, drop = TRUE)) %>%
-  group_by(rel_year_2yr, GROUP2) %>%
-  summarise(
-    n_clusters_bin = n_distinct(cluster_uid),
-    n_obs_bin = n(),
-    .groups = "drop"
-  )
-
-tab_both <- tab_rel %>%
-  left_join(tab_bin, by = c("rel_year_2yr", "GROUP2")) %>%
-  arrange(rel_year_2yr, GROUP2, rel_year) %>%
-  group_by(rel_year_2yr, GROUP2) %>%
+  ) %>%
   mutate(
-    block_n = n(),
-    block_first = row_number() == 1,
-    rel_year_2yr_lab = bin_label(rel_year_2yr),
-
-    # show bin totals only once per block
-    rel_year_2yr_show   = if_else(block_n > 1 & !block_first, "", rel_year_2yr_lab),
-    n_clusters_bin_show = if_else(block_n > 1 & !block_first, NA_integer_, n_clusters_bin),
-    n_obs_bin_show      = if_else(block_n > 1 & !block_first, NA_integer_, n_obs_bin)
-  ) %>%
-  ungroup() %>%
-  select(
-    rel_year,
-    GROUP2,
-    n_clusters_rel,
-    n_obs_rel,
-    rel_year_2yr = rel_year_2yr_show,
-    n_clusters_bin = n_clusters_bin_show,
-    n_obs_bin = n_obs_bin_show,
-    block_n,
-    block_first,
-    rel_year_2yr_sort = rel_year_2yr
+    lab = bin_label(rel_year_2yr),
+    xmin = case_when(
+      rel_year_2yr == -5L ~ min_rel - 0.5,
+      rel_year_2yr == -4L ~ -8.5,
+      rel_year_2yr == -3L ~ -6.5,
+      rel_year_2yr == -2L ~ -4.5,
+      rel_year_2yr == -1L ~ -2.5,
+      rel_year_2yr ==  0L ~ -0.5,
+      rel_year_2yr ==  1L ~  1.5,
+      rel_year_2yr ==  2L ~  3.5,
+      rel_year_2yr ==  3L ~  5.5,
+      rel_year_2yr ==  4L ~  7.5,
+      rel_year_2yr ==  5L ~  9.5
+    ),
+    xmax = case_when(
+      rel_year_2yr == -5L ~ -8.5,
+      rel_year_2yr == -4L ~ -6.5,
+      rel_year_2yr == -3L ~ -4.5,
+      rel_year_2yr == -2L ~ -2.5,
+      rel_year_2yr == -1L ~ -0.5,
+      rel_year_2yr ==  0L ~  1.5,
+      rel_year_2yr ==  1L ~  3.5,
+      rel_year_2yr ==  2L ~  5.5,
+      rel_year_2yr ==  3L ~  7.5,
+      rel_year_2yr ==  4L ~  9.5,
+      rel_year_2yr ==  5L ~  max_rel + 0.5
+    ),
+    xmid = (xmin + xmax) / 2
   )
 
-tab_print <- tab_both %>% 
-  select( rel_year, GROUP2, n_clusters_rel, n_obs_rel, rel_year_2yr, n_clusters_bin, 
-  n_obs_bin, block_n, block_first, rel_year_2yr_sort )
-
-gt_tab <- tab_print %>%
-  select(-block_n, -block_first, -rel_year_2yr_sort) %>%
-  gt() %>%
-  cols_label(
-    rel_year = "Rel. year",
-    GROUP2 = "Group",
-    n_clusters_rel = "Clusters",
-    n_obs_rel = "Obs.",
-    rel_year_2yr = "Bin",
-    n_clusters_bin = "Clusters",
-    n_obs_bin = "Obs."
-  ) %>%
-  fmt_number(columns = c(n_clusters_rel, n_obs_rel, n_clusters_bin, n_obs_bin), decimals = 0) %>%
-  sub_missing(columns = c(n_clusters_bin, n_obs_bin), missing_text = "") %>%
-  tab_options(
-    table.font.size = px(10),
-    data_row.padding = px(2),
-    heading.padding = px(2),
-    column_labels.padding = px(2)
-  ) %>%
-  cols_align(
-    align = "left",
-    columns = c(rel_year, GROUP2, rel_year_2yr)
-  ) %>%
-  cols_align(
-    align = "right",
-    columns = c(n_clusters_rel, n_obs_rel, n_clusters_bin, n_obs_bin)
+count_binned_obs_plot <- ggplot() +
+  geom_col(
+    data = year_counts,
+    aes(x = rel_year, y = n_obs, fill = "Annual count"),
+    colour = NA
+  ) +
+  geom_rect(
+    data = bin_top,
+    aes(
+      xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax,
+      colour = "Binned count"
+    ),
+    fill = NA,
+    linewidth = 0.4
+  ) +
+  geom_text(
+    data = bin_top,
+    aes(x = xmid, y = y, label = lab),
+    vjust = -0.4,
+    size = 4,
+    show.legend = FALSE
+  ) +
+  scale_fill_manual(
+    name = NULL,
+    breaks = "Annual count",
+    values = c("Annual count" = "grey70")
+  ) +
+  scale_colour_manual(
+    name = NULL,
+    breaks = "Binned count",
+    values = c("Binned count" = "black")
+  ) +
+  guides(
+    fill = guide_legend(override.aes = list(colour = NA)),
+    colour = guide_legend(override.aes = list(fill = NA, linewidth = 0.8))
+  ) +
+  labs(x = "Relative year", y = "Number of observations") +
+  theme_minimal(base_size = 15) +
+  theme(
+    legend.position = "top",
+    legend.box = "horizontal"
   )
-write_rds(gt_tab, "soumission_articles/table/rel_year_table.rds")
-gt_tab
+
+write_rds(count_binned_obs_plot, "soumission_articles/figures/count_binned_obs_plot.rds")
+count_binned_obs_plot
 ```
-
 
 Pour l'instant, on n'arrive pas à appliquer l'approche de @borusyak2024 avec des données en coupes répétées (pas du panel) avec le package R didimputation. En théorie cette méthode peut s'appliquer à des données "repeated cross sections" et il semblerait qu'un package STATA le fasse. Mais nous ne disposons pas de STATA pour tester. On va donc appliquer la méthode de Gardner, qui en principe est très proche (avec des intervalles de confiance un peu plus large).
 
