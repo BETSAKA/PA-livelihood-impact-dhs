@@ -120,7 +120,7 @@ f_pre <- as.formula(paste(
   "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
 ))
 
-m_pre <- feols(f_pre, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
+h1_m_pre_2x2 <- feols(f_pre, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
 
 # Traitement 2008–2021
 main <- dat %>%
@@ -130,9 +130,10 @@ main <- dat %>%
 
 f_main <- f_pre  # même formule
 
-m_main <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
+h1_m_main_2x2 <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
 
-etable(m_pre, m_main, headers = c("Placebo 97–08", "Traitement 08–21"))
+etable(h1_m_pre_2x2, h1_m_main_2x2, 
+  headers = c("Placebo 97–08", "Traitement 08–21"))
 
 # Extraction compacte des deux effets DID
 did_row <- function(model, year_post, vc = ~ cluster_uid, term = "treat_post"){
@@ -141,8 +142,8 @@ did_row <- function(model, year_post, vc = ~ cluster_uid, term = "treat_post"){
     transmute(year = year_post, estimate, se = std.error)
 }
 did_df <- bind_rows(
-  did_row(m_pre, 2008),
-  did_row(m_main, 2021)
+  did_row(h1_m_pre_2x2, 2008),
+  did_row(h1_m_main_2x2, 2021)
 ) %>%
   mutate(period = factor(ifelse(year == 2008, "1997–2008 (placebo)", "2008–2021 (effect)"),
                          levels = c("1997–2008 (placebo)", "2008–2021 (effect)")),
@@ -157,6 +158,16 @@ h1_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate)) +
        title = "Impact on well-being: 2x2 DiD impact on local population (< 10km)")
        
 write_rds(h1_2x2_plot, "soumission_articles/manuscript/figures/h1_2x2_plot.rds")
+
+
+h1_2x2_table <- modelsummary(
+  list(
+    "DID 2x2 placebo (1997-2008)" = h1_m_pre_2x2, 
+    "DID 2x2 (2008-2021)" = h1_m_main_2x2
+    )
+    )
+write_rds(h1_2x2_table, "soumission_articles/manuscript/figures/h1_2x2_table.rds")
+h1_2x2_table
 ```
 
 Le test placebo donne une estimation avec un coefficient faible (+1.8 centile) et non significatif: pas de différence détectée avant intervention dans les tendances du groupe traitement et du groupe contrôle. L'estimation du traitement présente une plus grande magnitude (-4.1 centiles), mais il reste non significatif. Les ménages vivant près des AP semblent connaître, un niveau de bien-être légèrement inférieur à celui des ménages contrôle, mais l'effet n'est pas significatif. A ce stade, l'analyse ne confirme pas l'hypothèse 1 (que les AP réduise le niveau de vie) : le sens de la relation est négatif, mais on ne peut pas rejeter l'hypothèse nulle. L'intervalle de confiance couvre encore largement 0, ce qui signifie qu'on a une précision insuffisante pour détecter un effet. L'effet est donc soit nul, soit inférieur à notre capacité de détection. Dans le PAP, on avait estimé que l'effet devrait être d'au moins 7.5 centiles pour pouvoir être détecté.
@@ -336,7 +347,6 @@ did2s_static <- did2s(
 )
 
 
-
 h1_staggered_static_tb <- modelsummary(list("did2s (static)" = did2s_static))
 write_rds(h1_staggered_static_tb, "soumission_articles/table/h1_staggered_static_tb.rds")
 ```
@@ -366,6 +376,7 @@ did2s_es_2yr <- did2s(
   cluster_var = "hv001",
   weights     = "w_all"
 )
+
 
 etable(did2s_es_2yr, headers = "did2s event-study (2-yr bins ±10)")
 
@@ -400,6 +411,7 @@ list(
   plot = h1_event_study_plot
 )
 ```
+
 
 ## Effect on inequalities
 
