@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="google-site-verification" content="tYl2I-AwOqGUSnsRtcm1Ns0ckhnkjG3EEDR2bby5B1E" />
+    <meta charset="utf-8">
+    <title>loi | ordonnance | décret | arrêté | constitution | texte | Finance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="CNLEGIS Madagascar: lois - ordonnances - décrets - arrêtés - constitutions - droit malagasy - textes - conseil du gouvernement - conseil des ministres - jurisprudence - Finances"/>
+    <Meta name="keywords" content="CNLEGIS Madagascar: lois - ordonnances - décrets - arrêtés - constitutions - droit malagasy - textes - conseil du gouvernement - conseil des ministres - jurisprudence - Finances">
+    <meta name="author" content="http://www.cnlegis.gov.mg" />
+    <meta name="robots" content="index, nofollow">
+    <meta name="revisit-after" content="5 days">
+    <!-- css -->
+    <link href="https://cnlegis.gov.mg/template_legis/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cnlegis.gov.mg/template_legis/css/fancybox/jquery.fancybox.css" rel="stylesheet">
+    <link href="https://cnlegis.gov.mg/template_legis/css/flexslider.css" rel="stylesheet">
+    <link href="https://cnlegis.gov.mg/template_legis/css/style.css" rel="stylesheet">
+    <link href="https://cnlegis.gov.mg/template_legis/css/style_perso.css" rel="stylesheet">
+    <link href="https://cnlegis.gov.mg/template_legis/css/style_mark.css" rel="stylesheet">
+    <!------------------------------->
+    <link href="https://cnlegis.gov.mg/template_legis/font-awesome-4.7.0/css/font-awesome.css" rel="stylesheet">
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+    <script src="https://cnlegis.gov.mg/template_legis/html5/html5shiv.min.js"></script>
+    <![endif]-->
+    <link rel="shortcut icon" type="image/x-icon" href="https://cnlegis.gov.mg/template_legis/img/cnlegis.ico">
+    <link rel="stylesheet" href="https://cnlegis.gov.mg/template_legis/bootstrap-datepicker/css/bootstrap-datepicker.css" />
+
+    <!-- Waves Effect Css -->
+    <link href="https://cnlegis.gov.mg/template_legis/plugins/node-waves/waves.css" rel="stylesheet" />
+
+    <!-- Animation Css -->
+    <link href="https://cnlegis.gov.mg/template_legis/plugins/animate-css/animate.css" rel="stylesheet" />
+
+    <link href="https://cnlegis.gov.mg/template_legis/magicsuggest/magicsuggest-min.css" rel="stylesheet" />
+    <link href="https://cnlegis.gov.mg/template_legis/magicsuggest/stylemagic.css" rel="stylesheet" />
+
+    <!-- Sweetalert Css -->
+    <link href="https://cnlegis.gov.mg/template_legis/plugins/sweetalert/sweetalert.css" rel="stylesheet" />
+
+    <link href='https://cnlegis.gov.mg/DataTables_1.10.15/media/css/dataTables.bootstrap.css' rel="stylesheet">
+<link href='https://cnlegis.gov.mg/DataTables_1.10.15/extensions/Responsive/css/responsive.bootstrap.css' rel="stylesheet">
+<link href='https://cnlegis.gov.mg/template_legis/jquery-confirm-master/css/jquery-confirm.css' rel="stylesheet" type="text/css">
+<link href='https://cnlegis.gov.mg/template_legis/easyautocomplete/easy-autocomplete.min.css' rel="stylesheet" type="text/css">
+    <script>
+        function load_body() {
+
+            var load_b=$('#test_load').val();
+
+            if (load_b=='1'){
+                var url=$('#chemin_source').val();
+
+                var test_url=$('#url_text').val();
+
+                if(url==test_url){
+                    $('#confirm-view-flash').modal('show');
+                }
+            }
+        };
+
+    </script>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-142147222-1"></script>
+	<script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+
+	  gtag('config', 'UA-142147222-1');
+	</script>
+
+
+	<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+	<script>
+	  (adsbygoogle = window.adsbygoogle || []).push({
+	    google_ad_client: "ca-pub-6743489466984288",
+	    enable_page_level_ads: true
+	  });
+	</script>
+
+    <script >
+        function redirect(){
+            var chemin_source = $('#chemin_source').val();
+            var url = window.location.href;
+            var regex = /www./g;
+            var search_url = url.search(regex)
+
+            if (search_url != "-1"){
+                var get_url = url.replace(/www./g,"")
+                window.location = get_url;
+            }
+            //---------------------------------------------
+
+            /*if ($('#txt_recherche').val()=='')
+            {
+                var href_page = chemin_source + 'page_accueil_cnL';
+                window.open(href_page, '_self');
+            }*/
+        }
+    </script>
+
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-NCF7K3VQ');</script>
+    <!-- End Google Tag Manager -->
+
+</head>
+<body onload="redirect()">
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NCF7K3VQ"
+                  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
+<input type="hidden" id="url_text" class="form-control" value="https://cnlegis.gov.mg/page_find_direct_mots/librairie_images/D2015-749/2015-749a.gif">
+
+<div id="wrapper" class="home-page">
+    <div class="topbar">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <p class="p_padding_left"><a href="http://www.primature.gov.mg/" target="_blank" class="top_a">PRIMATURE</a></p>
+                    <p class="p_padding_left"><a href="javascript:void(0)" class="top_a">SECRETARIAT GENERAL DU GOUVERNEMENT</a></p>
+                    <p class="p_padding_left"><a href="https://cnlegis.gov.mg/page_cnlegis_cnL/" class="top_a">DIRCNLEGIS</a></p>
+                    <p class="pull-right hidden-xs"><i class="fa fa-phone"></i>Tel : (+261)20 22 650 10 / (+261)20 22 331 16</p>
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- start header -->
+<header>
+    <div class="navbar navbar-default navbar-static-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand m-t--2" href="javascript:void(0)"><img src="https://cnlegis.gov.mg/template_legis/img/cnlegis.png" width="45px" height="65px" alt="logo"/>CNLEGIS</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li class="active"><a href="https://cnlegis.gov.mg/page_accueil_cnL/">ACCUEIL</a></li>
+                    <li class=""><a href="https://cnlegis.gov.mg/page_situation_juridique_cnL/">SITUATION JURIDIQUE</a></li>
+                    <li class=""><a href="https://cnlegis.gov.mg/page_droit_national_cnL/">DROIT NATIONAL</a></li>
+                    <!--<li class="dropdown ">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#"><b>DROIT</b>
+                            <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li class=""><a href=""><b>DROIT NATIONAL</b></a></li>
+                            <li><a href="https://www.legifrance.gouv.fr/Droit-international" target="_blank"><b>INTERNATIONAL</b></a></li>
+                        </ul>
+                    </li>-->
+                    <li class=""><a href="https://cnlegis.gov.mg/page_lois_reglements_cnL/">LOIS ET REGLEMENTS</a></li>
+                    <li class=""><a href="https://cnlegis.gov.mg/page_jurisprudence_cnL/">JURISPRUDENCE</a></li>
+                    <li class=""><a id="usr_jo_mtp" name="usr_jo_mtp" href="javascript:void(0);">JOURNAL OFFICIEL</a></li> <!--//echo base_url().'page_jo_numero/'; -->
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>
+<!-- end header -->
+
+<div class="modal fade" id="confirm-view-acces-jo"  role="dialog" data-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div style="text-align: center;" id="myModalLabel_view_g_parent_jo"><h4 class="modal-title" id="myModalLabel_view_g_jo" align="center">UTILISATEUR<br/>JOURNAL OFFICIEL</h4></div>
+            </div>
+            <div class="modal-body m-b--30">
+                <div class="body-modal">
+                    <form id="sign_in_jo" method="POST" action="https://cnlegis.gov.mg/page_sign_in_jo/">
+                        <div class="msg font-bold col-teal font-15">Identification de l'utilisateur</div>
+                        <div class="m-t-10"></div>
+
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-addon">
+                                <i class="fa fa-user"></i>
+                            </span>
+                                <div class="form-line">
+                                    <input type="text" class="form-control" name="txt_username" id="txt_username" placeholder="Nom d'utilisateur" required autofocus>
+                            </div>
+                        </div>
+                        <div class="m-t-10"></div>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-addon">
+                                <i class="fa fa-lock"></i>
+                            </span>
+                                <div class="form-line">
+                                    <input type="password" class="form-control" name="txt_password" id="txt_password" placeholder="Mot de passe" required>
+                                </div>
+                        </div>
+                        <div class="m-t-10"></div>
+                        
+                        <div class="row">
+                            <div class="col-xs-12">
+                                    <table border="0" cellpadding="10" cellspacing="10" width="100%">
+                                        <tr>
+                                            <td align="left">
+                                                <button type="button" class="btn btn-danger waves-effect" id="btn_quit_login_jo" data-dismiss="modal">
+                                                    <i class="fa fa-times active"></i>
+                                                    <span class="col-white" style="font-size: 12pt;">FERMER</span>
+                                                </button>
+                                            </td>
+                                            <td align="center">&nbsp;</td>
+                                            <td align="right">
+                                                <button class="btn btn-success waves-effect " type="submit">
+                                                    <i class="fa fa-sign-in"></i>
+                                                    <span class="col-white" style="font-size: 12pt;">CONNEXION</span>
+                                                </button>
+
+                                            </td>
+                                        </tr>
+                                    </table>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <section id="banner">
+        <!-- Slider -->
+        <div id="main-slider" class="flexslider">
+            <ul class="slides">
+                <li>
+                    <img src="https://cnlegis.gov.mg/template_legis/img/slides/11.jpg" alt="" />
+                    <div class="flex-caption">
+
+
+                    </div>
+                </li>
+                <li>
+                    <img src="https://cnlegis.gov.mg/template_legis/img/slides/22.jpg" alt=""/>
+                    <div class="flex-caption">
+
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <!-- end slider -->
+
+    </section>
+    <section id="call-to-action-2">
+        <div class="container m-b--40 m-t--20">
+            <div class="row">
+                <div class="col-md-12 col-sm-12">
+                    <h2 class="h2_recherche">FORMULAIRE DE RECHERCHE :</h2>
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li role="presentation" class="active">
+                            <a href="javascript:void(0)" >
+                                <b class="nav-color">OBJET</b>
+                            </a>
+                        </li>
+                        <li role="presentation" class="bg-danger" title="Cliquez-ici">
+                            <a href="https://cnlegis.gov.mg/page_cherche_dir_mots_texte/" >
+                                <b class="nav-color">MOTS</b>
+                            </a>
+                        </li>
+                        <li role="presentation" class="bg-success" title="Cliquez-ici" >
+                            <a href="https://cnlegis.gov.mg/page_cherche_dir_numeros/" >
+                                <b class="nav-color">NUMERO</b>
+                            </a>
+                        </li>
+                        <li role="presentation" class="bg-yellow" title="Cliquez-ici">
+                            <a href="https://cnlegis.gov.mg/page_cherche_dir_dates/" >
+                                <b class="nav-color">DATES</b>
+                            </a>
+                        </li>
+                        <li role="presentation" class="bg-violet" title="Cliquez-ici">
+                            <a href="https://cnlegis.gov.mg/page_cherche_dir_type/" >
+                                <b class="nav-color">TYPES</b>
+                            </a>
+                        </li>
+                        <li class="dropdown bg-golds">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#" title="Cliquez-ici"><b class="nav-color">CONSEILS</b>
+                                <span class="caret nav-color"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a title="Cliquez-ici" href="https://cnlegis.gov.mg/page_cherche_dir_conseil_mots/"><b>MOTS</b></a></li>
+                                <li><a title="Cliquez-ici" href="https://cnlegis.gov.mg/page_cherche_dir_conseil/" ><b>DATES</b></a></li>
+
+                            </ul>
+                        </li>
+                        <!--<li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#"><b>JOURNAL OFFICIEL</b>
+                                <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a href=""><b>NUMEROS</b></a></li>
+                                <li><a href="" ><b>DATES</b></a></li>
+
+                            </ul>
+                        </li>-->
+                    </ul>
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane fade in active" id="mots_cherche_with_icon_title">
+                            <div class="row clearfix up_clear_fix">
+                                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                    <form class="form-horizontal" id="form_cherche_dir_mots" method="post" action="https://cnlegis.gov.mg/page_find_direct_mots/">
+
+                                            <div class="col-lg-12 m-t--2 border_tabs" >
+                                                <div class="m-b-20"></div>
+                                                <div class="row">
+                                                    <div class="col-lg-10" >
+                                                        <div class="form-group">
+                                                            <div class="form-line">
+                                                                <div class="col-lg-12"><input type="text" id="txt_recherche" name="txt_recherche" class="form-control " value="" placeholder="Saisissez l'objet du texte ici..." required></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-2" align="center">
+                                                        <div class="m-t--50"><button type="submit" id="btn_recherche" class="btn btn-primary bolder waves-effect"><b>Rechercher</b></button></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                            <div role="tabpanel" class="tab-pane fade " id="num_cherche_with_icon_title">
+
+                        </div>
+                            <div role="tabpanel" class="tab-pane fade " id="date_cherche_with_icon_title">
+
+                        </div>
+                            <div role="tabpanel" class="tab-pane fade " id="conseil_cherche_with_icon_title">
+
+                        </div>
+                        <div role="tabpanel" class="tab-pane fade " id="conseil_mots_cherche_with_icon_title">
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="content m-b--10">
+        <div class="container  m-b--45">
+            <div class="row ">
+
+                <a href="javascript:void(0)" class="scroll_exit" id="fermer_modal" title="Fermer"><i class="fa fa-times active"></i></a>
+
+                <div class="col-md-12 m-t-10 m-b--80">
+                    <div class="aligncenter">
+                        <h2 class="aligncenter">ACTUALITES</h2>
+                    </div>
+                    <br/>
+                </div>
+
+                <!----------------------------------------------------------------------------------------------------->
+                <div class="modal fade" id="confirm-view-flash"  role="dialog">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+
+                            <div class="modal-header">
+                                <ul class="nav nav-tabs" role="tablist">
+                                    <li role="presentation" >
+                                        <a href="#list_1" data-toggle="tab" class="font-bold col-red">NOMINATION DU PREMIER MINISTRE</a>
+                                    </li>
+                                    <li role="presentation" class="active">
+                                        <a href="#list_2" data-toggle="tab" class="font-bold col-green">NOMINATION DES MEMBRES DU GOUVERNEMENT</a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="modal-body">
+
+                                <input type="hidden" id="test_load" value="1">
+
+                                <div class="tab-content">
+                                    <div role="tabpanel" class="tab-pane fade" id="list_1">
+
+                                    </div>
+                                    <div role="tabpanel" class="tab-pane fade in active" id="list_2">
+
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-danger bolder" id="btnfermer_view" data-dismiss="modal">
+                                    <i class="fa fa-times"></i>
+                                    <span>Fermer</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!----------------------------------------------------------------------------------------------------->
+            </div>
+
+            <div class="row">
+                <div class="modal fade " id="confirm-view-m"  role="dialog">
+                    <div class="modal-dialog modal-lg modal-autoheight">
+                        <div class="modal-content">
+                            <div class="modal-header m-b-50 m-t-50" >
+                                <div class="header-title " >
+                                        <div class="col-md-12">Rechercher :</div>
+                                        <div class="col-md-6 m-b-5">
+                                            <input type="search" class="form-control" placeholder="Saisissez le(s) mot(s) ici ...">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <button data-search="next" class="btn btn-success waves-effect" title="Suivant">
+                                                <i class="fa fa-arrow-down"></i>
+                                            </button>
+                                            <button data-search="prev" class="btn btn-success waves-effect" title="Précédent">
+                                                <i class="fa fa-arrow-up"></i>
+                                            </button>
+                                            <button data-search="clear" class="btn btn-danger waves-effect" title="Nouvelle recherche">
+                                                <i class="fa fa-pencil"></i>
+                                            </button>
+                                        </div>
+                                </div>
+                            </div>
+                            <div class="modal-body contents-cm">
+                                <p style="text-align: center;" id="myModalLabel_view_m_parent">
+                                    <h4 class="modal-title" id="myModalLabel_view" align="center"></h4>
+                                </p>
+                                <div class="row"></div> 
+                                <div class="body-modal "><span id="body_modal_view"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade " id="confirm-view-g"  role="dialog">
+                    <div class="modal-dialog modal-lg modal-autoheight">
+                        <div class="modal-content">
+                            <div class="modal-header m-b-50 m-t-50" >
+                                <div class="header-title " >
+                                        <div class="col-md-12">Rechercher :</div>
+                                        <div class="col-md-6 m-b-5">
+                                            <input type="search" class="form-control" placeholder="Saisissez le(s) mot(s) ici ...">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <button data-search="next" class="btn btn-success waves-effect" title="Suivant">
+                                                <i class="fa fa-arrow-down"></i>
+                                            </button>
+                                            <button data-search="prev" class="btn btn-success waves-effect" title="Précédent">
+                                                <i class="fa fa-arrow-up"></i>
+                                            </button>
+                                            <button data-search="clear" class="btn btn-danger waves-effect" title="Nouvelle recherche">
+                                                <i class="fa fa-pencil"></i>
+                                            </button>
+                                        </div>
+                                </div>
+                            </div>
+                            <div class="modal-body contents-cg">
+                                <p style="text-align: center;" id="myModalLabel_view_m_parent">
+                                    <h4 class="modal-title" id="myModalLabel_view_g" align="center"></h4>
+                                </p>
+                                <div class="row"></div> 
+                                <div class="body-modal "><span id="body_modal_view_g"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="skill-home">
+                    <div class="skill-home-solid clearfix">
+                        <div class="col-md-6 text-center">
+                            <span class="icons2 c2"><i class="fa fa-users"></i></span>
+                            <div class="box-area">
+                                <h3>Conseil du Gouvernement</h3>
+                                <div class="stream" style="height: 310px;">
+                                    <div class="m-t--40">
+                                        <table id="Lst_actus_G" class="table table-striped row-border table-hover dt-responsive inventory_related" width="100%" cellspacing="0">
+                                            <thead >
+                                            <tr>
+                                                <th class="never" >DATE</th>
+                                                <th class="never" >TYPE</th>
+                                                <th class="all" width="100%">LIBELLE</th>
+                                                <th class="never" >TITRE</th>
+                                                <th class="never">DESCRIPTION</th>
+                                                <th class="never">id</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <span class="icons3 c2"><i class="fa fa-users"></i></span>
+                            <div class="box-area">
+                                <h3>Conseil des Ministres</h3>
+                                <div class="stream" style="height: 310px;">
+                                    <div class="m-t--40">
+                                        <table id="Lst_actus_M" class="table table-striped row-border table-hover dt-responsive inventory_related" width="100%" cellspacing="0">
+                                            <thead >
+                                            <tr>
+                                                <th class="never" >DATE</th>
+                                                <th class="never" >TYPE</th>
+                                                <th class="all" width="100%">LIBELLE</th>
+                                                <th class="never" >TITRE</th>
+                                                <th class="never">DESCRIPTION</th>
+                                                <th class="never">id</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="about home-about bg_about">
+        <div class="container m-t--60">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="section-title ">
+                        <h2 class="text-center">LOIS ET REGLEMENTS</h2>
+                        <p class="p_class_justify">La promulgation, la publication, le caractère exécutoire, la rectification et la diffusion des lois, décrets et tout autre acte administratif ou réglementaire ayant une portée générale sont régis par les articles 1 à 7 de l'Ordonnance N°62-041 du 19 septembre 1962 relative aux dispositions générales de droit interne et de droit international privé. (J.O N°244 du 28 septembre 1962, page 1989).</p>
+                        <p class="p_class_justify">Ce sont les textes de portée générale parus dans le Journal Officiel qui sont accessibles dans cette rubrique. Elle contient les références des textes parus depuis 1897 et les textes intégraux parus depuis 1998.</p>
+                        <p class="p_class_justify">Les types d'accès proposés:</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6 info-blocks">
+                    <a id="usr_jo_mtb" href="javascript:void(0);" class="a-link"><i class="icon-info-blocks fa fa-laptop"></i>
+                        <div class="info-blocks-in">
+                            <h3>Journal Officiel</h3>
+                            <p>Journal Officiel de la République de Madagascar en ligne</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-sm-6 info-blocks">
+                    <a href="https://cnlegis.gov.mg/page_acces_theme/" class="a-link"><i class="icon-info-blocks fa fa-hdd-o"></i>
+                        <div class="info-blocks-in">
+                            <h3>Accès par thème</h3>
+                            <p>L'accès se fait à base des thèmes utilisés dans le plan de classement.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 col-sm-3">
+                <div class="widget">
+                    <h5 class="widgetheading">Contact</h5>
+                    <ul class="link-list">
+                        <li>Palais du Premier Ministre</li>
+                        <li>Mahazoarivo</li>
+                        <li>BP: 248</li>
+                        <li>Antananarivo - 101</li>
+                        <li>MADAGASCAR</li>
+                        <li><i class="fa fa-phone"></i> (+261) 20 22 650 10</li>
+                        <li>postes 431 / 455</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-3">
+                <div class="widget">
+                    <h5 class="widgetheading">Cours de justice</h5>
+                    <ul class="link-list">
+                        <li><a href="http://www.hcc.gov.mg/" target="_blank">Haute Cour Constitutionnelle</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-3">
+                <div class="widget">
+                    <h5 class="widgetheading">Organes législatifs</h5>
+                    <ul class="link-list">
+                        <li><a href="http://www.assemblee-nationale.mg/" target="_blank">Assemblée Nationale</a></li>
+                        <li><a href="http://www.senat.mg/" target="_blank">Sénat</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-3">
+                <div class="widget">
+                    <h5 class="widgetheading">Milieu académique</h5>
+                    <ul class="link-list">
+                        <li><a href="http://www.univ-antananarivo.mg/" target="_blank">Faculté de droit, d’économie, de gestion et de sociologie – Université d’Antananarivo</a></li>
+                        <li><a href="http://www.univ-fianar.mg/" target="_blank">Faculté de droit – Université de Fianarantsoa</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="sub-footer m-t--40">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="copyright">
+                        <p>
+                            <span>&copy; 2018 <a href="javascript:void(0);">DIRCNLEGIS</a>.</span>
+
+                        </p>
+                    </div>
+                </div>
+                <div class="col-lg-6" style="text-align: right">
+                    <a title="Referencement Google" href="http://www.referencement-google-gratuit.com/" title="Referencement Google" data-placement="top" target="_blank" ></a>
+                    <!--<ul class="social-network">
+                        <li><a title="Referencement Google" href="http://www.referencement-google-gratuit.com/" title="Referencement Google" data-placement="top" target="_blank" ><i class="fa fa-google"></i></a></li>
+                        <li><a href="#" data-placement="top" title="Twitter"><i class="fa fa-twitter"></i></a></li>
+                        <li><a href="#" data-placement="top" title="Linkedin"><i class="fa fa-linkedin"></i></a></li>
+                        <li><a href="#" data-placement="top" title="Pinterest"><i class="fa fa-pinterest"></i></a></li>
+                        <li><a href="#" data-placement="top" title="Google plus"><i class="fa fa-google-plus"></i></a></li>
+                    </ul>-->
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+</div>
+<a href="#" class="scrollup"><i class="fa fa-angle-up active"></i></a>
+<!-- javascript
+    ================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<input type="hidden" id="chemin_source" value="https://cnlegis.gov.mg/">
+
+<script src=""></script>
+<script src="https://cnlegis.gov.mg/DataTables_1.10.15/media/js/jquery.js"></script>
+<script src="https://cnlegis.gov.mg/template_legis/js/jquery.easing.1.3.js"></script>
+<script src="https://cnlegis.gov.mg/template_legis/js/bootstrap.min.js"></script>
+
+<script src="https://cnlegis.gov.mg/template_legis/js/jquery.fancybox.pack.js"></script>
+<script src="https://cnlegis.gov.mg/template_legis/js/jquery.fancybox-media.js"></script>
+<script src="https://cnlegis.gov.mg/template_legis/js/jquery.flexslider.js"></script>
+<script src="https://cnlegis.gov.mg/template_legis/js/animate.js"></script>
+<!-- Vendor Scripts -->
+<script src="https://cnlegis.gov.mg/template_legis/js/modernizr.custom.js"></script>
+<script src="https://cnlegis.gov.mg/template_legis/js/jquery.isotope.min.js"></script>
+<script src="https://cnlegis.gov.mg/template_legis/js/jquery.magnific-popup.min.js"></script>
+<script src="https://cnlegis.gov.mg/template_legis/js/custom.js"></script>
+
+<script src="https://cnlegis.gov.mg/template_legis/jquery-inputmask/jquery.inputmask.bundle.js"></script>
+
+<script src="https://cnlegis.gov.mg/template_legis/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+<script src="https://cnlegis.gov.mg/template_legis/bootstrap-datepicker/locales/bootstrap-datepicker.fr-CH.min.js"></script>
+
+<!-- Waves Effect Plugin Js -->
+<script src="https://cnlegis.gov.mg/template_legis/plugins/node-waves/waves.js"></script>
+
+<!-- Custom Js -->
+<script src="https://cnlegis.gov.mg/template_legis/plugins/admin.js"></script>
+
+<script src="https://cnlegis.gov.mg/template_legis/plugins/mark/jquery.mark.min.js" charset="UTF-8"></script>
+
+<script src="https://cnlegis.gov.mg/DataTables_1.10.15/media/js_perso/js_mark_perso.js"></script>
+
+<script src="https://cnlegis.gov.mg/DataTables_1.10.15/media/js_perso/js_modal_resize.js"></script>
+
+<script src="https://cnlegis.gov.mg/DataTables_1.10.15/media/js_perso/js_mark_perso_cm.js"></script>
+<script src="https://cnlegis.gov.mg/DataTables_1.10.15/media/js_perso/js_mark_perso_cg.js"></script>
+
+<script src="https://cnlegis.gov.mg/DataTables_1.10.15/media/js_perso/js_mark_html_fr.js"></script>
+<script src="https://cnlegis.gov.mg/DataTables_1.10.15/media/js_perso/js_mark_html_mg.js"></script>
+
+<!-- SweetAlert Plugin Js -->
+<script src="https://cnlegis.gov.mg/template_legis/plugins/sweetalert/sweetalert.min.js"></script>
+
+<script src="https://cnlegis.gov.mg/template_legis/js_perso/js_find_usr_jo.js"></script>
+
+<script src='https://cnlegis.gov.mg/DataTables_1.10.15/media/js/jquery.dataTables.js'></script>
+<script src='https://cnlegis.gov.mg/DataTables_1.10.15/media/js/dataTables.bootstrap.js'></script>
+<script src='https://cnlegis.gov.mg/DataTables_1.10.15/extensions/Responsive/js/dataTables.responsive.js'></script>
+<script src='https://cnlegis.gov.mg/DataTables_1.10.15/extensions/Responsive/js/responsive.bootstrap.js'></script>
+<script src='https://cnlegis.gov.mg/DataTables_1.10.15/media/js_perso/manage_recherche.js'></script>
+<script src='https://cnlegis.gov.mg/DataTables_1.10.15/media/js_perso/ajax_lister_actus.js'></script>
+<script src='https://cnlegis.gov.mg/template_legis/jquery-confirm-master/js/jquery-confirm.js'></script>
+
+</body>
+</html>

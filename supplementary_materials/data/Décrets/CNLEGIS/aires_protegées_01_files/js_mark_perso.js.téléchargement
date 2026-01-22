@@ -1,0 +1,15 @@
+/**
+ * Created by user on 05/02/2018.
+ */
+$(function() {
+    $('#fermer_modal').hide();
+
+    $('#fermer_modal').on('click', function() {
+        $('#confirm-view-html').modal('hide');
+        $('#confirm-view-html-mg').modal('hide');
+        $('#confirm-view').modal('hide');
+        $('#confirm-view-m').modal('hide');
+        $('#confirm-view-g').modal('hide');
+        $('#fermer_modal').hide();
+    });
+});
