@@ -77,15 +77,7 @@ Considering the long-term, large-scale, complex, and politically sensitive natur
 
 
 ### Protected areas {#protectedareas}
-This study evaluates the impact of terrestrial PA creation on rural household well-being between 2008 and 2021. These time frame was chosen on the basis of the availability of geolocalised data on household living conditions and coincides with a period of strong expansion of PAs in the country, as shown in @fig-evo-pa
-
-
-![Evolution of protected areas in Madagascar and study period](figures/evo_pa.png){#fig-evo-pa width=100%}
-
-    Notes: This graph shows the evolution of PA creation in Madagascar since their creation in 1927 (under the colonial administration) until 2024. From 1927 until the early 2000s, PAs were characterized by strict conservation (IUCN categories I, II, and IV). At the IUCN Parks Summit in Durban in 2003, the Malagasy government committed to tripling coverage, which led to the creation of new PAs with 28 provisional creation decrees published between April 2006 and December 2007 and a global decree bringing the number of new PA to 97 in 2008. Final ratification decrees were not issued until 2015, which formalized these creations of new PAs. The data used to produce the graph come from the Service de la Gouvernance des Aires Protégées (SGAP), of the Ministère de l'Environnement et du Développement Durable (MEDD)
-
-
-Our study analyzes the impact of PA on household well being over 13 years (2008-2021). We use 2008 as the reference year. Accordingly, the population considered as treated encompasses households living in rural areas within 10 km of a PA created between 2008 and 2021, according to the GPS coordinates provided in the Demographic Health Surveys (DHS) data[^2]. Households in the control group are those living in a rural area more than 10 km away from a PA created between 2008 and 2021, and they exhibit very similar characteristics or share significant traits with households in the treatment group. We decided to exclude rural populations living within 10 km of PA created before 2008, as they are considered treated before the study period; as well as households located in urban areas. 
+This study evaluates the impact of terrestrial PA creation on rural household well-being between 2008 and 2021. These time frame was chosen on the basis of the availability of geolocalised data on household living conditions and coincides with a period of strong expansion of PAs in the country (Appendix).We use 2008 as the reference year. Accordingly, the population considered as treated encompasses households living in rural areas within 10 km of a PA created between 2008 and 2021, according to the GPS coordinates provided in the Demographic Health Surveys (DHS) data[^2]. Households in the control group are those living in a rural area more than 10 km away from a PA created between 2008 and 2021, and they exhibit very similar characteristics or share significant traits with households in the treatment group. We decided to exclude rural populations living within 10 km of PA created before 2008, as they are considered treated before the study period; as well as households located in urban areas. 
 
 [^2]: These GPS coordinates correspond to the centroids of the enumeration areas surveyed. To protect respondent confidentiality, these coordinates are first randomly shifted using the following procedure: An offset angle between 0 and 360 is randomly drawn, and then an offset distance is randomly drawn, between 0 and 2 km in urban areas and between 0 and 5 km in rural areas. For 1% of rural clusters, the distance drawn is between 0 and 10 km [@Skiles2013]
 
@@ -96,25 +88,11 @@ Our study analyzes the impact of PA on household well being over 13 years (2008-
     Notes: Households in the treatment group are those located in clusters less than 10 km from PAs created since 2008 in rural areas (shown in red) and households are those located in clusters more than 10 km from PA created since 2008 in rural areas (shown in blue). Rural populations living within 10 km of PA created before 2008 or located in urban areas are excluded from the study (shown in black). The GPS data used comes from DHS clusters. 
 
 
-
-@tbl-period-crea shows the distribution of terrestrial PAs (by number and area) according to the period in which they were created by final decree, taking 2008 as the reference year. In the treatment period (2008 to 2021), 103 PAs were created, covering 75,252 km².
-
-![Classification of household clusters according their group affiliation ](table/period_crea.png){#tbl-period-crea width=100%}
-
-    Notes: PA number” refers to the number of protected areas created during each period.Area is expressed in square kilometers (km²). Calculations are based on data from the World Database on Protected Areas (WDPA).
-
-
 ### Household socioeconomic conditions {#householdsocioeconomicconditions} 
-The data on household living conditions used for this study comes from surveys conducted by the “Institut National de la Statistique de Madagascar” (INSTAT) as part of the Demographic and Health Surveys (DHS)[^3].These data covers a wide range of topics, including demographic characteristics, living conditions, health, education, sanitation, and hygiene. These surveys were conducted 1997, 2008, and 2021, containing 650 clusters in 2021[^4], 585 in 2008[^5], and 268 in 1997[^6].
+The data on household living conditions used for this study comes from surveys conducted by the “Institut National de la Statistique de Madagascar” (INSTAT) as part of the Demographic and Health Surveys (DHS)(Appendix). 
 
 
-[^3]: The DHS surveys are based on a two-stage stratified sampling method. The population of interest is divided into 23 study areas corresponding to Madagascar's 22 regions, the capital Antananarivo(considered separately), an the Analamanga region without the capital (to isolate the impact of the capital on regional results). With the exception of the capital two strata were created in each study area. At the first level, enumeration ares (also called 'clusters') are randomly selected within each domain, with a probability proportional to the population of the cluster according to the latest census. At the second level, a sample of households is randomly selected within these clusters to participate in the survey programs
 
-[^4]: 657 clusters were drawn with probability proportional to size. After implementation in the field, 650 of the 657 clusters initially selected were actually visited
-
-[^5]: 600 clusters were drawn with probability proportional to size. Of the 600 clusters selected, 596 could be surveyed. However, nine other clusters had invalid GPS coordinates, resulting in a total of 585 clusters for 2008
-
-[^6]: 270 clusters were drawn with probability proportional to size. Of the 270 clusters selected, 269 could be surveyed. However, one cluster had invalid GPS coordinates, resulting in a total of 585 clusters for 2008. 
 
 These data are used to construct the variables for the impact assessment model. In this analysis, two outcome variables are considered: household living standards (primary outcome) and inequalities in living standards at the level of the surveyed localities (secondary outcome). 
 
@@ -303,7 +281,7 @@ For the event study, each observation is indexed by its relative year to treatme
 #| message: false
 #| echo: false
 
-gt_tab <- read_rds("../table/rel_year_table.rds")
+gt_tab <- read_rds("../figures/count_binned_obs_plot.rds")
 
 # Voir la doc de tinytable si tu veux modifier la mise en forme
 gt_tab
