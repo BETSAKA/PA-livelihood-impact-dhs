@@ -28,6 +28,32 @@ Protected areas in Madagascar were first created in 1927 under French colonial a
 
 In our pre-analysis plan, we noticed that the data from the World Database on Protected Areas from [the protected planet portal](https://www.protectedplanet.net/en) was inaccurate for certain areas. The inaccuraties includes the classifications of IUCN status, incorrect creation dates, delineations that include buffer zones extending beyond the boundaries of PA. We therefore used the legal analysis carried out using CNLEGIS to identify early protections that are not registered in WDPA. Work to identify these cases was carried out by Bédécarrats and Seheno (Septembre 2024): <https://betsaka.github.io/conservation-dynamic-madagascar/>. This graph shows the evolution of protected areas since their creation to the present day (calculations by authors based on WDPA data).
 
+![](figures/evo_pa.png){#fig-evo-pa width="100%"}
+
+Our study analyzes the impact of PA on household well-being over 13 years (2008-2021). Taking 2008 as the reference year, 71 protected areas were created, covering a total area of 75,252 km². @tbl-period-crea shows the distribution of terrestrial PAs (by number and area) according to the period in which they were created by final decree.
+
+![Classification of household clusters according their group affiliation](table/period_crea.png){#tbl-period-crea width="100%"}
+
+\
+*Note : PA number refers to the number of protected areas created during each period. Area is expressed in square kilometers (km²). Calculations are based on data from the world Database on Protected Areas (WDPA).*
+
+
+### Household socioeconomic conditions 
+
+
+
+
+
+
+[^3]: The DHS surveys are based on a two-stage stratified sampling method. The population of interest is divided into 23 study areas corresponding to Madagascar's 22 regions, the capital Antananarivo(considered separately), an the Analamanga region without the capital (to isolate the impact of the capital on regional results). With the exception of the capital two strata were created in each study area. At the first level, enumeration ares (also called 'clusters') are randomly selected within each domain, with a probability proportional to the population of the cluster according to the latest census. At the second level, a sample of households is randomly selected within these clusters to participate in the survey programs
+
+[^4]: 657 clusters were drawn with probability proportional to size. After implementation in the field, 650 of the 657 clusters initially selected were actually visited
+
+[^5]: 600 clusters were drawn with probability proportional to size. Of the 600 clusters selected, 596 could be surveyed. However, nine other clusters had invalid GPS coordinates, resulting in a total of 585 clusters for 2008
+
+[^6]: 270 clusters were drawn with probability proportional to size. Of the 270 clusters selected, 269 could be surveyed. However, one cluster had invalid GPS coordinates, resulting in a total of 585 clusters for 2008. 
+
+
 ## Empirical strategy
 
 ## Methods
