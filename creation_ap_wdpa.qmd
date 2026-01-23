@@ -300,10 +300,15 @@ wdpa_area <- wdpa_class %>%
     area_km2 = sum(REP_AREA, na.rm = TRUE),
     .groups = "drop"
   ) %>%
+  complete(
+    STATUS_YR,
+    IUCN_CAT,
+    fill = list(area_km2 = 0)
+  ) %>%
   arrange(STATUS_YR) %>%
   group_by(IUCN_CAT) %>%
-  mutate(cum_area_km2 = cumsum(area_km2))
-
+  mutate(cum_area_km2 = cumsum(area_km2))%>%
+  ungroup
 
 table(wdpa_class$IUCN_CAT)
 
@@ -318,8 +323,10 @@ wdpa_area %>%
 ggplot(wdpa_area,
        aes(x = STATUS_YR, 
            y = cum_area_km2, 
-           fill = IUCN_CAT)) +
- 
+           fill = IUCN_CAT)
+       ) +
+  geom_area(alpha = 0.9) +
+  
   geom_rect(
     data = data.frame(xmin = 2008, xmax = 2021),
     aes(
@@ -358,7 +365,7 @@ ggplot(wdpa_area,
   labs(
     x = "Year of creation",
     y = "Cumulative protected area (km²)",
-    title = "Evolution of cumulative protected areas by IUCN category"
+    title = "Evolution of protected areas in Madagascar and study period"
   ) +
 
   theme_minimal(base_size = 13) +
