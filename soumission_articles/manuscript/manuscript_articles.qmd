@@ -73,68 +73,18 @@ Based on this theory of change, we define two main outcome variables to capture 
 
 
 ## Data {#data}
-Considering the long-term, large-scale, complex, and politically sensitive nature of the intervention to be evaluated, we use secondary data on the socioeconomic conditions of households, their geographical environment and their location in relation to PAs. 
+This study evaluates the impact of PA creation on rural household well-being between 2008 and 2021. These time frame was chosen on the basis of the availability of geolocalised data on household living conditions and coincides with a period of strong expansion of PAs in the country (Appendix). We use data from the World Database on Protected Areas (WDPA) for data on protected areas, particularly terrestrial protected areas. We use data from the mapme.biodiversity package [@Gorgen2022] to automate the retrieval of large raster data sets on the geophysical environment of households, such as forest cover rates in 2000, slope and altitude, population density in 2000, and accessibility in 2000 (Appendix). Data on household socioeconomic conditions are mainly from the survey conducted by the 'Institut National de la Statistique de Madagascar' (INSTAT) as part of the Demographic and Health Surveys (DHS)[^1] (Appendix). Three DHS surveys were conducted in 1997, 2008 and 2021, containing 650 clusters in 2021, 585 in 2008, and 268 in 1997. We use 2008 as the reference year. Accordingly, the population considered as treated encompasses households living in rural areas within 10 km of a PA created between 2008 and 2021, according to the GPS coordinates provided in the Demographic Health Surveys (DHS) data[^2]. Households in the control group are those living in a rural area more than 10 km away from a PA created between 2008 and 2021, and they exhibit very similar characteristics or share significant traits with households in the treatment group. We decided to exclude rural populations living within 10 km of PA created before 2008, as they are considered treated before the study period; as well as households located in urban areas. 
 
-
-### Protected areas {#protectedareas}
-This study evaluates the impact of terrestrial PA creation on rural household well-being between 2008 and 2021. These time frame was chosen on the basis of the availability of geolocalised data on household living conditions and coincides with a period of strong expansion of PAs in the country (Appendix).We use 2008 as the reference year. Accordingly, the population considered as treated encompasses households living in rural areas within 10 km of a PA created between 2008 and 2021, according to the GPS coordinates provided in the Demographic Health Surveys (DHS) data[^2]. Households in the control group are those living in a rural area more than 10 km away from a PA created between 2008 and 2021, and they exhibit very similar characteristics or share significant traits with households in the treatment group. We decided to exclude rural populations living within 10 km of PA created before 2008, as they are considered treated before the study period; as well as households located in urban areas. 
-
-[^2]: These GPS coordinates correspond to the centroids of the enumeration areas surveyed. To protect respondent confidentiality, these coordinates are first randomly shifted using the following procedure: An offset angle between 0 and 360 is randomly drawn, and then an offset distance is randomly drawn, between 0 and 2 km in urban areas and between 0 and 5 km in rural areas. For 1% of rural clusters, the distance drawn is between 0 and 10 km [@Skiles2013]
-
+[^1]: These GPS coordinates correspond to the centroids of the enumeration areas surveyed. To protect respondent confidentiality, these coordinates are first randomly shifted using the following procedure: An offset angle between 0 and 360 is randomly drawn, and then an offset distance is randomly drawn, between 0 and 2 km in urban areas and between 0 and 5 km in rural areas. For 1% of rural clusters, the distance drawn is between 0 and 10 km [@Skiles2013]
 
 
 ![Classification of household clusters according their group affiliation ](figures/map-clust.png){#fig-map-clust width=100%}
 
     Notes: Households in the treatment group are those located in clusters less than 10 km from PAs created since 2008 in rural areas (shown in red) and households are those located in clusters more than 10 km from PA created since 2008 in rural areas (shown in blue). Rural populations living within 10 km of PA created before 2008 or located in urban areas are excluded from the study (shown in black). The GPS data used comes from DHS clusters. 
 
+We use DHS data to construct the variables for the impact assessment model. Two outcome variables are considered: household living standards (primary outcome) and inequalities in living standards at the level of the surveyed localities (secondary outcome). The household living standards, is estimated from the wealth index, calculated specifically for rural areas. We will translate this wealth index into an integer between 1 and 100, corresponding to the household’s wealth percentile relative to the distribution of the whole sample. In addition to the impact of PAs on household living standards, we seek to understand their influence on socioeconomic inequalities within the affected populations. To do this, we propose to use a standardized Z-Score of the wealth index, allowing for the comparison of the relative distribution of wealth around the mean within the study population, at the level of each survey cluster. 
 
-### Household socioeconomic conditions {#householdsocioeconomicconditions} 
-The data on household living conditions used for this study comes from surveys conducted by the “Institut National de la Statistique de Madagascar” (INSTAT) as part of the Demographic and Health Surveys (DHS)(Appendix). 
-
-
-
-
-These data are used to construct the variables for the impact assessment model. In this analysis, two outcome variables are considered: household living standards (primary outcome) and inequalities in living standards at the level of the surveyed localities (secondary outcome). 
-
-  - Main outcome variable: Household living standards
-    
-The first outcome variable, household living standards, is estimated from the wealth index, calculated specifically for rural areas (variable coded hv270a in the DHS data). The wealth index is defined in the DHS data catalogue as: 'A composite measure of a household's cumulative living standard. The wealth index is calculated using easy-to-collect data on a household’s ownership of selected assets, such as televisions and bicycles; materials used for housing construction; and types of water access and sanitation facilities. Generated with a statistical procedure known as principal components analysis, the wealth index places individual households on a continuous scale of relative wealth. DHS separates all interviewed households into five wealth quintiles to compare the influence of wealth on various population, health and nutrition indicators. As a response to criticism that a single wealth index is too urban in its construction and not able to distinguish the poorest of the poor from other poor households, this variable provides an urban- and rural-specific wealth index' (The DHS Program/ICF 2018). As described above, we will translate this wealth index into an integer between 1 and 100, corresponding to the household’s wealth percentile relative to the distribution of the whole sample. 
-
-  - Secondary outcome variable: inequality of household living standards
-In addition to the impact of PAs on household living standards, we seek to understand their influence on socioeconomic inequalities within the affected populations. To do this, we propose to use a standardized Z-Score of the wealth index, allowing for the comparison of the relative distribution of wealth around the mean within the study population, at the level of each survey cluster. 
-
-The Z-Score $Z_i$  for each household $i$ is calculated from the wealth index using the following formula: 
-
-$$
-Z_i = \frac{W_i - \mu_W}{\sigma_W}
-$$
-(1)
-
- where $W_i$ is the wealth index for household $i$, $μ_W$ represents the average wealth index for all households surveyed in each rural cluster, and $σ_W$ is the standard deviation of households in the cluster. 
-
-
-  - Control variable
 These data also provide us with control variables: age and sex of the head of the household.These characteristics determine the economic opportunities and resource management capacity of households [@LoBue2022]. These variables reduce the unexplained variability in the model and thus enable a more accurate estimate of the treatment effect. 
-
-
-### Household geophysical environment {#householdgeophysicalenvironment}
-Household geophysical environment data will be obtained using the R package mapme.biodiversity [@Gorgen2022]. This package automates the retrieval and processing of large raster-format data to produce a series of indicators applied to user-defined polygons for specified periods, which are subsequently and defined. 
-
-
-"*Forest cover rates in 2000* correspond to the percentage coverage by vegetation with a height of 5 meters or more [@Hansen2013]. This variable is provided by the Global Forest Change dataset, which indicates for each pixel of one arc-second (approximately 30 meters at the equator) an estimate of forest cover in 2000 [@Hansen2013]. In Madagascar, as in other countries, PA have been preferentially created by targeting forest zones [@Wilson2006; @Carvalho2020]. Globally, Naidoo ([-@Naidoo2019]) indicates that forest cover in an area is negatively correlated with the living standards of its inhabitants." 
-
-"*Slope and elevation* are calculated using a digital terrain model from NASA-SRTM ( Shuttle Radar Topography data), which provides an elevation estimate for arc-second pixels [@NASAJPL2020]. Slope is measured as a percentage for each plot, while elevation is measured in meters. These topological variables influence the location of PA [@Joppa2010], as well as the agricultural potential of an area and therefore the living standards of rural populations [@CanavireBacarreza2013]."
-    
-"*Population density in 2000* corresponds to the estimated number of inhabitants per km² based on Worldpop data. Worldpop data provide estimates of population density for the year 2000 at a spatial resolution of about 1 km. They use modeling techniques and combines census data with various geospatial datasets[@WorldPop2018]."
-    
-"*Accessibility in 2000*
-corresponds to the estimated travel time for households to the nearest cities, measured in minutes. These accessibility data to cities are compiled by the Joint Research Center (JRC), with 2000 as the reference year [@Uchida2011]. Accessibility to cities determines the ability to benefit from the services, products and opportunities they offer and is therefore a key factor in determining living standards in rural areas [@Weiss2018; @INSTAT2020]."
-
-Each of these variables will be calculated within a circle of 10 km radius around the GPS coordinates of the survey cluster. All households in the same cluster are assigned the same values for forest cover rate in 2000, slope and elevation, population density in 2000 and accessibility in 2000. 
-
-We also integrate the Standardized Precipitation Evapotranspiration Index (SPEI) [@VicenteSerrano2010] for the year preceding the survey. This index is calculated based on a long-term reference (1981-2010) to quantify excess or deficit of rainfall. We use the SPEI value for the two years prior to each survey, as well as the year of the survey. The SPEI is calculated from monthly precipitation and minimum and maximum temperature data from worldclim, using an improved version of the Hargreaves method defined by [@Droogers2002], as implemented in the SPEI R package [@VicenteSerrano2010]. This variable will be calculated for a circle with a radius of 10 km around the GPS coordinates of the cluster.
-
-The data from this source will constitute part of our matching variables. Matching covariates are used to select units not exposed to conservation (control groups) that are comparable to the exposed units (treatment group). A appropriate for the matching process are variables likely to influence both the probability of treatment (whether a PA has been created near the household) and the outcome (household living standard and inequalities among households). 
 
 
 ## Descriptive statistics {#descriptivestatistics}
