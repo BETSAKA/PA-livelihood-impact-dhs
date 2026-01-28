@@ -38,27 +38,23 @@ Our study analyzes the impact of PA on household well-being over 13 years (2008-
 
 ### Household socioeconomic conditions
 
-The data on household living conditions used for this study comes from surveys conducted by the 'Institut National de la Statistique de Madagascar' (INSTAT) as part of the Demographic and Health Surveys (DHS). These data covers a wide range of topics, including demographic characteristics, living conditions, health, education, sanitation, and hygiene. The DHS surveys are based on a two-stage stratified sampling method. The population of interest is divided into 23 study areas corresponding to Madagascar’s 22 regions, the capital Antananarivo (considered separately), and the Analamanga region without the capital (to isolate the impact of the capital on regional results). Except for the capital, two strata were created in each study area: The urban stratum and the rural stratum. A total of 45 sampling strata were created. At the first stage, enumeration areas (referred to as ‘clusters’ hereafter) were randomly selected within each area with a probability proportional to the population of the cluster according to the most recent census. A complete enumeration of households was conducted in each selected cluster, with 650 clusters in 2021[^1], 600 in 2008[^2] and 270 in 1997[^3]. At the second stage, a sample of households is randomly selected within these clusters to participate in the survey programs. This method helps to reduce survey costs while ensuring the representativeness of the results.
+The data on household living conditions used for this study comes from surveys conducted by the 'Institut National de la Statistique de Madagascar' (INSTAT) as part of the Demographic and Health Surveys (DHS). These data covers a wide range of topics, including demographic characteristics, living conditions, health, education, sanitation, and hygiene. The DHS surveys are based on a two-stage stratified sampling method. The population of interest is divided into 23 study areas corresponding to Madagascar’s 22 regions, the capital Antananarivo (considered separately), and the Analamanga region without the capital (to isolate the impact of the capital on regional results). Except for the capital, two strata were created in each study area: The urban stratum and the rural stratum. A total of 45 sampling strata were created. At the first stage, enumeration areas (referred to as ‘clusters’ hereafter) were randomly selected within each area with a probability proportional to the population of the cluster according to the most recent census. A complete enumeration of households was conducted in each selected cluster, with 650 clusters in 2021[^suppl_material-1], 600 in 2008[^suppl_material-2] and 270 in 1997[^suppl_material-3]. At the second stage, a sample of households is randomly selected within these clusters to participate in the survey programs. This method helps to reduce survey costs while ensuring the representativeness of the results.
 
+[^suppl_material-1]: 657 clusters were drawn with probability proportional to size. After implementation in the field, 650 of the 657 clusters initially selected were actually visited
 
-[^1]: 657 clusters were drawn with probability proportional to size. After implementation in the field, 650 of the 657 clusters initially selected were actually visited
+[^suppl_material-2]: 600 clusters were drawn with probability proportional to size. Of the 600 clusters selected, 596 could be surveyed. However, nine other clusters had invalid GPS coordinates, resulting in a total of 585 clusters for 2008
 
-[^2]: 600 clusters were drawn with probability proportional to size. Of the 600 clusters selected, 596 could be surveyed. However, nine other clusters had invalid GPS coordinates, resulting in a total of 585 clusters for 2008
+[^suppl_material-3]: 270 clusters were drawn with probability proportional to size. Of the 270 clusters selected, 269 could be surveyed. However, one cluster had invalid GPS coordinates, resulting in a total of 585 clusters for 2008.
 
-[^3]: 270 clusters were drawn with probability proportional to size. Of the 270 clusters selected, 269 could be surveyed. However, one cluster had invalid GPS coordinates, resulting in a total of 585 clusters for 2008.
+The data on the socioeconomic conditions of households are used to construct the outcome and the control variable in the impact evaluation model. In this analysis, two outcome variables are considered: household living standards and inequalities in living standards at the level of the surveyed localities.
 
-
-The data on the socioeconomic conditions of households are used to construct the outcome and the control variable in the impact evaluation model. In this analysis, two outcome variables are considered: household living standards and inequalities in living standards at the level of the surveyed localities. 
-
-
-#### Outcome variable 
+#### Outcome variable
 
 -   Main outcome variable: Household living standards
 
 The first outcome variable, household living standard, is estimated from the wealth index, calculated specifically for rural areas. The wealth index is defined in the DHS data catalogue as: “A composite measure of a household's cumulative living standard. The wealth index is calculated using easy-to-collect data on a household’s ownership of selected assets, such as televisions and bicycles; materials used for housing construction; and types of water access and sanitation facilities. Generated with a statistical procedure known as principal components analysis, the wealth index places individual households on a continuous scale of relative wealth. DHS separates all interviewed households into five wealth quintiles to compare the influence of wealth on various population, health and nutrition indicators. As a response to criticism that a single wealth index is too urban in its construction and not able to distinguish the poorest of the poor from other poor households, this variable provides an urban- and rural-specific wealth index” (The DHS Program/ICF 2018). As described above, we will translate this wealth index into an integer between 1 and 100, corresponding to the household’s wealth percentile relative to the distribution of the whole sample
 
--   Secondary outcome variable: inequality of household living standards 
-In addition to the evaluation impact of PA on household living standards, we will seek to understand their influence on socioeconomic inequalities within the affected populations. To do this, we propose to use a standardized Z-Score of the wealth index, allowing for the comparison of the relative distribution of wealth around the mean within the study population, at the level of each survey cluster. 
+-   Secondary outcome variable: inequality of household living standards In addition to the evaluation impact of PA on household living standards, we will seek to understand their influence on socioeconomic inequalities within the affected populations. To do this, we propose to use a standardized Z-Score of the wealth index, allowing for the comparison of the relative distribution of wealth around the mean within the study population, at the level of each survey cluster.
 
 The Z-Score $Z_i$ for each household $i$ is calculated from the wealth index using the following formula:
 
@@ -66,10 +62,9 @@ $$
 Z_i = \frac{W_i - \mu_W}{\sigma_W}
 $$ (1)
 
-where $W_i$ is the wealth index for household $i$, $μ_W$ represents the average wealth index for all households surveyed in each rural cluster, and $σ_W$ s the standard deviation of households in the cluster. 
+where $W_i$ is the wealth index for household $i$, $μ_W$ represents the average wealth index for all households surveyed in each rural cluster, and $σ_W$ s the standard deviation of households in the cluster.
 
-
-#### Control variables 
+#### Control variables
 
 DHS also provide us with control variables: age and sex of the head of the household.These characteristics determine the economic opportunities and resource management capacity of households [@LoBue2022]. These variables reduce the unexplained variability in the model and thus enable a more accurate estimate of the treatment effect.
 
@@ -92,112 +87,80 @@ We also integrate the Standardized Precipitation Evapotranspiration Index (SPEI)
 The data from this source will constitute part of our matching variables. Matching covariates are used to select units not exposed to conservation (control groups) that are comparable to the exposed units (treatment group). A appropriate for the matching process are variables likely to influence both the probability of treatment (whether a PA has been created near the household) and the outcome (household living standard and inequalities among households).
 
 ## Empirical strategy
-### Matching methods {#matchingmethods}
-Our evaluative approach is based on a counterfactual measure that estimates the causal effect of the treatment, namely the implementation of PAs.  This approach is based on a comparison between a treatment group (households living in rural areas within or less than 10 km of PA) and a control group (households living in rural areas more than 10 km from PA created after 2008)[@Schleicher2020; @Desbureaux2021]. The study thus fits within the framework of Rubin's causal model [@Rubin1974], according to which potential outcomes depend on exposure to the treatment. To ensure comparability between groups, we apply genetic matching (function GenMatch from the R MachtIt package) to pair each unit in the treatment group with a unit in the control group that has the same observable characteristics [@Ho2007]. This approach uses a single distance measure'Mahalanobis distance', to quantify the similarity between the two groups of observations, while taking into account the correlations between covariates and their covariances [@Diamond2013]. This procedure increases the credibility of the results and reduces endogeneity issues [@Ma2020]. We also apply a caliper of 0.25 standard deviation of the Mahalanobis distance to avoid creating pairs with overly large differences  [@Rosenbaum1983]. The validity of this estimation depends on the balance between the treatment and control groups before and after matching. Before matching, we check the balance using the standardized mean difference (SMD), which measures the difference between the means of the covariates in the two groups. After matching, matching is further assessed visually using a quantile-quantile plot.
 
+### Matching methods {#matchingmethods}
+
+Our evaluative approach is based on a counterfactual measure that estimates the causal effect of the treatment, namely the implementation of PAs. This approach is based on a comparison between a treatment group (households living in rural areas within or less than 10 km of PA) and a control group (households living in rural areas more than 10 km from PA created after 2008)[@Schleicher2020; @Desbureaux2021]. The study thus fits within the framework of Rubin's causal model [@Rubin1974], according to which potential outcomes depend on exposure to the treatment. To ensure comparability between groups, we apply genetic matching (function GenMatch from the R MachtIt package) to pair each unit in the treatment group with a unit in the control group that has the same observable characteristics [@Ho2007]. This approach uses a single distance measure'Mahalanobis distance', to quantify the similarity between the two groups of observations, while taking into account the correlations between covariates and their covariances [@Diamond2013]. This procedure increases the credibility of the results and reduces endogeneity issues [@Ma2020]. We also apply a caliper of 0.25 standard deviation of the Mahalanobis distance to avoid creating pairs with overly large differences [@Rosenbaum1983]. The validity of this estimation depends on the balance between the treatment and control groups before and after matching. Before matching, we check the balance using the standardized mean difference (SMD), which measures the difference between the means of the covariates in the two groups. After matching, matching is further assessed visually using a quantile-quantile plot.
 
 ### Difference-in-difference {#difference-in-difference}
-We assess the impact of PAs on household living standards and inequalities using the difference-in-difference (DID) method. The DID principle consists in comparing the wealth index of control and treatment households before and after the establishment of PAs(our treatment begins in 2008). 
 
-This method relies on the parallel trends assumption,according to which treated and untreated areas evolved similarly prior to the intervention. To validate this hypothesis, we will use as a reference, among the rural households surveyed in 1997, those living within 10 km of a PA created between 2008 and 2021 (placebo treatment group) and those matched to them using the method described above (placebo control group). We will conduct a placebo test by performing a DID estimation between these groups for the period 1997-2008. If the result of this placebo test close to zero or statistically insignificant, the hypothesis of parallel trends is supported. 
+We assess the impact of PAs on household living standards and inequalities using the difference-in-difference (DID) method. The DID principle consists in comparing the wealth index of control and treatment households before and after the establishment of PAs(our treatment begins in 2008).
 
-In our DID estimates, we use cluster robust standard errors to account for intra-cluster correlations.  
+This method relies on the parallel trends assumption,according to which treated and untreated areas evolved similarly prior to the intervention. To validate this hypothesis, we will use as a reference, among the rural households surveyed in 1997, those living within 10 km of a PA created between 2008 and 2021 (placebo treatment group) and those matched to them using the method described above (placebo control group). We will conduct a placebo test by performing a DID estimation between these groups for the period 1997-2008. If the result of this placebo test close to zero or statistically insignificant, the hypothesis of parallel trends is supported.
+
+In our DID estimates, we use cluster robust standard errors to account for intra-cluster correlations.
 
 The simplified equation for the difference-in-difference [@Daw2018] is as follows:
- 	
+
 $$
 Y_{it} = \alpha_0 + \beta_1 \text{Treatment}_i + \beta_2 \text{Post}_t + \delta D_{it} + \varepsilon_{it}
-$$				                  (2)
+$$ (2)
 
 With the parameters defined as:
 
- $Y_{i t}$: Wealth index for household $i$ in year $t$ (1997, 2008 or 2021)
- 
- 
- $α_0$: Intercept, representing the baseline wealth index
- 
- $β_1$: Coefficient associated with the variable $Treatment_i$
- 
- $Treatment_i$: Binary variable that takes the value of 1 for households $i$ affected by a PA (treatment households) and 0 for households $i$ not affected by PA (control households)
- 
- $β_2$:  : Coefficient associated with the variable $Post_t$
- 
- $Post_t$: Binary variable that takes the value of 1 for the post-treatment year 2021 and 0 for the pre-treatment year 2008
- 
- $δ$: Coefficient of interest representing the effect of PA creation on household living standards $i$ in year $t$
- 
- $D_{i t}$: Interaction term between $Treatment_i$ and $Post_t$; It is equal to 1 for treatment households $i$ after the treatment year $t$ and 0 for the other households.
- 
-$ε_{i t}$: Error term for household $i$ in year $t$
+ $Y_{i t}$: Wealth index for household $i$ in year $t$ (1997, 2008 or 2021)      $α_0$: Intercept, representing the baseline wealth index   $β_1$: Coefficient associated with the variable $Treatment_i$
 
+$Treatment_i$: Binary variable that takes the value of 1 for households $i$ affected by a PA (treatment households) and 0 for households $i$ not affected by PA (control households)
+
+$β_2$:  : Coefficient associated with the variable $Post_t$
+
+$Post_t$: Binary variable that takes the value of 1 for the post-treatment year 2021 and 0 for the pre-treatment year 2008
+
+$δ$: Coefficient of interest representing the effect of PA creation on household living standards $i$ in year $t$
+
+$D_{i t}$: Interaction term between $Treatment_i$ and $Post_t$; It is equal to 1 for treatment households $i$ after the treatment year $t$ and 0 for the other households.
+
+$ε_{i t}$: Error term for household $i$ in year $t$
 
 # Departures and complements to the preanalysis plan
 
-
 ## Staggered DID estimator
-Our study used Malaria Indicator Surveys (MIS) data because our two-period estimate lacked sufficient statistical power. MIS data are surveys focused specifically on malaria-related issues, which do not include certain health or demographic questions found in DHS surveys. However, all variables relating to household living conditions used in DHS surveys are present in MIS surveys. The inclusion of these data requires an estimator adapted to staggered adoption and multiple study periods with potential heterogenous treatment effects [@Borusyak2024]. The approach of Borusyak, Jaravel, and Spiess  [-@Borusyak2024] with repeated cross-sectional data using the diddimputation package is theoretically feasible, but it impossible with unevenly spaced time-to-treatment events, event for a repeated cross-section in R. We therefore apply Gardner's approach [-@Gardner2022], which is very similar in principle, with slightly wider confidence intervals. This approach is applied with binning of the years relative to the treatment, grouping all observations beyond plus or minus two years into common categories. 
 
+Our study used Malaria Indicator Surveys (MIS) data because our two-period estimate lacked sufficient statistical power. MIS data are surveys focused specifically on malaria-related issues, which do not include certain health or demographic questions found in DHS surveys. However, all variables relating to household living conditions used in DHS surveys are present in MIS surveys. The inclusion of these data requires an estimator adapted to staggered adoption and multiple study periods with potential heterogenous treatment effects [@Borusyak2024]. The approach of Borusyak, Jaravel, and Spiess [-@Borusyak2024] with repeated cross-sectional data using the diddimputation package is theoretically feasible, but it impossible with unevenly spaced time-to-treatment events, event for a repeated cross-section in R. We therefore apply Gardner's approach [-@Gardner2022], which is very similar in principle, with slightly wider confidence intervals. This approach is applied with binning of the years relative to the treatment, grouping all observations beyond plus or minus two years into common categories.
 
 ## Years-to-treatment binning
-The decision to incorporate a binning period into the estimate is motivated by the irregular spacing of the available surveys, which means that certain relative time values are represented by very few observations and produce unstable coefficients. A two-year binning strategy will strengthen the stability of our estimates. As Borusyak, Jaravel et Spiess [-@Borusyak2024]: "In practice, it is common to bin distant leads and lags into a single catgory, both to improve statistical precision and to avoid presenting very noisy and uniformative coefficients". This approach facilitates the reduction of noise at the extremes, thereby enabling the focus on interpreting the main dynamics surrounding the treatment. 
+
+The decision to incorporate a binning period into the estimate is motivated by the irregular spacing of the available surveys, which means that certain relative time values are represented by very few observations and produce unstable coefficients. A two-year binning strategy will strengthen the stability of our estimates. As Borusyak, Jaravel et Spiess [-@Borusyak2024]: "In practice, it is common to bin distant leads and lags into a single catgory, both to improve statistical precision and to avoid presenting very noisy and uniformative coefficients". This approach facilitates the reduction of noise at the extremes, thereby enabling the focus on interpreting the main dynamics surrounding the treatment.
 
 ## Inclusion of MICS 2018
-We still do not have sufficient data to stabilize our estimates. Incorporating MIS data alone introduces substantial noise due to the irregular spacing of the available survey waves. To remedy this problem, We therefore included the 2018 Multiple Indicator Cluster Surveys (MICS)in the analysis. The MICS samples provide cross-sectional data at both the individual and household levels and are designed using methodologies comparable to those of the MIS and DHS surveys [@bolgrien_harmonized_2025]. These 2018 MICS cover 17,870 households during a period for which no alternative data sources are available, allowing for more comprehensive coverage of both the preceding and subsequent years. It is worth noting that recent versions of the MICS and DHS surveys have been harmonized, facilitating their integration [@bolgrien_harmonized_2025]. 
 
+We still do not have sufficient data to stabilize our estimates. Incorporating MIS data alone introduces substantial noise due to the irregular spacing of the available survey waves. To remedy this problem, We therefore included the 2018 Multiple Indicator Cluster Surveys (MICS)in the analysis. The MICS samples provide cross-sectional data at both the individual and household levels and are designed using methodologies comparable to those of the MIS and DHS surveys [@bolgrien_harmonized_2025]. These 2018 MICS cover 17,870 households during a period for which no alternative data sources are available, allowing for more comprehensive coverage of both the preceding and subsequent years. It is worth noting that recent versions of the MICS and DHS surveys have been harmonized, facilitating their integration [@bolgrien_harmonized_2025].
 
 ## PA governance classification
 
-We keep only terrestrial protected areas and discard marine or coastal protected areas. There is no consensus on IUCN categories in the literature. Ellason et al. [-@elleason2021] suggest the following classification, which we complement here with the naming used by the authors:
+This analysis examines heterogeneous impacts according to governance regimes. The analysis of heterogeneous effects aims to determine which categories of households benefit most - or least - from the creation of protected areas and the circumstances under which these effects occur.  
+We keep only terrestrial protected areas and discard marine or coastal protected areas.Although there is no clear consensus in the literature regarding the use of IUCN categories, Elleason et al. [-@elleason2021] suggest the following classification, which we complement here with the naming used by the authors:
 
 -   Some studies group I and II in one class, and all others in another class:
 
-    -   Sharlemann et al. [-@scharlemann2010] classify cat. I and II as "protected sites with more restrictive land management regimes" and III to VI as "all other protected sites"
+    -   Scharlemann et al. [-@scharlemann_securing_2010] classify cat. I and II as "protected sites with more restrictive land management regimes" and III to VI as "all other protected sites"
 
     -   Jones et al. [-@Jones2018] designate I and II as "strict biodiversity conservation areas" and III to VI as "zones permitting certain human activities and sustainable resource extraction"
 
-    -   Anderson and Mammides [-@anderson2020] designate only I and II as "areas in stricter categories".
+    -   Anderson and Mammides [-@anderson_role_2020] designate only I and II as "areas in stricter categories".
 
 -   Other studies group I, II and III in one class, and IV, V and VI in another class:
 
-    -   Seiferling et al. [-@seiferling2012] designate I to III as "areas into high-protection" and IV to VI as "low protection categories".
+    -   Seiferling et al. [-@seiferling_measuring_2012] designate I to III as "areas into high-protection" and IV to VI as "low protection categories".
 
-    -   Françoso et al. [-@françoso2015] refer to IV to VI as "sustainable use PAs" and the other as "other".
+    -   Françoso et al. [-@francoso_habitat_2015] refer to IV to VI as "sustainable use PAs" and the other as "other".
 
 -   Other studies group I to IV in one class and V and VI in another class:
 
-    -   Nelson and Chomitz [-@nelson2011] refer to I to IV as "strict protection" and V and VI as "nonstrict or multi-use protection".
+    -   Nelson and Chomitz [-@nelson_effectiveness_2011] refer to I to IV as "strict protection" and V and VI as "nonstrict or multi-use protection".
 
-    -   Porter-Bordland et al. [-@porter-bolland2012] refer as I to IV as "protected areas" and V and VI as "community managed forests".
+    -   Porter-Bolland et al. [-@porter-bolland_community_2012] refer as I to IV as "protected areas" and V and VI as "community managed forests".
 
-Adding to this classification, we share Ledberger [-@leberger2020] analysis that classifies the naturalness of IUCN category definition as follows: Ia = Ib \> II = III \> IV = VI \> V and they find out that "the global ranking of the effect of the IUCN categories on the forest loss per PA at the global scale, from the least to the most forest loss, was III \< Ia = Ib = II \< IV = V = VI" .
+Adding to this classification, we share Ledberger [-@leberger_global_2020] analysis that classifies the naturalness of IUCN category definition as follows: Ia = Ib \> II = III \> IV = VI \> V and they find out that "the global ranking of the effect of the IUCN categories on the forest loss per PA at the global scale, from the least to the most forest loss, was III \< Ia = Ib = II \< IV = V = VI" .
 
-We consider that Lebergers et al. results [-@leberger2020] convincingly make the case to group I to III. We find out however that vivid debates focused on the category IV definition and revision [@leroux2010], so keep IV separated in our analysis, its purpose and criteria are different from V and VI[^suppl_material-1].
-
-[^suppl_material-1]: From the literature, we could even consider also separating III in a separate category, to have 3 classes: I-II, III, IV and V-VI.
-
-```{r}
-library(dplyr)
-
-# Drop marine, compute decade
-#wdpa2 <- wdpa_gee %>%
- # filter(MARINE == "0") %>% #0: 100% terrestrial, 1: both, 2: 100% marine
-  #mutate(decade = STATUS_YR - (STATUS_YR %% 10),
-         #decade = case_when(
-           #decade == 0 ~ "Unknown",
-           #decade >0 & decade <= 1950 ~ "Before 1960",
-           #.default = paste(decade, decade+9, sep = "-")),
-         #type = ifelse(IUCN_CAT %in% c("Ia", "Ib", "II", "III"), "Strict",
-                       #ifelse(IUCN_CAT == "IV", "IV",
-                             # ifelse(IUCN_CAT %in% c("V", "VI"), "Nonstrict", 
-                             # "Unknown"))))
-# Organize the order of display of decades, starting with Unnkown, then Before
-#decades <- wdpa2 %>%
- # pluck("decade") %>%
-  #unique() %>%
-  #sort()
-#order_decades <- c("Before 1960", str_subset(decades, "^[0-9]")) 
-#wdpa2 <- wdpa2 %>%
- # filter(decade != "Unknown") %>% 
-#  mutate(decade = factor(decade, levels = order_decades))
-```
-
+Building on the results of Leberger et al.[-@leberger_global_2020] which suggest similar conservation outcomes for IUCN status I to III, we use a parsimonious governance-based classification in our empirical analysis. Although the literature highlights ongoing debates regarding the definition and management objectives of status Iv [@leroux_global_2010], we include it within the group of strictly protected areas. This choice reflects both empirical considerations and data constraints, while acknowledging that status IV differs conceptually from status V and VI, which are explicitly treated as multi-use protected areas. To this end, we examine the role of governance by distinguishing between strict protected areas (IUCN categories I-IV) and multi-use protected areas (IUCN categories V-VI).
