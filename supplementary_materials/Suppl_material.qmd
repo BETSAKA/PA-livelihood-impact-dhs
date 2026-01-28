@@ -7,13 +7,37 @@ bibliography: references.bib
   
 format: 
    typst: 
+     toc: false
      number-sections: true
      fig-cap-location: top
      bibliographystyle: "chicago-author-date"
    docx: default
-abstract: |
-  This document uses a reproductible workflows to provide descriptive statistics accompanying the scientific article as title is 'Socioeconomic Impacts of Terrestrial Protected Areas: Evidence from Large-Scale National Surveys in Madagascar'. In section 1, we present the data sources and identification strategy and econometric methods used in the analysis. In section 2, we analyse the database on protected areas management evaluations to assess the absolute and relative importance of evaluation methods by type of countries.
+
 ---
+
+```{=typst}
+#align(center)[
+  #v(3cm)
+
+  #text(size: 16pt, weight: "bold")[
+    Socioeconomic Impacts of Terrestrial Protected Areas:  
+    Evidence from Large-Scale National Surveys in Madagascar
+  ]
+]
+
+#v(2cm)
+
+#align(left)[
+  #outline(
+    depth: 2,
+    indent: 1em,
+    fill: repeat("."),
+  )
+]
+
+#pagebreak()
+```
+
 
 # Pre-specified methods
 
@@ -82,45 +106,52 @@ Household geophysical environment data will be obtained using the R package mapm
 
 Each of these variables will be calculated within a circle of 10 km radius around the GPS coordinates of the survey cluster. All households in the same cluster are assigned the same values for forest cover rate in 2000, slope and elevation, population density in 2000 and accessibility in 2000.
 
-We also integrate the Standardized Precipitation Evapotranspiration Index (SPEI) [@VicenteSerrano2010] for the year preceding the survey. This index is calculated based on a long-term reference (1981-2010) to quantify excess or deficit of rainfall. We use the SPEI value for the two years prior to each survey, as well as the year of the survey. The SPEI is calculated from monthly precipitation and minimum and maximum temperature data from worldclim, using an improved version of the Hargreaves method defined by [@Droogers2002], as implemented in the SPEI R package [@VicenteSerrano2010]. This variable will be calculated for a circle with a radius of 10 km around the GPS coordinates of the cluster.
+We also integrate *the Standardized Precipitation Evapotranspiration Index* (SPEI) [@VicenteSerrano2010] for the year preceding the survey. This index is calculated based on a long-term reference (1981-2010) to quantify excess or deficit of rainfall. We use the SPEI value for the two years prior to each survey, as well as the year of the survey. The SPEI is calculated using monthly precipitation, minimum and maximum temperature data for each cluster from Worldclim, based on a long-term reference period from 1981 to 2021. We calculate the latitude using the geometric coordinates of each cluster, which serves as the basis for estimating potential evapotranspiration (PET). This ensures that the PET estimate is specific to local geographical conditions. We then retrieve the monthly time series of climate variables for each cluster. Using the Hargreaves formula (modified Hargreaves method) as defined by Droogers and Allen [@Droogers2002], we estimate PET and the water balance. The latter is converted into a time series from which the SPEI index is estimated on 12-month scale.
+
+
+
+```         
+Notes: The black curve shows the annual trend in the avergae SPEI and highlights the variations in the climate of the study area from one year to the next. Between 1980 and 2000, most years had an SPEI value greated than 0, corresponding to normal or slightly wet conditions. According to the classification of McKee et al. [@McKee1993], they were few episodes of significant drought. However, since 2004, SPEI values have been below zero, indicating an increase in the fresquency of drought episodes. In 2017, the SPEI reached a particularly low value of -2.27, which, according to the classification of Vicente-Serrano et al. [@Vicente2010], indicates a very severe drought. 
+```
 
 The data from this source will constitute part of our matching variables. Matching covariates are used to select units not exposed to conservation (control groups) that are comparable to the exposed units (treatment group). A appropriate for the matching process are variables likely to influence both the probability of treatment (whether a PA has been created near the household) and the outcome (household living standard and inequalities among households).
 
-## Empirical strategy
 
-### Matching methods {#matchingmethods}
+## Statistical power
 
-Our evaluative approach is based on a counterfactual measure that estimates the causal effect of the treatment, namely the implementation of PAs. This approach is based on a comparison between a treatment group (households living in rural areas within or less than 10 km of PA) and a control group (households living in rural areas more than 10 km from PA created after 2008)[@Schleicher2020; @Desbureaux2021]. The study thus fits within the framework of Rubin's causal model [@Rubin1974], according to which potential outcomes depend on exposure to the treatment. To ensure comparability between groups, we apply genetic matching (function GenMatch from the R MachtIt package) to pair each unit in the treatment group with a unit in the control group that has the same observable characteristics [@Ho2007]. This approach uses a single distance measure'Mahalanobis distance', to quantify the similarity between the two groups of observations, while taking into account the correlations between covariates and their covariances [@Diamond2013]. This procedure increases the credibility of the results and reduces endogeneity issues [@Ma2020]. We also apply a caliper of 0.25 standard deviation of the Mahalanobis distance to avoid creating pairs with overly large differences [@Rosenbaum1983]. The validity of this estimation depends on the balance between the treatment and control groups before and after matching. Before matching, we check the balance using the standardized mean difference (SMD), which measures the difference between the means of the covariates in the two groups. After matching, matching is further assessed visually using a quantile-quantile plot.
+The calculation of statistical power aims to estimate the probability that the study detects an effect when it exists. The expected power threshold $α$ is commonly set at 0.8, which means that the study has an 80% chance of rejecting the null hypothesis when an effect is present. Furthermore, the significance threshold $α$ is set at 0.05, indicating a 5% risk of incorrectly rejecting the null hypothesis when it is true.
 
-### Difference-in-difference {#difference-in-difference}
-
-We assess the impact of PAs on household living standards and inequalities using the difference-in-difference (DID) method. The DID principle consists in comparing the wealth index of control and treatment households before and after the establishment of PAs(our treatment begins in 2008).
-
-This method relies on the parallel trends assumption,according to which treated and untreated areas evolved similarly prior to the intervention. To validate this hypothesis, we will use as a reference, among the rural households surveyed in 1997, those living within 10 km of a PA created between 2008 and 2021 (placebo treatment group) and those matched to them using the method described above (placebo control group). We will conduct a placebo test by performing a DID estimation between these groups for the period 1997-2008. If the result of this placebo test close to zero or statistically insignificant, the hypothesis of parallel trends is supported.
-
-In our DID estimates, we use cluster robust standard errors to account for intra-cluster correlations.
-
-The simplified equation for the difference-in-difference [@Daw2018] is as follows:
+The minimal detectable effect represents the smallest difference that the study can detect between the treatment and control groups, taking into account the parameters chosen for power and the specification threshold. To measure this effect, we use the standardized effect size, also known as Cohen’s $d$ , defined as follows:
 
 $$
-Y_{it} = \alpha_0 + \beta_1 \text{Treatment}_i + \beta_2 \text{Post}_t + \delta D_{it} + \varepsilon_{it}
-$$ (2)
+d = \frac{\bar{X}_1 - \bar{X}_2}{s}
+$$
 
-With the parameters defined as:
+where $\bar{X}_1$ and $\bar{X}_2$ are the average of the outcome variable for the treatment and control groups, and is the combined standard deviation of the two groups. The outcome variable used for the power calculation is the rural household percentile of the wealth index, calculated based on the wealth index variable present in the DHS survey.
 
- $Y_{i t}$: Wealth index for household $i$ in year $t$ (1997, 2008 or 2021)      $α_0$: Intercept, representing the baseline wealth index   $β_1$: Coefficient associated with the variable $Treatment_i$
+We use the average and standard deviation values from the treatment group for both groups as the matching process has not yet been performed. We assume that the control group, once matched, will be similar to the treatment group in terms of variability and sample size.
 
-$Treatment_i$: Binary variable that takes the value of 1 for households $i$ affected by a PA (treatment households) and 0 for households $i$ not affected by PA (control households)
+Prior the power calculation, we segmented the wealth index into percentiles rather than quintiles to better capture the continuity of the variable and maximize the sensitivity of the econometric analysis. The approach, already used by some researchers \[Staveteig2014\], preserves greater granularity in the variable while improving the precision of the estimates. By increasing the number of classes, we will reduce the risk of bias associated with artificial discontinuities and improve the ability of our models to capture the marginal effects of conservation policies on living standards.
 
-$β_2$:  : Coefficient associated with the variable $Post_t$
+With these characteristics, we calculate that the minimal detectable effect is 7.5, indicating that the study is able to detect a minimum change of 7.5 percentiles in the wealth index between the groups.
 
-$Post_t$: Binary variable that takes the value of 1 for the post-treatment year 2021 and 0 for the pre-treatment year 2008
+The Intra-cluster Correltion Coefficient (ICC) is 0.4854, indicating a strong intra-cluster correlation. This means that much of the variability in the wealth index is attribuable to differences between survey areas (for example, households in the same village share similar characteristics). The adjusted standard edeviation is 28.81, indicating a lerge dispersion of wealth index scores around the mean. Given that the index ranges from 1 to 5, this standard deviation is relatively large. Cohen's $d$ od 0.2695 refers to an effect of moderate magnitude by conventional standards. This means that a significant differnece should be detectable between the treatment and control groups after the matching process. Finally, the MDE in outcome units is 7.7649 in the wealth index between groups. This corresponds to a significant detectable difference given the index's scale of 1 to 5. This means that the PA would need to have an effect of approximately 7.8 points in terms of asset percentile.
 
-$δ$: Coefficient of interest representing the effect of PA creation on household living standards $i$ in year $t$
 
-$D_{i t}$: Interaction term between $Treatment_i$ and $Post_t$; It is equal to 1 for treatment households $i$ after the treatment year $t$ and 0 for the other households.
+## Empirical strategy
 
-$ε_{i t}$: Error term for household $i$ in year $t$
+### Covariates Distribution before and after matching
+
+Before matching allows initial imbalances to be determined using the Standardized Mean Difference (SMD) test. The SMD measures the difference between the means of the covariates in the treatment and control groupes to compare the relative balance of variables measured in different units
+
+If $$SMD<0.1$$, there is a satisfactory balance between the groups for the covariate If $$SMD>0.1$$, the balance is significant
+
+The following show the distributions of covariates before and after matching for the three years of study(1997, 2008, and 2021).
+
+### Number of treated group and control group before and after matching
+
+The following table shows, for each year: the total number of observations initially available, the number of observation retained after including those that did not belong to either the treatment group or the control group, and those with missing values for the variables used for matching. It also shows the numbers of group in the treatment and control before and after matching.
+
 
 # Departures and complements to the preanalysis plan
 
@@ -139,7 +170,7 @@ We still do not have sufficient data to stabilize our estimates. Incorporating M
 ## PA governance classification
 
 This analysis examines heterogeneous impacts according to governance regimes. The analysis of heterogeneous effects aims to determine which categories of households benefit most - or least - from the creation of protected areas and the circumstances under which these effects occur.  
-We keep only terrestrial protected areas and discard marine or coastal protected areas.Although there is no clear consensus in the literature regarding the use of IUCN categories, Elleason et al. [-@elleason2021] suggest the following classification, which we complement here with the naming used by the authors:
+We keep only terrestrial protected areas and discard marine or coastal protected areas.Although there is no clear consensus in the literature regarding the use of IUCN categories, Elleason et al. [-@elleason_strictly_2021] suggest the following classification, which we complement here with the naming used by the authors:
 
 -   Some studies group I and II in one class, and all others in another class:
 
