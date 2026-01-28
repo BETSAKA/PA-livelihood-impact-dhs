@@ -142,18 +142,7 @@ Our study used Malaria Indicator Surveys (MIS) data because our two-period estim
 The decision to incorporate a binning period into the estimate is motivated by the irregular spacing of the available surveys, which means that certain relative time values are represented by very few observations and produce unstable coefficients. A two-year binning strategy will strengthen the stability of our estimates. As Borusyak, Jaravel et Spiess [-@Borusyak2024]: "In practice, it is common to bin distant leads and lags into a single catgory, both to improve statistical precision and to avoid presenting very noisy and uniformative coefficients". This approach facilitates the reduction of noise at the extremes, thereby enabling the focus on interpreting the main dynamics surrounding the treatment. 
 
 ## Inclusion of MICS 2018
-
-
-
-
-
-
-
-
-
-
- 
-
+We still do not have sufficient data to stabilize our estimates. Incorporating MIS data alone introduces substantial noise due to the irregular spacing of the available survey waves. To remedy this problem, We therefore included the 2018 Multiple Indicator Cluster Surveys (MICS)in the analysis. The MICS samples provide cross-sectional data at both the individual and household levels and are designed using methodologies comparable to those of the MIS and DHS surveys [@bolgrien_harmonized_2025]. These 2018 MICS cover 17,870 households during a period for which no alternative data sources are available, allowing for more comprehensive coverage of both the preceding and subsequent years. It is worth noting that recent versions of the MICS and DHS surveys have been harmonized, facilitating their integration [@bolgrien_harmonized_2025]. 
 
 
 ## PA governance classification
