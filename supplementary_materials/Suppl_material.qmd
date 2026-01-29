@@ -12,7 +12,6 @@ format:
      fig-cap-location: top
      bibliographystyle: "chicago-author-date"
    docx: default
-
 ---
 
 ```{=typst}
@@ -37,8 +36,6 @@ format:
 
 #pagebreak()
 ```
-
-
 # Pre-specified methods
 
 ## Data
@@ -108,14 +105,28 @@ Each of these variables will be calculated within a circle of 10 km radius aroun
 
 We also integrate *the Standardized Precipitation Evapotranspiration Index* (SPEI) [@VicenteSerrano2010] for the year preceding the survey. This index is calculated based on a long-term reference (1981-2010) to quantify excess or deficit of rainfall. We use the SPEI value for the two years prior to each survey, as well as the year of the survey. The SPEI is calculated using monthly precipitation, minimum and maximum temperature data for each cluster from Worldclim, based on a long-term reference period from 1981 to 2021. We calculate the latitude using the geometric coordinates of each cluster, which serves as the basis for estimating potential evapotranspiration (PET). This ensures that the PET estimate is specific to local geographical conditions. We then retrieve the monthly time series of climate variables for each cluster. Using the Hargreaves formula (modified Hargreaves method) as defined by Droogers and Allen [@Droogers2002], we estimate PET and the water balance. The latter is converted into a time series from which the SPEI index is estimated on 12-month scale.
 
+```{r}
+#| label: fig-spei
+#| fig-cap: "Annual SPEI (scale = 12) for a geographic cluster between 1981 and 2021"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+library(tidyverse,  warn.conflicts = FALSE)
+
+spei_plot <- read_rds("figures/spei_plot.rds")
+print(spei_plot)
+```
 
 
 ```         
-Notes: The black curve shows the annual trend in the avergae SPEI and highlights the variations in the climate of the study area from one year to the next. Between 1980 and 2000, most years had an SPEI value greated than 0, corresponding to normal or slightly wet conditions. According to the classification of McKee et al. [@McKee1993], they were few episodes of significant drought. However, since 2004, SPEI values have been below zero, indicating an increase in the fresquency of drought episodes. In 2017, the SPEI reached a particularly low value of -2.27, which, according to the classification of Vicente-Serrano et al. [@Vicente2010], indicates a very severe drought. 
+Notes: The black curve shows the annual trend in the avergae SPEI and highlights the variations in the climate of the study area from one year to the next. Between 1980 and 2000, most years had an SPEI value greated than 0, corresponding to normal or slightly wet conditions. According to the classification of McKee et al. [@McKee1993], they were few episodes of significant drought. However, since 2004, SPEI values have been below zero, indicating an increase in the fresquency of drought episodes. In 2017, the SPEI reached a particularly low value of -2.4, which, according to the classification of Vicente-Serrano et al. [@Vicente2010], indicates a very severe drought. 
 ```
 
 The data from this source will constitute part of our matching variables. Matching covariates are used to select units not exposed to conservation (control groups) that are comparable to the exposed units (treatment group). A appropriate for the matching process are variables likely to influence both the probability of treatment (whether a PA has been created near the household) and the outcome (household living standard and inequalities among households).
-
 
 ## Statistical power
 
@@ -135,8 +146,12 @@ Prior the power calculation, we segmented the wealth index into percentiles rath
 
 With these characteristics, we calculate that the minimal detectable effect is 7.5, indicating that the study is able to detect a minimum change of 7.5 percentiles in the wealth index between the groups.
 
-The Intra-cluster Correltion Coefficient (ICC) is 0.4854, indicating a strong intra-cluster correlation. This means that much of the variability in the wealth index is attribuable to differences between survey areas (for example, households in the same village share similar characteristics). The adjusted standard edeviation is 28.81, indicating a lerge dispersion of wealth index scores around the mean. Given that the index ranges from 1 to 5, this standard deviation is relatively large. Cohen's $d$ od 0.2695 refers to an effect of moderate magnitude by conventional standards. This means that a significant differnece should be detectable between the treatment and control groups after the matching process. Finally, the MDE in outcome units is 7.7649 in the wealth index between groups. This corresponds to a significant detectable difference given the index's scale of 1 to 5. This means that the PA would need to have an effect of approximately 7.8 points in terms of asset percentile.
 
+
+
+
+
+The Intra-cluster Correltion Coefficient (ICC) is 0.4854, indicating a strong intra-cluster correlation. This means that much of the variability in the wealth index is attribuable to differences between survey areas (for example, households in the same village share similar characteristics). The adjusted standard edeviation is 28.81, indicating a lerge dispersion of wealth index scores around the mean. Given that the index ranges from 1 to 5, this standard deviation is relatively large. Cohen's $d$ od 0.2695 refers to an effect of moderate magnitude by conventional standards. This means that a significant differnece should be detectable between the treatment and control groups after the matching process. Finally, the MDE in outcome units is 7.7649 in the wealth index between groups. This corresponds to a significant detectable difference given the index's scale of 1 to 5. This means that the PA would need to have an effect of approximately 7.8 points in terms of asset percentile.
 
 ## Empirical strategy
 
@@ -151,7 +166,6 @@ The following show the distributions of covariates before and after matching for
 ### Number of treated group and control group before and after matching
 
 The following table shows, for each year: the total number of observations initially available, the number of observation retained after including those that did not belong to either the treatment group or the control group, and those with missing values for the variables used for matching. It also shows the numbers of group in the treatment and control before and after matching.
-
 
 # Departures and complements to the preanalysis plan
 
@@ -169,7 +183,7 @@ We still do not have sufficient data to stabilize our estimates. Incorporating M
 
 ## PA governance classification
 
-This analysis examines heterogeneous impacts according to governance regimes. The analysis of heterogeneous effects aims to determine which categories of households benefit most - or least - from the creation of protected areas and the circumstances under which these effects occur.  
+This analysis examines heterogeneous impacts according to governance regimes. The analysis of heterogeneous effects aims to determine which categories of households benefit most - or least - from the creation of protected areas and the circumstances under which these effects occur.\
 We keep only terrestrial protected areas and discard marine or coastal protected areas.Although there is no clear consensus in the literature regarding the use of IUCN categories, Elleason et al. [-@elleason_strictly_2021] suggest the following classification, which we complement here with the naming used by the authors:
 
 -   Some studies group I and II in one class, and all others in another class:
