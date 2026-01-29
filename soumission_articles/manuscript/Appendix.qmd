@@ -2,132 +2,69 @@
 title: "Appendix - Socioeconomic Impact Evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys"
 
 editor: visual
-  
+
 bibliography: references.bib 
   
 format: 
   typst: 
-    toc: true
-    toc-depth: 2
-    fontsize: 12pt 
-    linestretch: 1.5
-    number-sections: true
+     number-sections: true
+     fig-cap-location: top
+     bibliographystyle: "chicago-author-date"
+  docx: default
 ---
+
 # Annexes {.appendix}
 
-## Annexe A – Location of DHS survey clusters 
+## Annexe A – Location of DHS survey clusters
 
-In the context of our study, the population considered as treated encompasses households living in rural areas within 10 km of a PA created between 2008 and 2021, according to the GPS coordinates provided in the Demographic Health Surveys (DHS) data.These GPS coordinates correspond to the centroids of the enumeration areas surveyed. To protect respondent confidentiality, these coordinates are first randomly shifted using the following procedure: An offset angle between 0 and 360 is randomly drawn, and then an offset distance is randomly drawn, between 0 and 2 km in urban areas and between 0 and 5 km in rural areas. For 1% of rural clusters, the distance drawn is between 0 and 10 km [@Skiles2013]. The 10 km threshold used in our analysis corresponds to the distance most commonly used in similar impact evaluations. 
+In the context of our study, the population considered as treated encompasses households living in rural areas within 10 km of a PA created between 2008 and 2021, according to the GPS coordinates provided in the Demographic Health Surveys (DHS) data.These GPS coordinates correspond to the centroids of the enumeration areas surveyed. To protect respondent confidentiality, these coordinates are first randomly shifted using the following procedure: An offset angle between 0 and 360 is randomly drawn, and then an offset distance is randomly drawn, between 0 and 2 km in urban areas and between 0 and 5 km in rural areas. For 1% of rural clusters, the distance drawn is between 0 and 10 km [@Skiles2013]. The 10 km threshold used in our analysis corresponds to the distance most commonly used in similar impact evaluations.
 
-We classify our DHS survey clusters (1997, 2008, and 2021) according to their distance from PA and their location in rural or urban areas. Households in the treatment group are those located in clusters less than 10 km from protected areas created since 2008 in rural areas. The control group includes households located in clusters more than 10 km from protected areas created since 2008 in rural areas. Households in clusters less than 10 km away created before 2008 and in urban areas are exclude from the study. Using the classify_clusters() function, we categorize each cluster accoding to its group. Of the clusters considered 'treated', we identify the year the PA was created, its type and the PA unique identifir. @
-
+We classify our DHS survey clusters (1997, 2008, and 2021) according to their distance from PA and their location in rural or urban areas. Households in the treatment group are those located in clusters less than 10 km from protected areas created since 2008 in rural areas. The control group includes households located in clusters more than 10 km from protected areas created since 2008 in rural areas. Households in clusters less than 10 km away created before 2008 and in urban areas are exclude from the study. Using the classify_clusters() function, we categorize each cluster accoding to its group. Of the clusters considered 'treated', we identify the year the PA was created, its type and the PA unique identifier.
 
 ## Annexe B – Standardized mean Difference Evapotranspiration Index (SPEI)
 
-The SPEI is calculated using monthly precipitation, minimum and maximum temperature data for each cluster from Worldclim, based on a long-term reference period from 1981 to 2021. We calculate the latitude using the geometric coordinates of each cluster, which serves as the basis for estimating potential evapotranspiration (PET). This ensures that the PET estimate is specific to local geographical conditions. We then retrieve the monthly time series of climate variables for each cluster. Using the Hargreaves formula (modified Hargreaves method) as defined by Droogers and Allen [@Droogers2002], we estimate PET and the water balance. The latter is converted into a time series from which the SPEI index is estimated on 12-month scale. 
+The SPEI is calculated using monthly precipitation, minimum and maximum temperature data for each cluster from Worldclim, based on a long-term reference period from 1981 to 2021. We calculate the latitude using the geometric coordinates of each cluster, which serves as the basis for estimating potential evapotranspiration (PET). This ensures that the PET estimate is specific to local geographical conditions. We then retrieve the monthly time series of climate variables for each cluster. Using the Hargreaves formula (modified Hargreaves method) as defined by Droogers and Allen [@Droogers2002], we estimate PET and the water balance. The latter is converted into a time series from which the SPEI index is estimated on 12-month scale.
 
+```         
+Notes: The black curve shows the annual trend in the avergae SPEI and highlights the variations in the climate of the study area from one year to the next. Between 1980 and 2000, most years had an SPEI value greated than 0, corresponding to normal or slightly wet conditions. According to the classification of McKee et al. [@McKee1993], they were few episodes of significant drought. However, since 2004, SPEI values have been below zero, indicating an increase in the fresquency of drought episodes. In 2017, the SPEI reached a particularly low value of -2.27, which, according to the classification of Vicente-Serrano et al. [@Vicente2010], indicates a very severe drought. 
+```
 
-
-    Notes: The black curve shows the annual trend in the avergae SPEI and highlights the variations in the climate of the study area from one year to the next. Between 1980 and 2000, most years had an SPEI value greated than 0, corresponding to normal or slightly wet conditions. According to the classification of McKee et al. [@McKee1993], they were few episodes of significant drought. However, since 2004, SPEI values have been below zero, indicating an increase in the fresquency of drought episodes. In 2017, the SPEI reached a particularly low value of -2.27, which, according to the classification of Vicente-Serrano et al. [@Vicente2010], indicates a very severe drought. 
-
-
-
-## Annexe C - Descriptives statistics for outcome variables 
-
-
-
-
-
-
-
-
-
+## Annexe C - Descriptives statistics for outcome variables
 
 ## Covariates Distribution before and after matching
 
 Before matching allows initial imbalances to be determined using the Standardized Mean Difference (SMD) test. The SMD measures the difference between the means of the covariates in the treatment and control groupes to compare the relative balance of variables measured in different units
 
-If $SMD<0.1$, there is a satisfactory balance between the groups for the covariate 
-If $SMD>0.1$, the balance is significant [@Austion2009]
+If $$SMD<0.1$$, there is a satisfactory balance between the groups for the covariate If $$SMD>0.1$$, the balance is significant
 
-
-The following @fig qhow the distributions of covariates before and after matching for th three years of study(1997, 2008, and 2021). 
-
-
+The following show the distributions of covariates before and after matching for the three years of study(1997, 2008, and 2021).
 
 ## Number of treated group and control group before and after matching
 
-The following table shows, for each year: the total number of observations initially available, the number of observation retained after including those that did not belong to either the treatment group or the control group, and those with missing values for the variables used for matching. It also shows the numbers of group in the treatment and control before and after matching. 
-
+The following table shows, for each year: the total number of observations initially available, the number of observation retained after including those that did not belong to either the treatment group or the control group, and those with missing values for the variables used for matching. It also shows the numbers of group in the treatment and control before and after matching.
 
 ## Statistical power
 
-The calculation of statistical power aims to estimate the probability that the study detects an effect when it exists. The expected power threshold $α$ is commonly set at 0.8, which means that the study has an 80% chance of rejecting the null hypothesis when an effect is present. Furthermore, the significance threshold $α$ is set at 0.05, indicating a 5% risk of incorrectly rejecting the null hypothesis when it is true. 
+The calculation of statistical power aims to estimate the probability that the study detects an effect when it exists. The expected power threshold $α$ is commonly set at 0.8, which means that the study has an 80% chance of rejecting the null hypothesis when an effect is present. Furthermore, the significance threshold $α$ is set at 0.05, indicating a 5% risk of incorrectly rejecting the null hypothesis when it is true.
 
-The minimal detectable effect represents the smallest difference that the study can detect between the treatment and control groups, taking into account the parameters chosen for power and the specification threshold. To measure this effect, we use the standardized effect size, also known as Cohen’s $d$ , defined as follows: 
+The minimal detectable effect represents the smallest difference that the study can detect between the treatment and control groups, taking into account the parameters chosen for power and the specification threshold. To measure this effect, we use the standardized effect size, also known as Cohen’s $d$ , defined as follows:
 
 $$
 d = \frac{\bar{X}_1 - \bar{X}_2}{s}
 $$
 
-where $\bar{X}_1$ and $\bar{X}_2$ are the average of the outcome variable for the treatment and control groups, and  is the combined standard deviation of the two groups. The outcome variable used for the power calculation is the rural household percentile of the wealth index, calculated based on the wealth index variable present in the DHS survey. 
+where $\bar{X}_1$ and $\bar{X}_2$ are the average of the outcome variable for the treatment and control groups, and is the combined standard deviation of the two groups. The outcome variable used for the power calculation is the rural household percentile of the wealth index, calculated based on the wealth index variable present in the DHS survey.
 
 We use the average and standard deviation values from the treatment group for both groups as the matching process has not yet been performed. We assume that the control group, once matched, will be similar to the treatment group in terms of variability and sample size.
 
-Prior the power calculation, we segmented the wealth index into percentiles rather than quintiles to better capture the continuity of the variable and maximize the sensitivity of the econometric analysis. The approach, already used by some researchers [@Staveteig2014], preserves greater granularity in the variable while improving the precision of the estimates. By increasing the number of classes, we will reduce the risk of bias associated with artificial discontinuities and improve the ability of our models to capture the marginal effects of conservation policies on living standards. 
+Prior the power calculation, we segmented the wealth index into percentiles rather than quintiles to better capture the continuity of the variable and maximize the sensitivity of the econometric analysis. The approach, already used by some researchers \[Staveteig2014\], preserves greater granularity in the variable while improving the precision of the estimates. By increasing the number of classes, we will reduce the risk of bias associated with artificial discontinuities and improve the ability of our models to capture the marginal effects of conservation policies on living standards.
 
-With these characteristics, we calculate that the minimal detectable effect is 7.5, indicating that the study is able to detect a minimum change of 7.5 percentiles in the wealth index between the groups. 
+With these characteristics, we calculate that the minimal detectable effect is 7.5, indicating that the study is able to detect a minimum change of 7.5 percentiles in the wealth index between the groups.
 
+The Intra-cluster Correltion Coefficient (ICC) is 0.4854, indicating a strong intra-cluster correlation. This means that much of the variability in the wealth index is attribuable to differences between survey areas (for example, households in the same village share similar characteristics). The adjusted standard edeviation is 28.81, indicating a lerge dispersion of wealth index scores around the mean. Given that the index ranges from 1 to 5, this standard deviation is relatively large. Cohen's $d$ od 0.2695 refers to an effect of moderate magnitude by conventional standards. This means that a significant differnece should be detectable between the treatment and control groups after the matching process. Finally, the MDE in outcome units is 7.7649 in the wealth index between groups. This corresponds to a significant detectable difference given the index's scale of 1 to 5. This means that the PA would need to have an effect of approximately 7.8 points in terms of asset percentile.
 
-The Intra-cluster Correltion Coefficient (ICC) is 0.4854, indicating a strong intra-cluster correlation. This means that much of the variability in the wealth index is attribuable to differences between survey areas (for example, households in the same village share similar characteristics). The adjusted standard edeviation is 28.81, indicating a lerge dispersion of wealth index scores around the mean. Given that the index ranges from 1 to 5, this standard deviation is relatively large. Cohen's $d$ od 0.2695 refers to an effect of moderate magnitude by conventional standards. This means that a significant differnece should be detectable between the treatment and control groups after the matching process. Finally, the MDE in outcome units is 7.7649 in the wealth index between groups. This corresponds to a significant detectable difference given the index's scale of 1 to 5. This means that the PA would need to have an effect of approximately 7.8 points in terms of asset percentile. 
+## Annexe C – Supplementary materials
 
+• Staggered DiD: dynamic event study For the event study, each observation is indexed by its relative year to treatment, defined as the difference between the survey year and the year in which the protected area was established for treated locations. This transformation allows outcomes to be compared along a common event time dimension across cohorts. Because surveys are conducted at irregular intervals and some relative years are represented by very few observations, we group relative years into two-year bins. For example, relative years −2 and −1 are grouped together, as are +4 and +5. Observations occurring more than ten years before or after treatment are further aggregated into open-ended bins, as shown in @tbl-rel-years. This binning strategy increases the number of observations contributing to each event-time coefficient, reduces noise at the extremes, and improves the stability and interpretability of the estimated dynamic effects.
 
-
-## Annexe C – Supplementary materials 
-
- • Staggered DiD: dynamic event study
-For the event study, each observation is indexed by its relative year to treatment, defined as the difference between the survey year and the year in which the protected area was established for treated locations. This transformation allows outcomes to be compared along a common event time dimension across cohorts. Because surveys are conducted at irregular intervals and some relative years are represented by very few observations, we group relative years into two-year bins. For example, relative years −2 and −1 are grouped together, as are +4 and +5. Observations occurring more than ten years before or after treatment are further aggregated into open-ended bins, as shown in @tbl-rel-years. This binning strategy increases the number of observations contributing to each event-time coefficient, reduces noise at the extremes, and improves the stability and interpretability of the estimated dynamic effects.  
-
-
-
-
-
-
-```{r}
-#| label: tbl-rel-years
-#| tbl-cap: "Binning of relative years-to-treatment for the event study"
-#| warning: false
-#| message: false
-#| echo: false
-
-gt_tab <- read_rds("../table/rel_year_table.rds")
-
-# Voir la doc de tinytable si tu veux modifier la mise en forme
-gt_tab
-```
-
-
-Event study results. You can refer to the figure by mentionning its name as @fig-h1-event-study.
-
-
-```{r}
-#| label: fig-h1-event-study
-#| fig-cap: "Impact on well-being: Event-study with 2-year bins"
-#| fig-width: 6
-#| fig-height: 3.5
-#| dpi: 300
-#| warning: false
-#| message: false
-#| echo: false
-
-h1_event_study_plot <- read_rds("figures/h1_event_study_plot.rds")
-
-# h1_event_study_plot
-
-# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
-h1_event_study_plot + 
-    ggtitle(element_blank())
-```
-
-
-
+\`\`\`
