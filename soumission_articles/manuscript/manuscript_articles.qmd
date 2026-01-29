@@ -82,10 +82,6 @@ This study evaluates the impact of PA creation on rural household well-being bet
 
     Notes: Households in the treatment group are those located in clusters less than 10 km from PAs created since 2008 in rural areas (shown in red) and households are those located in clusters more than 10 km from PA created since 2008 in rural areas (shown in blue). Rural populations living within 10 km of PA created before 2008 or located in urban areas are excluded from the study (shown in black). The GPS data used comes from DHS clusters. 
 
-We use DHS data to construct the variables for the impact assessment model. Two outcome variables are considered: household living standards (primary outcome) and inequalities in living standards at the level of the surveyed localities (secondary outcome). The household living standards, is estimated from the wealth index, calculated specifically for rural areas. We will translate this wealth index into an integer between 1 and 100, corresponding to the household’s wealth percentile relative to the distribution of the whole sample. In addition to the impact of PAs on household living standards, we seek to understand their influence on socioeconomic inequalities within the affected populations. To do this, we propose to use a standardized Z-Score of the wealth index, allowing for the comparison of the relative distribution of wealth around the mean within the study population, at the level of each survey cluster. 
-
-These data also provide us with control variables: age and sex of the head of the household.These characteristics determine the economic opportunities and resource management capacity of households [@LoBue2022]. These variables reduce the unexplained variability in the model and thus enable a more accurate estimate of the treatment effect. 
-
 
 ## Descriptive statistics {#descriptivestatistics}
 
@@ -104,43 +100,48 @@ These data also provide us with control variables: age and sex of the head of th
 
 ## Empirical strategy {#empiricalstrategy}
 
-### Matching methods {#matchingmethods}
-Our evaluative approach is based on a counterfactual measure that estimates the causal effect of the treatment, namely the implementation of PAs.  This approach is based on a comparison between a treatment group (households living in rural areas within or less than 10 km of PA) and a control group (households living in rural areas more than 10 km from PA created after 2008)[@Schleicher2020; @Desbureaux2021]. The study thus fits within the framework of Rubin's causal model [@Rubin1974], according to which potential outcomes depend on exposure to the treatment. To ensure comparability between groups, we apply genetic matching (function GenMatch from the R MachtIt package) to pair each unit in the treatment group with a unit in the control group that has the same observable characteristics [@Ho2007]. This approach uses a single distance measure'Mahalanobis distance', to quantify the similarity between the two groups of observations, while taking into account the correlations between covariates and their covariances [@Diamond2013]. This procedure increases the credibility of the results and reduces endogeneity issues [@Ma2020]. We also apply a caliper of 0.25 standard deviation of the Mahalanobis distance to avoid creating pairs with overly large differences  [@Rosenbaum1983]. The validity of this estimation depends on the balance between the treatment and control groups before and after matching. Before matching, we check the balance using the standardized mean difference (SMD), which measures the difference between the means of the covariates in the two groups. After matching, matching is further assessed visually using a quantile-quantile plot.
 
+### Matching methods {#matchingmethods}
+
+Our evaluative approach is based on a counterfactual measure that estimates the causal effect of the treatment, namely the implementation of PAs. This approach is based on a comparison between a treatment group (households living in rural areas within or less than 10 km of PA) and a control group (households living in rural areas more than 10 km from PA created after 2008)[@Schleicher2020; @Desbureaux2021]. The study thus fits within the framework of Rubin's causal model [@Rubin1974], according to which potential outcomes depend on exposure to the treatment. To ensure comparability between groups, we apply genetic matching (function GenMatch from the R MachtIt package) to pair each unit in the treatment group with a unit in the control group that has the same observable characteristics [@Ho2007]. This approach uses a single distance measure'Mahalanobis distance', to quantify the similarity between the two groups of observations, while taking into account the correlations between covariates and their covariances [@Diamond2013]. This procedure increases the credibility of the results and reduces endogeneity issues [@Ma2020]. We also apply a caliper of 0.25 standard deviation of the Mahalanobis distance to avoid creating pairs with overly large differences [@Rosenbaum1983]. The validity of this estimation depends on the balance between the treatment and control groups before and after matching. Before matching, we check the balance using the standardized mean difference (SMD), which measures the difference between the means of the covariates in the two groups. After matching, matching is further assessed visually using a quantile-quantile plot.
 
 ### Difference-in-difference {#difference-in-difference}
-We assess the impact of PAs on household living standards and inequalities using the difference-in-difference (DID) method. The DID principle consists in comparing the wealth index of control and treatment households before and after the establishment of PAs(our treatment begins in 2008). 
 
-This method relies on the parallel trends assumption,according to which treated and untreated areas evolved similarly prior to the intervention. To validate this hypothesis, we will use as a reference, among the rural households surveyed in 1997, those living within 10 km of a PA created between 2008 and 2021 (placebo treatment group) and those matched to them using the method described above (placebo control group). We will conduct a placebo test by performing a DID estimation between these groups for the period 1997-2008. If the result of this placebo test close to zero or statistically insignificant, the hypothesis of parallel trends is supported. 
+We assess the impact of PAs on household living standards and inequalities using the difference-in-difference (DID) method. The DID principle consists in comparing the wealth index of control and treatment households before and after the establishment of PAs(our treatment begins in 2008).
 
-In our DID estimates, we use cluster robust standard errors to account for intra-cluster correlations.  
+This method relies on the parallel trends assumption,according to which treated and untreated areas evolved similarly prior to the intervention. To validate this hypothesis, we will use as a reference, among the rural households surveyed in 1997, those living within 10 km of a PA created between 2008 and 2021 (placebo treatment group) and those matched to them using the method described above (placebo control group). We will conduct a placebo test by performing a DID estimation between these groups for the period 1997-2008. If the result of this placebo test close to zero or statistically insignificant, the hypothesis of parallel trends is supported.
+
+In our DID estimates, we use cluster robust standard errors to account for intra-cluster correlations.
 
 The simplified equation for the difference-in-difference [@Daw2018] is as follows:
- 	
+
 $$
 Y_{it} = \alpha_0 + \beta_1 \text{Treatment}_i + \beta_2 \text{Post}_t + \delta D_{it} + \varepsilon_{it}
-$$				                  (2)
+$$ (2)
 
 With the parameters defined as:
 
- $Y_{i t}$: Wealth index for household $i$ in year $t$ (1997, 2008 or 2021)
- 
- 
- $α_0$: Intercept, representing the baseline wealth index
- 
- $β_1$: Coefficient associated with the variable $Treatment_i$
- 
- $Treatment_i$: Binary variable that takes the value of 1 for households $i$ affected by a PA (treatment households) and 0 for households $i$ not affected by PA (control households)
- 
- $β_2$:  : Coefficient associated with the variable $Post_t$
- 
- $Post_t$: Binary variable that takes the value of 1 for the post-treatment year 2021 and 0 for the pre-treatment year 2008
- 
- $δ$: Coefficient of interest representing the effect of PA creation on household living standards $i$ in year $t$
- 
- $D_{i t}$: Interaction term between $Treatment_i$ and $Post_t$; It is equal to 1 for treatment households $i$ after the treatment year $t$ and 0 for the other households.
- 
+ $Y_{i t}$: Wealth index for household $i$ in year $t$ (1997, 2008 or 2021)      $α_0$: Intercept, representing the baseline wealth index   $β_1$: Coefficient associated with the variable $Treatment_i$
+
+$Treatment_i$: Binary variable that takes the value of 1 for households $i$ affected by a PA (treatment households) and 0 for households $i$ not affected by PA (control households)
+
+$β_2$:  : Coefficient associated with the variable $Post_t$
+
+$Post_t$: Binary variable that takes the value of 1 for the post-treatment year 2021 and 0 for the pre-treatment year 2008
+
+$δ$: Coefficient of interest representing the effect of PA creation on household living standards $i$ in year $t$
+
+$D_{i t}$: Interaction term between $Treatment_i$ and $Post_t$; It is equal to 1 for treatment households $i$ after the treatment year $t$ and 0 for the other households.
+
 $ε_{i t}$: Error term for household $i$ in year $t$
+
+
+
+We analyze a repeated cross section over a 13 years "treatment period" (2008-2021). 
+
+The unit of analysis in our study is the household. This is indeed a level at which a significant portion of individual resources are pooled, and it is at this level that data on living standards – the outcome variable of our study – are available in national surveys [@Deaton1997]. Two outcome variables are considered: household living standards (primary outcome) and inequalities in living standards at the level of the surveyed localities (secondary outcome). The household living standards, is estimated from the wealth index, calculated specifically for rural areas. We will translate this wealth index into an integer between 1 and 100, corresponding to the household’s wealth percentile relative to the distribution of the whole sample. In addition to the impact of PAs on household living standards, we seek to understand their influence on socioeconomic inequalities within the affected populations. To do this, we propose to use a standardized Z-Score of the wealth index, allowing for the comparison of the relative distribution of wealth around the mean within the study population, at the level of each survey cluster. 
+
+These data also provide us with control variables: age and sex of the head of the household.These characteristics determine the economic opportunities and resource management capacity of households [@LoBue2022]. These variables reduce the unexplained variability in the model and thus enable a more accurate estimate of the treatment effect.
 
 
 ### Robustness and sensitivity tests {#robustnessandsensitivity}
@@ -406,6 +407,11 @@ The study is performed in the framework of the BETSAKA project. The BETSAKA proj
 
 ## Declaration of interest
 One of the authors is an evaluation officer at AFD, and the BETSAKA project is funded by the Evaluation department of both AFD and KfW. While the operational departments of AFD and KfW also fund conservation projects in Madagascar and other countries, the Evaluation departments operate independently. They are committed to rigorous, unbiased studies and are supervised by independent entities within both institutions. 
+
+## Appendix A. Supplementary data 
+
+Supplementary material related to this article can be found at 
+
 
 
 ------------------------------------------------------------------------
