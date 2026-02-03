@@ -75,15 +75,17 @@ Based on this theory of change, we define two main outcome variables to capture 
 
 ## Pre-specified empirical strategy {#pre-specifiedempiricalstrategy} 
 
-We developed a pre-analysis plan to structure the study, specifying the data processing tools, the selected observations and variables, and the statistical methods used to test the hypotheses. The empirical strategy was registered on the Open Science Framework prior to any analysis, with a dated and verifiable record submitted in Novembre 2024 and updated in March 2025 (published on OSF in March 2025:https://osf.io/bgu5n/).
+We developed a pre-analysis plan to structure the study, specifying the data processing tools, the selected observations and variables, and the statistical methods used to test the hypotheses. The empirical strategy was registered on the Open Science Framework prior to any analysis, with a dated and verifiable record submitted in Novembre 2024 and updated in March 2025 (https://osf.io/bgu5n/).
 
 ### Data {#data}
+This study assesses the impact or the creation of PAs on rural household well-being between 2008 and 2021, based on geolocated data on PAs (Word Database on Protected Areas (WDPA)), environmental characteristics (downloaded from the *mapme.biodiversity* package), and the socioeconomic conditions of households (Demographic and Health Surveys (DHS)). Household living standards are the primary outcome, with inequality as a secondary outcome, and demographic and environmental varaibles are included as controls to improve the precision of treatment effect estimates. We use three DHS surveys (1997, 2008, 2021), taking 2008 as the reference year. The treated group comprises rural households located within 10 km of PAs established between 2008 and 2021 (in red), while the control group includes rural households located more than 10 km away with comparable characteristics (in blue). Rural households near PAs created before 2008 and households in urban areas are excluded.  
+A comprehensive overview of the data set along with the selected variables is outlined within the pre-analysis plan.
+
 
 ![Classification of household clusters according their group affiliation](figures/map-clust.png){#fig-map-clust width="100%"}
 
-```         
-Notes: Households in the treatment group are those located in clusters less than 10 km from PAs created since 2008 in rural areas (shown in red) and households are those located in clusters more than 10 km from PAs created since 2008 in rural areas (shown in blue). Rural populations living within 10 km of PAs created before 2008 or located in urban areas are excluded from the study (shown in black). The GPS data used comes from DHS clusters. 
-```
+
+
 
 ### Methods {#methods}
 
@@ -111,16 +113,6 @@ $D_{i t}$: Interaction term between $Treatment_i$ and $Post_t$; It is equal to 1
 
 $ε_{i t}$: Error term for household $i$ in year $t$
 
-### Robustness and sensitivity tests {#robustnessandsensitivity}
-
-We implement a series of robustness tests predefined in the pre-analysis plan published prior to the results(published on OSF in March 2025:https://osf.io/bgu5n/).We re-estimate all effects using distances thresholds 5 km and 15 km to assess the robustness of our results th the choice of the treatment radius. While condifence intervals may widen when restricting the study area to 5 km, comparing coefficients across specifications allows us to assess the consistency of the estimated effects.
-
-We apply Benjamini-Hochber's ([-@Benjamini1995]) False Discovery Rate method to test Hypothesis 2 (PAs impact on inequalities between households) and Hypothesis 3 the role of PAs governance model). These tests are performed to mitigate the risk of incorrectly inferring significant effects by controlling the average proportion of false positives among the results reported as significant. Hypothesis 2 is evaluated using the Z-score outcome of the wealth index, and Hypothesis 3 is evaluated using PAs governance categories based on IUCN status of PAs.
-
-In the analysis, the outcome variable may be correlated with unobserved factors or shocks at the household level. Fixed effects methods can correct for many of these factors, but only repeated cross-sectional data are available.
-
-Genetic matching and Doubly Robust DID estimation on a cross-section do not fully control for unobserved characteristics that may simultaneously affect PAs and the outcome variable (wealth index). To assess the robustness of the results in the face of these potential biases resulting from unobserved confounding variables, we perform a sensitivity analysis using Rosenbaum's method ([-@Rosenbaum2002,pp.\~105–170]).
-
 
 ### Statistical power {#statisticalpower}
 The calculation of statistical power aims to estimate the probability that the study detects an effect when it exists. The expected power threshold $α$ is commonly set at 0.8, which means that the study has an 80% chance of rejecting the null hypothesis when an effect is present. Furthermore, the significance threshold $α$ is set at 0.05, indicating a 5% risk of incorrectly rejecting the null hypothesis when it is true.
@@ -143,6 +135,17 @@ With these characteristics, we calculate that the minimal detectable effect is 7
 ![Statistical Power for Wealth Index Centiles](table/statistic_power.png){#tbl-statistic-power width="80%"}
 
 The Intra-cluster Correlation Coefficient (ICC) is 0.4854, indicating a strong intra-cluster correlation. This means that much of the variability in the wealth index is attribuable to differences between survey areas (for example, households in the same village share similar characteristics). The adjusted standard edeviation is 28.81, indicating a lerge dispersion of wealth index scores around the mean. Given that the index ranges from 1 to 5, this standard deviation is relatively large. Cohen's $d$ od 0.2695 refers to an effect of moderate magnitude by conventional standards. This means that a significant differnece should be detectable between the treatment and control groups after the matching process. Finally, the MDE in outcome units is 7.7649 in the wealth index between groups. This corresponds to a significant detectable difference given the index's scale of 1 to 5. This means that the PAs would need to have an effect of approximately 7.8 points in terms of asset percentile.
+
+
+### Robustness and sensitivity tests {#robustnessandsensitivity}
+
+We implement a series of robustness tests predefined in the pre-analysis plan published prior to the results(published on OSF in March 2025:https://osf.io/bgu5n/).We re-estimate all effects using distances thresholds 5 km and 15 km to assess the robustness of our results th the choice of the treatment radius. While condifence intervals may widen when restricting the study area to 5 km, comparing coefficients across specifications allows us to assess the consistency of the estimated effects.
+
+We apply Benjamini-Hochber's ([-@Benjamini1995]) False Discovery Rate method to test Hypothesis 2 (PAs impact on inequalities between households) and Hypothesis 3 the role of PAs governance model). These tests are performed to mitigate the risk of incorrectly inferring significant effects by controlling the average proportion of false positives among the results reported as significant. Hypothesis 2 is evaluated using the Z-score outcome of the wealth index, and Hypothesis 3 is evaluated using PAs governance categories based on IUCN status of PAs.
+
+In the analysis, the outcome variable may be correlated with unobserved factors or shocks at the household level. Fixed effects methods can correct for many of these factors, but only repeated cross-sectional data are available.
+
+Genetic matching and Doubly Robust DID estimation on a cross-section do not fully control for unobserved characteristics that may simultaneously affect PAs and the outcome variable (wealth index). To assess the robustness of the results in the face of these potential biases resulting from unobserved confounding variables, we perform a sensitivity analysis using Rosenbaum's method ([-@Rosenbaum2002,pp.\~105–170]).
 
 
 ## Departures and complements to the preanalysis plan (2 PAGE)
