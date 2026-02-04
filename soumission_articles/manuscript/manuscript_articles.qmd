@@ -47,7 +47,7 @@ Yet national scale impact evaluations remain scarce. None of the quantitative st
 
 This article contributes to the literature in two ways. Empirically, it provides the first national level impact evaluation of terrestrial protected areas in Madagascar, covering 71 protected areas created between 2008 and 2021. Methodologically, it combines recent advances in matching and difference in differences methods with geolocated household survey data to construct a credible counterfactual. To enhance transparency and limit researcher discretion, the empirical strategy was fully specified in a pre analysis plan registered on the Open Science Framework prior to conducting any outcome analysis. Our analysis plan was submitted with a dated and verifiable certification on the OSF portal in November 2024 and updated in March 2025.
 
-The remainder of the paper proceeds as follows [@theoryofchange], presents the conceptual framework and hypotheses. [@data] describes the data sources. [@descriptivestatistics] outlines the identification strategy and econometric methods. [@studydesign] presents the econometric approaches used to assess the effect of PAs on household livelihoods, the effect of PAs on inequalities between households, and the heterogeneity of effects according to the type of PAs governance. [@resultats] presents our main results and proposes a series of robustness tests. [@discussionandconclusion] concludes.
+The remainder of the paper proceeds as follows [@theoryofchange], presents the conceptual framework and hypotheses. [@pre-specifiedempiricalstrategy]  describes the data sources.  outlines the identification strategy and econometric methods.  presents the econometric approaches used to assess the effect of PAs on household livelihoods, the effect of PAs on inequalities between households, and the heterogeneity of effects according to the type of PAs governance.  presents our main results and proposes a series of robustness tests. [@discussionandconclusion] concludes.
 
 ## Theory of change {#theoryofchange}
 
@@ -65,9 +65,7 @@ Our first set of results therefore consists of determining whether PAs in Madaga
 
 The impact mechanisms represented in @fig-theory-change are likely to affect households differently depending on their prior characteristics, which would increase inequality (Hypothesis 2). Compensation measures are generally implemented in the form of projects to promote income-generating activities (agriculture, livestock, handicrafts) in surrounding communities [@Poudyal2018a]. In the context of such development projects, individuals known as “development brokers” frequently emerge as intermediaries between local communities and implementing organizations. By mobilizing their social networks and specific skills, these brokers manage to capture a disproportionate share of the benefits of interventions, whether in form of income or privileged access to opportunities. This dynamic can reinforce pre-existing inequalities within communities, limiting the access of the most vulnerable households to the expected benefits of compensation programs. Although tourism development is often presented as an opportunity for economic growth, it also tends to exacerbate socioeconomic inequalities, particularly in developing countries. Adeniyi et al. ([-@Adeniyi2024]) show that in Southern Africa, tourism can initially exacerbate inequalities by concentrating benefits in the most attractive regions, while leaving marginalized communities out of the economic benefits. According to Ghosh and Mitra ([-@Ghosh2021]), the relationship between tourism and inequality follows an inverted Kuznets curve in developing countries: when tourism remains moderate, its growth reduces inequalities, but when tourism becomes massive, further expansion worsens inequalities. Finally, Xuanming et al. ([-@Xuanming2024]) point out that while tourism helps to improve certain socioeconomic indicators, it can also generate inflationary pressures and strain local resources, particularly affecting the most vulnerable households. Taken together, these mechanisms suggest that PAs may exacerbate economic inequalities within neighboring communities by creating opportunities that primarily benefit individuals with higher levels of education or dominant social positions, granting them access to rents and jobs related to tourism and associated activities (Hypothesis 2).
 
-IUCN status of PAs[^manuscript_articles-1] are frequently used to explain differences in effectiveness between them. For example, Naidoo et al. ([-@Naidoo2019]) show that multiple-use PAs (statuses V and VI) tend to have more beneficial effects than strict areas (statuses I to IV), partly due to greater flexibility in integrating local needs. Beyond status alone, governance plays a central role. Eklund et al. ([-@Eklund2017]) highlight the importance of transparent and inclusive structures to maximize the positive effects of PAs on conservation and social justice. They call for management approaches to be adapted to local contexts, with greater involvement of communities in decision-making processes, to better reconcile conservation and development objectives.
-
-[^manuscript_articles-1]: These GPS coordinates correspond to the centroids of the enumeration areas surveyed. To protect respondent confidentiality, these coordinates are first randomly shifted using the following procedure: An offset angle between 0 and 360 is randomly drawn, and then an offset distance is randomly drawn, between 0 and 2 km in urban areas and between 0 and 5 km in rural areas. For 1% of rural clusters, the distance drawn is between 0 and 10 km [@Skiles2013]
+IUCN status of PAs are frequently used to explain differences in effectiveness between them. For example, Naidoo et al. ([-@Naidoo2019]) show that multiple-use PAs (statuses V and VI) tend to have more beneficial effects than strict areas (statuses I to IV), partly due to greater flexibility in integrating local needs. Beyond status alone, governance plays a central role. Eklund et al. ([-@Eklund2017]) highlight the importance of transparent and inclusive structures to maximize the positive effects of PAs on conservation and social justice. They call for management approaches to be adapted to local contexts, with greater involvement of communities in decision-making processes, to better reconcile conservation and development objectives.
 
 This diversity is particularly evident in Madagascar. Although governed by similar formal statuses, PAs follow different paths depending on the local context and the way in which they are implemented. Froger and Méral ([-@Froger2009]) show that the early initiatives of shared governance, gradually introduced with in-depth mediation efforts, achieved encouraging results by strengthening local community support. However, from the 2000s onward, the accelerated deployment of management transfers, driven by quantitative targets, often led to hasty and less contextually adapted implementations, undermining the effectiveness of these mechanisms. These experiences demonstrate that, beyond the PAs status, their establishment period, management approach, and level of community participation significantly influence their socioeconomic impacts. We therefore anticipate that the impacts of PAs on well-being and inequalities are heterogeneous, and that PAs with higher levels of local community participation are more likely to generate greater benefits and distribute them more equitably (Hypothesis 3).
 
@@ -78,40 +76,45 @@ Based on this theory of change, we define two main outcome variables to capture 
 We developed a pre-analysis plan to structure the study, specifying the data processing tools, the selected observations and variables, and the statistical methods used to test the hypotheses. The empirical strategy was registered on the Open Science Framework prior to any analysis, with a dated and verifiable record submitted in Novembre 2024 and updated in March 2025 (https://osf.io/bgu5n/).
 
 ### Data {#data}
-This study assesses the impact or the creation of PAs on rural household well-being between 2008 and 2021, based on geolocated data on PAs (Word Database on Protected Areas (WDPA)), environmental characteristics (downloaded from the *mapme.biodiversity* package), and the socioeconomic conditions of households (Demographic and Health Surveys (DHS)). Household living standards are the primary outcome, with inequality as a secondary outcome, and demographic and environmental varaibles are included as controls to improve the precision of treatment effect estimates. We use three DHS surveys (1997, 2008, 2021), taking 2008 as the reference year. The treated group comprises rural households located within 10 km of PAs established between 2008 and 2021 (in red), while the control group includes rural households located more than 10 km away with comparable characteristics (in blue). Rural households near PAs created before 2008 and households in urban areas are excluded.  
-A comprehensive overview of the data set along with the selected variables is outlined within the pre-analysis plan.
+This study assesses the impact or the creation of PAs on rural household well-being between 2008 and 2021, based on geolocated data on PAs (Word Database on Protected Areas (WDPA)), environmental characteristics (downloaded from the *mapme.biodiversity* package), and the socioeconomic conditions of households (Demographic and Health Surveys (DHS)). Household living standards are the primary outcome, with inequality as a secondary outcome, and demographic and environmental variables are included as controls to improve the accuracy of treatment effect estimates. We use three DHS surveys (1997, 2008, 2021), taking 2008 as the reference year. The treatment group includes rural households located in clusters less than 10 km from PAs created since 2008 in rural areas (shown in red), and households in the control group are those located in clusters more than 10 km from PAs created since 2008 in rural areas (shown in blue). Rural populations living within 10 km of PAs before 2008 or located in urban areas are excluded from the study (shown in black). The GPS data used comes from DHS clusters. A comprehensive overview of the data set along with the selected variables is outlined within the pre-analysis plan.
 
+![](figures/map-clust.png){#fig-map-clust width="100%" fig-cap="Classification of household clusters according to their group affiliation."}
 
-![Classification of household clusters according their group affiliation](figures/map-clust.png){#fig-map-clust width="100%"}
-
-
-
+*Source: Author’s elaboration based on DHS data (1997, 2008, 2021).*
 
 ### Methods {#methods}
 
-To assess the impact of PAs surrounding the well-being of households, it is essentials to identify the counterfactual scenario, that is, what would have occurred in the absence of protection. We therefore applied genetic matching combined with Mahalanobis distance matching and a caliper of 0.25 to reduce observable differences between treated and control units and to quantify the similarly between matched observations. This matching procedure enhances the robustness and credibility of the empirical results (Appendix). The underlying assumption is that, after matching, treated and control units would exhibit identical expected outcomes in the absence of PAs. Post-matching, we employed a difference-in-difference (DID) approach to estimate the causal effect associated with the PAs creation. This method consists in comparing the wealth index of households in treated and control groups before and after the PAs creation(Appendix). The DID strategy relies on the parallel tyrends assumption, which posits that treated and untreated areas followed similar trajectories prior to the intervention.
+To assess the impact of PAs on household well-being, it is essential to identify the counterfactual scenario, that is, what would have occurred in the absence of protection. We applied genetic matching with Mahalanobis distance matching and a caliper of 0.25 to improve covariate balance between treated and control units. This procedure strengthens the robustness of the empirical analysis (details in the PAP).Post-matching, we used difference-in-difference (DID) approach to estimate the causal effect of PAs creation by comparing changes in household wealth index between treated and control groups before and after the intervention. The DID strategy relies on the parallel tyrends assumption, which posits that treated and untreated areas followed similar trajectories prior to the intervention.
 
-The simplified equation for the difference-in-difference [@Daw2018] is as follows:
+The equation for the difference-in-difference [@Daw2018] is as follows:
 
 $$
-Y_{it} = \alpha_0 + \beta_1 \text{Treatment}_i + \beta_2 \text{Post}_t + \delta D_{it} + \varepsilon_{it}
+Y_{ict} = \alpha + \delta \cdot(\text{Treatment}_c \times  \text{Post}_t) + X_{ict}' \theta + \mu_c + \lambda_t + \varepsilon_{ict} 
 $$ (2)
 
 With the parameters defined as:
 
- $Y_{i t}$: Wealth index for household $i$ in year $t$ (1997, 2008 or 2021)      $α_0$: Intercept, representing the baseline wealth index   $β_1$: Coefficient associated with the variable $Treatment_i$
+$Y_{ict}$: Wealth index for household $i$ in cluster $c$ at year $t$ (1997, 2008 or 2021)
 
-$Treatment_i$: Binary variable that takes the value of 1 for households $i$ affected by a PAs (treatment households) and 0 for households $i$ not affected by PAs (control households)
+$α$: Intercept, representing the average wealth index of households in control clusters before the treatment
 
-$β_2$:  : Coefficient associated with the variable $Post_t$
+${Treatment}_c$: Binary variable that takes the value of 1 if cluster $c$ is located in an area affected by a protected area, and 0 otherwise (control households)
 
 $Post_t$: Binary variable that takes the value of 1 for the post-treatment year 2021 and 0 for the pre-treatment year 2008
 
-$δ$: Coefficient of interest representing the effect of PAs creation on household living standards $i$ in year $t$
+$(\text{Treatment}_c \times  \text{Post}_t)$: Interaction term between $Treatment_i$ and $Post_t$; It is equal to 1 for treated clusters in the post-treatment period and 0 for the other households
 
-$D_{i t}$: Interaction term between $Treatment_i$ and $Post_t$; It is equal to 1 for treatment households $i$ after the treatment year $t$ and 0 for the other households.
+$\delta$: Coefficient of interest (DID estimator), measuring the causal effect of protected area creation on household well-being
 
-$ε_{i t}$: Error term for household $i$ in year $t$
+$X_{ict}$: Vector of observable control variables at the household or cluster level (age and sex of head of household, SPEI, accessibility, population density, forest cover area, slope and altitude)
+
+$\theta$: Vector of coefficients associated with the control variables $X_{ict}$
+
+$\mu_c$: Cluster fixed effects, capturing unobserved characteristics that are constant over time within each cluster 
+
+$\lambda_t$: Time fixed effects, captyring shocks common to all clusters in a given year
+
+$\varepsilon_{ict}$: Error term, representing unobserved factors affecting the household wealth index for household $i$ in cluster $c$ at year $t$
 
 
 ### Statistical power {#statisticalpower}
