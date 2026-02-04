@@ -80,7 +80,7 @@ This study assesses the impact or the creation of PAs on rural household well-be
 
 ![](figures/map-clust.png){#fig-map-clust width="100%" fig-cap="Classification of household clusters according to their group affiliation."}
 
-*Source: Author’s elaboration based on DHS data (1997, 2008, 2021).*
+*Source: Author’s calculation based on DHS data (1997, 2008, 2021).*
 
 ### Methods {#methods}
 
@@ -88,19 +88,19 @@ To assess the impact of PAs on household well-being, it is essential to identify
 
 The equation for the difference-in-difference [@Daw2018] is as follows:
 
-$$
-Y_{ict} = \alpha + \delta \cdot(\text{Treatment}_c \times  \text{Post}_t) + X_{ict}' \theta + \mu_c + \lambda_t + \varepsilon_{ict} 
-$$ (2)
 
+$$
+Y_{ict} = \alpha + \delta \cdot (\mathrm{Treatment}_c \times \mathrm{Post}_t) + X_{ict}' \theta + \mu_c + \lambda_t + \varepsilon_{ict}
+$$
 With the parameters defined as:
 
 $Y_{ict}$: Wealth index for household $i$ in cluster $c$ at year $t$ (1997, 2008 or 2021)
 
-$α$: Intercept, representing the average wealth index of households in control clusters before the treatment
+$\alpha$: Intercept, representing the average wealth index of households in control clusters before the treatment
 
-${Treatment}_c$: Binary variable that takes the value of 1 if cluster $c$ is located in an area affected by a protected area, and 0 otherwise (control households)
+$\mathrm{Treatment}_c$: Binary variable that takes the value of 1 if cluster $c$ is located in an area affected by a protected area, and 0 otherwise (control households)
 
-$Post_t$: Binary variable that takes the value of 1 for the post-treatment year 2021 and 0 for the pre-treatment year 2008
+$\mathrm{Post}_t$: Binary variable that takes the value of 1 for the post-treatment year 2021 and 0 for the pre-treatment year 2008
 
 $(\text{Treatment}_c \times  \text{Post}_t)$: Interaction term between $Treatment_i$ and $Post_t$; It is equal to 1 for treated clusters in the post-treatment period and 0 for the other households
 
@@ -118,31 +118,16 @@ $\varepsilon_{ict}$: Error term, representing unobserved factors affecting the h
 
 
 ### Statistical power {#statisticalpower}
-The calculation of statistical power aims to estimate the probability that the study detects an effect when it exists. The expected power threshold $α$ is commonly set at 0.8, which means that the study has an 80% chance of rejecting the null hypothesis when an effect is present. Furthermore, the significance threshold $α$ is set at 0.05, indicating a 5% risk of incorrectly rejecting the null hypothesis when it is true.
-
-The minimal detectable effect represents the smallest difference that the study can detect between the treatment and control groups, taking into account the parameters chosen for power and the specification threshold. To measure this effect, we use the standardized effect size, also known as Cohen’s $d$ , defined as follows:
-
-$$
-d = \frac{\bar{X}_1 - \bar{X}_2}{s}
-$$
-
-where $\bar{X}_1$ and $\bar{X}_2$ are the average of the outcome variable for the treatment and control groups, and is the combined standard deviation of the two groups. The outcome variable used for the power calculation is the rural household percentile of the wealth index, calculated based on the wealth index variable present in the DHS survey.
-
-We use the average and standard deviation values from the treatment group for both groups as the matching process has not yet been performed. We assume that the control group, once matched, will be similar to the treatment group in terms of variability and sample size.
-
-Prior the power calculation, we segmented the wealth index into percentiles rather than quintiles to better capture the continuity of the variable and maximize the sensitivity of the econometric analysis. The approach, already used by some researchers \[Staveteig2014\], preserves greater granularity in the variable while improving the precision of the estimates. By increasing the number of classes, we will reduce the risk of bias associated with artificial discontinuities and improve the ability of our models to capture the marginal effects of conservation policies on living standards.
-
-With these characteristics, we calculate that the minimal detectable effect is 7.8, indicating that the study is able to detect a minimum change of 7.8 percentiles in the wealth index between the groups.
+Statistical power aims to estimate the probability of detecting an effect when one exists, typically set at 0.8. To improve sensitivity and preserve granularity, the wealth index was segmented into percentiles rather than quintiles, reducing bias from artificial cutoffs and enhancing the ability to capture the effects of conservation policies on living standards. The results of the statistical power calculation are presented in the following table. Theu show an intra-cluster correlation coefficient (ICC) of 0.4854, indicatinga a high degree of similarity within clusters. The adjusted standard deviation of the wealth index is 28.82, reflecting substantial dispersion. Cohen's $d$ of 0.27 indicates a moderate effect size, and the minimal detectable effect (MDE) is 7.8 percentiles, meaning the study can reliably detect differences of his magnitude between treatment and control groups. 
 
 
-![Statistical Power for Wealth Index Centiles](table/statistic_power.png){#tbl-statistic-power width="80%"}
+![](table/statistic_power.png){#tbl-statistic-power width="100%" fig-cap="Statistical Power for Wealth Index percentiles."}
 
-The Intra-cluster Correlation Coefficient (ICC) is 0.4854, indicating a strong intra-cluster correlation. This means that much of the variability in the wealth index is attribuable to differences between survey areas (for example, households in the same village share similar characteristics). The adjusted standard edeviation is 28.81, indicating a lerge dispersion of wealth index scores around the mean. Given that the index ranges from 1 to 5, this standard deviation is relatively large. Cohen's $d$ od 0.2695 refers to an effect of moderate magnitude by conventional standards. This means that a significant differnece should be detectable between the treatment and control groups after the matching process. Finally, the MDE in outcome units is 7.7649 in the wealth index between groups. This corresponds to a significant detectable difference given the index's scale of 1 to 5. This means that the PAs would need to have an effect of approximately 7.8 points in terms of asset percentile.
-
+*Source: Author’s calculation*
 
 ### Robustness and sensitivity tests {#robustnessandsensitivity}
 
-We implement a series of robustness tests predefined in the pre-analysis plan published prior to the results(published on OSF in March 2025:https://osf.io/bgu5n/).We re-estimate all effects using distances thresholds 5 km and 15 km to assess the robustness of our results th the choice of the treatment radius. While condifence intervals may widen when restricting the study area to 5 km, comparing coefficients across specifications allows us to assess the consistency of the estimated effects.
+We re-estimate all effects using distances thresholds 5 km and 15 km to assess the robustness of our results th the choice of the treatment radius. While condifence intervals may widen when restricting the study area to 5 km, comparing coefficients across specifications allows us to assess the consistency of the estimated effects.
 
 We apply Benjamini-Hochber's ([-@Benjamini1995]) False Discovery Rate method to test Hypothesis 2 (PAs impact on inequalities between households) and Hypothesis 3 the role of PAs governance model). These tests are performed to mitigate the risk of incorrectly inferring significant effects by controlling the average proportion of false positives among the results reported as significant. Hypothesis 2 is evaluated using the Z-score outcome of the wealth index, and Hypothesis 3 is evaluated using PAs governance categories based on IUCN status of PAs.
 
