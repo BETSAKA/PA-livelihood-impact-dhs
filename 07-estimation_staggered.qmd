@@ -412,7 +412,6 @@ list(
 )
 ```
 
-
 ## Effect on inequalities
 
 ### Estimation en 2x2 DiD
