@@ -50,9 +50,15 @@ In our pre-analysis plan, we noticed that the data from the World Database on Pr
 
 ![](figures/evo_pa.png){#fig-evo-pa width="100%"}
 
+```         
+Notes: The graph shows the evolution of PA creation in Madagascar since the creation in 1927 (under the colonial administration) until 2025.  
+```
+
 Our study analyzes the impact of PA on household well-being over 13 years (2008-2021). Taking 2008 as the reference year, 71 protected areas were created, covering a total area of 75,252 km². @tbl-period-crea shows the distribution of terrestrial PAs (by number and area) according to the period in which they were created by final decree.
 
-![Classification of household clusters according their group affiliation](table/period_crea.png){#tbl-period-crea width="100%"}
+@tbl-period-crea shows the distribution 
+
+![Classification of household clusters according their group affiliation](table/period_crea.png){#tbl-period-crea width="80%"}
 
 \
 *Note : PA number refers to the number of protected areas created during each period. Area is expressed in square kilometers (km²). Calculations are based on data from the world Database on Protected Areas (WDPA).*
@@ -144,18 +150,19 @@ We use the average and standard deviation values from the treatment group for bo
 
 Prior the power calculation, we segmented the wealth index into percentiles rather than quintiles to better capture the continuity of the variable and maximize the sensitivity of the econometric analysis. The approach, already used by some researchers \[Staveteig2014\], preserves greater granularity in the variable while improving the precision of the estimates. By increasing the number of classes, we will reduce the risk of bias associated with artificial discontinuities and improve the ability of our models to capture the marginal effects of conservation policies on living standards.
 
-With these characteristics, we calculate that the minimal detectable effect is 7.5, indicating that the study is able to detect a minimum change of 7.5 percentiles in the wealth index between the groups.
+With these characteristics, we calculate that the minimal detectable effect is 7.8, indicating that the study is able to detect a minimum change of 7.8 percentiles in the wealth index between the groups.
 
 
+![Statistical Power for Wealth Index Centiles](table/statistic_power.png){#tbl-statistic-power width="80%"}
 
 
-
-
-The Intra-cluster Correltion Coefficient (ICC) is 0.4854, indicating a strong intra-cluster correlation. This means that much of the variability in the wealth index is attribuable to differences between survey areas (for example, households in the same village share similar characteristics). The adjusted standard edeviation is 28.81, indicating a lerge dispersion of wealth index scores around the mean. Given that the index ranges from 1 to 5, this standard deviation is relatively large. Cohen's $d$ od 0.2695 refers to an effect of moderate magnitude by conventional standards. This means that a significant differnece should be detectable between the treatment and control groups after the matching process. Finally, the MDE in outcome units is 7.7649 in the wealth index between groups. This corresponds to a significant detectable difference given the index's scale of 1 to 5. This means that the PA would need to have an effect of approximately 7.8 points in terms of asset percentile.
+The Intra-cluster Correlation Coefficient (ICC) is 0.4854, indicating a strong intra-cluster correlation. This means that much of the variability in the wealth index is attribuable to differences between survey areas (for example, households in the same village share similar characteristics). The adjusted standard edeviation is 28.81, indicating a lerge dispersion of wealth index scores around the mean. Given that the index ranges from 1 to 5, this standard deviation is relatively large. Cohen's $d$ od 0.2695 refers to an effect of moderate magnitude by conventional standards. This means that a significant differnece should be detectable between the treatment and control groups after the matching process. Finally, the MDE in outcome units is 7.7649 in the wealth index between groups. This corresponds to a significant detectable difference given the index's scale of 1 to 5. This means that the PA would need to have an effect of approximately 7.8 points in terms of asset percentile.
 
 ## Empirical strategy
 
-### Covariates Distribution before and after matching
+### Matching methods
+Our evaluative approach is based on a counterfactual measure that estimates the causal effect of the treatment, in case the implementation of PA. This approach is based on a comparison between a treatment group (household living in rural areas within or less than 10 km of PA) and a control group (households living in rural areas more than 10 km from PA created after 2008). The study thus fits within the framework of Rubin’s causal model [-@Rubin1974], according to which there are several hypothetical outcomes depending on exposure to the treatment. To ensure comparability between groups, we apply the genetic matching (GenMatch) from the R MachtIt package to pair each unit in the treatment group with a unit in the control group that has the same observable characteristics [@Ho2007]. This approach uses a single distance measure, ‘Mahalanobis distance matching’, to quantify the similarity between the two groups of observations, while taking into account the correlations between covariates and their covariances [@Diamond2013]. It increases the credibility of the results and reduces endogeneity issues [@Ma2020]. We also apply a caliper of 0.25 standard deviation of the Mahalanobis distance to avoid creating pairs with overly large differences [@Rosenbaum1983]. The validity of this estimation depends on the balance between the treatment and control groups before and after matching. Before matching, we check the balance using the Standardized Mean Difference (SMD), which measures the difference between the means of the covariates in the two groups. After matching, a visual test is performed on the quality of the matching using a quantile-quantile plot.
+
 
 Before matching allows initial imbalances to be determined using the Standardized Mean Difference (SMD) test. The SMD measures the difference between the means of the covariates in the treatment and control groupes to compare the relative balance of variables measured in different units
 
@@ -163,9 +170,37 @@ If $$SMD<0.1$$, there is a satisfactory balance between the groups for the covar
 
 The following show the distributions of covariates before and after matching for the three years of study(1997, 2008, and 2021).
 
-### Number of treated group and control group before and after matching
+```{r}
+#| label: tbl-balance-long-all
+#| tbl-cap: "Standardized Mean Difference of all years "
+#| warning: false
+#| message: false
+#| echo: false
 
-The following table shows, for each year: the total number of observations initially available, the number of observation retained after including those that did not belong to either the treatment group or the control group, and those with missing values for the variables used for matching. It also shows the numbers of group in the treatment and control before and after matching.
+balance_long_all <- read.csv("table/balance_long_all.csv")
+balance_long_all
+```
+
+```{=typst}
+
+#figure(
+  grid(
+    columns: 3,
+    gutter: 10pt,
+    image("figures/bal_before_1997.png", width: 100%),
+    image("figures/bal_before_2008.png", width: 100%),
+    image("figures/bal_before_2021.png", width: 100%),
+  ),
+  caption: "Covariate balance before matching (1997, 2008, 2021)",
+)
+
+```
+
+
+### Difference-in-difference methods
+We assess the PA impact on household living standards and inequalities using the difference-in-difference (DID) method. The DID principle is to compare the wealth index of control and treatment households before and after the establishment of PA(note that our treatment begins in 2008).
+This method relies on the parallel trends assumption,according to which treated and untreated areas evolved similarly prior to the intervention. To validate this hypothesis, we will use as a reference, among the rural households surveyed in 1997, those living in an area located within or less than 10 km of a PA created between 2008 and 2021 (placebo treatment group) and those matched to them using the method described above (placebo control group). We will conduct a placebo test by performing a DID estimation between these groups for the period 1997-2008. If the result of this placebo test is zero or statistically insignificant, the hypothesis of parallel trends is validated.
+In our DID estimates, we use robust standard errors for intra-cluster correlations to manage the dependence of observations within clusters. The aim is to adjust the standard errors by taking into account the intra-cluster correlations present within groups by sampling the outcome variable [@Abadie2021]. This adjustment is calculated based on the model residuals ans an estimate of the intra-cluster variance. We calculate the residuals from the regression model and then use these residuals to construct a ribust variance-covariance matrix. The matrix will adjust the intra-cluster correlation by taking into account the error structure.
 
 # Departures and complements to the preanalysis plan
 
@@ -209,3 +244,9 @@ We keep only terrestrial protected areas and discard marine or coastal protected
 Adding to this classification, we share Ledberger [-@leberger_global_2020] analysis that classifies the naturalness of IUCN category definition as follows: Ia = Ib \> II = III \> IV = VI \> V and they find out that "the global ranking of the effect of the IUCN categories on the forest loss per PA at the global scale, from the least to the most forest loss, was III \< Ia = Ib = II \< IV = V = VI" .
 
 Building on the results of Leberger et al.[-@leberger_global_2020] which suggest similar conservation outcomes for IUCN status I to III, we use a parsimonious governance-based classification in our empirical analysis. Although the literature highlights ongoing debates regarding the definition and management objectives of status Iv [@leroux_global_2010], we include it within the group of strictly protected areas. This choice reflects both empirical considerations and data constraints, while acknowledging that status IV differs conceptually from status V and VI, which are explicitly treated as multi-use protected areas. To this end, we examine the role of governance by distinguishing between strict protected areas (IUCN categories I-IV) and multi-use protected areas (IUCN categories V-VI).
+
+
+```{=typst}
+
+#pagebreak()
+```
