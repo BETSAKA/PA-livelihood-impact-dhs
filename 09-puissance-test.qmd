@@ -158,8 +158,8 @@ compute_clustered_mde <- function(treated_data, control_data,
               cohens_d, mde_value)
   )
   
-  # Render table with gt
-  gt(results_table) %>%
+  # Table with gt
+  stat_table <- gt(results_table) %>%
     tab_header(
       title = "Statistical Power for Wealth Index Centiles",
       subtitle = paste0("Outcome variable: ", outcome_var)
@@ -175,13 +175,18 @@ compute_clustered_mde <- function(treated_data, control_data,
     tab_source_note(
       source_note = paste0(
         "Outcome variable = wealth_centile_rural_simple, centiles of the wealth index."
-      )
-    )
+      ))
+  
+  return(stat_table)
 }
 
 # Compute MDE for rural households
-compute_clustered_mde(treated_data, control_data,
+stat_table <- compute_clustered_mde(treated_data, control_data,
                       outcome_var = "wealth_centile_rural_simple")
+
+# Save the file
+stat_power_file <- "data/derived/stat_power.rds"
+saveRDS(stat_table, stat_power_file)
 
 ```
 
@@ -195,4 +200,4 @@ L'interprétation des résultats pour le calcul de puissance basé sur l'indice 
 
 -   Le MDE en unités de résultat est de 7.4200, ce qui indique que l'étude est capable de détecter un changement minim
 
-Pour pouvoir être détecté, l'impact des aires protégées devra être de points en terme de pourcentile d'actifs.
+Pour pouvoir être détecté, l'impact des aires protégées devra être de 7.6 points en terme de pourcentile d'actifs.
