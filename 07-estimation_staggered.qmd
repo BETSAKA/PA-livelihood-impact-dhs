@@ -38,6 +38,7 @@ library(ggplot2)
 library(gt)
 library(gtExtras)
 library(did2s)
+library(modelsummary)
 
 # Chargement des données
 d97 <- read_rds("data/derived/data_matched_1997.rds") %>%
@@ -132,6 +133,12 @@ f_main <- f_pre  # même formule
 m_main <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
 
 etable(m_pre, m_main, headers = c("Placebo 97–08", "Traitement 08–21"))
+
+tab_fixest <- modelsummary(
+  list("Placebo 97-08" = m_pre, "Traitement 08-21" = m_main), output = "gt"
+)
+
+saveRDS(tab_fixest, "soumission_articles/manuscript/table/table_DID_WI.rds")
 
 # Extraction compacte des deux effets DID
 did_row <- function(model, year_post, vc = ~ cluster_uid, term = "treat_post"){
@@ -297,7 +304,6 @@ colnames(ttab) <- c(
 ttab
 ```
 
-
 Pour l'instant, on n'arrive pas à appliquer l'approche de @borusyak2024 avec des données en coupes répétées (pas du panel) avec le package R didimputation. En théorie cette méthode peut s'appliquer à des données "repeated cross sections" et il semblerait qu'un package STATA le fasse. Mais nous ne disposons pas de STATA pour tester. On va donc appliquer la méthode de Gardner, qui en principe est très proche (avec des intervalles de confiance un peu plus large).
 
 Nota bene : Afin de stabiliser les estimations de l’event-study, nous avons appliqué un binning des années relatives au traitement, regroupant toutes les observations au-delà de ±5 années dans des catégories communes. Ce choix est motivé par l’espacement irrégulier des enquêtes disponibles, qui implique que certaines valeurs de temps relatif sont représentées par très peu d’observations et produisent des coefficients instables. Comme le soulignent Borusyak, Jaravel et Spiess (2024, p. 22) : “*In practice, it is common to bin distant leads and lags into a single category, both to improve statistical precision and to avoid presenting very noisy and uninformative coefficients.*” Cette approche permet ainsi de réduire le bruit aux extrêmes et de se concentrer sur l’interprétation des dynamiques principales autour du traitement.s
@@ -318,6 +324,8 @@ did2s_static <- did2s(
 
 etable(did2s_static, headers = "Static estimation on wealth index")
 
+
+saveRDS(did2s_static, "soumission_articles/manuscript/table/did2s_static_WI.rds")
 ```
 
 Now the event study
@@ -347,6 +355,8 @@ did2s_es_2yr <- did2s(
 )
 
 etable(did2s_es_2yr, headers = "did2s event-study (2-yr bins ±10)")
+
+saveRDS(did2s_es_2yr, "soumission_articles/manuscript/table/did2s_es_2yr.rds")
 
 # Tidy coefficients and plot
 plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
@@ -378,7 +388,6 @@ list(
 )
 ```
 
-
 ## Effect on inequalities
 
 ### Estimation en 2x2 DiD
@@ -408,11 +417,19 @@ main <- dat %>%
   mutate(post = as.integer(DHSYEAR == 2021),
          treat_post = treat * post)
 
-f_main <- f_pre  # même formule
+f_main <- f_pre  
 
 m_main <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
 
-etable(m_pre, m_main, headers = c("Placebo 97–08", "Traitement 08–21"))
+etable(m_pre, m_main, headers = c("Placebo 97–08", "Traitement 08–21")
+       )
+
+tab_fixest <- modelsummary(
+  list("Placebo 97–08" = m_pre, "Traitement 08–21" = m_main),
+  output = "gt"
+)
+
+saveRDS(tab_fixest, "soumission_articles/manuscript/table/table_DID_zscore.rds")
 
 # Extraction compacte des deux effets DID
 did_row <- function(model, year_post, vc = ~ cluster_uid, term = "treat_post"){
@@ -453,6 +470,7 @@ did2s_static <- did2s(
 
 etable(did2s_static, headers = "Static estimation on z-score of wealth index")
 
+saveRDS(did2s_static, "soumission_articles/manuscript/table/did2s_static_zscore.rds")
 ```
 
 Now the event study
@@ -482,6 +500,8 @@ did2s_es_2yr <- did2s(
 )
 
 etable(did2s_es_2yr, headers = "did2s event-study (2-yr bins ±10)")
+
+saveRDS(did2s_es_2yr, "soumission_articles/manuscript/table/did2s_es_2yr_zscore.rds")
 
 # Tidy coefficients and plot
 plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
@@ -623,10 +643,7 @@ ggplot(did_df, aes(x = period, y = estimate, colour = type)) +
        title = "DID 2×2 par type d’AP (strict vs usage multiple)")
 ```
 
-
 ### Estimation statique par type d’aire protégée
-
-
 
 ```{r}
 # Strict only
@@ -766,7 +783,5 @@ list(
 )
 
 ```
-
-
 
 The event study estimates are highly unstable once the sample is split by protected area type. At most relative time periods, coefficients are imprecisely estimated and vary substantially across horizons, with occasional statistically significant points that do not follow a coherent temporal pattern. This reflects the fact that, after separating strict and multi use protected areas and restricting the control group accordingly, the number of observations contributing to each type–cohort–period cell becomes small, especially at longer leads and lags. As a result, individual coefficients are driven by a limited set of cohorts and are sensitive to reweighting, making them difficult to interpret as meaningful dynamic effects. In this context, the event study mainly illustrates data limitations rather than well identified temporal responses, and does not support a stable or interpretable dynamic pattern by protected area type.
