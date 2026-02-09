@@ -47,7 +47,7 @@ Yet national scale impact evaluations remain scarce. None of the quantitative st
 
 This article contributes to the literature in two ways. Empirically, it provides the first national level impact evaluation of terrestrial protected areas in Madagascar, covering 71 protected areas created between 2008 and 2021. Methodologically, it combines recent advances in matching and difference in differences methods with geolocated household survey data to construct a credible counterfactual. To enhance transparency and limit researcher discretion, the empirical strategy was fully specified in a pre analysis plan registered on the Open Science Framework prior to conducting any outcome analysis. Our analysis plan was submitted with a dated and verifiable certification on the OSF portal in November 2024 and updated in March 2025.
 
-The remainder of the paper proceeds as follows [@theoryofchange], presents the conceptual framework and hypotheses. [@pre-specifiedempiricalstrategy]  describes the data sources.  outlines the identification strategy and econometric methods.  presents the econometric approaches used to assess the effect of PAs on household livelihoods, the effect of PAs on inequalities between households, and the heterogeneity of effects according to the type of PAs governance.  presents our main results and proposes a series of robustness tests. [@discussionandconclusion] concludes.
+The remainder of the paper proceeds as follows [@theoryofchange], presents the conceptual framework and hypotheses. [@pre-specifiedempiricalstrategy] describes the data sources. outlines the identification strategy and econometric methods. presents the econometric approaches used to assess the effect of PAs on household livelihoods, the effect of PAs on inequalities between households, and the heterogeneity of effects according to the type of PAs governance. presents our main results and proposes a series of robustness tests. [@discussionandconclusion] concludes.
 
 ## Theory of change {#theoryofchange}
 
@@ -71,11 +71,12 @@ This diversity is particularly evident in Madagascar. Although governed by simil
 
 Based on this theory of change, we define two main outcome variables to capture changes in living standards: household wealth index (the main outcome) and the standardized Z-score of the wealth index (the secondary outcome). Household wealth will be the outcome variable used to determine the overall impact of PAs, and the standardized Z-score of the wealth index will capture inequalities in living standards across localities. We also use variables that may be predictive of the outcome under study. The appropriate covariates for our model are variables that are likely to influence both the probability of treatment (whether a PAs has been created near the household) and the outcome (household living standard and inequalities between households). The literature shows that PAs tend to be created in less dense, less accessible, higher and steeper regions [@Joppa2010]. These variables may also affect living standards: areas that are more dense, flat, low-lying and accessible (in terms of travel time and geography) tend to be wealthier [@Gallup1999]. We propose five covariates (forest cover in 2000, slope, elevation, population density in 2000, and accessibility in 2000).
 
-## Pre-specified empirical strategy {#pre-specifiedempiricalstrategy} 
+## Pre-specified empirical strategy {#pre-specifiedempiricalstrategy}
 
 We developed a pre-analysis plan to structure the study, specifying the data processing tools, the selected observations and variables, and the statistical methods used to test the hypotheses. The empirical strategy was registered on the Open Science Framework prior to any analysis, with a dated and verifiable record submitted in Novembre 2024 and updated in March 2025 (https://osf.io/bgu5n/).
 
 ### Data {#data}
+
 This study assesses the impact or the creation of PAs on rural household well-being between 2008 and 2021, based on geolocated data on PAs (Word Database on Protected Areas (WDPA)), environmental characteristics (downloaded from the *mapme.biodiversity* package), and the socioeconomic conditions of households (Demographic and Health Surveys (DHS)). Household living standards are the primary outcome, with inequality as a secondary outcome, and demographic and environmental variables are included as controls to improve the accuracy of treatment effect estimates. We use three DHS surveys (1997, 2008, 2021), taking 2008 as the reference year. The treatment group includes rural households located in clusters less than 10 km from PAs created since 2008 in rural areas (shown in red), and households in the control group are those located in clusters more than 10 km from PAs created since 2008 in rural areas (shown in blue). Rural populations living within 10 km of PAs before 2008 or located in urban areas are excluded from the study (shown in black). The GPS data used comes from DHS clusters. A comprehensive overview of the data set along with the selected variables is outlined within the pre-analysis plan.
 
 ![](figures/map-clust.png){#fig-map-clust width="100%" fig-cap="Classification of household clusters according to their group affiliation."}
@@ -88,11 +89,9 @@ To assess the impact of PAs on household well-being, it is essential to identify
 
 The equation for the difference-in-difference [@Daw2018] is as follows:
 
-
 $$
 Y_{ict} = \alpha + \delta \cdot (\mathrm{Treatment}_c \times \mathrm{Post}_t) + X_{ict}' \theta + \mu_c + \lambda_t + \varepsilon_{ict}
-$$
-With the parameters defined as:
+$$ With the parameters defined as:
 
 $Y_{ict}$: Wealth index for household $i$ in cluster $c$ at year $t$ (1997, 2008 or 2021)
 
@@ -110,16 +109,15 @@ $X_{ict}$: Vector of observable control variables at the household or cluster le
 
 $\theta$: Vector of coefficients associated with the control variables $X_{ict}$
 
-$\mu_c$: Cluster fixed effects, capturing unobserved characteristics that are constant over time within each cluster 
+$\mu_c$: Cluster fixed effects, capturing unobserved characteristics that are constant over time within each cluster
 
 $\lambda_t$: Time fixed effects, captyring shocks common to all clusters in a given year
 
 $\varepsilon_{ict}$: Error term, representing unobserved factors affecting the household wealth index for household $i$ in cluster $c$ at year $t$
 
-
 ### Statistical power {#statisticalpower}
-Statistical power aims to estimate the probability of detecting an effect when one exists, typically set at 0.8. To improve sensitivity and preserve granularity, the wealth index was segmented into percentiles rather than quintiles, reducing bias from artificial cutoffs and enhancing the ability to capture the effects of conservation policies on living standards. The results of the statistical power calculation are presented in the following table. Theu show an intra-cluster correlation coefficient (ICC) of 0.4854, indicatinga a high degree of similarity within clusters. The adjusted standard deviation of the wealth index is 28.82, reflecting substantial dispersion. Cohen's $d$ of 0.27 indicates a moderate effect size, and the minimal detectable effect (MDE) is 7.8 percentiles, meaning the study can reliably detect differences of his magnitude between treatment and control groups. 
 
+Statistical power aims to estimate the probability of detecting an effect when one exists, typically set at 0.8. To improve sensitivity and preserve granularity, the wealth index was segmented into percentiles rather than quintiles, reducing bias from artificial cutoffs and enhancing the ability to capture the effects of conservation policies on living standards. The results of the statistical power calculation are presented in the following table. Theu show an intra-cluster correlation coefficient (ICC) of 0.4854, indicatinga a high degree of similarity within clusters. The adjusted standard deviation of the wealth index is 28.82, reflecting substantial dispersion. Cohen's $d$ of 0.27 indicates a moderate effect size, and the minimal detectable effect (MDE) is 7.8 percentiles, meaning the study can reliably detect differences of his magnitude between treatment and control groups.
 
 ![](table/statistic_power.png){#tbl-statistic-power width="100%" fig-cap="Statistical Power for Wealth Index percentiles."}
 
@@ -135,20 +133,22 @@ In the analysis, the outcome variable may be correlated with unobserved factors 
 
 Genetic matching and Doubly Robust DID estimation on a cross-section do not fully control for unobserved characteristics that may simultaneously affect PAs and the outcome variable (wealth index). To assess the robustness of the results in the face of these potential biases resulting from unobserved confounding variables, we perform a sensitivity analysis using Rosenbaum's method ([-@Rosenbaum2002,pp.\~105–170]).
 
-
 ## Departures and complements to the preanalysis plan (2 PAGE)
 
-
 ### Inclusion of MICS
+
 We still do not have sufficient data to stabilize our estimates. Incorporating MIS data alone introduces substantial noise due to the irregular spacing of the available survey waves. To remedy this problem, We therefore included the 2018 Multiple Indicator Cluster Surveys (MICS)in the analysis. The MICS samples provide cross-sectional data at both the individual and household levels and are designed using methodologies comparable to those of the MIS and DHS surveys [@bolgrien_harmonized_2025]. These 2018 MICS cover 17,870 households during a period for which no alternative data sources are available, allowing for more comprehensive coverage of both the preceding and subsequent years. It is worth noting that recent versions of the MICS and DHS surveys have been harmonized, facilitating their integration [@bolgrien_harmonized_2025].
 
 ### Years-to-treatment binning
+
 The decision to incorporate a binning period into the estimate is motivated by the irregular spacing of the available surveys, which means that certain relative time values are represented by very few observations and produce unstable coefficients. A two-year binning strategy will strengthen the stability of our estimates. As Borusyak, Jaravel et Spiess [-@Borusyak2024]: "In practice, it is common to bin distant leads and lags into a single catgory, both to improve statistical precision and to avoid presenting very noisy and uniformative coefficients". This approach facilitates the reduction of noise at the extremes, thereby enabling the focus on interpreting the main dynamics surrounding the treatment.
 
 ### Choice of staggered DID estimator
+
 Our study used Malaria Indicator Surveys (MIS) data because our two-period estimate lacked sufficient statistical power. MIS data are surveys focused specifically on malaria-related issues, which do not include certain health or demographic questions found in DHS surveys. However, all variables relating to household living conditions used in DHS surveys are present in MIS surveys. The inclusion of these data requires an estimator adapted to staggered adoption and multiple study periods with potential heterogenous treatment effects [@Borusyak2024]. The approach of Borusyak, Jaravel, and Spiess [-@Borusyak2024] with repeated cross-sectional data using the diddimputation package is theoretically feasible, but it impossible with unevenly spaced time-to-treatment events, event for a repeated cross-section in R. We therefore apply Gardner's approach [-@Gardner2022], which is very similar in principle, with slightly wider confidence intervals. This approach is applied with binning of the years relative to the treatment, grouping all observations beyond plus or minus two years into common categories.
 
 ### PAs governance classification
+
 This analysis examines heterogeneous impacts according to governance regimes. The analysis of heterogeneous effects aims to determine which categories of households benefit most - or least - from the creation of protected areas and the circumstances under which these effects occur.\
 We keep only terrestrial protected areas and discard marine or coastal protected areas.Although there is no clear consensus in the literature regarding the use of IUCN categories, Elleason et al. [-@elleason_strictly_2021] suggest the following classification, which we complement here with the naming used by the authors:
 
@@ -176,7 +176,6 @@ Adding to this classification, we share Ledberger [-@leberger_global_2020] analy
 
 Building on the results of Leberger et al.[-@leberger_global_2020] which suggest similar conservation outcomes for IUCN status I to III, we use a parsimonious governance-based classification in our empirical analysis. Although the literature highlights ongoing debates regarding the definition and management objectives of status Iv [@leroux_global_2010], we include it within the group of strictly protected areas. This choice reflects both empirical considerations and data constraints, while acknowledging that status IV differs conceptually from status V and VI, which are explicitly treated as multi-use protected areas. To this end, we examine the role of governance by distinguishing between strict protected areas (IUCN categories I-IV) and multi-use protected areas (IUCN categories V-VI).
 
-
 ## Descriptive statistics {#descriptivestatistics}
 
 The unit of analysis in our study is the household. It is at this level that a significant proportion of individual resources are pooled, and it is at this level that data on living standards - the outcome variable in our study - are available in national surveys [@Deaton1997]. Two outcome variables are taken into account: hosuehold living standards (primary outcome) and inequalities in living standards at the level of the localities studied (secondary outcome). Household living standards are estimated using the wealth index, calculated specifically for rural areas. We will translate this wealth index into an integer between 1 and 100, corresponding to the household's wealth percentile relative to the distribution of the entire sample. In addition to the impact of PAs on hosuehold living standards, we seek to understand their influence on socioeconomic inequalities within the populations concerned. To do this, we propose using a standardized Z-score of the wealth index, which allows us to compare the relative distribution of wealth around the mean within the study population at the level of each survey group.
@@ -202,16 +201,26 @@ Notes: The graph shows boxplots of the zscore wealth index distribution in perce
 The distribution analysis of covariates prior to matching shows a substantial imbalance between the treatment and control groups (2008 case in the @tbl-balance-long-2008). After matching,the SMDs improve for all variables in each year. However, the population density in 2000 remains the most difficult variable to balance. This reflects the fact PAs are not randomly distributed. The graph @fig-bal-before-2008 shows the difference in covariates between the two groups.
 
 ```{r}
+#| label: tbl-matching-summary
+#| tbl-cap: "Matching summary "
+#| warning: false
+#| message: false
+#| echo: false
+
+matching_summary <- readRDS("table/matching_summary_all_years.rds")
+matching_summary
+```
+
+```{r}
 #| label: tbl-balance-long-2008
 #| tbl-cap: "Standardized Mean Difference of the Year 2008 "
 #| warning: false
 #| message: false
 #| echo: false
 
-balance_long_2008 <- read.csv("table/balance_long_2008.csv")
+balance_long_2008 <- readRDS("table/tab_smd.rds")
 balance_long_2008
 ```
-
 
 ![Covariate balance matching](figures/bal_before_2008.png){#fig-bal-before-2008 width="100%"}
 
@@ -223,7 +232,19 @@ Notes: These graphs show the distribution of covaraites before matching between 
 
 In our DID estimation, we used robust standard errors. The results indicate no statistically significant difference at the 5% level between treated and control households. @fig-h1-2x2 presents the results of the 2x2 DID estimation comparing the treatment groups (households living within 10 km of a PAs) and the control groups (households more than 10 km away) prior to (1997-2008) and after (2008-2021) the PAs establishment.
 
-![](table/tbl_wi.png){#tbl-tbl_wi width="100%"}
+```{r}
+#| label: tbl-did2s-static-WI
+#| tbl-cap: "Static treatment effect estimates on well-being"
+#| warning: false
+#| message: false
+#| echo: false
+
+library(tidyverse,  warn.conflicts = FALSE)
+
+tbl_did2s_static_WI <- read_rds("table/did2s_static_WI.rds")
+
+tbl_did2s_static_WI
+```
 
 The placebo test for the treatment period (1997-2008 period) yields small and insignificant coefficient (+3.9 percentile) indicating that no differencial trend is detected prior to intervention (@tbl-h1-staggered-static). The supports the parallell trends assumption as the wealth indices of the two groups vary similarly before PAs creation.
 
@@ -251,10 +272,6 @@ h1_2x2_plot <- read_rds("figures/h1_2x2_plot.rds")
 # Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
 h1_2x2_plot + 
     ggtitle(element_blank())
-```
-
-```         
-Notes: The vertical axis reports the estimated DID effect on the household wealth percentile (in points). Points indicate point estimates, and error bars represent cluster robust confidence intervals. The placebo estimate (1997-2008) and treatment period estimate (2008-2021) are both statistically insignificant, with the confidence interval crossing zero. 
 ```
 
 #### Event study estimation
@@ -455,7 +472,6 @@ Overall, our results do not allow us to rule out that protected areas have socio
 
 #pagebreak()
 ```
-
 ## CRediT authorship contribution statement
 
 Iriana Razafimahenina: conceptualization - formal analysis - Methodology - writing - original draft
@@ -474,14 +490,14 @@ The study is performed in the framework of the BETSAKA project. The BETSAKA proj
 
 One of the authors is an evaluation officer at AFD, and the BETSAKA project is funded by the Evaluation department of both AFD and KfW. While the operational departments of AFD and KfW also fund conservation projects in Madagascar and other countries, the Evaluation departments operate independently. They are committed to rigorous, unbiased studies and are supervised by independent entities within both institutions.
 
-
 ## Declaration of interest
-One of the authors is an evaluation officer at AFD, and the BETSAKA project is funded by the Evaluation department of both AFD and KfW. While the operational departments of AFD and KfW also fund conservation projects in Madagascar and other countries, the Evaluation departments operate independently. They are committed to rigorous, unbiased studies and are supervised by independent entities within both institutions. 
+
+One of the authors is an evaluation officer at AFD, and the BETSAKA project is funded by the Evaluation department of both AFD and KfW. While the operational departments of AFD and KfW also fund conservation projects in Madagascar and other countries, the Evaluation departments operate independently. They are committed to rigorous, unbiased studies and are supervised by independent entities within both institutions.
 
 ## Bibliography
+
 ::: {#refs}
 :::
-
 
 ## Appendix A. Supplementary data
 
