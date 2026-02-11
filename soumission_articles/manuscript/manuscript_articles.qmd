@@ -144,7 +144,7 @@ In the analysis, the outcome variable may be correlated with unobserved factors 
 
 Genetic matching and Doubly Robust DID estimation on a cross-section do not fully control for unobserved characteristics that may simultaneously affect PAs and the outcome variable (wealth index). To assess the robustness of the results in the face of these potential biases resulting from unobserved confounding variables, we perform a sensitivity analysis using Rosenbaum's method ([-@Rosenbaum2002,pp.\~105–170]).
 
-## Departures and complements to the preanalysis plan (2 PAGE)
+## Departures and complements to the preanalysis plan
 
 ### Inclusion of MICS
 
@@ -225,6 +225,14 @@ balance_long_2008
 ```
 
 ![Covariate balance matching](figures/bal_before_2008.png){#fig-bal-before-2008 width="100%"}
+
+::: {#fig-bal-2008 layout-ncol=2}
+
+![](figures/bal_before_2008.png){width="100%"}
+![](figures/density_after_2008.png){width="100%"}
+
+Covariate balance before and after matching (2008).
+:::
 
 *Source: Authors*
 
