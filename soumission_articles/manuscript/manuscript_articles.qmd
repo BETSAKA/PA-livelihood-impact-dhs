@@ -476,7 +476,6 @@ The DID estimates revealed that, on average, female-headed households have a low
 ## Discussion {#discussion}
 
 ## Conclusion {#conclusion}
-
 This study assesses the potentially contradictory effects of PAs on the household living standards and socioeconomic inequalities among rural households in Madagascar. By relying on a pre analysis plan and combining matching with difference in difference approaches.
 
 Hypothesis 1 posits that, on average, PAs reduce the living standardsof rural households. Our results do not support this hypothesis. Across multiple specifications, we do not detect a statistically significant average effect of PAs creation on the household wealth index. Point estimates are generally negative, but confidence intervals are wide and include zero, implying that any true effect is either close to zero or below our detection capacity. A plausible explanation is that losses associated with restrictions on access to natural resources are offset, at least partially, by compensatory mechanisms, ecosystem services, or adaptation strategies, even if these mechanisms remain limited or uneven. From a policy perspective, these findings underline the importance of strengthening inclusive measures, such as transparent revenue sharing from tourism or targeted transfers, to reduce the risk of vulnerability among households located near PAs
