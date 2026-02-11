@@ -47,7 +47,7 @@ Yet national scale impact evaluations remain scarce. None of the quantitative st
 
 This article contributes to the literature in two ways. Empirically, it provides the first national level impact evaluation of terrestrial protected areas in Madagascar, covering 71 protected areas created between 2008 and 2021. Methodologically, it combines recent advances in matching and difference in differences methods with geolocated household survey data to construct a credible counterfactual. To enhance transparency and limit researcher discretion, the empirical strategy was fully specified in a pre analysis plan registered on the Open Science Framework prior to conducting any outcome analysis. Our analysis plan was submitted with a dated and verifiable certification on the OSF portal in November 2024 and updated in March 2025.
 
-The remainder of the paper proceeds as follows [@theoryofchange], presents the conceptual framework and hypotheses. [@pre-specifiedempiricalstrategy] describes the data sources. outlines the identification strategy and econometric methods. presents the econometric approaches used to assess the effect of PAs on household livelihoods, the effect of PAs on inequalities between households, and the heterogeneity of effects according to the type of PAs governance. presents our main results and proposes a series of robustness tests. [@discussionandconclusion] concludes.
+The remainder of the paper proceeds as follows [@theoryofchange], presents the conceptual framework and hypotheses. [@pre-specifiedempiricalstrategy] describes the data sources. outlines the identification strategy and econometric methods. presents the econometric approaches used to assess the effect of PAs on household livelihoods, the effect of PAs on inequalities between households, and the heterogeneity of effects according to the type of PAs governance. presents our main results and proposes a series of robustness tests. [@conclusion] concludes.
 
 ## Theory of change {#theoryofchange}
 
@@ -119,7 +119,18 @@ $\varepsilon_{ict}$: Error term, representing unobserved factors affecting the h
 
 Statistical power aims to estimate the probability of detecting an effect when one exists, typically set at 0.8. To improve sensitivity and preserve granularity, the wealth index was segmented into percentiles rather than quintiles, reducing bias from artificial cutoffs and enhancing the ability to capture the effects of conservation policies on living standards. The results of the statistical power calculation are presented in the following table. Theu show an intra-cluster correlation coefficient (ICC) of 0.4854, indicatinga a high degree of similarity within clusters. The adjusted standard deviation of the wealth index is 28.82, reflecting substantial dispersion. Cohen's $d$ of 0.27 indicates a moderate effect size, and the minimal detectable effect (MDE) is 7.8 percentiles, meaning the study can reliably detect differences of his magnitude between treatment and control groups.
 
-![](table/statistic_power.png){#tbl-statistic-power width="100%" fig-cap="Statistical Power for Wealth Index percentiles."}
+```{r}
+#| label: tbl-statistical-power
+#| tbl-cap: "Statistical power "
+#| warning: false
+#| message: false
+#| echo: false
+
+library(tidyverse,  warn.conflicts = FALSE)
+
+statistical_power <- readRDS("table/stat_power.rds")
+statistical_power
+```
 
 *Source: Author’s calculation*
 
@@ -184,15 +195,17 @@ The unit of analysis in our study is the household. It is at this level that a s
 
 ![Distribution of the rural wealth index (percentile)](figures/distr_wi.png){#fig-distr-wi width="100%"}
 
-```         
-Notes: The graph shows boxplots of the wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). Across all surveys, for all years of the study, the wealth index distributions of the treatment and control groups are roughly similar.
-```
+*Source: Authors*
+
+The graph shows boxplots of the wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). Across all surveys, for all years of the study, the wealth index distributions of the treatment and control groups are roughly similar.
+
 
 ![Distribution of the Zscore of the rural wealth index (percentile)](figures/distr_zs.png){#fig-distr-zs width="100%"}
 
-```         
-Notes: The graph shows boxplots of the zscore wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). Across all survey years, the wealth index Z scores of the treatment and control group is roughly similar.
-```
+*Source: Authors*
+
+The graph shows boxplots of the zscore wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). Across all survey years, the wealth index Z scores of the treatment and control group is roughly similar.
+
 
 ## Results {#results}
 
@@ -201,19 +214,8 @@ Notes: The graph shows boxplots of the zscore wealth index distribution in perce
 The distribution analysis of covariates prior to matching shows a substantial imbalance between the treatment and control groups (2008 case in the @tbl-balance-long-2008). After matching,the SMDs improve for all variables in each year. However, the population density in 2000 remains the most difficult variable to balance. This reflects the fact PAs are not randomly distributed. The graph @fig-bal-before-2008 shows the difference in covariates between the two groups.
 
 ```{r}
-#| label: tbl-matching-summary
-#| tbl-cap: "Matching summary "
-#| warning: false
-#| message: false
-#| echo: false
-
-matching_summary <- readRDS("table/matching_summary_all_years.rds")
-matching_summary
-```
-
-```{r}
 #| label: tbl-balance-long-2008
-#| tbl-cap: "Standardized Mean Difference of the Year 2008 "
+#| tbl-cap: "Standardized Mean Difference of the Year 2008 and 2021"
 #| warning: false
 #| message: false
 #| echo: false
@@ -224,9 +226,10 @@ balance_long_2008
 
 ![Covariate balance matching](figures/bal_before_2008.png){#fig-bal-before-2008 width="100%"}
 
-```         
-Notes: These graphs show the distribution of covaraites before matching between clusters located near protected areas (purple) and those located far from them (green). Each panel illustrates the covaraites used in the matching, namely forest cover in 2000, slope and altitude, population density in 2000, slope and accessibility in 2000 (estimated travel time by car from households to the nearest towns). 
-```
+*Source: Authors*
+
+These graphs show the distribution of covaraites before matching between clusters located near protected areas (purple) and those located far from them (green). Each panel illustrates the covaraites used in the matching, namely forest cover in 2000, slope and altitude, population density in 2000, slope and accessibility in 2000 (estimated travel time by car from households to the nearest towns). 
+
 
 ### Overall impact on livelihoods {#overallimpactonlivelihoods}
 
@@ -241,10 +244,11 @@ In our DID estimation, we used robust standard errors. The results indicate no s
 
 library(tidyverse,  warn.conflicts = FALSE)
 
-tbl_did2s_static_WI <- read_rds("table/did2s_static_WI.rds")
+tbl_did2s_static_WI <- read_rds("table/table_DID_WI.rds")
 
 tbl_did2s_static_WI
 ```
+*Source: Authors*
 
 The placebo test for the treatment period (1997-2008 period) yields small and insignificant coefficient (+3.9 percentile) indicating that no differencial trend is detected prior to intervention (@tbl-h1-staggered-static). The supports the parallell trends assumption as the wealth indices of the two groups vary similarly before PAs creation.
 
@@ -273,6 +277,7 @@ h1_2x2_plot <- read_rds("figures/h1_2x2_plot.rds")
 h1_2x2_plot + 
     ggtitle(element_blank())
 ```
+*Source: Authors*
 
 #### Event study estimation
 
@@ -294,6 +299,7 @@ To increase temporal coverage before and after treatment, we integrate additiona
 h1_staggered_static_tb <- read_rds("../table/h1_staggered_static_tb.rds")
 h1_staggered_static_tb
 ```
+*Source: Author’s calculation*
 
 The static staggered DID estimate suggests a positive but statistically insignificant association between treatment and household wealth (+4.5 wealth percentiles, standard error 4.23). Given the magnitude of uncertainty, this estimate does not allow us to reject the null hypothesis of no effect, motivating a dynamic event study analysis.
 
@@ -315,6 +321,7 @@ gt_tab <- read_rds("../figures/count_binned_obs_plot.rds")
 # Voir la doc de tinytable si tu veux modifier la mise en forme
 gt_tab
 ```
+*Source: Author’s calculation*
 
 ```{r}
 #| label: fig-h1-event-study
@@ -363,16 +370,16 @@ h2_2x2_plot +
     ggtitle(element_blank())
 
 ```
+*Source: Authors*
 
-```         
-Notes: The estimated average effect (black dot) is slightly positive for the placebo period, but still not significant (the error bar crosses the horizontal line). During treatment, the estimated average effect is slightly below 0, pointing to a negative effect, but as the clustered confidence interval overlaps 0, the effect is not significant
-```
+The estimated average effect (black dot) is slightly positive for the placebo period, but still not significant (the error bar crosses the horizontal line). During treatment, the estimated average effect is slightly below 0, pointing to a negative effect, but as the clustered confidence interval overlaps 0, the effect is not significant
+
 
 The coefficient on the post indicator is positive and statistically significant in the main specification (post = 0.055, p \< 0.01), indicating a general increase in inequality over time between 2008 and 2021 that affects both treated and control clusters alike. This pattern reflects a time trend rather than a treatment effect, and should not be attributed to PAs creation. Climatic conditions, as measured by the SPEI, exhibit statistically significant associations with inequality in the treatment period, suggesting that climatic shocks disproportionately affect poorer households and contribute to widening disparities. In contrast, household demographic characteristics play a limited role: households headed by women exhibit slightly lower relative wealth positions in the inequality distribution, while the age of the household head is positively associated with relative wealth. Finally, the very low values of R² and adjusted R² indicate that the model explains only a small share of the variation in inequality outcomes. This is expected in short panel DID specifications using repeated cross sections and does not undermine the identification of the treatment effect, but it cautions against interpreting the model as predictive
 
-```         
+        
 • Staggered DiD: static specification
-```
+
 
 @tbl-h2-staggered-static reports the static staggered DID estimates for inequality outcomes. The estimated treatment effect is negative but very small (−0.007), and not statistically significant. This indicates that, on average, exposure to PAs creation is not associated with a detectable change in within cluster wealth inequality. The estimate is imprecise, and the null hypothesis of no effect should not be rejected
 
@@ -387,9 +394,11 @@ h2_staggered_static_tb <- read_rds("../table/h2_staggered_static_tb.rds")
 h2_staggered_static_tb
 ```
 
-```         
+*Source: Author’s calculation*
+
+        
 • Staggered DiD: dynamic event study
-```
+
 
 @fig-h2-event-study presents the dynamic event study estimates for inequality outcomes using two year bins. Pre treatment coefficients are close to zero and statistically insignificant, supporting the plausibility of the parallel trends assumption for inequality measures. Following PAs creation, estimated effects remain small and statistically insignificant across all post treatment horizons.
 
@@ -411,6 +420,7 @@ h2_event_study_plot <- read_rds("figures/h2_event_study_plot.rds")
 h2_event_study_plot + 
     ggtitle(element_blank())
 ```
+*Source: Authors*
 
 ### Heterogeneity {#heterogeneity}
 
@@ -437,10 +447,9 @@ h3_2x2_plot <- read_rds("figures/h3_2x2_plot.rds")
 h3_2x2_plot + 
     ggtitle(element_blank())
 ```
+*Source: Authors*
 
-```         
-Notes: The graph highlights the change in household living standards  before and after the PAs implementation, by governance type of PAs. Point estimates differ slightly between multi use and strict PAs in both periods, but confidence intervals overlap zero throughout, indicating no statistically significant differences.  
-```
+The graph highlights the change in household living standards  before and after the PAs implementation, by governance type of PAs. Point estimates differ slightly between multi use and strict PAs in both periods, but confidence intervals overlap zero throughout, indicating no statistically significant differences.  
 
 As shown in the Appendix, staggered DID and event study specifications that allow for dynamic and cohort specific effects lead to consistent conclusions. While some coefficients are statistically significant at specific horizons, they are not stable across specifications or governance types, and do not alter the overall finding of no detectable average differential effect by PAs governance regime.
 
@@ -456,7 +465,9 @@ Rosenbaum's sensitivity test [@Rosenbaum1983] shows that the results are not rob
 
 The DID estimates revealed that, on average, female-headed households have a lower wealth percentile (-2.307) than male-headed households (+0.7440). However, the interaction between the treatment and the gender of the household head does not reveal a signifcicant difference between men and women. In other words, living near PAs has no particular effect on gender inequality among household heads. Similarly, no interaction between the treatment and the age of the household head was evident, even though households headed by people aged 45-59 appeared to be significantly wealthier (2.920) than others.
 
-## Discussion and conclusion {#discussionandconclusion}
+## Discussion {#discussion}
+
+## Conclusion {#conclusion}
 
 This study assesses the potentially contradictory effects of PAs on the household living standards and socioeconomic inequalities among rural households in Madagascar. By relying on a pre analysis plan and combining matching with difference in difference approaches.
 
@@ -485,10 +496,6 @@ Holimalala Randriamanampisoa: conceptualization - formal analysis - Project admi
 ## Financement
 
 The study is performed in the framework of the BETSAKA project. The BETSAKA project is cofunded by the Development Impact Lab of the German KfW Development Bank; the Agence Française de Développement (AFD), through the PAIRES program, the French National Research Agency (ANR), and the French Research Institute for Sustainable Development (IRD).
-
-## Declaration of interest
-
-One of the authors is an evaluation officer at AFD, and the BETSAKA project is funded by the Evaluation department of both AFD and KfW. While the operational departments of AFD and KfW also fund conservation projects in Madagascar and other countries, the Evaluation departments operate independently. They are committed to rigorous, unbiased studies and are supervised by independent entities within both institutions.
 
 ## Declaration of interest
 
