@@ -24,7 +24,6 @@ library(haven)
 library(sf) 
 library(tmap) 
 library(gt)  
-library(codebook)
 library(writexl)
 library(wdpar)
 library(geodata) # Pour avoir le contour de Madagascar
