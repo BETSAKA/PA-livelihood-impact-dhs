@@ -1,0 +1,20 @@
+/**
+ * Created by PE2 on 11/01/2018.
+ */
+$(function () {
+
+    var $formMaskedInput_ch = $('.card_che');
+    $formMaskedInput_ch.find('.input-mask-date-debut').inputmask('99-99-9999', { placeholder: '__-__-____' });
+    $formMaskedInput_ch.find('.input-mask-date-fin').inputmask('99-99-9999', { placeholder: '__-__-____' });
+    $('#sandbox-container .input-daterange').datepicker({
+        format: "dd-mm-yyyy",
+        startDate: "01-01-1800",//"today",(use appointment),
+        endDate: "today",//"+2m",//"today"(use appointment),
+        clearBtn: true,
+        language: "fr",
+        autoclose: true,
+        todayHighlight: true
+    });
+
+
+});

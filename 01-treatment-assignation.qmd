@@ -363,8 +363,8 @@ gt_table
 # Enregistre le tableau en CSV
 write.csv(summary_table, "data/derived/summary_table.csv", row.names = FALSE)
 
-saveRDS(gt_table, "soumission_articles/manuscript/table/summary_table.rds")
-```
+
+write_rds(summary_table, "soumission_articles/manuscript/table/tbl-period-crea")
 
 ## Classification des clusters
 

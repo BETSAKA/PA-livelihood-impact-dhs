@@ -1,0 +1,379 @@
+---
+title: "creation_AP"
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+Un cas important est l'[Arrêté Interministériel n° 18633/2008/MEFT/MEM du 17 octobre 2008 portant mise en protection temporaire globale des sites visés par l’Arrêté interministériel n° 17914 du 18 octobre 2006 et levant la suspension de l’octroi des permis miniers et forestiers pour certains sites.](https://faolex.fao.org/docs/pdf/Mad173201.pdf) Cette décision s'applique à 97 nouvelles aires protégées en cours de création et 29 sites prioritaires pour la biodiversité et la gestion forestière.
+
+Ce dernier a été amendé par l'[Arrêté interministériel n° 52005/2010 du 20 décembre 2010 modifiant l'arrêté interministériel Mine-Forêts n°18633 du 17 octobre 2008 portant mise en protection temporaire globale des sites visés par l’arrêté n°17914 du 18 octobre 2006 et levant la suspension de l’octroi des permis miniers et forestiers pour certains sites.](https://faolex.fao.org/docs/pdf/mad142467.pdf) Cette décision s'applique à 95 aires protégées (24 ayant déjà un statut de protection temporaire).
+
+Ces deux textes concernent une liste très étendu de sites potentiels, qui ne sont pas nommément listés dans le texte. On a juste une carte (peu précise) et une somme de zones concernées (en nombre et en surface).
+
+```{r}
+library(rvest)
+library(tidyverse)
+
+library(rvest)
+library(dplyr)
+
+# Directory containing the HTML files
+input_dir <- "supplementary_materials/data/Décrets/CNLEGIS"
+
+html_files <- list.files(
+  path = input_dir,
+  pattern = "\\.html$",
+  full.names = TRUE
+)
+
+file_path <- html_files[1]
+
+
+# Columns to select
+keep_columns <- c(
+  "DATE(S)", "DATE TEXTES", "TEXTE(S)", "TYPE", "NUM TEXTE", "NUM", "OBJET",
+  "OBJET MG", "NUM JO", "DATE JO", "DATE JO FR", "PAGE JO", "ETAT", "NOTE(S)",
+  "NOTES MG", "DOC PDF FR", "DOC PDF MG", "MINISTERE(S)", "id", "HTML FR", 
+  "HTML MG")
+keep_types <- c(
+  "Constitution", "Loi constitutionnelle", "Loi organique", "Loi",
+  "Ordonnance", "Décret", "Arrêté", "Circulaire", "Décision",
+  "Instruction", "Note", "Délibération", "Arrêt", "Avis", "Palmarès",
+  "Procès verbal", "Exposé des motifs de la loi", "Jugement", "Déclaration")
+
+# Function to clean column names
+clean_column_names <- function(names) {
+  names %>%
+    str_replace_all("\\(|\\)", "") %>%  # Remove parentheses
+    str_replace_all(" ", "_") %>%      # Replace spaces with underscores
+    str_to_lower()                     # Convert to lowercase
+}
+
+
+
+# Function to extract the desired table from a single HTML file
+extract_table <- function(file_path) {
+  # Read the HTML file
+  html <- read_html(file_path)
+  
+  # Extract the table
+  table <- html %>%
+    html_node("table#Lst_docs") %>%
+    html_table(fill = TRUE)
+  
+  
+  # Select the relevant columns
+  selected_columns <- table %>%
+    select(all_of(keep_columns)) %>%
+    filter(TYPE %in% keep_types)
+  
+   colnames(selected_columns) <- clean_column_names(colnames(selected_columns))
+
+      # Ensure all columns are converted to text
+   selected_columns<- selected_columns %>%
+     mutate(across(everything(), as.character))
+   
+  return(selected_columns)
+}
+
+# Get a list of all HTML files in the directory
+html_files <- list.files(input_dir, pattern = "\\.html$", full.names = TRUE)
+
+# Apply the extraction function to all files
+all_results <- map_dfr(html_files, extract_table)
+
+```
+
+Classification du type
+
+```{r}
+# Add typology columns
+class_results <- all_results %>%
+  mutate(
+    creation_definitive = str_detect(
+      textes, regex("(?<!en )(création|crétion de l'aire protégée)", 
+                    ignore_case = TRUE)),
+    modifiant = str_detect(textes, regex("modifiant", ignore_case = TRUE)),
+    prorogation = str_detect(textes, regex("prorog", ignore_case = TRUE)),
+    delegation_gestion = str_detect(
+      textes, regex("délégation de gestion", ignore_case = TRUE)),
+    mise_protection_temporaire = str_detect(
+      textes, regex("protection temporaire", ignore_case = TRUE)),
+
+    nomination = str_detect(textes, regex("nomination", ignore_case = TRUE))) %>%
+mutate(
+    total_true = rowSums(select(., creation_definitive:nomination), na.rm = TRUE),
+    concatenated_true = pmap_chr(
+      select(., creation_definitive:nomination),
+      ~ paste(names(which(c(...))), collapse = ", ")
+    ),
+    .before = everything()
+  ) %>%
+  filter(!(total_true == 0)) %>%
+  filter(!(total_true == 1 & nomination)) %>% # On enlève le copil Sydney
+  filter(!(str_detect(textes, "fonctionnement du Comité de Pilotage"))) %>%
+  filter(!(str_detect(textes, "fonctionnement de la Commission"))) %>%
+  filter(!(str_detect(textes, "organisation du Comité")))
+```
+
+On extrait le nom des aires protégées.
+
+```{r}
+class_results <- class_results %>%
+  mutate(
+    pa = str_extract(
+      textes, regex("[\"«](.*?)[\"»,]|nommée\\s*(.*?)[»,]", ignore_case = TRUE)
+    ),
+    pa = ifelse(
+      is.na(pa),
+      str_extract(
+        textes, regex("nommée\\s*(.*?)[\"]", ignore_case = TRUE)
+      ),
+      pa
+    ),
+    pa = ifelse(
+      str_detect(textes, "respectivement"),
+      str_extract(
+        textes,
+        regex("respectivement\\s+(.*?)(?=\\.|N°|ETAT)", ignore_case = TRUE)
+      ),
+      pa
+    ),
+    pa = str_replace(pa, "\"Complexe des Aires", "Complexe des Aires"), 
+    pa = str_remove(pa, "^nommée\\s*"),  # Supprime "nommée"
+    pa = str_remove(pa, "^respectivement\\s*"),  # Supprime "nommée"
+    pa = str_remove(pa, "(?<=\")[^\"«]*$"),  # Supprime tout après le 2e guillemet
+    pa = str_remove_all(pa, "[\"«»]"),  # Supprime les quotes
+    pa = str_trim(pa),  # Supprime les espaces en trop
+    pa = str_remove(pa, ",$"),
+    pa = str_remove(pa, "^'"),
+    .before = textes
+  )
+```
+
+On matche le nom des aires protégés avec les noms dans WDPA
+
+```{r}
+library(stringdist)
+library(fuzzyjoin)
+library(wdpar)
+
+# Load the work implemented in: https://betsaka.github.io/conservation-dynamic-madagascar/03_legal_docs.html
+legal_texts <- read_rds("data/legal_texts.rds")
+
+# Use the legal analysis made from CNLEGIS to identify early protections
+# that are not registered in WDPA: 
+legal_years <- legal_texts |>
+  filter(str_detect(type_decision, "creation_definitive|mise_protection_temporaire")) |>
+  mutate(
+    date_texte = as.Date(date_texte),
+    legal_year = year(date_texte)
+  ) |>
+  group_by(WDPAID) |>
+  summarize(
+    legal_year = min(legal_year, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+# Load WDPA data
+wdpa <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
+
+ # wdpa_clean() |> # This might cause to drop existing PAs!
+ # Include PAs that exist according to the legal analysis
+  filter(STATUS == "Designated" | WDPAID %in% legal_years$WDPAID) %>%
+  mutate(MARINE = recode(MARINE,
+                         "0" = "Terrestre",
+                         "1" = "Mixte",
+                         "2" = "Marine"),
+        GEOMETRY_TYPE = st_geometry_type(.)) %>%
+  filter(GEOMETRY_TYPE %in% c("POLYGON", "MULTIPOLYGON"),)
+
+# Make sure join keys have compatible types
+legal_years <- legal_years |> mutate(WDPAID = as.numeric(WDPAID))
+wdpa <- wdpa |> mutate(WDPAID = as.numeric(WDPAID))
+
+# Join and replace STATUS_YR where a legal year exists
+wdpa <- wdpa |>
+  left_join(legal_years, by = "WDPAID") |>
+  mutate(
+    STATUS_YR = if_else(!is.na(legal_year), as.integer(legal_year), STATUS_YR)
+  ) |>
+  select(-legal_year)
+
+# To check if some are unmatched (on priciple none should be)
+legal_unmatched <- legal_years |> anti_join(st_drop_geometry(wdpa), by = "WDPAID")
+
+
+wdpa %>%
+  pluck("ORIG_NAME")
+
+class_results %>%
+  pluck("pa")
+
+
+# Harmonization for comparison (without modifying original data)
+wdpa_clean <- wdpa %>%
+  mutate(cleaned_ORIG_NAME = str_trim(str_to_lower(ORIG_NAME)))
+
+class_clean <- class_results %>%
+  mutate(cleaned_pa = str_trim(str_to_lower(pa)))
+
+# Split cells containing multiple names (both ", " and " et " as separators)
+split_class_clean <- class_clean %>%
+  mutate(cleaned_pa_split = str_split(cleaned_pa, ",\\s*|\\s+et\\s+")) %>%  # Split on commas or " et "
+  unnest(cleaned_pa_split) %>%
+  rename(single_cleaned_pa = cleaned_pa_split)  # Rename for clarity
+
+# Function to compute proportional string distance
+match_pa_to_wdpa <- function(pa_name, wdpa_names) {
+  # Calculate proportional distances
+  distances <- stringdist(
+    a = pa_name,
+    b = wdpa_names,
+    method = "lv"  # Levenshtein distance
+  ) / pmax(nchar(pa_name), nchar(wdpa_names))
+  
+  # Find the best match
+  best_match_idx <- which.min(distances)
+  list(
+    closest_match = wdpa_names[best_match_idx],
+    match_distance = distances[best_match_idx]
+  )
+}
+
+# Find closest matches for each split name
+conversion_table <- split_class_clean %>%
+  rowwise() %>%
+  mutate(
+    match_result = list(match_pa_to_wdpa(single_cleaned_pa, wdpa_clean$cleaned_ORIG_NAME)),
+    closest_match = wdpa_clean$ORIG_NAME[which.min(
+      stringdist(single_cleaned_pa, wdpa_clean$cleaned_ORIG_NAME) / 
+        pmax(nchar(single_cleaned_pa), nchar(wdpa_clean$cleaned_ORIG_NAME))
+    )],
+    match_distance = min(
+      stringdist(single_cleaned_pa, wdpa_clean$cleaned_ORIG_NAME) /
+        pmax(nchar(single_cleaned_pa), nchar(wdpa_clean$cleaned_ORIG_NAME))
+    )
+  ) %>%
+  ungroup() %>%
+  select(original_pa = single_cleaned_pa, closest_match, match_distance)
+
+
+#writexl::write_xlsx(conversion_table_wdpa, "conversion_table_wdpa.xlsx")
+
+```
+
+Nous classons maintenant les aires protégées par date de création et par IUCN
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+wdpa_class <- wdpa_clean %>%
+  filter(
+    !is.na(STATUS_YR),
+    STATUS == "Designated"
+  ) %>%
+  mutate(
+    IUCN_CAT = case_when(
+      IUCN_CAT %in% c("Ia", "Ib") ~ "I",
+      IUCN_CAT %in% c("II", "III", "IV", "V", "VI") ~ IUCN_CAT,
+      TRUE ~ "Not defined"
+      ),
+    IUCN_CAT = factor(
+      IUCN_CAT,
+      levels = c("I", "II", "III", "IV", "V", "VI", "Not defined")
+    )
+  )
+
+# Nombre d'AP
+table_pa_number <- wdpa_class %>%
+  count(STATUS_YR, IUCN_CAT, name = "n_pa")
+
+# Surface protégée (km²)
+wdpa_area <- wdpa_class %>%
+  filter(!is.na(REP_AREA)) %>%
+  group_by(STATUS_YR, IUCN_CAT) %>%
+  summarise(
+    area_km2 = sum(REP_AREA, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  complete(
+    STATUS_YR,
+    IUCN_CAT,
+    fill = list(area_km2 = 0)
+  ) %>%
+  arrange(STATUS_YR) %>%
+  group_by(IUCN_CAT) %>%
+  mutate(cum_area_km2 = cumsum(area_km2))%>%
+  ungroup
+
+table(wdpa_class$IUCN_CAT)
+
+wdpa_area %>%
+  filter(IUCN_CAT == "I") %>%
+  summarise(
+    min = min(cum_area_km2),
+    max = max(cum_area_km2)
+  )
+
+# Plot
+ggplot(wdpa_area,
+       aes(x = STATUS_YR, 
+           y = cum_area_km2, 
+           fill = IUCN_CAT)
+       ) +
+  geom_area(alpha = 0.9) +
+  
+  geom_rect(
+    data = data.frame(xmin = 2008, xmax = 2021),
+    aes(
+      xmin = xmin,
+      xmax = xmax,
+      ymin = -Inf,
+      ymax = Inf,
+      linetype = "Study period"
+    ),
+    inherit.aes = FALSE,
+    fill = NA,
+    color = "black",
+    linewidth = 0.8
+  ) + 
+  geom_area(
+    alpha = 0.9,
+    position = "stack"
+  ) +
+  scale_fill_manual(
+    name = "IUCN Category",
+    values = c(
+      "I"           = "#F8766D",  # rose / rouge clair
+      "II"          = "#C49A00",  # ocre
+      "III"         = "#53B400",  # vert
+      "IV"          = "#00C094",  # vert d’eau
+      "V"           = "#00B6EB",  # bleu
+      "VI"          = "#A58AFF",  # violet
+      "Not defined" = "#FB61D7"   # rose vif
+    )
+  ) +
+   scale_linetype_manual(
+    name = "",
+    values = c("Study period" = "solid")
+  ) +
+
+  labs(
+    x = "Year of creation",
+    y = "Cumulative protected area (km²)",
+    title = "Evolution of protected areas in Madagascar and study period"
+  ) +
+
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.box = "horizontal",
+    panel.grid.minor = element_blank()
+  )
+
+```
