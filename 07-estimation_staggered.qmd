@@ -163,7 +163,7 @@ h1_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate)) +
   labs(x = NULL, y = "Effect on wealth index centile",
        title = "Impact on well-being: 2x2 DiD impact on local population (< 10km)")
        
-write_rds(h1_2x2_plot, "soumission_articles/manuscript/figures/h1_2x2_plot.rds")
+write_rds(h1_2x2_plot, "paper/figures/h1_2x2_plot.rds")
 
 
 h1_2x2_table <- modelsummary(
@@ -172,7 +172,7 @@ h1_2x2_table <- modelsummary(
     "DID 2x2 (2008-2021)" = h1_m_main_2x2
     )
     )
-write_rds(h1_2x2_table, "soumission_articles/manuscript/figures/h1_2x2_table.rds")
+write_rds(h1_2x2_table, "paper/figures/h1_2x2_table.rds")
 h1_2x2_table
 ```
 
@@ -413,7 +413,7 @@ h1_event_study_plot <- ggplot(plot_did2s_2yr, aes(k, estimate)) +
   ) + 
   scale_x_discrete(labels = bin_label)
 
-write_rds(h1_event_study_plot, "soumission_articles/manuscript/figures/h1_event_study_plot.rds")
+write_rds(h1_event_study_plot, "paper/figures/h1_event_study_plot.rds")
 
 # Return relevant objects
 list(
@@ -487,7 +487,7 @@ h2_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate)) +
   labs(x = NULL, y = "Effect on z-score of wealth index centile",
        title = "Impact on inequalities: 2x2 DiD impact on local population (< 10km)")
 
-write_rds(h2_2x2_plot, "soumission_articles/manuscript/figures/h2_2x2_plot.rds")
+write_rds(h2_2x2_plot, "paper/figures/h2_2x2_plot.rds")
 ```
 
 ## Estimation statique
@@ -564,7 +564,7 @@ h2_event_study_plot <- ggplot(plot_did2s_2yr, aes(k, estimate)) +
   ) + 
   scale_x_discrete(labels = bin_label)
 
-write_rds(h2_event_study_plot, "soumission_articles/manuscript/figures/h2_event_study_plot.rds")
+write_rds(h2_event_study_plot, "paper/figures/h2_event_study_plot.rds")
 
 # Return relevant objects
 list(
@@ -682,7 +682,7 @@ h3_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate, colour = type)) +
   labs(x = NULL, y = "Effet DID (centile de richesse)",
        title = "DID 2×2 par type d’AP (strict vs usage multiple)")
 
-write_rds(h3_2x2_plot, "soumission_articles/manuscript/figures/h3_2x2_plot.rds")
+write_rds(h3_2x2_plot, "paper/figures/h3_2x2_plot.rds")
 
 h3_2x2_plot 
 ```
@@ -821,7 +821,7 @@ h3_event_study_plot <- ggplot(es_all, aes(k, estimate, colour = type)) +
   ) +
   scale_x_discrete(labels = bin_label)
 
-write_rds(h3_event_study_plot, "soumission_articles/manuscript/figures/h3_event_study_plot.rds")
+write_rds(h3_event_study_plot, "paper/figures/h3_event_study_plot.rds")
 
 
 list(
