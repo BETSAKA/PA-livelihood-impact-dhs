@@ -190,7 +190,7 @@ The distribution analysis of covariates prior to matching shows a substantial im
 #| message: false
 #| echo: false
 
-balance_long_2008 <- readRDS("table/tab_smd.rds")
+balance_long_2008 <- readRDS("tables/tab_smd.rds")
 balance_long_2008
 ```
 
@@ -221,7 +221,7 @@ In our DID estimation, we used robust standard errors. The results indicate no s
 
 library(tidyverse,  warn.conflicts = FALSE)
 
-tbl_did2s_static_WI <- read_rds("table/table_DID_WI.rds")
+tbl_did2s_static_WI <- read_rds("tables/table_DID_WI.rds")
 
 tbl_did2s_static_WI
 ```
@@ -273,7 +273,7 @@ To increase temporal coverage before and after treatment, we integrate additiona
 #| message: false
 #| echo: false
 
-h1_staggered_static_tb <- read_rds("table/h1_staggered_static_tb.rds")
+h1_staggered_static_tb <- read_rds("tables/h1_staggered_static_tb.rds")
 h1_staggered_static_tb
 ```
 
@@ -368,7 +368,7 @@ The coefficient on the post indicator is positive and statistically significant 
 #| message: false
 #| echo: false
 
-h2_staggered_static_tb <- read_rds("table/h2_staggered_static_tb.rds")
+h2_staggered_static_tb <- read_rds("tables/h2_staggered_static_tb.rds")
 h2_staggered_static_tb
 ```
 

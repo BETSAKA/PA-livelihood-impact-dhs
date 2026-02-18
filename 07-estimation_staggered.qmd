@@ -139,7 +139,7 @@ tab_fixest <- modelsummary(
   list("Placebo 97-08" = m_pre, "Traitement 08-21" = m_main), output = "gt"
 )
 
-saveRDS(tab_fixest, "soumission_articles/manuscript/table/table_DID_WI.rds")
+saveRDS(tab_fixest, "paper/tables/table_DID_WI.rds")
 
 # Extraction compacte des deux effets DID
 did_row <- function(model, year_post, vc = ~ cluster_uid, term = "treat_post"){
@@ -355,7 +355,7 @@ did2s_static <- did2s(
 
 
 h1_staggered_static_tb <- modelsummary(list("did2s (static)" = did2s_static))
-write_rds(h1_staggered_static_tb, "soumission_articles/table/h1_staggered_static_tb.rds")
+write_rds(h1_staggered_static_tb, "paper/tables/h1_staggered_static_tb.rds")
 
 ```
 
@@ -388,7 +388,7 @@ did2s_es_2yr <- did2s(
 
 etable(did2s_es_2yr, headers = "did2s event-study (2-yr bins ±10)")
 
-saveRDS(did2s_es_2yr, "soumission_articles/manuscript/table/did2s_es_2yr.rds")
+saveRDS(did2s_es_2yr, "paper/tables/did2s_es_2yr.rds")
 
 # Tidy coefficients and plot
 plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
@@ -463,7 +463,7 @@ tab_fixest <- modelsummary(
   output = "gt"
 )
 
-saveRDS(tab_fixest, "soumission_articles/manuscript/table/table_DID_zscore.rds")
+saveRDS(tab_fixest, "paper/tables/table_DID_zscore.rds")
 
 # Extraction compacte des deux effets DID
 did_row <- function(model, year_post, vc = ~ cluster_uid, term = "treat_post"){
@@ -506,7 +506,7 @@ did2s_static_h2 <- did2s(
 
 
 h2_staggered_static_tb <- modelsummary(list("did2s (static)" = did2s_static_h2))
-write_rds(h2_staggered_static_tb, "soumission_articles/table/h2_staggered_static_tb.rds")
+write_rds(h2_staggered_static_tb, "paper/tables/h2_staggered_static_tb.rds")
 h2_staggered_static_tb
 
 ```
@@ -539,7 +539,7 @@ did2s_es_2yr <- did2s(
 
 etable(did2s_es_2yr, headers = "did2s event-study (2-yr bins ±10)")
 
-saveRDS(did2s_es_2yr, "soumission_articles/manuscript/table/did2s_es_2yr_zscore.rds")
+saveRDS(did2s_es_2yr, "paper/tables/did2s_es_2yr_zscore.rds")
 
 # Tidy coefficients and plot
 plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
@@ -726,7 +726,7 @@ h3_staggered_static_tb <- modelsummary(list(
   "Both"        = did2s_static
   )
 )
-write_rds(h3_staggered_static_tb, "soumission_articles/table/h3_staggered_static_tb.rds")
+write_rds(h3_staggered_static_tb, "paper/tables/h3_staggered_static_tb.rds")
 h3_staggered_static_tb
 ```
 

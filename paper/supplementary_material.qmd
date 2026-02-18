@@ -63,7 +63,7 @@ library(gt)
 library(tidyverse)
 library(gt)
 
-tbl_gt_desc_AP <- read_rds("table/desc_AP_combined.rds")
+tbl_gt_desc_AP <- read_rds("tables/desc_AP_combined.rds")
 
 tbl_gt_desc_AP %>%
   gt() %>%                           # <- Transformer le tibble en gt_tbl
@@ -94,7 +94,7 @@ library(tidyverse)
 library(gt)
 
 # Charger le tableau
-tbl_var_desc_stats <- read_rds("table/gt_descr_stats.rds")
+tbl_var_desc_stats <- read_rds("tables/gt_descr_stats.rds")
 
 # Si c'est une liste, prendre le tibble principal
 if (is.list(tbl_var_desc_stats)) {
@@ -154,7 +154,7 @@ Our study analyzes the impact of PA on household well-being over 13 years (2008-
 
 library(tidyverse,  warn.conflicts = FALSE)
 
-tbl_period_crea <- readRDS("table/tbl-period-crea.rds")
+tbl_period_crea <- readRDS("tables/tbl-period-crea.rds")
 tbl_period_crea
 ```
 
@@ -210,7 +210,7 @@ Statistical power estimates the probability of detecting an effect if it exists,
 
 library(tidyverse,  warn.conflicts = FALSE)
 
-statistical_power <- readRDS("table/stat_power.rds")
+statistical_power <- readRDS("tables/stat_power.rds")
 statistical_power
 ```
 
@@ -264,7 +264,7 @@ This section presents multiple tests on outcome varaibles and hypotheses. When t
 library(dplyr)
 library(gt)
 
-tbl_h2_fdr <- read_rds("table/H2_H3_FDR_results.rds")
+tbl_h2_fdr <- read_rds("tables/H2_H3_FDR_results.rds")
 
 tbl_h2_fdr_gt <- tbl_h2_fdr %>%
   mutate(
@@ -316,7 +316,7 @@ library(gt)
 library(dplyr)
 
 
-tbl_h3_fdr <- read_rds("table/H2_H3_FDR_.rds")
+tbl_h3_fdr <- read_rds("tables/H2_H3_FDR_.rds")
 
 tbl_h3_fdr
 
@@ -340,7 +340,7 @@ The pseudo-panel analysis (tbl-pseudo-analysis) shows that the coefficients of t
 library(dplyr)
 library(gt)
 
-tbl_pseudo_analysis <- read_rds("table/pseudo_results.rds")
+tbl_pseudo_analysis <- read_rds("tables/pseudo_results.rds")
 tbl_pseudo_analysis
 ```
 
@@ -366,7 +366,7 @@ Genetic matching and DID estimation on a cross-section do not allow for the cont
 library(dplyr)
 library(gt)
 
-tbl_rosenbaum_analysis <- read_rds("table/sensitivity_gt.rds")
+tbl_rosenbaum_analysis <- read_rds("tables/sensitivity_gt.rds")
 tbl_rosenbaum_analysis 
 ```
 
@@ -389,7 +389,7 @@ This section presents the estimation of heterogeneous effects by introducing int
 library(dplyr)
 library(gt)
 
-tbl_heterogeneous_sex <- read_rds("table/did_sex_gt.rds")
+tbl_heterogeneous_sex <- read_rds("tables/did_sex_gt.rds")
 tbl_heterogeneous_sex
 ```
 
@@ -407,7 +407,7 @@ tbl_heterogeneous_sex
 library(dplyr)
 library(gt)
 
-tbl_heterogeneous_age <- read_rds("table/did_age_gt.rds")
+tbl_heterogeneous_age <- read_rds("tables/did_age_gt.rds")
 tbl_heterogeneous_age
 ```
 
@@ -425,7 +425,7 @@ tbl_heterogeneous_age
 library(dplyr)
 library(gt)
 
-tbl_heterogeneous_climate <- read_rds("table/did_rain_gt.rds")
+tbl_heterogeneous_climate <- read_rds("tables/did_rain_gt.rds")
 tbl_heterogeneous_climate
 ```
 

@@ -684,6 +684,6 @@ tab_smd <- balance_wide %>%
 
 tab_smd
 
-saveRDS(tab_smd, "soumission_articles/manuscript/table/tab_smd.rds")
+saveRDS(tab_smd, "paper/tables/tab_smd.rds")
 
 ```

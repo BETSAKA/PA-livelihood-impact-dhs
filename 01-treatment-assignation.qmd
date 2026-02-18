@@ -363,7 +363,7 @@ gt_table <- summary_table %>%
     decimals = 0
   )
 
-write_rds(gt_table, "soumission_articles/manuscript/table/tbl-period-crea.rds")
+write_rds(gt_table, "paper/tables/tbl-period-crea.rds")
 
 
 ```

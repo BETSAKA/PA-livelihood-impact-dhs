@@ -4282,7 +4282,7 @@ tbl_fe <- results_fe %>%
   )
 
 
-write_rds(tbl_fe, "table/pseudo_results.rds")
+write_rds(tbl_fe, "paper/tables/pseudo_results.rds")
 
 ```
 
