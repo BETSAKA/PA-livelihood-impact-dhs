@@ -8,13 +8,23 @@ bibliography: references.bib
   
 format: 
    typst: 
+     text-wrap: true
+     hyphenation: true
+     lang: en
      number-sections: true
      fig-cap-location: top
      bibliographystyle: "chicago-author-date"
+     pdf: 
+       fig-dpi: 150 
+       fig-format: png 
+       fig-width: 6 
+       fig-height: 4
    docx: default
    
 abstract: |
-  Protected areas are the most widely used instrument for biodiversity conservation, yet their socioeconomic effects on nearby populations remain contested, particularly in low income contexts where livelihoods depend heavily on natural resources. This paper evaluates the impact of terrestrial protected areas on rural household well being in Madagascar, exploiting geolocated socio-demographic surveys covering the period of rapid protected area expansion between 2008 and 2021. To support identification, we draw on an earlier survey wave from 1997 to assess the plausibility of parallel trends prior to treatment. We combine spatially derived socio environmental indicators with genetic matching and difference in difference to construct a credible counterfactual. The study follows a pre analysis plan registered before any outcome analysis, including an ex ante power calculation indicating the ability to detect effects of approximately 7.5 wealth percentiles. We find no statistically significant average effect of protected area creation on the wealth index of households located within 10 km of protected areas established after 2008. A series of robustness checks using alternative data sources and specifications supports this result. The absence of an average effect may reflect offsetting positive and negative mechanisms, heterogeneous impacts across households or sites, or limited implementation capacity in a context of weak governance and chronic underfunding of protected areas.
+
+
+  Protected areas are the most widely used instrument for biodiversity conservation, yet their socioeconomic effects on nearby populations remain contested, particularly in low income contexts where livelihoods depend heavily on natural resources. This paper evaluates the impact of terrestrial protected areas on rural household well-being in Madagascar, exploiting geolocated socio-demographic surveys covering the period of rapid protected area expansion between 2008 and 2021. To support identification, we draw on an earlier survey wave from 1997 to assess the plausibility of parallel trends prior to treatment. We combine spatially derived socio environmental indicators with genetic matching and difference-in-difference to construct a credible counterfactual. The study follows a pre-analysis plan registered before any outcome analysis, including an ex ante power calculation indicating the ability to detect effects of approximately 7.5 wealth percentiles. We find no statistically significant average effect of protected area creation on the wealth index of households located within 10 km of protected areas established after 2008. A series of robustness checks using alternative data sources and specifications supports this result. The absence of an average effect may reflect offsetting positive and negative mechanisms, heterogeneous impacts across households or sites, or limited implementation capacity in a context of weak governance and chronic underfunding of protected areas.
   
 Keywords: Biodiversity Conservation, Well-being, Demographic and Health surveys, Genetic matching, difference-in-difference, Madagascar
 
@@ -35,57 +45,59 @@ note: |
 ```
 ## Introduction {#introduction}
 
-The reconciliation between conservation and economic development has long debated in the scientific literature [@Adams2004], but the issue has gained renewed prominence over the past decade with the rapid global expansion of protected areas (PAs). This debate is particularly salient in the context of the Kunming–Montreal Global Biodiversity Framework, under which 195 signatory states committed to protecting 30 percent of terrestrial land by 2030.
+The reconciliation between conservation and economic development has long been debated in the scientific literature [@Adams2004], but the issue has gained renewed prominence over the past decade with the rapid global expansion of protected areas (PAs). This debate is particularly salient in the context of the Kunming–Montreal Global Biodiversity Framework, under which 195 signatory states committed to protecting 30 percent of terrestrial land by 2030.
 
-In theory, PAs can affect local livelihoods through multiple and potentially opposing channels. While they are a central instrument for biodiversity conservation [@Maxwell2020], their establishment may restrict access to land and natural resources that support income generating activities such as agriculture, hunting, fishing, or forest product collection. At the same time, protected areas may generate benefits through compensation schemes, employment opportunities linked to conservation or tourism, and the provision of ecosystem services such as water regulation, erosion control, or fire prevention [@Kandel2022].
+In theory, PAs can affect local livelihoods through multiple and potentially opposing channels. While they are a central instrument for biodiversity conservation [@Maxwell2020], their establishment may restrict access to land and natural resources that support income generating activities such as agriculture, hunting, fishing, or forest product collection. At the same time, PAs may generate benefits through compensation schemes, employment opportunities linked to conservation or tourism, and the provision of ecosystem services such as water regulation, erosion control, or fire prevention [@Kandel2022].
 
-Despite these ambivalent mechanisms, rigorous quantitative evidence on the socioeconomic impacts of PAs remains limited, in particular in poor and fragile governance contexts. Among the 1,043 studies reviewed across 104 countries by McKinnon et al. ([-@McKinnon2016]), only 19 used quantitative methods to assess effects on material living conditions or economic well being. More recent syntheses confirm substantial heterogeneity in estimated impacts across contexts and methodologies. Focusing on 30 quantitative evaluations of household income, Kandel et al. ([-@Kandel2022]) find that protected areas are associated with modest average gains, with effects that depend strongly on local conditions. This heterogeneity underscores the need for context specific evaluations using transparent and robust empirical strategies.
+Despite these ambivalent mechanisms, rigorous quantitative evidence on the socioeconomic impacts of PAs remains limited, in particular in poor and fragile governance contexts. Among the 1,043 studies reviewed across 104 countries by McKinnon et al. ([-@McKinnon2016]), only 19 used quantitative methods to assess effects on material living conditions or economic well-being. More recent syntheses confirm substantial heterogeneity in estimated impacts across contexts and methodologies. Focusing on 30 quantitative evaluations of household income, Kandel et al. ([-@Kandel2022]) find that PAs are associated with modest average gains, with effects that depend strongly on local conditions. This heterogeneity underscores the need for context specific evaluations using transparent and robust empirical strategies.
 
-Madagascar provides a particularly relevant setting for such an analysis. It ranks among the poorest countries globally under SDG 1.1, with the highest share of the population living below the international poverty line [@Conceicao2024,pp. 298-299]. During the study period, terrestrial PAs coverage expanded from 3.6 percent of national territory in 2008 to 10.8 percent in 2021, while the share of the population living within 10 km of a PAs rose from 9 to 28 percent. At the same time, Madagascar exhibits low state capacity [@Hanson2021], which constrains the implementation of conservation policies and associated social measures. Combined with high rural dependence on natural resources, these features suggest that the socioeconomic impacts of protected areas may differ from those observed in less precarious institutional contexts.
+Madagascar provides a particularly relevant setting for such an analysis. It ranks among the poorest countries globally under SDG 1.1, with the highest share of the population living below the international poverty line [@Conceicao2024 pp. 298-299]. During the study period, terrestrial PAs coverage expanded from 3.6 percent of national territory in 2008 to 10.8 percent in 2021, while the share of the population living within 10 km of a PAs rose from 9 to 28 percent. At the same time, Madagascar exhibits low state capacity [@Hanson2021], which constrains the implementation of conservation policies and associated social measures. Combined with high rural dependence on natural resources, these features suggest that the socioeconomic impacts of PAs may differ from those observed in less precarious institutional contexts.
 
-Yet national scale impact evaluations remain scarce. None of the quantitative studies reviewed by McKinnon et al. ([-@McKinnon2016]) focus on Madagascar. The only study cited by Kandel et al. ([-@Kandel2022]) that includes the country relies on cross sectional municipality level data from the 1993 census [@Mammides2019], predates the major expansion of protected areas, and does not allow for before and after comparisons.
+Yet national scale impact evaluations remain scarce. None of the quantitative studies reviewed by McKinnon et al. ([-@McKinnon2016]) focus on Madagascar. The only study cited by Kandel et al. ([-@Kandel2022]) that includes the country relies on cross sectional municipality level data from the 1993 census [@Mammides2019], predates the major expansion of PAs, and does not allow for before and after comparisons.
 
-This article contributes to the literature in two ways. Empirically, it provides the first national level impact evaluation of terrestrial protected areas in Madagascar, covering 71 protected areas created between 2008 and 2021. Methodologically, it combines recent advances in matching and difference in differences methods with geolocated household survey data to construct a credible counterfactual. To enhance transparency and limit researcher discretion, the empirical strategy was fully specified in a pre analysis plan registered on the Open Science Framework prior to conducting any outcome analysis. Our analysis plan was submitted with a dated and verifiable certification on the OSF portal in November 2024 and updated in March 2025.
+This article contributes to the literature in two ways. Empirically, it provides the first national level impact evaluation of terrestrial PAs in Madagascar, covering 71 PAs created between 2008 and 2021. Methodologically, it combines recent advances in matching and difference-in-differences methods with geolocated household survey data to construct a credible counterfactual. To enhance transparency and limit researcher discretion, the empirical strategy was fully specified in a pre-analysis plan registered on the Open Science Framework prior to conducting any outcome analysis. Our analysis plan was submitted with a dated and verifiable certification on the OSF portal in November 2024 and updated in March 2025.
 
-The remainder of the paper proceeds as follows [@theoryofchange], presents the conceptual framework and hypotheses. [@pre-specifiedempiricalstrategy] describes the data sources. outlines the identification strategy and econometric methods. presents the econometric approaches used to assess the effect of PAs on household livelihoods, the effect of PAs on inequalities between households, and the heterogeneity of effects according to the type of PAs governance. presents our main results and proposes a series of robustness tests. [@conclusion] concludes.
+The remainder of the paper proceeds as follows. [@theoryofchange], presents the conceptual framework and hypotheses. [@pre-specifiedempiricalstrategy] describes the data sources, outlines the identification strategy, and details the econometric methods used to assess the effect of PAs on household livelihoods, on inequalities between households, and the heterogeneity of effects according to the type of PAs governance. [@departuresandcomplementstothepreanalysisplan] presents an additional specification integrated into our analysis, followed by descriptive statistics in the [@descriptivestatistics]. [@results] reports the main findings and provides a series of robustness tests. Finally, [@discussion] discusses the result, and [@conclusion] concludes.
 
 ## Theory of change {#theoryofchange}
 
-Our conceptual framework is based on a theory of change that links the implementation of PAs (the treatment) to local household well-being (outcome) through multiple possible channels, summarised in (@fig-theory-change). The objective here is to determine the impact of PAs implementation on observed changes in household living standards. Existing evidence suggests that average impacts are modest but highly context dependent. Kandel et al. ([-@Kandel2022]) report a slightly positive average impact, alongside subtantial heterogeneity across settings. Building on this litterature, we represent potential mechanisms in the form of directed acyclic graph [@Hunermund2023]. If the mechanisms represented affect all residents of a locality in a convergent manner, they should translate into a significant average impact (positive or negative) on the average well being (Hypothesis 1). If, on contrary, they affect households in very different ways, the average effects may be close to zero, but inequalities within local communities may increase (Hypothesis 2).
+Our conceptual framework is based on a theory of change that links the implementation of PAs (the treatment) to local household well-being (outcome) through multiple possible channels, summarised in (@fig-theory-change). The objective here is to determine the impact of PAs implementation on observed changes in household living standards. Existing evidence suggests that average impacts are modest but highly context dependent. Kandel et al. ([-@Kandel2022]) report a slightly positive average impact, alongside substantial heterogeneity across settings. Building on this literature, we represent potential mechanisms in the form of a directed acyclic graph [@Hunermund2023]. If the mechanisms represented affect all residents of a locality in a convergent manner, they should translate into a significant average impact (positive or negative) on the average well-being (Hypothesis 1). If, on the contrary, they affect households in very different ways, the average effects may be close to zero, but inequalities within local communities may increase (Hypothesis 2).
 
-![Logic diagram of the theory of change tested in the study](figures/theory_change.png){#fig-theory-change width="100%"}
+![Logic diagram of the theory of change tested in the study](figures/theory_change.png){#fig-theory-change width="80%"}
+
+*Source: Authors*
 
 The factors likely to lead to a decline in well-being seem particularly significant in the Malagasy context, where the population is predominantly rural and living in extreme poverty (the last assessment was in 2021, with 69.2% of the population below the \$2.15 a day threshold at 2017 PPP). Six studies conducted in Madagascar between 1995 and 2006 estimated the opportunity cost of restricted access to natural resources following the creation of PAs (slash-and-burn agriculture, hunting, gathering, timber, etc.) at between USD 39 and 177 per household per year [@Neudert2017]. Golden et al. ([-@Golden2014]) estimated that income from hunting accounted for 57% of household's cash income in areas adjacent to the Makira and Masoala PAs. Another survey of people living near Makira estimated the value of pharmaceutical use at USD 30-44 per year per household, based on the subsidized price of equivalent treatments in the Malagasy market [@Golden2012].
 
-Several factors that could help improve livelihoods through conservation appear to be fragile in Madagascar, starting with tourism. Naidoo et al. ([-@Naidoo2019]) aggregate data from DHS surveys conducted between 2001 and 2011 in 34 developing countries. Their study is based on matching households near and far from PAs, but with no pre-post conservation comparison. They highlight positive impacts , but only for a subset of PAs "with documented tourism". According to their study, households living near the PAs "with tourism" are 17% wealthier and 16% less likely to be poor than similar households living far from these areas. However, tourism in Madagascar’s PAs remains low. According to data from Madagascar National Parks (MNP), only seven PAs recorded more than 10,000 visitors in 2023 (with a maximum of 30,744 in Isalo), which is low compared to the average of 356,405 visitors per year and per PAs recorded across 929 PAs worldwide in the global study by Chung et al. ([-@Chung2018]).
+Several factors that could help improve livelihoods through conservation appear to be fragile in Madagascar, starting with tourism. Naidoo et al. ([-@Naidoo2019]) aggregate data from DHS surveys conducted between 2001 and 2011 in 34 developing countries. Their study is based on matching households near and far from PAs, but with no pre-post conservation comparison. They highlight positive impacts, but only for a subset of PAs "with documented tourism". According to their study, households living near the PAs "with tourism" are 17% wealthier and 16% less likely to be poor than similar households living far from these areas. However, tourism in Madagascar’s PAs remains low. According to data from Madagascar National Parks (MNP), only seven PAs recorded more than 10,000 visitors in 2023 (with a maximum of 30,744 in Isalo), which is low compared to the average of 356,405 visitors per year and per PAs recorded across 929 PAs worldwide in the global study by Chung et al. ([-@Chung2018]).
 
-When new PAs are created in Madagascar, compensation mechanisms for local populations remain rare, ineffective and insufficient [@Riviere2017; @Bertrand2014]. The most in-depth study on this subject, conducted by Poudyal et al. ([-@Poudyal2018]) with support from the World Bank, focuses on the Ankeniheny Zahamena Corridor (CAZ), created in 2015 to connect several existing PAs. Five study sites were selected: two adjacent to the new CAZ PAs (one eligible for compensation, the other not), two adjacent to long-established PAs, and one far from the forest boundary. The median cost of the conservation restriction is estimated at USD 2,375 per household per year, representing between 27% and 84% of the average annual income. The amounts set aside to compensate beneficiary households were assessed to be insufficient relative to the losses incurred, and around 50% of households eligible for compensation received nothing [@Poudyal2018; @Poudyal2016].
+When new PAs are created in Madagascar, compensation mechanisms for local populations remain rare, ineffective and insufficient [@Riviere2017; @Bertrand2014]. The most in-depth study on this subject, conducted by Poudyal et al. ([-@Poudyal2018]) with support from the World Bank, focuses on the Ankeniheny Zahamena Corridor (CAZ), created in 2015 to connect several existing PAs. Five study sites were selected: two adjacent to the new CAZ PA (one eligible for compensation, the other not), two adjacent to long-established PAs, and one far from the forest boundary. The median cost of the conservation restriction is estimated at USD 2,375 per household per year, representing between 27% and 84% of the average annual income. The amounts set aside to compensate beneficiary households were assessed to be insufficient relative to the losses incurred, and around 50% of households eligible for compensation received nothing [@Poudyal2018; @Poudyal2016].
 
 Our first set of results therefore consists of determining whether PAs in Madagascar, by limiting access to natural resources, have negative impacts on the standard of living of households living nearby, potentially exceeding the benefits of compensation and ecosystem services, and whether these impacts are more adverse than those documented in other contexts (Hypothesis 1).
 
-The impact mechanisms represented in @fig-theory-change are likely to affect households differently depending on their prior characteristics, which would increase inequality (Hypothesis 2). Compensation measures are generally implemented in the form of projects to promote income-generating activities (agriculture, livestock, handicrafts) in surrounding communities [@Poudyal2018a]. In the context of such development projects, individuals known as “development brokers” frequently emerge as intermediaries between local communities and implementing organizations. By mobilizing their social networks and specific skills, these brokers manage to capture a disproportionate share of the benefits of interventions, whether in form of income or privileged access to opportunities. This dynamic can reinforce pre-existing inequalities within communities, limiting the access of the most vulnerable households to the expected benefits of compensation programs. Although tourism development is often presented as an opportunity for economic growth, it also tends to exacerbate socioeconomic inequalities, particularly in developing countries. Adeniyi et al. ([-@Adeniyi2024]) show that in Southern Africa, tourism can initially exacerbate inequalities by concentrating benefits in the most attractive regions, while leaving marginalized communities out of the economic benefits. According to Ghosh and Mitra ([-@Ghosh2021]), the relationship between tourism and inequality follows an inverted Kuznets curve in developing countries: when tourism remains moderate, its growth reduces inequalities, but when tourism becomes massive, further expansion worsens inequalities. Finally, Xuanming et al. ([-@Xuanming2024]) point out that while tourism helps to improve certain socioeconomic indicators, it can also generate inflationary pressures and strain local resources, particularly affecting the most vulnerable households. Taken together, these mechanisms suggest that PAs may exacerbate economic inequalities within neighboring communities by creating opportunities that primarily benefit individuals with higher levels of education or dominant social positions, granting them access to rents and jobs related to tourism and associated activities (Hypothesis 2).
+The impact mechanisms represented in @fig-theory-change are likely to affect households differently depending on their prior characteristics, which would increase inequality (Hypothesis 2). Compensation measures are generally implemented in the form of projects to promote income-generating activities (agriculture, livestock, handicrafts) in surrounding communities [@Poudyal2018a]. In the context of such development projects, individuals known as “development brokers” frequently emerge as intermediaries between local communities and implementing organizations. By mobilizing their social networks and specific skills, these brokers manage to capture a disproportionate share of the benefits of interventions, whether in the form of income or privileged access to opportunities. This dynamic can reinforce pre-existing inequalities within communities, limiting the access of the most vulnerable households to the expected benefits of compensation programs. Although tourism development is often presented as an opportunity for economic growth, it also tends to exacerbate socioeconomic inequalities, particularly in developing countries. Adeniyi et al. ([-@Adeniyi2024]) show that in Southern Africa, tourism can initially exacerbate inequalities by concentrating benefits in the most attractive regions, while leaving marginalized communities out of the economic benefits. According to Ghosh and Mitra ([-@Ghosh2021]), the relationship between tourism and inequality follows an inverted Kuznets curve in developing countries: when tourism remains moderate, its growth reduces inequalities, but when tourism becomes massive, further expansion worsens inequalities. Finally, Xuanming et al. ([-@Xuanming2024]) point out that while tourism helps to improve certain socioeconomic indicators, it can also generate inflationary pressures and strain local resources, particularly affecting the most vulnerable households. Taken together, these mechanisms suggest that PAs may exacerbate economic inequalities within neighboring communities by creating opportunities that primarily benefit individuals with higher levels of education or dominant social positions, granting them access to rents and jobs related to tourism and associated activities (Hypothesis 2).
 
 IUCN status of PAs are frequently used to explain differences in effectiveness between them. For example, Naidoo et al. ([-@Naidoo2019]) show that multiple-use PAs (statuses V and VI) tend to have more beneficial effects than strict areas (statuses I to IV), partly due to greater flexibility in integrating local needs. Beyond status alone, governance plays a central role. Eklund et al. ([-@Eklund2017]) highlight the importance of transparent and inclusive structures to maximize the positive effects of PAs on conservation and social justice. They call for management approaches to be adapted to local contexts, with greater involvement of communities in decision-making processes, to better reconcile conservation and development objectives.
 
-This diversity is particularly evident in Madagascar. Although governed by similar formal statuses, PAs follow different paths depending on the local context and the way in which they are implemented. Froger and Méral ([-@Froger2009]) show that the early initiatives of shared governance, gradually introduced with in-depth mediation efforts, achieved encouraging results by strengthening local community support. However, from the 2000s onward, the accelerated deployment of management transfers, driven by quantitative targets, often led to hasty and less contextually adapted implementations, undermining the effectiveness of these mechanisms. These experiences demonstrate that, beyond the PAs status, their establishment period, management approach, and level of community participation significantly influence their socioeconomic impacts. We therefore anticipate that the impacts of PAs on well-being and inequalities are heterogeneous, and that PAs with higher levels of local community participation are more likely to generate greater benefits and distribute them more equitably (Hypothesis 3).
+This diversity is particularly evident in Madagascar. Although governed by similar formal statuses, PAs follow different paths depending on the local context and the way in which they are implemented. Froger and Méral ([-@Froger2009]) show that the early initiatives of shared governance, gradually introduced with in-depth mediation efforts, achieved encouraging results by strengthening local community support. However, from the 2000s onward, the accelerated deployment of management transfers, driven by quantitative targets, often led to hasty and less contextually adapted implementations, undermining the effectiveness of these mechanisms. These experiences demonstrate that, beyond the PAs' status, their establishment period, management approach, and level of community participation significantly influence their socioeconomic impacts. We therefore anticipate that the impacts of PAs on well-being and inequalities are heterogeneous, and that PAs with higher levels of local community participation are more likely to generate greater benefits and distribute them more equitably (Hypothesis 3).
 
 Based on this theory of change, we define two main outcome variables to capture changes in living standards: household wealth index (the main outcome) and the standardized Z-score of the wealth index (the secondary outcome). Household wealth will be the outcome variable used to determine the overall impact of PAs, and the standardized Z-score of the wealth index will capture inequalities in living standards across localities. We also use variables that may be predictive of the outcome under study. The appropriate covariates for our model are variables that are likely to influence both the probability of treatment (whether a PAs has been created near the household) and the outcome (household living standard and inequalities between households). The literature shows that PAs tend to be created in less dense, less accessible, higher and steeper regions [@Joppa2010]. These variables may also affect living standards: areas that are more dense, flat, low-lying and accessible (in terms of travel time and geography) tend to be wealthier [@Gallup1999]. We propose five covariates (forest cover in 2000, slope, elevation, population density in 2000, and accessibility in 2000).
 
 ## Pre-specified empirical strategy {#pre-specifiedempiricalstrategy}
 
-We developed a pre-analysis plan to structure the study, specifying the data processing tools, the selected observations and variables, and the statistical methods used to test the hypotheses. The empirical strategy was registered on the Open Science Framework prior to any analysis, with a dated and verifiable record submitted in Novembre 2024 and updated in March 2025 (https://osf.io/bgu5n/).
+We developed a pre-analysis plan to structure the study, specifying the data processing tools, the selected observations and variables, and the statistical methods used to test the hypotheses. The empirical strategy was registered on the Open Science Framework prior to any analysis, with a dated and verifiable record submitted in November 2024 and updated in March 2025 (https://osf.io/bgu5n/).
 
 ### Data {#data}
 
-This study assesses the impact or the creation of PAs on rural household well-being between 2008 and 2021, based on geolocated data on PAs (Word Database on Protected Areas (WDPA)), environmental characteristics (downloaded from the *mapme.biodiversity* package), and the socioeconomic conditions of households (Demographic and Health Surveys (DHS)). Household living standards are the primary outcome, with inequality as a secondary outcome, and demographic and environmental variables are included as controls to improve the accuracy of treatment effect estimates. We use three DHS surveys (1997, 2008, 2021), taking 2008 as the reference year. The treatment group includes rural households located in clusters less than 10 km from PAs created since 2008 in rural areas (shown in red), and households in the control group are those located in clusters more than 10 km from PAs created since 2008 in rural areas (shown in blue). Rural populations living within 10 km of PAs before 2008 or located in urban areas are excluded from the study (shown in black). The GPS data used comes from DHS clusters. A comprehensive overview of the data set along with the selected variables is outlined within the pre-analysis plan.
+This study assesses the impact of the creation of PAs on rural household well-being between 2008 and 2021, based on geolocated data on PAs (World Database on Protected Areas (WDPA)), environmental characteristics (downloaded from the *mapme.biodiversity* package), and the socioeconomic conditions of households (Demographic and Health Surveys (DHS)). Household living standards are the primary outcome, with inequality as a secondary outcome, and demographic and environmental variables are included as controls to improve the accuracy of treatment effect estimates. We use three DHS surveys (1997, 2008, 2021), taking 2008 as the reference year. The treatment group includes rural households located in clusters less than 10 km from PAs created since 2008 in rural areas (shown in red), and households in the control group are those located in clusters more than 10 km from PAs created since 2008 in rural areas (shown in blue). Rural populations living within 10 km of PAs before 2008 or located in urban areas are excluded from the study (shown in grey). The GPS data used comes from DHS clusters. A comprehensive overview of the data set along with the selected variables is outlined within the pre-analysis plan.
 
-![](figures/map-clust.png){#fig-map-clust width="100%" fig-cap="Classification of household clusters according to their group affiliation."}
+![](figures/map-clust.png){#fig-map-clust width="80%" fig-cap="Classification of household clusters according to their group affiliation."}
 
 *Source: Author’s calculation based on DHS data (1997, 2008, 2021).*
 
 ### Methods {#methods}
 
-To assess the impact of PAs on household well-being, it is essential to identify the counterfactual scenario, that is, what would have occurred in the absence of protection. We applied genetic matching with Mahalanobis distance matching and a caliper of 0.25 to improve covariate balance between treated and control units. This procedure strengthens the robustness of the empirical analysis (details in the PAP).Post-matching, we used difference-in-difference (DID) approach to estimate the causal effect of PAs creation by comparing changes in household wealth index between treated and control groups before and after the intervention. The DID strategy relies on the parallel tyrends assumption, which posits that treated and untreated areas followed similar trajectories prior to the intervention.
+To assess the impact of PAs on household well-being, it is essential to identify the counterfactual scenario, that is, what would have occurred in the absence of protection. We applied genetic matching with Mahalanobis distance matching and a caliper of 0.25 to improve covariate balance between treated and control units. This procedure strengthens the robustness of the empirical analysis (details in the PAP). Post-matching, we used a difference-in-difference (DID) approach to estimate the causal effect of PAs creation by comparing changes in household wealth index between treated and control groups before and after the intervention. The DID strategy relies on the parallel trends assumption, which posits that treated and untreated areas followed similar trajectories prior to the intervention.
 
 The equation for the difference-in-difference [@Daw2018] is as follows:
 
@@ -101,7 +113,7 @@ $\mathrm{Treatment}_c$: Binary variable that takes the value of 1 if cluster $c$
 
 $\mathrm{Post}_t$: Binary variable that takes the value of 1 for the post-treatment year 2021 and 0 for the pre-treatment year 2008
 
-$(\text{Treatment}_c \times  \text{Post}_t)$: Interaction term between $Treatment_i$ and $Post_t$; It is equal to 1 for treated clusters in the post-treatment period and 0 for the other households
+$(\text{Treatment}_c \times  \text{Post}_t)$: Interaction term between $Treatment_c$ and $Post_t$; It is equal to 1 for treated clusters in the post-treatment period and 0 for the other households
 
 $\delta$: Coefficient of interest (DID estimator), measuring the causal effect of protected area creation on household well-being
 
@@ -111,107 +123,65 @@ $\theta$: Vector of coefficients associated with the control variables $X_{ict}$
 
 $\mu_c$: Cluster fixed effects, capturing unobserved characteristics that are constant over time within each cluster
 
-$\lambda_t$: Time fixed effects, captyring shocks common to all clusters in a given year
+$\lambda_t$: Time fixed effects, capturing shocks common to all clusters in a given year
 
 $\varepsilon_{ict}$: Error term, representing unobserved factors affecting the household wealth index for household $i$ in cluster $c$ at year $t$
 
 ### Statistical power {#statisticalpower}
 
-Statistical power aims to estimate the probability of detecting an effect when one exists, typically set at 0.8. To improve sensitivity and preserve granularity, the wealth index was segmented into percentiles rather than quintiles, reducing bias from artificial cutoffs and enhancing the ability to capture the effects of conservation policies on living standards. The results of the statistical power calculation are presented in the following table. Theu show an intra-cluster correlation coefficient (ICC) of 0.4854, indicatinga a high degree of similarity within clusters. The adjusted standard deviation of the wealth index is 28.82, reflecting substantial dispersion. Cohen's $d$ of 0.27 indicates a moderate effect size, and the minimal detectable effect (MDE) is 7.8 percentiles, meaning the study can reliably detect differences of his magnitude between treatment and control groups.
-
-```{r}
-#| label: tbl-statistical-power
-#| tbl-cap: "Statistical power "
-#| warning: false
-#| message: false
-#| echo: false
-
-library(tidyverse,  warn.conflicts = FALSE)
-
-statistical_power <- readRDS("table/stat_power.rds")
-statistical_power
-```
-
-*Source: Author’s calculation*
+Statistical power aims to estimate the probability of detecting an effect when one exists, typically set at 0.8. To increase sensitivity and limit biases associated with artificial thresholds, the wealth index was segmented into percentiles rather than quintiles. The calculations show a high intra-cluster correlation coefficient (ICC) of 0.4854, significant dispersion with an adjusted standard deviation of 28.82, and a moderate effect size (Cohen's $d$ = 0.27). The minimum detectable effect (MDE) is 7.5 percentiles, meaning that the study can reliably identify differences of this magnitude between treatment and control groups.
 
 ### Robustness and sensitivity tests {#robustnessandsensitivity}
 
-We re-estimate all effects using distances thresholds 5 km and 15 km to assess the robustness of our results th the choice of the treatment radius. While condifence intervals may widen when restricting the study area to 5 km, comparing coefficients across specifications allows us to assess the consistency of the estimated effects.
+We re-estimate all effects using distances thresholds 5 km and 15 km to assess the robustness of our results to the choice of the treatment radius. While confidence intervals may widen when restricting the study area to 5 km, comparing coefficients across specifications allows us to assess the consistency of the estimated effects.
 
-We apply Benjamini-Hochber's ([-@Benjamini1995]) False Discovery Rate method to test Hypothesis 2 (PAs impact on inequalities between households) and Hypothesis 3 the role of PAs governance model). These tests are performed to mitigate the risk of incorrectly inferring significant effects by controlling the average proportion of false positives among the results reported as significant. Hypothesis 2 is evaluated using the Z-score outcome of the wealth index, and Hypothesis 3 is evaluated using PAs governance categories based on IUCN status of PAs.
+We apply Benjamini-Hochberg's ([-@Benjamini1995]) False Discovery Rate method to test Hypothesis 2 (PAs impact on inequalities between households) and Hypothesis 3 (the role of PAs governance model). These tests are performed to mitigate the risk of incorrectly inferring significant effects by controlling the average proportion of false positives among the results reported as significant. Hypothesis 2 is evaluated using the Z-score outcome of the wealth index, and Hypothesis 3 is evaluated using PAs governance categories based on IUCN status of PAs.
 
 In the analysis, the outcome variable may be correlated with unobserved factors or shocks at the household level. Fixed effects methods can correct for many of these factors, but only repeated cross-sectional data are available.
 
 Genetic matching and Doubly Robust DID estimation on a cross-section do not fully control for unobserved characteristics that may simultaneously affect PAs and the outcome variable (wealth index). To assess the robustness of the results in the face of these potential biases resulting from unobserved confounding variables, we perform a sensitivity analysis using Rosenbaum's method ([-@Rosenbaum2002,pp.\~105–170]).
 
-## Departures and complements to the preanalysis plan
+## Departures and complements to the preanalysis plan {#departuresandcomplementstothepreanalysisplan}
 
 ### Inclusion of MICS
 
-We still do not have sufficient data to stabilize our estimates. Incorporating MIS data alone introduces substantial noise due to the irregular spacing of the available survey waves. To remedy this problem, We therefore included the 2018 Multiple Indicator Cluster Surveys (MICS)in the analysis. The MICS samples provide cross-sectional data at both the individual and household levels and are designed using methodologies comparable to those of the MIS and DHS surveys [@bolgrien_harmonized_2025]. These 2018 MICS cover 17,870 households during a period for which no alternative data sources are available, allowing for more comprehensive coverage of both the preceding and subsequent years. It is worth noting that recent versions of the MICS and DHS surveys have been harmonized, facilitating their integration [@bolgrien_harmonized_2025].
+We still do not have sufficient data to stabilize our estimates. Incorporating MIS data alone introduces substantial noise due to the irregular spacing of the available survey waves. To remedy this problem, we therefore included the 2018 Multiple Indicator Cluster Surveys (MICS) in the analysis. The MICS samples provide cross-sectional data at both the individual and household levels and are designed using methodologies comparable to those of the MIS and DHS surveys [@bolgrien_harmonized_2025]. These 2018 MICS cover 17,870 households during a period for which no alternative data sources are available, allowing for more comprehensive coverage of both the preceding and subsequent years. It is worth noting that recent versions of the MICS and DHS surveys have been harmonized, facilitating their integration [@bolgrien_harmonized_2025].
 
 ### Years-to-treatment binning
 
-The decision to incorporate a binning period into the estimate is motivated by the irregular spacing of the available surveys, which means that certain relative time values are represented by very few observations and produce unstable coefficients. A two-year binning strategy will strengthen the stability of our estimates. As Borusyak, Jaravel et Spiess [-@Borusyak2024]: "In practice, it is common to bin distant leads and lags into a single catgory, both to improve statistical precision and to avoid presenting very noisy and uniformative coefficients". This approach facilitates the reduction of noise at the extremes, thereby enabling the focus on interpreting the main dynamics surrounding the treatment.
+The decision to incorporate a binning period into the estimate is motivated by the irregular spacing of the available surveys, which means that certain relative time values are represented by very few observations and produce unstable coefficients. A two-year binning strategy will strengthen the stability of our estimates. As Borusyak, Jaravel and Spiess [-@Borusyak2024]: "In practice, it is common to bin distant leads and lags into a single category, both to improve statistical precision and to avoid presenting very noisy and uninformative coefficients". This approach facilitates the reduction of noise at the extremes, thereby enabling the focus on interpreting the main dynamics surrounding the treatment.
 
 ### Choice of staggered DID estimator
 
-Our study used Malaria Indicator Surveys (MIS) data because our two-period estimate lacked sufficient statistical power. MIS data are surveys focused specifically on malaria-related issues, which do not include certain health or demographic questions found in DHS surveys. However, all variables relating to household living conditions used in DHS surveys are present in MIS surveys. The inclusion of these data requires an estimator adapted to staggered adoption and multiple study periods with potential heterogenous treatment effects [@Borusyak2024]. The approach of Borusyak, Jaravel, and Spiess [-@Borusyak2024] with repeated cross-sectional data using the diddimputation package is theoretically feasible, but it impossible with unevenly spaced time-to-treatment events, event for a repeated cross-section in R. We therefore apply Gardner's approach [-@Gardner2022], which is very similar in principle, with slightly wider confidence intervals. This approach is applied with binning of the years relative to the treatment, grouping all observations beyond plus or minus two years into common categories.
+Our study used Malaria Indicator Surveys (MIS) data because our two-period estimate lacked sufficient statistical power. MIS data are surveys focused specifically on malaria-related issues, which do not include certain health or demographic questions found in DHS surveys. However, all variables relating to household living conditions used in DHS surveys are present in MIS surveys. The inclusion of these data requires an estimator adapted to staggered adoption and multiple study periods with potential heterogeneous treatment effects [@Borusyak2024]. The approach of Borusyak, Jaravel, and Spiess [-@Borusyak2024] with repeated cross-sectional data using the didimputation package is theoretically feasible, but it is impossible with unevenly spaced time-to-treatment events, even for a repeated cross-section in R. We therefore apply Gardner's approach ([-@Gardner2022]), which is very similar in principle, with slightly wider confidence intervals. This approach is applied with binning of the years relative to the treatment, grouping all observations beyond plus or minus two years into common categories.
 
 ### PAs governance classification
 
-This analysis examines heterogeneous impacts according to governance regimes. The analysis of heterogeneous effects aims to determine which categories of households benefit most - or least - from the creation of protected areas and the circumstances under which these effects occur.\
-We keep only terrestrial protected areas and discard marine or coastal protected areas.Although there is no clear consensus in the literature regarding the use of IUCN categories, Elleason et al. [-@elleason_strictly_2021] suggest the following classification, which we complement here with the naming used by the authors:
-
--   Some studies group I and II in one class, and all others in another class:
-
-    -   Scharlemann et al. [-@scharlemann_securing_2010] classify cat. I and II as "protected sites with more restrictive land management regimes" and III to VI as "all other protected sites"
-
-    -   Jones et al. [-@Jones2018] designate I and II as "strict biodiversity conservation areas" and III to VI as "zones permitting certain human activities and sustainable resource extraction"
-
-    -   Anderson and Mammides [-@anderson_role_2020] designate only I and II as "areas in stricter categories".
-
--   Other studies group I, II and III in one class, and IV, V and VI in another class:
-
-    -   Seiferling et al. [-@seiferling_measuring_2012] designate I to III as "areas into high-protection" and IV to VI as "low protection categories".
-
-    -   Françoso et al. [-@francoso_habitat_2015] refer to IV to VI as "sustainable use PAs" and the other as "other".
-
--   Other studies group I to IV in one class and V and VI in another class:
-
-    -   Nelson and Chomitz [-@nelson_effectiveness_2011] refer to I to IV as "strict protection" and V and VI as "nonstrict or multi-use protection".
-
-    -   Porter-Bolland et al. [-@porter-bolland_community_2012] refer as I to IV as "protected areas" and V and VI as "community managed forests".
-
-Adding to this classification, we share Ledberger [-@leberger_global_2020] analysis that classifies the naturalness of IUCN category definition as follows: Ia = Ib \> II = III \> IV = VI \> V and they find out that "the global ranking of the effect of the IUCN categories on the forest loss per PAs at the global scale, from the least to the most forest loss, was III \< Ia = Ib = II \< IV = V = VI" .
-
-Building on the results of Leberger et al.[-@leberger_global_2020] which suggest similar conservation outcomes for IUCN status I to III, we use a parsimonious governance-based classification in our empirical analysis. Although the literature highlights ongoing debates regarding the definition and management objectives of status Iv [@leroux_global_2010], we include it within the group of strictly protected areas. This choice reflects both empirical considerations and data constraints, while acknowledging that status IV differs conceptually from status V and VI, which are explicitly treated as multi-use protected areas. To this end, we examine the role of governance by distinguishing between strict protected areas (IUCN categories I-IV) and multi-use protected areas (IUCN categories V-VI).
+PAs are classified internationally according to the IUCN management status, which range from strict protection with limited or no resource extraction (statuses I–II) to areas that explicitly allow sustainable use (statuses V–VI). The literature does not provide a consistent treatment of status IV, which is variously grouped with strictly protected areas or with multi-use areas depending on the study. After reviewing this debate, we classify category IV together with strict protected areas and distinguish two governance regimes: strict protected areas (IUCN statuses I–IV) and multi-use protected areas (IUCN statues V–VI). The diversity of alternative classifications used in the literature and the rationale for this choice are detailed in the Supplementary Material.
 
 ## Descriptive statistics {#descriptivestatistics}
 
-The unit of analysis in our study is the household. It is at this level that a significant proportion of individual resources are pooled, and it is at this level that data on living standards - the outcome variable in our study - are available in national surveys [@Deaton1997]. Two outcome variables are taken into account: hosuehold living standards (primary outcome) and inequalities in living standards at the level of the localities studied (secondary outcome). Household living standards are estimated using the wealth index, calculated specifically for rural areas. We will translate this wealth index into an integer between 1 and 100, corresponding to the household's wealth percentile relative to the distribution of the entire sample. In addition to the impact of PAs on hosuehold living standards, we seek to understand their influence on socioeconomic inequalities within the populations concerned. To do this, we propose using a standardized Z-score of the wealth index, which allows us to compare the relative distribution of wealth around the mean within the study population at the level of each survey group.
+The unit of analysis in our study is the household. It is at this level that a significant proportion of individual resources are pooled, and it is at this level that data on living standards - the outcome variable in our study - are available in national surveys [@Deaton1997]. Two outcome variables are taken into account: household living standards (primary outcome) and inequalities in living standards at the level of the localities studied (secondary outcome). Household living standards are estimated using the wealth index, calculated specifically for rural areas. We will translate this wealth index into an integer between 1 and 100, corresponding to the household's wealth percentile relative to the distribution of the entire sample. In addition to the impact of PAs on household living standards, we seek to understand their influence on socioeconomic inequalities within the populations concerned. To do this, we propose using a standardized Z-score of the wealth index, which allows us to compare the relative distribution of wealth around the mean within the study population at the level of each survey group.
 
 @fig-distr-wi shows that the control and treatment groups have very similar wealth profiles, with averages between 47 and 50, and medians ranging from 46 to 51. In contrast, the excluded group is at the top of the national distribution of wealth, with an average above 50 and a median between 63 and 77. Its distribution is generally shifted upwards, with higher values across the distribution. This suggests that there is no difference between the control and treatment groups; however, the standard deviations of the two groups indicate a high degree of heterogeneity in household living standards.
 
-![Distribution of the rural wealth index (percentile)](figures/distr_wi.png){#fig-distr-wi width="100%"}
+![Distribution of the rural wealth index (percentile)](figures/distr_wi.png){#fig-distr-wi width="80%"}
 
 *Source: Authors*
 
 The graph shows boxplots of the wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). Across all surveys, for all years of the study, the wealth index distributions of the treatment and control groups are roughly similar.
 
-
-![Distribution of the Zscore of the rural wealth index (percentile)](figures/distr_zs.png){#fig-distr-zs width="100%"}
+![Distribution of the Zscore of the rural wealth index (percentile)](figures/distr_zs.png){#fig-distr-zs width="80%"}
 
 *Source: Authors*
 
 The graph shows boxplots of the zscore wealth index distribution in percentiles (blue for the control group, red for the treatment group, and grey for the excluded groups). Across all survey years, the wealth index Z scores of the treatment and control group is roughly similar.
 
-
 ## Results {#results}
 
 ### Matching between treatment and control {#matchingbetweentreatmentandcontrol}
 
-The distribution analysis of covariates prior to matching shows a substantial imbalance between the treatment and control groups (2008 case in the @tbl-balance-long-2008). After matching,the SMDs improve for all variables in each year. However, the population density in 2000 remains the most difficult variable to balance. This reflects the fact PAs are not randomly distributed. The graph @fig-bal-before-2008 shows the difference in covariates between the two groups.
+The distribution analysis of covariates prior to matching shows a substantial imbalance between the treatment and control groups (2008 case in the @tbl-balance-long-2008). After matching, the SMDs improve for all variables in each year. However, the population density in 2000 remains the most difficult variable to balance. This reflects the fact that PAs are not randomly distributed. The @fig-before-2008 shows the difference in covariates between the two groups.
 
 ```{r}
 #| label: tbl-balance-long-2008
@@ -224,22 +194,21 @@ balance_long_2008 <- readRDS("table/tab_smd.rds")
 balance_long_2008
 ```
 
-![Covariate balance matching](figures/bal_before_2008.png){#fig-bal-before-2008 width="100%"}
+*Source: Authors*
 
-::: {#fig-bal-2008 layout-ncol=2}
-
-![](figures/bal_before_2008.png){width="100%"}
-![](figures/density_after_2008.png){width="100%"}
-
-Covariate balance before and after matching (2008).
-:::
+![Covariate balance before matching (2008))](figures/density_before_2008.png){#fig-before-2008 width="80%"}
 
 *Source: Authors*
 
-These graphs show the distribution of covaraites before matching between clusters located near protected areas (purple) and those located far from them (green). Each panel illustrates the covaraites used in the matching, namely forest cover in 2000, slope and altitude, population density in 2000, slope and accessibility in 2000 (estimated travel time by car from households to the nearest towns). 
+![Covariate balance after matching (2008))](figures/density_after_2008.png){#fig-after-2008 width="80%"}
 
+*Source: Authors*
+
+These graphs show the distribution of covariates before matching between clusters located near protected areas (purple) and those located far from them (green). Each panel illustrates the covariates used in the matching, namely forest cover in 2000, slope and elevation, population density in 2000, slope and accessibility in 2000 (estimated travel time by car from households to the nearest towns).
 
 ### Overall impact on livelihoods {#overallimpactonlivelihoods}
+
+#### Estimation DID 2X2
 
 In our DID estimation, we used robust standard errors. The results indicate no statistically significant difference at the 5% level between treated and control households. @fig-h1-2x2 presents the results of the 2x2 DID estimation comparing the treatment groups (households living within 10 km of a PAs) and the control groups (households more than 10 km away) prior to (1997-2008) and after (2008-2021) the PAs establishment.
 
@@ -256,13 +225,14 @@ tbl_did2s_static_WI <- read_rds("table/table_DID_WI.rds")
 
 tbl_did2s_static_WI
 ```
+
 *Source: Authors*
 
-The placebo test for the treatment period (1997-2008 period) yields small and insignificant coefficient (+3.9 percentile) indicating that no differencial trend is detected prior to intervention (@tbl-h1-staggered-static). The supports the parallell trends assumption as the wealth indices of the two groups vary similarly before PAs creation.
+The placebo test for the treatment period (1997-2008 period) yields small and insignificant coefficient (+3.3 wealth percentiles) indicating that no differential trend is detected prior to intervention (@tbl-h1-staggered-static). The supports the parallel trends assumption as the wealth indices of the two groups vary similarly before PAs creation.
 
-Climatic conditions, as measured by the SPEI have no significant effect on rural wealth, and the effect of household characteristics appears to be minimal. On average, households headed by women are slightly poorer, while those with older members are tend to be wealthier.
+Climatic conditions, as measured by the SPEI have no significant effect on rural wealth, and the effect of household characteristics appears to be minimal. On average, households headed by women are slightly poorer, while those with older members tend to be wealthier.
 
-For the treatment period (2008-2021), the estimated effect is negative but statistically insignificant (-2.5 wealth percentiles). Households living near PAs appear to have slightly lower living standards, but the confidence interval clearly includes zero. Given the study's ex ante power calculation, which indicates that effects smaller than approximately 7.8 wealth percentiles cannot be reliably detected (Appendix). This result that any true effect is either close to zero or below our detection threshold.
+For the treatment period (2008-2021), the estimated effect is positive but statistically insignificant (+1.7 wealth percentiles). Households living near PAs appear to have slightly lower living standards, but the confidence interval clearly includes zero. Given the study's ex ante power calculation, which indicates that effects smaller than approximately 7.5 wealth percentiles cannot be reliably detected (Supplementary materials). This result suggests that any true effect is either close to zero or below our detection threshold.
 
 ```{r}
 #| label: fig-h1-2x2
@@ -285,6 +255,7 @@ h1_2x2_plot <- read_rds("figures/h1_2x2_plot.rds")
 h1_2x2_plot + 
     ggtitle(element_blank())
 ```
+
 *Source: Authors*
 
 #### Event study estimation
@@ -293,9 +264,7 @@ The 2×2 DID estimates indicate no statistically significant average effect of P
 
 To increase temporal coverage before and after treatment, we integrate additional survey waves from the Malaria Indicator Surveys (MIS) (1997, 2011, and 2013) and MICS 2018, which follows a survey design comparable to DHS and MIS and includes 17,870 households. These additional surveys improve coverage of both pre treatment and post treatment periods.
 
-```         
 • Staggered DiD: static
-```
 
 ```{r}
 #| label: tbl-h1-staggered-static
@@ -304,31 +273,32 @@ To increase temporal coverage before and after treatment, we integrate additiona
 #| message: false
 #| echo: false
 
-h1_staggered_static_tb <- read_rds("../table/h1_staggered_static_tb.rds")
+h1_staggered_static_tb <- read_rds("table/h1_staggered_static_tb.rds")
 h1_staggered_static_tb
 ```
+
 *Source: Author’s calculation*
 
 The static staggered DID estimate suggests a positive but statistically insignificant association between treatment and household wealth (+4.5 wealth percentiles, standard error 4.23). Given the magnitude of uncertainty, this estimate does not allow us to reject the null hypothesis of no effect, motivating a dynamic event study analysis.
 
-```         
 • Staggered DiD: dynamic event study
-```
 
-For the event study, each observation is indexed by its relative year to treatment, defined as the difference between the survey year and the year of PAs establishment for treated locations. This transformation allows outcomes to be compared along a common event time dimension across cohorts. Because surveys are conducted at irregular intervals and some relative years are represented by very few observations, we group relative years into two-year bins. Observations occurring more than ten years before or after treatment are further aggregated into open-ended bins, as shown in @tbl-rel-years. This binning strategy improves the stability and precision of the estimated dynamic effects.
+For the event study, each observation is indexed by its relative year to treatment, defined as the difference between the survey year and the year of PAs establishment for treated locations. This transformation allows outcomes to be compared along a common event time dimension across cohorts. Because surveys are conducted at irregular intervals and some relative years are represented by very few observations, we group relative years into two-year bins. Observations occurring more than ten years before or after treatment are further aggregated into open-ended bins, as shown in @fig-rel-years. This binning strategy improves the stability and precision of the estimated dynamic effects.
 
 ```{r}
-#| label: tbl-rel-years
-#| tbl-cap: "Binning of relative years-to-treatment for the event study"
+#| label: fig-rel-years
+#| fig-cap: "Binning of relative years-to-treatment for the event study"
+#| fig-width: 10
+#| fig-height: 6
 #| warning: false
 #| message: false
 #| echo: false
 
-gt_tab <- read_rds("../figures/count_binned_obs_plot.rds")
+p <- read_rds("figures/count_binned_obs_plot.rds")
 
-# Voir la doc de tinytable si tu veux modifier la mise en forme
-gt_tab
+p + theme(legend.position = "bottom")
 ```
+
 *Source: Author’s calculation*
 
 ```{r}
@@ -350,7 +320,7 @@ h1_event_study_plot +
     ggtitle(element_blank())
 ```
 
-Figure 7 shows that the estimated event time coefficients are close to zero in the pre treatment period, and none of the pre treatment coefficients are statistically distinguishable from zero, supporting the plausibility of the parallel trends assumption. Following PAs establishment, point estimates fluctuate across event time bins and are generally imprecise. However, the estimate for the longest horizon (more than 10 years after treatment) is large and negative, and its confidence interval lies entirely below zero. This pattern suggests a potential adverse effect emerging only at long horizons, while effects in the short and medium run remain statistically indistinguishable from zero. This long horizon estimate should nonetheless be interpreted cautiously, as it may reflect a specific subset of PAs. Although it includes 851 treated observations from 27 clusters, it primarily concerns PAs created at the beginning of the study period, which may differ systematically from later ones (for instance, lower tourism potential or other unobserved characteristics). Subject to further investigation, this estimate could reflect a genuine mechanism, such as a gradual decline in compensatory measures by PAs managers or the cumulative effects of land use restrictions on younger farming generations.
+@fig-h1-event-study shows that the estimated event time coefficients are close to zero in the pre treatment period, and none of the pre-treatment coefficients are statistically distinguishable from zero, supporting the plausibility of the parallel trends assumption. Following PAs establishment, point estimates fluctuate across event time bins and are generally imprecise. However, the estimate for the longest horizon (more than 10 years after treatment) is large and negative, and its confidence interval lies entirely below zero. This pattern suggests a potential adverse effect emerging only at long horizons, while effects in the short and medium run remain statistically indistinguishable from zero. This long horizon estimate should nonetheless be interpreted cautiously, as it may reflect a specific subset of PAs. Although it includes 851 treated observations from 27 clusters, it primarily concerns PAs created at the beginning of the study period, which may differ systematically from later ones (for instance, lower tourism potential or other unobserved characteristics). Subject to further investigation, this estimate could reflect a genuine mechanism, such as a gradual decline in compensatory measures by PAs managers or the cumulative effects of land use restrictions on younger farming generations.
 
 ### Effect on inequalities {#effectoninequalities}
 
@@ -378,16 +348,16 @@ h2_2x2_plot +
     ggtitle(element_blank())
 
 ```
+
 *Source: Authors*
 
 The estimated average effect (black dot) is slightly positive for the placebo period, but still not significant (the error bar crosses the horizontal line). During treatment, the estimated average effect is slightly below 0, pointing to a negative effect, but as the clustered confidence interval overlaps 0, the effect is not significant
 
+The coefficient on the post indicator is positive and statistically significant in the main specification (post = 0.055, p \< 0.01), indicating a general increase in inequality over time between 2008 and 2021 that affects both treated and control clusters alike. This pattern reflects a time trend rather than a treatment effect, and should not be attributed to PAs creation. Climatic conditions, as measured by the SPEI, exhibit statistically significant associations with inequality in the treatment period, suggesting that climatic shocks disproportionately affect poorer households and contribute to widening disparities. In contrast, household demographic characteristics play a limited role: households headed by women exhibit slightly lower relative wealth positions in the inequality distribution, while the age of the household head is positively associated with relative wealth. Finally, the very low values of R² and adjusted R² indicate that the model explains only a small share of the variation in inequality outcomes. This is expected in short panel DID specifications using repeated cross sections and does not undermine the identification of the treatment effect, but it cautions against interpreting the model as predictive.
 
-The coefficient on the post indicator is positive and statistically significant in the main specification (post = 0.055, p \< 0.01), indicating a general increase in inequality over time between 2008 and 2021 that affects both treated and control clusters alike. This pattern reflects a time trend rather than a treatment effect, and should not be attributed to PAs creation. Climatic conditions, as measured by the SPEI, exhibit statistically significant associations with inequality in the treatment period, suggesting that climatic shocks disproportionately affect poorer households and contribute to widening disparities. In contrast, household demographic characteristics play a limited role: households headed by women exhibit slightly lower relative wealth positions in the inequality distribution, while the age of the household head is positively associated with relative wealth. Finally, the very low values of R² and adjusted R² indicate that the model explains only a small share of the variation in inequality outcomes. This is expected in short panel DID specifications using repeated cross sections and does not undermine the identification of the treatment effect, but it cautions against interpreting the model as predictive
+#### Event study estimation
 
-        
 • Staggered DiD: static specification
-
 
 @tbl-h2-staggered-static reports the static staggered DID estimates for inequality outcomes. The estimated treatment effect is negative but very small (−0.007), and not statistically significant. This indicates that, on average, exposure to PAs creation is not associated with a detectable change in within cluster wealth inequality. The estimate is imprecise, and the null hypothesis of no effect should not be rejected
 
@@ -398,17 +368,15 @@ The coefficient on the post indicator is positive and statistically significant 
 #| message: false
 #| echo: false
 
-h2_staggered_static_tb <- read_rds("../table/h2_staggered_static_tb.rds")
+h2_staggered_static_tb <- read_rds("table/h2_staggered_static_tb.rds")
 h2_staggered_static_tb
 ```
 
 *Source: Author’s calculation*
 
-        
 • Staggered DiD: dynamic event study
 
-
-@fig-h2-event-study presents the dynamic event study estimates for inequality outcomes using two year bins. Pre treatment coefficients are close to zero and statistically insignificant, supporting the plausibility of the parallel trends assumption for inequality measures. Following PAs creation, estimated effects remain small and statistically insignificant across all post treatment horizons.
+@fig-h2-event-study presents the dynamic event study estimates for inequality outcomes using two-year bins. Pre treatment coefficients are close to zero and statistically insignificant, supporting the plausibility of the parallel trends assumption for inequality measures. Following PAs creation, estimated effects remain small and statistically insignificant across all post treatment horizons.
 
 ```{r}
 #| label: fig-h2-event-study
@@ -428,13 +396,12 @@ h2_event_study_plot <- read_rds("figures/h2_event_study_plot.rds")
 h2_event_study_plot + 
     ggtitle(element_blank())
 ```
+
 *Source: Authors*
 
 ### Heterogeneity {#heterogeneity}
 
-#### Estimation DID 2X2
-
-We assess whether the average effect of PAs creation on household living standards differs by governance regime, distinguishing between strict PAs and multi use PAs (Appendix). The 2×2 DID estimates indicate no statistically significant effect for either governance type, both in the placebo period (1997–2008) and in the treatment period (2008–2021). Point estimates differ in sign across regimes, but confidence intervals are wide and overlap zero, providing no evidence of systematic heterogeneity in average impacts by PAs governance.
+We assess whether the average effect of PAs creation on household living standards differs by governance regime, distinguishing between strict PAs and multi-use PAs (supplementary materials). The 2×2 DID estimates indicate no statistically significant effect for either governance type, both in the placebo period (1997–2008) and in the treatment period (2008–2021). Point estimates differ in sign across regimes, but confidence intervals are wide and overlap zero, providing no evidence of systematic heterogeneity in average impacts by PAs governance.
 
 ```{r}
 #| label: fig-h3-2x2
@@ -455,36 +422,44 @@ h3_2x2_plot <- read_rds("figures/h3_2x2_plot.rds")
 h3_2x2_plot + 
     ggtitle(element_blank())
 ```
+
 *Source: Authors*
 
-The graph highlights the change in household living standards  before and after the PAs implementation, by governance type of PAs. Point estimates differ slightly between multi use and strict PAs in both periods, but confidence intervals overlap zero throughout, indicating no statistically significant differences.  
+The graph highlights the change in household living standards before and after the PAs implementation, by governance type of PAs. Point estimates differ slightly between multi-use and strict PAs in both periods, but confidence intervals overlap zero throughout, indicating no statistically significant differences.
 
-As shown in the Appendix, staggered DID and event study specifications that allow for dynamic and cohort specific effects lead to consistent conclusions. While some coefficients are statistically significant at specific horizons, they are not stable across specifications or governance types, and do not alter the overall finding of no detectable average differential effect by PAs governance regime.
+As previous estimates show, staggered DID and event study specifications that allow for dynamic and cohort specific effects lead to consistent conclusions. While some coefficients are statistically significant at specific horizons, they are not stable across specifications or governance types, and do not alter the overall finding of no detectable average differential effect by PAs governance regime.
 
-### Robustness {#Robustness}
+### Robustness tests {#Robustnesstests}
 
-In this section, we discuss the sensitivity analyses and robustness checks that suppport our main results. First, to verify the robustness of our conclusions, we performed additional analyses using distances of 5 km and 15 km from the AP to define the treated group. We find that the creation of PAs did not lead to significant changes in household wealth percentiles for iether distance. In neither cas is the interaction coefficient significant. Conversely, the temporal effect is consistently positive and significant, reflecting a general increase in wealth after 2008, regardless of the distance considered. Climatic variables are also statistically significant, and socio-demographic indicators consistently show that female-headed households have lower wealth and that wealth levels are positively correlated with the age of the household head. The stability of these results across the three distance thresholds suggests that climatic and socio-demographic dynamics largely dominate the effect of proximity to PAs. These tests showed that our conclusions are robust to the definition of treated households.
+In this section, we discuss the sensitivity analyses and robustness checks that support our main results. First, to verify the robustness of our conclusions, we performed additional analyses using distances of 5 km and 15 km from the PA to define the treated group. We find that the creation of PAs did not lead to significant changes in household wealth percentiles for either distance. In neither case is the interaction coefficient significant. Conversely, the temporal effect is consistently positive and significant, reflecting a general increase in wealth after 2008, regardless of the distance considered. Climatic variables are also statistically significant, and socio-demographic indicators consistently show that female-headed households have lower wealth and that wealth levels are positively correlated with the age of the household head. The stability of these results across the three distance thresholds suggests that climatic and socio-demographic dynamics largely dominate the effect of proximity to PAs. These tests showed that our conclusions are robust to the definition of treated households.
 
-Benjamini's [@Benjamini1995] False Discovery rate (FDR) method showed that, prior to multiple tetsing, the coefficients did not show a stable trend of improvement or deterioration in the wealth index. After controlling for the risk of false positives, only a marked negative effect on the wealth index remains statistically significant. This suggests a transient effect of impoverishment.
+Benjamini's [-@Benjamini1995] False Discovery rate (FDR) method showed that, prior to multiple testing, the coefficients did not show a stable trend of improvement or deterioration in the wealth index. After controlling for the risk of false positives, only a marked negative effect on the wealth index remains statistically significant. This suggests a transient effect of impoverishment.
 
-The pseudo panel approach shows that the average wealth index of household cohorts is influenced by environmental factors. The results indicate that households located at high altitudes and in densely populated areas have a higher wealth index. Forest cover has a positive and significnat effect, while slope and accessibility have a negative effect on the wealth index. In contrast, socioe-demograohic variables have a weakly significant effect, suggesting that spatial and environmental conditions play a more decisive role than individual househol characteristics.
+The pseudo panel approach shows that the average wealth index of household cohorts is influenced by environmental factors. The results indicate that households located at high altitudes and in densely populated areas have a higher wealth index. Forest cover has a positive and significant effect, while slope and accessibility have a negative effect on the wealth index. In contrast, socio-demographic variables have a weakly significant effect, suggesting that spatial and environmental conditions play a more decisive role than individual household characteristics.
 
-Rosenbaum's sensitivity test [@Rosenbaum1983] shows that the results are not robust in the face of unobserved assignment biases. In 1997, the absence of any systematic difference between households close to and far from PAs before the introduction of PAs confirms the hypothesis of parallel trends. In 2008, the test suggest a significant effect when assuming no bias ($Γ=1$), but this quickly disappears as soon as a small unmeasured imbalance is introduced ($Γ>1$). The Hodges-Lehmann intervals include zero and the p-value bounds exceed the 0.05 threshold. In 2021, the estimated effect is small and marginally significant, but it is not robust to hidden bias assumptions. Limiting ourselves to these three years, the observed wealth inequalities cannot be causally and robustly attributed to proximity to PAs.
+Rosenbaum's sensitivity test [@Rosenbaum1983] shows that the results are not robust in the face of unobserved assignment biases. In 1997, the absence of any systematic difference between households close to and far from PAs before the introduction of PAs confirms the hypothesis of parallel trends. In 2008, the test suggests a significant effect when assuming no bias ($Γ=1$), but this quickly disappears as soon as a small unmeasured imbalance is introduced ($Γ>1$). The Hodges-Lehmann intervals include zero and the p-value bounds exceed the 0.05 threshold. In 2021, the estimated effect is small and marginally significant, but it is not robust to hidden bias assumptions. Limiting ourselves to these three years, the observed wealth inequalities cannot be causally and robustly attributed to proximity to PAs.
 
-The DID estimates revealed that, on average, female-headed households have a lower wealth percentile (-2.307) than male-headed households (+0.7440). However, the interaction between the treatment and the gender of the household head does not reveal a signifcicant difference between men and women. In other words, living near PAs has no particular effect on gender inequality among household heads. Similarly, no interaction between the treatment and the age of the household head was evident, even though households headed by people aged 45-59 appeared to be significantly wealthier (2.920) than others.
+The DID estimates revealed that, on average, female-headed households have a lower wealth percentile (-2.307) than male-headed households (+0.7440). However, the interaction between the treatment and the gender of the household head does not reveal a significant difference between men and women. In other words, living near PAs has no particular effect on gender inequality among household heads. Similarly, no interaction between the treatment and the age of the household head was evident, even though households headed by people aged 45-59 appeared to be significantly wealthier (2.920) than others.
 
 ## Discussion {#discussion}
 
+This study assesses the potentially contradictory effects of PAs on the household living standards and socioeconomic inequalities among rural households in Madagascar. By relying on a pre-analysis plan and combining matching with difference-in-difference approaches.
+
+Hypothesis 1 posits that, on average, PAs reduce the living standards of rural households. Our results do not support this hypothesis. Across multiple specifications, we do not detect a statistically significant average effect of PAs creation on the household wealth index. Point estimates are generally negative, but confidence intervals are wide and include zero, implying that any true effect is either close to zero or below our detection capacity. A plausible explanation is that losses associated with restrictions on access to natural resources are offset, at least partially, by compensatory mechanisms, ecosystem services, or adaptation strategies, even if these mechanisms remain limited or uneven. On the other hand, the absence of a detectable effect may also reflect the presence of compensatory forces that offset impacts in the short and medium term. While some households experience income losses dues to restrictions on forest exploitation, others may benefit from employment opportunities in conservation projects or from diversifying their livelihood activities. As a result, losses and gains may counterbalance each other, leading to no observable net change in the short and medium run. At the same time, our dynamic results are consistent with the literature suggesting that the socioeconomic costs of PAs are often delayed and cumulative rather than immediate [@Brockington2015]. In the early stages, land-use restrictions may be absorbed through adaptation mechanisms. However, over the longer term, particularly in the context of population growth, these constraints can progressively erode household's resilience and reduce their capacity to cope with shocks. This dynamic may explain the significantly negative effect observed ten years after the PAs' creation. From a policy perspective, these findings underline the importance of strengthening inclusive measures, such as transparent revenue sharing from tourism or targeted transfers, to reduce the risk of vulnerability among households located near PAs.
+
+Hypothesis 2 concerns the effect of PAs creation on within cluster wealth inequalities. The results show no statistically significant average impact of PAs on inequality, as measured by the Z score of the wealth index. Instead, observed changes in inequality are primarily associated with broader socio demographic and climatic dynamics. In particular, climatic shocks, as captured by drought indicators, are associated with increased inequality, suggesting that poorer households are less able to buffer adverse shocks. Household characteristics also matter: households headed by women tend to occupy lower relative positions in the wealth distribution, while those headed by older individuals tend to be better off, likely reflecting accumulated assets and social capital. These patterns point to structural drivers of inequality that operate largely independently of PAs creation. In the absence of inclusive policies, conservation interventions may nonetheless interact with these dynamics by reinforcing existing asymetries in access to opportunities, which calls for governance arrangements that explicitly address equity concerns.
+
+Hypothesis 3 examines whether the effects of PAs creation differ by governance regime. The 2x2 DID estimates do not provide evidence of statistically significant heterogeneity between strict and multi-use PAs. While point estimates differ in sign across governance types, confidence intervals are wide and overlap zero, preventing any firm conclusion regarding differential average impacts. Staggered DID and event study analyses lead to consistent conclusions: although some coefficients are significant at specific horizons, they are not stable across specifications and do not alter the overall finding of no detectable systematic heterogeneity by governance type. These results suggest that, in the Malagasy context, formal governance categories alone are insufficient to explain variation in socioeconomic outcomes, and that implementation quality, timing, and local context likely play a more important role.
+
 ## Conclusion {#conclusion}
-This study assesses the potentially contradictory effects of PAs on the household living standards and socioeconomic inequalities among rural households in Madagascar. By relying on a pre analysis plan and combining matching with difference in difference approaches.
 
-Hypothesis 1 posits that, on average, PAs reduce the living standardsof rural households. Our results do not support this hypothesis. Across multiple specifications, we do not detect a statistically significant average effect of PAs creation on the household wealth index. Point estimates are generally negative, but confidence intervals are wide and include zero, implying that any true effect is either close to zero or below our detection capacity. A plausible explanation is that losses associated with restrictions on access to natural resources are offset, at least partially, by compensatory mechanisms, ecosystem services, or adaptation strategies, even if these mechanisms remain limited or uneven. From a policy perspective, these findings underline the importance of strengthening inclusive measures, such as transparent revenue sharing from tourism or targeted transfers, to reduce the risk of vulnerability among households located near PAs
+For decades, scientific literature has debated the impacts of PAs on the living conditions of local communities. These effects are highly context-dependent, varying according to geographic, ecological and socioeconomic factors. As a result, it is difficult to make generalized statements about whether PAs are beneficial or detrimental to households.
 
-Hypothesis 2 concerns the effect of PAs creation on within cluster wealth inequalities. The results show no statistically significant average impact of PAs on inequality, as measured by the Z score of the wealth index. Instead, observed changes in inequality are primarily associated with broader socio demographic and climatic dynamics. In particular, climatic shocks, as captured by drought indicators, are associated with increased inequality, suggesting that poorer households are less able to buffer adverse shocks. Household characteristics also matter: households headed by women tend to occupy lower relative positions in the wealth distribution, while those headed by older individuals tend to be better off, likely reflecting accumulated assets and social capital. These patterns point to structural drivers of inequality that operate largely independently of PAs creation. In the absence of inclusive policies, conservation interventions may nonetheless interact with these dynamics by reinforcing existing asymmetries in access to opportunities, which calls for governance arrangements that explicitly address equity concerns.
+In the Malagasy context, overall, our results do not allow us to rule out that PAs have socioeconomic impacts on rural households. However, they suggest that the widespread concern, notably in Madagascar, that PAs creation substantially undermines rural living conditions is not supported at the temporal and spatial scale of our analysis. At the same time, these findings do not preclude the existence of longer term effects, nor of important sources of heterogeneity that are not captured by the dichotomous classifications used in this study.
 
-Hypothesis 3 examines whether the effects of PAs creation differ by governance regime. The 2x2 DID estimates do not provide evidence of statistically significant heterogeneity between strict and multi use PAs. While point estimates differ in sign across governance types, confidence intervals are wide and overlap zero, preventing any firm conclusion regarding differential average impacts. staggered DID and event study analyses lead to consistent conclusions: although some coefficients are significant at specific horizons, they are not stable across specifications and do not alter the overall finding of no detectable systematic heterogeneity by governance type. These results suggest that, in the Malagasy context, formal governance categories alone are insufficient to explain variation in socioeconomic outcomes, and that implementation quality, timing, and local context likely play a more important role
+In particular, the negative effects observed at long horizons in the dynamic analysis may point to delayed or cumulative mechanisms, or to differentiated impacts across specific subsets of PAs. This calls for further work to better document long term trajectories and to move beyond coarse governance typologies in order to understand how conservation policies interact with local socioeconomic dynamics over time. In this context, the integration of systematic socioeconomic monitoring into PA governance frameworks could help decision-makers identify emerging vulnerabilities before they become entrenched.
 
-Overall, our results do not allow us to rule out that protected areas have socioeconomic impacts on rural households. However, they suggest that the widespread concern, notably in Madagascar, that PAs creation substantially undermines rural living conditions is not supported at the temporal and spatial scale of our analysis. At the same time, these findings do not preclude the existence of longer term effects, nor of important sources of heterogeneity that are not captured by the dichotomous classifications used in this study. In particular, the negative effects observed at long horizons in the dynamic analysis may point to delayed or cumulative mechanisms, or to differentiated impacts across specific subsets of PAs. This calls for further work to better document long term trajectories and to move beyond coarse governance typologies in order to understand how conservation policies interact with local socioeconomic dynamics over time.
+Finally, these findings should be interpreted in light of the scale and nature of the data used. The analysis is designed to detect average effects of PA creation on household wealth at a national scale, using repeated cross-sectional surveys and spatial proximity as a treatment proxy. As such, it is well suited to identifying large and systematic impacts, but less capable of capturing small, highly localized, or institution-specific effects. In particular, welfare changes that operate through non-monetary channels, gradual adaptation processes, or uneven implementation of compensation and enforcement are unlikely to be fully reflected in standard wealth indices. This limitation is not specific to the Malagasy case, but reflects a more general challenge for evaluating the development effectiveness of conservation policies using multi-purpose household surveys.
 
 ```{=typst}
 
@@ -492,15 +467,15 @@ Overall, our results do not allow us to rule out that protected areas have socio
 ```
 ## CRediT authorship contribution statement
 
-Iriana Razafimahenina: conceptualization - formal analysis - Methodology - writing - original draft
+Iriana Razafimahenina: Conceptualization; Data curation; Formal analysis; Methodology; Writing - Original draft
 
-Florent Bédécarrats: conceptualization - Data curation - formal analysis - Funding acquisition - investigation -Methodology - Project administration - Resources - Software - Supervision - Validation - writing - original draft -
+Florent Bédécarrats: Conceptualization; Data curation; Formal analysis; Funding acquisition; Investigation; Methodology; Project administration; Resources; Software; Supervision; Validation; Writing - Original draft
 
-Ingrid Dallmann:conceptualization - Methodology - Supervision - Validation - Writing - review & editing
+Ingrid Dallmann: Conceptualization; Methodology; Supervision; Validation; Writing; Review & Editing
 
-Holimalala Randriamanampisoa: conceptualization - formal analysis - Project administration -supervision - Validation- Writing - review & editing
+Holimalala Randriamanampisoa: Conceptualization; Formal analysis; Project administration; Supervision; Validation; Writing - Review & Editing
 
-## Financement
+## Funding
 
 The study is performed in the framework of the BETSAKA project. The BETSAKA project is cofunded by the Development Impact Lab of the German KfW Development Bank; the Agence Française de Développement (AFD), through the PAIRES program, the French National Research Agency (ANR), and the French Research Institute for Sustainable Development (IRD).
 
@@ -508,18 +483,9 @@ The study is performed in the framework of the BETSAKA project. The BETSAKA proj
 
 One of the authors is an evaluation officer at AFD, and the BETSAKA project is funded by the Evaluation department of both AFD and KfW. While the operational departments of AFD and KfW also fund conservation projects in Madagascar and other countries, the Evaluation departments operate independently. They are committed to rigorous, unbiased studies and are supervised by independent entities within both institutions.
 
-## Bibliography
-
-::: {#refs}
-:::
-
-## Appendix A. Supplementary data
-
-Supplementary material related to this article can be found at
-
 ```{=typst}
 
 #pagebreak()
 ```
-
-------------------------------------------------------------------------
+::: {#refs}
+:::

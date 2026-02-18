@@ -36,12 +36,23 @@ standard_crs <- 4326
 mdg_crs <- 29702 
 
 # On charge les données gps 
-gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp")
-gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp")
-gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp")
-gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp")
-gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp")
-gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp")
+gps_1997_initial <- st_read("data/raw/dhs/DHS_1997/MDGE32FL/MDGE32FL.shp", quiet = TRUE)
+gps_2008_initial <- st_read("data/raw/dhs/DHS_2008/MDGE53FL/MDGE53FL.shp", quiet = TRUE) 
+gps_2011_initial <- st_read("data/raw/dhs/DHS_2011/MDGE61FL/MDGE61FL.shp", quiet = TRUE) 
+gps_2013_initial <- st_read("data/raw/dhs/DHS_2013/MDGE6AFL/MDGE6AFL.shp", quiet = TRUE) 
+gps_2016_initial <- st_read("data/raw/dhs/DHS_2016/MDGE71FL/MDGE71FL.shp", quiet = TRUE)
+gps_2021_initial <- st_read("data/raw/dhs/DHS_2021/MDGE81FL/MDGE81FL.shp", quiet = TRUE)
+gps_2018_initial <- st_read("data/raw/mics/2018/GPS Datasets/MadagascarMICS2018GPS.shp")  %>%
+  select(DHSYEAR = SVYYEARS,
+         DHSCLUST = HH1,
+         URBAN_RURA = HH6,
+         LATNUM = LATITUDE,
+         LONGNUM = LONGITUDE) %>%
+  mutate(URBAN_RURA = case_when(
+    URBAN_RURA == "Urban" ~ "U",
+    URBAN_RURA == "Rural" ~ "R",
+    .default = NA_character_
+  ))
 
 # Fonction qui vérifie que les coordonnées ne sont pas nulles
 check_coordinates <- function(dhs_gps, country_polygon, negate = FALSE) {
@@ -54,37 +65,66 @@ gps_2008 <- check_coordinates(gps_2008_initial, contour_mada)
 gps_2011 <- check_coordinates(gps_2011_initial, contour_mada)
 gps_2013 <- check_coordinates(gps_2013_initial, contour_mada)
 gps_2016 <- check_coordinates(gps_2016_initial, contour_mada)
+gps_2018 <- check_coordinates(gps_2018_initial, contour_mada)
 gps_2021 <- check_coordinates(gps_2021_initial, contour_mada)
 
-# Load boundary 
+library(wdpar)
+
+# Load the work implemented in: https://betsaka.github.io/conservation-dynamic-madagascar/03_legal_docs.html
+legal_texts <- read_rds("data/legal_texts.rds")
+
+# Use the legal analysis made from CNLEGIS to identify early protections
+# that are not registered in WDPA: 
+legal_years <- legal_texts |>
+  filter(str_detect(type_decision, "creation_definitive|mise_protection_temporaire")) |>
+  mutate(
+    date_texte = as.Date(date_texte),
+    legal_year = year(date_texte)
+  ) |>
+  group_by(WDPAID) |>
+  summarize(
+    legal_year = min(legal_year, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+# Load WDPA data
+wdpa <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
+ # wdpa_clean() |> # This might cause to drop existing PAs!
+ # Include PAs that exist according to the legal analysis
+  filter(STATUS == "Designated" | WDPAID %in% legal_years$WDPAID) %>%
+  mutate(MARINE = recode(MARINE,
+                         "0" = "Terrestre",
+                         "1" = "Mixte",
+                         "2" = "Marine"),
+        GEOMETRY_TYPE = st_geometry_type(.)) %>%
+  filter(GEOMETRY_TYPE %in% c("POLYGON", "MULTIPOLYGON"),)
+
+# Make sure join keys have compatible types
+legal_years <- legal_years |> mutate(WDPAID = as.numeric(WDPAID))
+wdpa <- wdpa |> mutate(WDPAID = as.numeric(WDPAID))
+
+# Join and replace STATUS_YR where a legal year exists
+wdpa <- wdpa |>
+  left_join(legal_years, by = "WDPAID") |>
+  mutate(
+    STATUS_YR = if_else(!is.na(legal_year), as.integer(legal_year), STATUS_YR)
+  ) |>
+  select(-legal_year)
+
+# To check if some are unmatched (on priciple none should be)
+legal_unmatched <- legal_years |> anti_join(st_drop_geometry(wdpa), by = "WDPAID")
+
+# Load boundary
 contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
   st_as_sf() %>%
   st_set_crs(standard_crs)
 
-# On charge les données des AP
-wdpa_terrestre_mod <- st_read("data/derived/wdpa_terrestre_mod.shp") %>%
-  rename(
-    WDPA_PID = WDPA_PI,
-    ORIG_NAME = ORIG_NA,
-    DESIG_ENG = DESIG_E,
-    DESIG_TYPE = DESIG_T,
-    IUCN_CAT = IUCN_CA,   
-    INT_CRIT = INT_CRI,
-    REP_M_AREA = REP_M_A,
-    REP_AREA = REP_ARE,
-    NO_TK_AREA = NO_TK_A,
-    STATUS_YR = STATUS_,
-    GEOMETRY_TYPE = GEOMETR,
-    AREA_KM2 = AREA_KM,
-    area_km2 = are_km2
-  ) %>% 
-  st_make_valid() %>%
-  st_transform(standard_crs)
-
 # Intersection des AP de WDPA avec la limite de Madagascar
-wdpa_terrestre <- wdpa_terrestre_mod %>%
+wdpa_terrestre <- wdpa %>% 
+  st_transform(crs = standard_crs) %>%
   st_make_valid() %>%
-  filter(rowSums(st_intersects(., contour_mada, sparse = FALSE)) > 0) %>%
+  st_intersection(contour_mada) %>%
   st_transform(mdg_crs) %>%
   mutate(
     area_m2  = as.numeric(st_area(.)),
@@ -92,6 +132,15 @@ wdpa_terrestre <- wdpa_terrestre_mod %>%
     area_km2 = area_m2 / 1e6
   ) %>%
   st_transform(standard_crs)
+
+# Ajout de la date de création du complexe des aires protégées Ambohimirahavavy Marivorahona 
+
+wdpa_terrestre_mod <- wdpa_terrestre %>%
+  mutate(STATUS_YR = ifelse(WDPAID == 555697871, 2015, STATUS_YR))
+
+# Sauvegarder le shapefile modifié 
+st_write(wdpa_terrestre_mod, "data/derived/wdpa_terrestre_mod.shp", delete_layer = TRUE)
+
 
 # Buffer de 5 km
 buffer_dist <- 5000
@@ -230,6 +279,8 @@ gps_2011_class <- classify_clusters_with_pa(gps_2011, buffer_5km_before_2008,
 gps_2013_class <- classify_clusters_with_pa(gps_2013, buffer_5km_before_2008,
                                             wdpa_from_2008)
 gps_2016_class <- classify_clusters_with_pa(gps_2016, buffer_5km_before_2008,
+                                            wdpa_from_2008)
+gps_2018_class <- classify_clusters_with_pa(gps_2018, buffer_5km_before_2008,
                                             wdpa_from_2008)
 gps_2021_class <- classify_clusters_with_pa(gps_2021, buffer_5km_before_2008,
                                             wdpa_from_2008)
@@ -840,7 +891,7 @@ all_covars <- spatial_covars_spei_5km %>%
   select(DHSYEAR, DHSCLUST, URBAN_RURA, treecover_area, slope, elevation,
          population_count, traveltime_2000, spei_wc)
 
-all_class_5km <- read.csv("data/derived/cluster_treatment_classification_staggered_5km.csv")
+all_class <- read.csv("data/derived/cluster_treatment_classification_staggered_5km.csv")
 
 # Helper: fabrique la table finale pour une année donnée
 vars_to_nest <- c("treecover_area", "slope", "elevation",
@@ -865,7 +916,7 @@ build_year <- function(hr_object,
       by = c("hv001" = "DHSCLUST")
     ) %>%
     left_join(
-      all_class_5km %>% filter(DHSYEAR == year) %>% select(-DHSYEAR),
+      all_class %>% filter(DHSYEAR == year) %>% select(-DHSYEAR),
       by = c("hv001" = "DHSCLUST")
     ) %>%
     mutate(DHSYEAR = year) %>%
@@ -929,18 +980,28 @@ hr_2021_final_5km <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA") %>%
   hh_rural_path = "data/derived/hh_2021_rural_simpler.rds",
   spei_years = 2019:2021)
 
+hr_2018_final_5km <- read_spss("data/raw/mics/2018/SPSS datasets/hh.sav") %>%
+  select(hv001 = HH1,# cluter number, 
+         hv002 = HH2,# household number, 
+         hv219 = HHSEX,# sex of hhh: 1: Masculin, 2: féminin
+         hv220 = HHAGE) %>% # age of hhh: 
+  build_year(year = 2018,
+             hh_rural_path = "data/derived/hh_2021_rural_simpler.rds",
+             spei_years = 2016:2018)
+
 # Consolidation
 
-hr_consolidated_5km <- bind_rows(
+hr_consolidated <- bind_rows(
   hr_1997_final_5km,
   hr_2008_final_5km,
   hr_2011_final_5km,
   hr_2013_final_5km,
   hr_2016_final_5km,
+  hr_2018_final_5km,
   hr_2021_final_5km
 )
 
-hr_consolidated_5km %>% count(DHSYEAR)
+hr_consolidated %>% count(DHSYEAR)
 
 # Sauvegardes millésime
 write_rds(hr_1997_final_5km, "data/derived/hr_1997_final_5km.rds")
@@ -948,10 +1009,11 @@ write_rds(hr_2008_final_5km, "data/derived/hr_2008_final_5km.rds")
 write_rds(hr_2011_final_5km, "data/derived/hr_2011_final_5km.rds")
 write_rds(hr_2013_final_5km, "data/derived/hr_2013_final_5km.rds")
 write_rds(hr_2016_final_5km, "data/derived/hr_2016_final_5km.rds")
+write_rds(hr_2018_final_5km, "data/derived/hr_2018_final_5km.rds")
 write_rds(hr_2021_final_5km, "data/derived/hr_2021_final_5km.rds")
 
 # Sauvegarde consolidée
-write_rds(hr_consolidated_5km, "data/derived/hr_consolidated_5km_1997_2008_2011_2013_2016_2021.rds")
+write_rds(hr_consolidated_5km, "data/derived/hr_consolidated_5km_1997_2008_2011_2013_2016_2018_2021.rds")
 cat("Données enregistrées\n")
 ```
 
@@ -1219,6 +1281,7 @@ data_list <- list(
   "2011" = hr_2011_final_5km,
   "2013" = hr_2013_final_5km,
   "2016" = hr_2016_final_5km,
+  "2018" = hr_2016_final_5km,
   "2021" = hr_2021_final_5km 
 )
 
@@ -1246,6 +1309,7 @@ print(density_plot(hr_2008_final_5km, 2008, matching_variables))
 print(density_plot(hr_2011_final_5km, 2011, matching_variables))
 print(density_plot(hr_2013_final_5km, 2013, matching_variables))
 print(density_plot(hr_2016_final_5km, 2016, matching_variables))
+print(density_plot(hr_2018_final_5km, 2018, matching_variables))
 print(density_plot(hr_2021_final_5km, 2021, matching_variables))
 ```
 
@@ -1366,42 +1430,42 @@ library(didimputation)
 library(broom)
 
 # Chargement des données
-d97_5km <- read_rds("data/derived/data_matched_1997_5km.rds") %>%
+d97_5km <- read_rds("data/derived/data_matched_1997_5km_rescaled.rds") %>%
   rename(spei_wc_n_2 = spei_wc_1995,
          spei_wc_n_1 = spei_wc_1996,
          spei_wc_n   = spei_wc_1997) %>%
   mutate(hv219 = zap_labels(hv219), # hhh sex (1/2)
          hv220 = zap_labels(hv220)) # hhh age (num)
 
-d08_5km <- read_rds("data/derived/data_matched_2008_5km.rds") %>%
+d08_5km <- read_rds("data/derived/data_matched_2008_5km_rescaled.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2006,
          spei_wc_n_1 = spei_wc_2007,
          spei_wc_n   = spei_wc_2008) %>%
   mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
-d11_5km <- read_rds("data/derived/data_matched_2011_5km.rds") %>%
+d11_5km <- read_rds("data/derived/data_matched_2011_5km_rescaled.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2009,
          spei_wc_n_1 = spei_wc_2010,
          spei_wc_n   = spei_wc_2011) %>%
   mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
-d13_5km <- read_rds("data/derived/data_matched_2013_5km.rds") %>%
+d13_5km <- read_rds("data/derived/data_matched_2013_5km_rescaled.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2011,
          spei_wc_n_1 = spei_wc_2012,
          spei_wc_n   = spei_wc_2013) %>%
   mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
-d16_5km <- read_rds("data/derived/data_matched_2016_5km.rds") %>%
+d16_5km <- read_rds("data/derived/data_matched_2016_5km_rescaled.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2014,
          spei_wc_n_1 = spei_wc_2015,
          spei_wc_n   = spei_wc_2016) %>%
   mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
-d21_5km <- read_rds("data/derived/data_matched_2021_5km.rds") %>%
+d21_5km <- read_rds("data/derived/data_matched_2021_5km_rescaled.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2019,
          spei_wc_n_1 = spei_wc_2020,
          spei_wc_n   = spei_wc_2021) %>%
@@ -3102,35 +3166,35 @@ library(didimputation)
 library(broom)
 
 # Chargement des données
-d97_15km <- read_rds("data/derived/data_matched_1997_15km.rds") %>%
+d97_15km <- read_rds("data/derived/data_matched_1997_15km_rescaled.rds") %>%
   rename(spei_wc_n_2 = spei_wc_1995,
          spei_wc_n_1 = spei_wc_1996,
          spei_wc_n   = spei_wc_1997) %>%
   dplyr::mutate(hv219 = zap_labels(hv219), # hhh sex (1/2)
          hv220 = zap_labels(hv220)) # hhh age (num)
 
-d08_15km <- read_rds("data/derived/data_matched_2008_15km.rds") %>%
+d08_15km <- read_rds("data/derived/data_matched_2008_15km_rescaled.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2006,
          spei_wc_n_1 = spei_wc_2007,
          spei_wc_n   = spei_wc_2008) %>%
   dplyr::mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
-d11_15km <- read_rds("data/derived/data_matched_2011_15km.rds") %>%
+d11_15km <- read_rds("data/derived/data_matched_2011_15km_rescaled.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2009,
          spei_wc_n_1 = spei_wc_2010,
          spei_wc_n   = spei_wc_2011) %>%
   mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
-d13_15km <- read_rds("data/derived/data_matched_2013_15km.rds") %>%
+d13_15km <- read_rds("data/derived/data_matched_2013_15km_rescaled.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2011,
          spei_wc_n_1 = spei_wc_2012,
          spei_wc_n   = spei_wc_2013) %>%
   mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
-d16_15km <- read_rds("data/derived/data_matched_2016_15km.rds") %>%
+d16_15km <- read_rds("data/derived/data_matched_2016_15km_rescaled.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2014,
          spei_wc_n_1 = spei_wc_2015,
          spei_wc_n   = spei_wc_2016) %>%
@@ -3586,7 +3650,6 @@ H2-effect on inequalities: PA exacerbate economic inequalities, as better-off or
 ```{r}
 library(fuzzySim)
 library(did2s)
-library(qte)
 
 # Chargement des données
 d97 <- read_rds("data/derived/data_matched_1997.rds") %>%
@@ -3624,6 +3687,13 @@ d16 <- read_rds("data/derived/data_matched_2016.rds") %>%
   mutate(hv219 = zap_labels(hv219),
          hv220 = zap_labels(hv220))
 
+d18 <- read_rds("data/derived/data_matched_2018.rds") %>%
+  rename(spei_wc_n_2 = spei_wc_2016,
+         spei_wc_n_1 = spei_wc_2017,
+         spei_wc_n   = spei_wc_2018) %>%
+  mutate(hv219 = zap_labels(hv219),
+         hv220 = zap_labels(hv220))
+
 d21 <- read_rds("data/derived/data_matched_2021.rds") %>%
   rename(spei_wc_n_2 = spei_wc_2019,
          spei_wc_n_1 = spei_wc_2020,
@@ -3632,7 +3702,7 @@ d21 <- read_rds("data/derived/data_matched_2021.rds") %>%
          hv220 = zap_labels(hv220))
 
 # Préparation des données
-dat <- bind_rows(d97, d08, d11, d13, d16, d21) %>%
+dat <- bind_rows(d97, d08, d11, d13, d16, d18, d21) %>%
   filter(GROUP %in% c("Treatment","Control")) %>%
   mutate(
     hv219   = factor(hv219, levels = c(1,2), labels = c("Homme","Femme")), # sexe (cat.)
@@ -3641,137 +3711,314 @@ dat <- bind_rows(d97, d08, d11, d13, d16, d21) %>%
     w_svy   = hv005 / 1e6,
     w_all   = w_svy * weights, # poids d'enquête × poids de matching (si 'weights' existe)
     id      = row_number(),
-    # Map des années de statut -> première année d'observation post (treatment_phase)
-    treatment_phase = case_when(
-      STATUS_YR == 2010 ~ 2011,
-      STATUS_YR == 2012 ~ 2013,
-      STATUS_YR == 2015 ~ 2016,
-      STATUS_YR == 2017 ~ 2021,
-      is.na(STATUS_YR)  ~ 0,
-      TRUE               ~ STATUS_YR
+    treatment_phase = STATUS_YR,
+    cluster_uid = interaction(DHSYEAR, hv001, drop = TRUE)
     )
-  )
 
-# did2s (Gardner) : statique + event-study
-dat3 <- dat %>%
+# compute relative years and binned relative years
+dat2 <- dat %>%
   mutate(
     treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
     rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
-    # Binning prudent pour stabilité (-5..5)
-    rel_year_binned = pmax(pmin(rel_year, 5), -5)
+    rel_year_clipped = case_when(
+      is.infinite(rel_year) ~ NA_real_,
+      TRUE ~ pmax(pmin(rel_year, 10), -10)
+    ),
+    rel_year_2yr = case_when(
+      is.na(rel_year_clipped) ~ NA_integer_,
+      rel_year_clipped <= -9  ~ -5,
+      rel_year_clipped <= -7  ~ -4,
+      rel_year_clipped <= -5  ~ -3,
+      rel_year_clipped <= -3  ~ -2,
+      rel_year_clipped <= -1  ~ -1,
+      rel_year_clipped <=  1  ~  0,
+      rel_year_clipped <=  3  ~  1,
+      rel_year_clipped <=  5  ~  2,
+      rel_year_clipped <=  7  ~  3,
+      rel_year_clipped <=  9  ~  4,
+      TRUE                    ~  5
+    ),
+    GROUP2 = case_when(GROUP == "Treatment" ~ "Treat.",
+                      GROUP == "Control"   ~ "Ctrl.")
+  ) 
+
+## Label for binned years
+bin_label <- function(k) {
+  dplyr::case_when(
+    is.na(k) ~ NA_character_,
+    k == -5L ~ "min to -9",
+    k == -4L ~ "-8 to -7",
+    k == -3L ~ "-6 to -5",
+    k == -2L ~ "-4 to -3",
+    k == -1L ~ "-2 to -1",
+    k ==  0L ~ "0 to 1",
+    k ==  1L ~ "2 to 3",
+    k ==  2L ~ "4 to 5",
+    k ==  3L ~ "6 to 7",
+    k ==  4L ~ "8 to 9",
+    k ==  5L ~ "10 to max",
+    TRUE     ~ as.character(k)
+  )
+}
+
+# per-year bars (use unclipped years, otherwise -18 etc collapse to -10)
+year_counts <- dat2 %>%
+  filter(is.finite(rel_year), !is.na(GROUP2)) %>%
+  count(GROUP2, rel_year, name = "n_obs")
+
+# binned "top bars" + labels
+bin_top <- dat2 %>%
+  filter(is.finite(rel_year), !is.na(rel_year_2yr), !is.na(GROUP2)) %>%
+  group_by(GROUP2, rel_year_2yr) %>%
+  summarise(
+    y = dplyr::n(),
+    min_rel = min(rel_year),
+    max_rel = max(rel_year),
+    ymin = 0,
+    ymax = dplyr::n(),
+    xmin = min(rel_year) - 0.5,
+    xmax = max(rel_year) + 0.5,
+    .groups = "drop"
+  ) %>%
+  mutate(
+    lab = bin_label(rel_year_2yr),
+    xmin = case_when(
+      rel_year_2yr == -5L ~ min_rel - 0.5,
+      rel_year_2yr == -4L ~ -8.5,
+      rel_year_2yr == -3L ~ -6.5,
+      rel_year_2yr == -2L ~ -4.5,
+      rel_year_2yr == -1L ~ -2.5,
+      rel_year_2yr ==  0L ~ -0.5,
+      rel_year_2yr ==  1L ~  1.5,
+      rel_year_2yr ==  2L ~  3.5,
+      rel_year_2yr ==  3L ~  5.5,
+      rel_year_2yr ==  4L ~  7.5,
+      rel_year_2yr ==  5L ~  9.5
+    ),
+    xmax = case_when(
+      rel_year_2yr == -5L ~ -8.5,
+      rel_year_2yr == -4L ~ -6.5,
+      rel_year_2yr == -3L ~ -4.5,
+      rel_year_2yr == -2L ~ -2.5,
+      rel_year_2yr == -1L ~ -0.5,
+      rel_year_2yr ==  0L ~  1.5,
+      rel_year_2yr ==  1L ~  3.5,
+      rel_year_2yr ==  2L ~  5.5,
+      rel_year_2yr ==  3L ~  7.5,
+      rel_year_2yr ==  4L ~  9.5,
+      rel_year_2yr ==  5L ~  max_rel + 0.5
+    ),
+    xmid = (xmin + xmax) / 2
   )
 
-# Outcome h
-yvar <- "wealth_centile_rural_weighted"
+count_binned_obs_plot <- ggplot() +
+  geom_col(
+    data = year_counts,
+    aes(x = rel_year, y = n_obs, fill = "Annual count"),
+    colour = NA
+  ) +
+  geom_rect(
+    data = bin_top,
+    aes(
+      xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax,
+      colour = "Binned count"
+    ),
+    fill = NA,
+    linewidth = 0.4
+  ) +
+  geom_text(
+    data = bin_top,
+    aes(x = xmid, y = y, label = lab),
+    vjust = -0.4,
+    size = 4,
+    show.legend = FALSE
+  ) +
+  scale_fill_manual(
+    name = NULL,
+    breaks = "Annual count",
+    values = c("Annual count" = "grey70")
+  ) +
+  scale_colour_manual(
+    name = NULL,
+    breaks = "Binned count",
+    values = c("Binned count" = "black")
+  ) +
+  guides(
+    fill = guide_legend(override.aes = list(colour = NA)),
+    colour = guide_legend(override.aes = list(fill = NA, linewidth = 0.8))
+  ) +
+  labs(x = "Relative year", y = "Number of observations") +
+  theme_minimal(base_size = 15) +
+  theme(
+    legend.position = "top",
+    legend.box = "horizontal"
+  )
 
-# -- Statique (traitement "on/off")------------------------------
-did2s_static <- did2s(
-  data        = dat3,
+
+# Outcome
+yvar <- "zscore_wealth"
+
+# fixest DID 2×2: placebo 1997–2008, traitement 2008–2021 ------------------
+
+# Placebo 1997–2008
+pre <- dat %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
+  mutate(post = as.integer(DHSYEAR == 2008),
+         treat_post = treat * post)
+
+f_pre <- as.formula(paste(
+  yvar, "~ treat + post + treat_post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre <- feols(f_pre, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
+
+# Traitement 2008–2021
+main <- dat %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
+  mutate(post = as.integer(DHSYEAR == 2021),
+         treat_post = treat * post)
+
+f_main <- f_pre  # même formule
+
+m_main <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
+
+etable(m_pre, m_main, headers = c("Placebo 97–08", "Traitement 08–21"))
+
+# Extraction compacte des deux effets DID
+did_row <- function(model, year_post, vc = ~ cluster_uid, term = "treat_post"){
+  summary(model, vcov = vc) %>% broom::tidy() %>%
+    filter(term == !!term) %>%
+    transmute(year = year_post, estimate, se = std.error)
+}
+did_df <- bind_rows(
+  did_row(m_pre, 2008),
+  did_row(m_main, 2021)
+) %>%
+  mutate(period = factor(ifelse(year == 2008, "1997–2008 (placebo)", "2008–2021 (effect)"),
+                         levels = c("1997–2008 (placebo)", "2008–2021 (effect)")),
+         lo = estimate - 1.96*se,
+         hi = estimate + 1.96*se)
+
+h2_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = .2) +
+  geom_point(size = 3) +
+  labs(x = NULL, y = "Effect on z-score of wealth index centile",
+       title = "Impact on inequalities: 2x2 DiD impact on local population (< 10km)")
+
+# Statique (traitement "on/off")
+did2s_static_h2 <- did2s(
+  data        = dat2,
   yname       = yvar,
   first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
   second_stage= ~ i(treat_on, ref = FALSE),
   treatment   = "treat_on",
-  cluster_var = "hv001",
+  cluster_var = "cluster_uid",
   weights     = "w_all"
 )
-etable(did2s_static, headers = "did2s statique")
 
-# -- Event-study (avec binning -5..5, ref = -1 et never-treated)--
-did2s_es <- did2s(
-  data        = dat3,
+
+# Event study
+dat2 <- dat2 |>
+  mutate(
+    rel_year_2yr2 = case_when(
+      is.na(rel_year_2yr) ~ "never",
+      TRUE ~ as.character(rel_year_2yr)
+    ),
+    rel_year_2yr2 = factor(
+      rel_year_2yr2,
+      levels = c("-5","-4","-3","-2","-1","0","1","2","3","4","5","never")
+    )
+  )
+
+did2s_es_2yr <- did2s(
+  data        = dat2,
   yname       = yvar,
   first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage= ~ i(rel_year_binned, ref = c(-1, Inf)),
+  second_stage= ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment   = "treat_on",
   cluster_var = "hv001",
   weights     = "w_all"
 )
-etable(did2s_es, headers = "did2s event-study (-5..5)")
 
-# -- Testing Quantile treatment effects---------------------------
-# Avec CiC -------------------
+etable(did2s_es_2yr, headers = "did2s event-study (2-yr bins ±10)")
 
-## Traitement 2008 -> 2021
-set.seed(123)
-dat_2per <- dat %>%
-  filter(DHSYEAR %in% c(2008, 2021)) %>%
-  mutate(treat = as.integer(GROUP == "Treatment"))
+# Tidy coefficients and plot
+plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_2yr::", term)) %>%
+  mutate(k = as.numeric(sub("^rel_year_2yr::", "", term))) %>%
+  arrange(k)
 
-cic_res <- suppressWarnings(CiC(
-  formla = wealth_centile_rural_weighted ~ treat,
-  t = 2021, tmin1 = 2008, tname = "DHSYEAR",
-  data = dat_2per,
-  panel = FALSE, # repeated cross-sections
-  se = TRUE, iters = 200, # bootstrap
-  probs = seq(0.05, 0.95, 0.05),
-  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
-))
+plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_2yr2::", term)) %>%          # <- fix
+  mutate(k = sub("^rel_year_2yr2::", "", term)) %>%    # keep as string (includes "never")
+  mutate(k = factor(k, levels = c("-5","-4","-3","-2","0","1","2","3","4","5","never"))) %>%
+  arrange(k)
 
-summary(cic_res)
-ggqte(cic_res) + labs(x="Quantiles", y="QTET", title="CiC QTET: 2008-2021")
+h2_event_study_plot <- ggplot(plot_did2s_2yr, aes(k, estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = .2) +
+  labs(
+    x = "Year-to-treatment (binned by 2 and at ±10 years)",
+    y = "Estimated effect on z-score of wealth centile",
+    title = "Impact on inequalities: Event-study with 2-year bins"
+  ) + 
+  scale_x_discrete(labels = bin_label)
 
-## placebo
 
-## Placebo: 1997 -> 2008
-dat_placebo <- dat %>%
-  filter(DHSYEAR %in% c(1997, 2008)) %>%
-  mutate(treat = as.integer(GROUP == "Treatment"))
-
-# (Optional) sanity check:
-# with(dat_placebo, table(DHSYEAR, treat))
-
-cic_pre <-  suppressWarnings(CiC(
-  formla = wealth_centile_rural_simple ~ treat,
-  t = 2008, tmin1 = 1997, tname = "DHSYEAR",
-  data = dat_placebo,
-  panel = FALSE, # repeated cross-sections
-  se = TRUE, iters = 100, # bootstrap
-  probs = seq(0.05, 0.95, 0.05),
-  xformla = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
-))
-
-summary(cic_pre)
-
-ggqte(cic_pre) +
-  labs(x = "Quantiles", y = "QTET",
-       title = "Placebo CiC QTET: 1997-2008 - buffer 10 km")
-
-# Extraction du p-value du coefficient estimé par DID static-----
-tidy_H2 <- broom::tidy(did2s_static)
-
-p_H2_did <- tidy_H2 %>%
-  filter(term == "treat_on::1") %>% 
-  pull(p.value)
-
-# Extraction du p-value du coefficient estimé par event study-----
-ev <- broom::tidy(did2s_es) %>%
-  mutate(
-    p_fdr <- p.adjust(p.value, method = "BH")
-  )
-
-# Extraction du p-value du coefficient estimé par QTE------------ 
-library(dplyr)
-
-qte_df <- tibble(
-  quantile  = cic_res$probs,
-  QTE       = cic_res$qte,
-  Std_Error = cic_res$qte.se
-) %>% 
-  mutate(
-    t_stat  = QTE / Std_Error,
-    p_value = 2 * (1 - pnorm(abs(t_stat))),
-    p_fdr   = p.adjust(p_value, method = "BH")
-  )
-
-qte_df
-
-# Correction FDR BH 
-results_H2 <- list(
-  DID_p_value = p_H2_did,
-  EventStudy_Table = ev %>% dplyr::select(term, estimate, std.error),
-  QTE_table = qte_df 
+# Return relevant objects
+list(
+  did2s_tidy = plot_did2s_2yr,
+  plot = h2_event_study_plot
 )
-results_H2 
+
+# Extraction des p-values de H2
+# DID statique
+p_H2_static <- broom::tidy(did2s_static_h2) %>%
+  filter(term == "treat_on::1") %>%
+  transmute(
+    hypothesis = "H2_static",
+    term      = term,
+    estimate  = estimate,
+    std.error = std.error,
+    p_value   = p.value
+  )
+
+# Event study
+ev_tidy <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_2yr2::", term)) %>%
+  mutate(
+    k = sub("^rel_year_2yr2::", "", term),
+    k = factor(k, levels = c("-5","-4","-3","-2","-1","0","1","2","3","4","5","never"))
+  ) %>%
+  arrange(k) %>%
+  transmute(
+    hypothesis = "H2_event",
+    term      = term,
+    estimate  = estimate,
+    std.error = std.error,
+    p_value   = p.value
+  )
+
+
+all_tests <- bind_rows(
+  p_H2_static,
+  ev_tidy
+)
+
+
+# Application de la correction FDR
+results_FDR <- all_tests %>%
+  arrange(p_value) %>%
+  mutate(
+    p_BH = p.adjust(p_value, method = "BH"),
+    significant_5pct = p_BH < 0.05
+  )
+
+results_FDR
+
 ```
 
 L'estimation DID statique indique qu'en moyenne, la création des aires protégées n'a pas modifié significativement le score de richesse standardisé des ménages exposés (treat_on = 1:: 0.0015). Toutefois, l'analyse dynamique via l'event study) nuance cette conclusion. L' effet reste nul autour de l'année de la création des aires protégées, mais deviennent positifs et significatifs après deux à trois ans. L'effet n'est pas durable mais diminue environ cinq plus tard.
@@ -3784,94 +4031,149 @@ H3-heterogeneity: Impacts vary across PA depending on governance, community part
 
 ```{r}
 library(stringr)
-# Extraction des coefficients
-apply_fdr <- function(res_object, outcome_name){
+yvar <- "wealth_centile_rural_weighted"
 
-  coef_df <- broom::tidy(res_object$es) %>%
-    filter(grepl("^rel_year_binned::", term)) %>%
-    mutate(
-      year = as.numeric(str_extract(term, "(?<=::)-?[0-9]+")),
-      group = case_when(
-        grepl("usage_multiple", term, ignore.case = TRUE) ~ "usage_multiple",
-        grepl("strict", term, ignore.case = TRUE) ~ "strict",
-        TRUE ~ NA_character_
-      ),
-      
-      outcome = outcome_name,
-      p_fdr = p.adjust(p.value, method = "BH")
-      
-    )
-
-  return(coef_df)
-}
-
-wealth_fdr <- apply_fdr(res_wealth, "wealth_centile_rural_weighted")
-zscore_fdr <- apply_fdr(res_zscore, "zscore_wealth")
-
-list(
-  Wealth_FDR = wealth_fdr,
-  Zscore_FDR = zscore_fdr
+iucn_sets <- list(
+  strict = c("Ia","Ib","II","III","IV"),
+  multi  = c("V","VI")
 )
 
-# Plot----------------------- 
-# Ajouter des intervalles de confiance
-prep_for_plot <- function(df){
-  df %>%
-    mutate(
-      ci_low = estimate - 1.96 * std.error,
-      ci_high = estimate + 1.96 * std.error,
-      signif_raw = p.value < 0.05,
-      signif_fdr = p_fdr < 0.05
-    )
+is_strict <- function(x) x %in% iucn_sets$strict
+is_multi  <- function(x) x %in% iucn_sets$multi
+
+# DID 2x2-----------------------------------------------------
+dat3 <- dat %>%
+  mutate(
+    treat_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
+    treat_multi  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))
+  )
+
+# Placebo ---------------------------------------------------
+
+# Strict
+
+pre_strict <- dat3 %>%
+  filter(
+    DHSYEAR %in% c(1997, 2008),
+    treat_strict == 1 | (GROUP == "Control")
+  ) %>%
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+
+f_pre_strict <- as.formula(paste(
+  yvar, "~ treat_strict + post + treat_strict:post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre_strict <- feols(f_pre_strict, data = pre_strict, weights = ~ w_all, cluster = ~ hv001)
+
+# Multi
+pre_multi <- dat3 %>%
+  filter(
+    DHSYEAR %in% c(1997, 2008),
+    treat_multi == 1 | (GROUP == "Control")
+  ) %>%
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+
+f_pre_multi <- as.formula(paste(
+  yvar, "~ treat_multi + post + treat_multi:post +",
+  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+))
+
+m_pre_multi <- feols(f_pre_multi, data = pre_multi, weights = ~ w_all, cluster = ~ hv001)
+
+# Main estimation ---------------------------
+
+main_strict <- dat3 %>%
+  filter(
+    DHSYEAR %in% c(2008, 2021),
+    treat_strict == 1 | (GROUP == "Control")
+  ) %>%
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_strict <- feols(f_pre_strict, data = main_strict, weights = ~ w_all, cluster = ~ hv001)
+
+main_multi <- dat3 %>%
+  filter(
+    DHSYEAR %in% c(2008, 2021),
+    treat_multi == 1 | (GROUP == "Control")
+  ) %>%
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_multi  <- feols(f_pre_multi, data = main_multi, weights = ~ w_all, cluster = ~ hv001)
+
+
+did_row <- function(model, year_post, term){
+  summary(model) %>% broom::tidy() %>%
+    filter(term == !!term) %>%
+    transmute(year = year_post, estimate, se = std.error)
 }
 
-wealth_df <- prep_for_plot(wealth_fdr)
-zscore_df <- prep_for_plot(zscore_fdr)
+did_df <- bind_rows(
+  did_row(m_pre_strict, 2008, "treat_strict:post") %>% mutate(type = "strict"),
+  did_row(m_main_strict, 2021, "treat_strict:post") %>% mutate(type = "strict"),
+  did_row(m_pre_multi, 2008, "treat_multi:post") %>% mutate(type = "multi"),
+  did_row(m_main_multi, 2021, "treat_multi:post") %>% mutate(type = "multi")
+) %>%
+  mutate(
+    period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
+                    levels = c("1997–2008","2008–2021")),
+    lo = estimate - 1.96*se,
+    hi = estimate + 1.96*se
+  )
 
+# Calcul des p-values
+did_df <- did_df %>%
+  mutate(
+    t_stat = estimate / se,           
+    p_value = 2 * (1 - pnorm(abs(t_stat)))
+  )
 
-plot_event_study <- function(df, title, y_lab){
-  ggplot(df, aes(x = year, y = estimate)) + 
-    geom_hline(yintercept = 0, linetype = "dashed", size = 0.7) + 
-    geom_errorbar(
-      aes(ymin = ci_low, ymax = ci_high, color = signif_fdr),
-      width = 0.2, size = 0.9
-    ) +
-    geom_point(
-      aes(color = signif_fdr, size = signif_fdr),
-      alpha = 0.9
-    ) +
-    scale_color_manual(values = c("FALSE" = 2.3, "TRUE" = 4)) +
-    labs(
-      title = title,
-      x = "Année relative à la création des aires protégées",
-      y = y_lab,
-      color = "Significativité",
-      size = "Significativité"
-    ) +
-    
-    theme_minimal(base_size = 15) + 
-    theme(
-      legend.position = "bottom",
-      plot.title = element_text(face = "bold"),
-      panel.grid.minor = element_blank()
+# Application de FDR
+did_df <- did_df %>%
+  arrange(p_value) %>%
+  mutate(
+    p_BH = p.adjust(p_value, method = "BH"),      
+    significant_5pct = p_BH < 0.05          
+  )
+
+did_df
+
+tbl_gt <- did_df %>%
+  select(type, period, year, estimate, lo, hi, t_stat, p_value, p_BH, significant_5pct) %>%
+  gt() %>%
+  tab_header(
+    title = "DID Estimates with FDR Correction",
+    subtitle = "Strict vs Multi IUCN categories"
+  ) %>%
+  fmt_number(
+    columns = vars(estimate, lo, hi, t_stat, p_value, p_BH),
+    decimals = 3
+  ) %>%
+  cols_label(
+    type = "Category",
+    period = "Period",
+    year = "Year",
+    estimate = "Coefficient",
+    lo = "CI Lower",
+    hi = "CI Upper",
+    t_stat = "t-stat",
+    p_value = "p-value",
+    p_BH = "p-value (FDR BH)",
+    significant_5pct = "Significant"
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "lightgreen"),
+    locations = cells_body(
+      columns = vars(significant_5pct),
+      rows = significant_5pct == TRUE
     )
-}
+  )
 
-# Plot du wealth index 
-plot_wealth <- plot_event_study(
-  df = wealth_df,
-  title = "Effets temporels des aires protégées sur le Wealth index",
-  y_lab = "Effet estimé sur le centile du wealth Index"
-)
-plot_wealth
+tbl_gt
 
-# Plot du zscore du wealth index
-plot_zscore <- plot_event_study(
-  df = zscore_df,
-  title = "Effets temporels des aires protégées sur le zscore du Wealth index",
-  y_lab = "Effet estimé sur le zscore du wealth Index"
-)
-plot_zscore
+
 ```
 
 Avant correction multiple, les coefficients ne montrent pas de tendance stable d'amélioration ou de détérioration de l'indice de richesse. Après le contrôle du risque de faux positifs, seul un effet négatif marqué sur l'indice de richesse demeure statistiquement significatif, suggérant un effet transitoire d'appauvrissement après deux ans de la mise en place des aires protégées. Les ménages localisés à 10 km des aires protégées ont dû subir un choc économique ponctuel (choc d'implémentation ou perte d'accès aux ressources ou transition socio-économique avant ajustement), plutôt qu'une tendance persistante.
@@ -3888,7 +4190,7 @@ library(fixest)
 library(readr)
 
 # Chargement des données 
-hr_consolidated <- read_rds("data/derived/hr_consolidated_1997_2008_2011_2013_2016_2021.rds")
+hr_consolidated <- read_rds("data/derived/hr_consolidated_1997_2008_2011_2013_2016_2018_2021.rds")
 
 # Construction des cohortes de ménage
 pseudo_panel <- hr_consolidated %>%
@@ -3942,6 +4244,46 @@ fe_model_zscore <- feols(
 )
 
 summary(fe_model_zscore, cluster = ~ hv001) 
+
+# Extraire tidy des deux modèles FE 
+tidy_wealth <- broom::tidy(fe_model_wealth, conf.int = TRUE, cluster = ~ hv001) %>%
+  mutate(outcome = "wealth_centile_mean")
+
+tidy_zscore <- broom::tidy(fe_model_zscore, conf.int = TRUE, cluster = ~ hv001) %>%
+  mutate(outcome = "zscore_wealth_mean")
+
+# Combiner les deux résultats 
+results_fe <- bind_rows(tidy_wealth, tidy_zscore) %>%
+  select(outcome, term, estimate, std.error, conf.low, conf.high, statistic, p.value)
+
+# Transformer en tableau gt 
+tbl_fe <- results_fe %>%
+  gt(groupname_col = "outcome") %>%
+  fmt_number(
+    columns = vars(estimate, std.error, conf.low, conf.high, statistic, p.value),
+    decimals = 3
+  ) %>%
+  tab_header(
+    title = "Pseudo panel Analysis",
+    subtitle = "Clustered standard errors at the hv001 level"
+  ) %>%
+  cols_label(
+    term = "Variable",
+    estimate = "Estimate",
+    std.error = "Std. Error",
+    conf.low = "CI Lower",
+    conf.high = "CI Upper",
+    statistic = "t value",
+    p.value = "p-value"
+  ) %>%
+  tab_style(
+    style = list(cell_text(weight = "bold")),
+    locations = cells_column_labels(columns = everything())
+  )
+
+
+write_rds(tbl_fe, "table/pseudo_results.rds")
+
 ```
 
 L'analyse du pseudo panel montre que l'indice de richesse moyen des cohortes de ménages est influencée par les facteurs environnementaux: plusieurs covariables apparaissent robustes et significatifs. Les résultats indiquent que les ménages situés en altitude et dans des zones densément peuplées présentent un indice de richesse plus élevé. La couverture forestière est également positive et significative. Tandis que la pente et l'accessibilité montre un effet négatif sur l'indice de richesse. En revanche, les variables socio-démographiques (sexe et âge du chef de ménage) n'ont pas d'effet significatif, suggérant que les conditions spatiales et environnementales jouent un rôle plus déterminant que les caractéristiques individuelles des ménages.
@@ -3963,6 +4305,7 @@ data_matched_2008 <- readRDS("data/derived/data_matched_2008.rds")
 data_matched_2011 <- readRDS("data/derived/data_matched_2011.rds")
 data_matched_2013 <- readRDS("data/derived/data_matched_2013.rds")
 data_matched_2016 <- readRDS("data/derived/data_matched_2016.rds")
+data_matched_2018 <- readRDS("data/derived/data_matched_2018.rds")
 data_matched_2021 <- readRDS("data/derived/data_matched_2021.rds")
 
 # Regrouper les jeux de données 
@@ -3972,6 +4315,7 @@ years_data <- list(
   "2011" = data_matched_2011,
   "2013" = data_matched_2013,
   "2016" = data_matched_2016,
+  "2018" = data_matched_2018,
   "2021" = data_matched_2021
 )
 
@@ -3997,6 +4341,51 @@ results_all <- lapply(names(years_data), function(year) {
 })
 
 print(results_all)
+
+# Extraire les résultats dans un tibble
+results_tbl <- lapply(names(years_data), function(year) {
+  df <- years_data[[year]]
+  treated <- df$wealth_centile_rural_simple[df$GROUP == "Treatment"]
+  control <- df$wealth_centile_rural_simple[df$GROUP == "Control"]
+  
+  # Test de Wilcoxon
+  wilcox_test <- wilcox.test(treated, control)
+  
+  # Sensibilité
+  res_p <- psens(x = treated, y = control, Gamma = 3, GammaInc = 0.5)
+  res_hl <- hlsens(x = treated, y = control, Gamma = 3, GammaInc = 0.5)
+  
+  # Extraire les bornes min/max pour p-value et HL
+  tibble(
+    Year = year,
+    Wilcoxon_p = wilcox_test$p.value,
+    Gamma_p_min = min(res_p$bounds$Upper, res_p$bounds$Lower),
+    Gamma_p_max = max(res_p$bounds$Upper, res_p$bounds$Lower),
+    Gamma_HL_min = min(res_hl$bounds$Upper, res_hl$bounds$Lower),
+    Gamma_HL_max = max(res_hl$bounds$Upper, res_hl$bounds$Lower)
+  )
+}) %>%
+  bind_rows()
+
+# Créer le tableau gt ---
+tbl_gt <- results_tbl %>%
+  gt() %>%
+  tab_header(
+    title = "Sensitivity Analysis Results by Year"
+  ) %>%
+  fmt_number(
+    columns = vars(Wilcoxon_p, Gamma_p_min, Gamma_p_max, Gamma_HL_min, Gamma_HL_max),
+    decimals = 3
+  ) %>%
+  cols_label(
+    Year = "Survey Year",
+    Wilcoxon_p = "Wilcoxon p-value",
+    Gamma_p_min = "Gamma p min",
+    Gamma_p_max = "Gamma p max",
+    Gamma_HL_min = "Gamma HL min",
+    Gamma_HL_max = "Gamma HL max"
+  )
+
 ```
 
 Le résultat montre que les effets estimés diffèrent selon les années, mais restent globablement peu robustes face à l'hypothèse d'un biais non observé. En 2008, 2011 et 2016, les tests suggèrent un effet significatif lorsqu'on suppose l'absence de biais ( Γ = 1). cependant, cet effet disparaît rapidement dès qu'un faible déséquilibre non mesuré est introduit ( Γ \> 1). Les intervalles de Hodges-Lehmann incluent des zéro et les bornes de p-values dépassent le seuil de 0.05, remettant en question la significativité. Pour les années 1997, 2013 et 2021, aucun effet significatif n'est détecté et les bornes de sensibilité montrent qu'un biais très faible suffit à rendre les conclusions incertaines.
@@ -4058,7 +4447,7 @@ d21 <- read_rds("data/derived/data_matched_2021.rds") %>%
 dat <- bind_rows(d97, d08, d11, d13, d16, d21) %>%
   filter(GROUP %in% c("Treatment","Control")) %>%
   mutate(
-    hv219   = factor(hv219, levels = c(1,2), labels = c("Homme","Femme")), # sexe (cat.)
+    hv219   = factor(hv219, levels = c(1,2), labels = c("Man","Woman")), # sexe (cat.)
     hv220   = as.numeric(hv220),                                           # âge
     treat   = as.integer(GROUP == "Treatment"),
     w_svy   = hv005 / 1e6,
@@ -4093,7 +4482,29 @@ did_sex <- did2s(
   weights = "w_all"
 )
 
-etable(did_sex, headers = "Effet hétérogène par sexe")
+etable(did_sex, headers = "Heteregeneous effects by sex of head of household")
+
+# Extraire les coefficients tidy 
+tidy_did_sex <- broom::tidy(did_sex, conf.int = TRUE) %>%
+  select(term, estimate, std.error, conf.low, conf.high, p.value)
+
+# Créer un tableau gt
+tbl_did_sex <- tidy_did_sex %>%
+  gt() %>%
+  fmt_number(
+    columns = vars(estimate, std.error, conf.low, conf.high, p.value),
+    decimals = 3
+  ) %>%
+  cols_label(
+    term = "Variable",
+    estimate = "Estimate",
+    std.error = "Std. Error",
+    conf.low = "CI lower",
+    conf.high = "CI upper",
+    p.value = "p-value"
+  )
+
+
 ```
 
 Les résultats montrent une forte disparité de richesse selon le sexe du chef de ménage. Les ménages dirigés par des hommes présentent en moyenne un niveau de richesse significativement plus élevé (0.7440), tandis que ceux dirigés par des femmes ont en moyenne un centile de richesse plus faible (-2.307). L'effet moyen des aires protégées sur la richesse n'est pas, en revanche, significatif. L'interaction entre le traitement et le sexe du chef de ménage ne révèle pas non plus de différence robuste entre hommes et femmes.
@@ -4123,7 +4534,29 @@ did_age <- did2s(
   weights = "w_all"
 )
 
-etable(did_age, headers = "Effet hétérogène par âge")
+etable(did_age, headers = "Heterogeneous Effet for age")
+
+# Extraire les coefficients tidy
+tidy_did_age <- broom::tidy(did_age, conf.int = TRUE) %>%
+  select(term, estimate, std.error, conf.low, conf.high, p.value) %>%
+  mutate(term = gsub("age_group", "Age group", term))
+
+# Créer le tableau gt
+tbl_did_age <- tidy_did_age %>%
+  gt() %>%
+  fmt_number(
+    columns = vars(estimate, std.error, conf.low, conf.high, p.value),
+    decimals = 3
+  ) %>%
+  cols_label(
+    term = "Variable",
+    estimate = "Estimate",
+    std.error = "Std. Error",
+    conf.low = "CI Lower",
+    conf.high = "CI Upper",
+    p.value = "p-value"
+  )
+
 ```
 
 Les résultats montrent que les aires protégées n'ont pas d'impact significatif sur la richesse des ménages selon l'âge du chef de ménages. Seuls les ménages dont le chef est âgé de 45 - 59 ans apparaissent significativement plus riches (2.920) que les autres. Aucune interaction par âge ne montre pas non plus un effet robuste.
@@ -4133,7 +4566,7 @@ Les résultats montrent que les aires protégées n'ont pas d'impact significati
 ```{r}
 # Effet hétérogène par pluviométrie (pluie vs sécheresse)
 dat <- dat %>%
-  mutate(rain_group = ifelse(spei_wc_n > 0, "pluie", "sécheresse"))
+  mutate(rain_group = ifelse(spei_wc_n > 0, "rain", "drought"))
 
 did_rain <- did2s(
   data = dat, 
@@ -4145,7 +4578,29 @@ did_rain <- did2s(
   weights = "w_all"
 )
 
-etable(did_rain, headers = "Effet hétérogène par pluviométrie")
+etable(did_rain, headers = "Heterogenous effect by climate")
+
+#  Extraire les coefficients tidy 
+tidy_did_rain <- broom::tidy(did_rain, conf.int = TRUE) %>%
+  select(term, estimate, std.error, conf.low, conf.high, p.value) %>%
+  mutate(term = gsub("rain_group", "Rain group", term))
+
+#  Créer le tableau gt 
+tbl_did_rain <- tidy_did_rain %>%
+  gt() %>%
+  fmt_number(
+    columns = vars(estimate, std.error, conf.low, conf.high, p.value),
+    decimals = 3
+  ) %>%
+  cols_label(
+    term = "Variable",
+    estimate = "Estimate",
+    std.error = "Std. Error",
+    conf.low = "CI Lower",
+    conf.high = "CI Upper",
+    p.value = "p-value"
+  ) 
+
 ```
 
 Le résultat montre que les aires protégées n'ont pas d'impact significatif sur la richesse, quelle que soit la condition climatique, même si les ménages observées en période de pluies semblent légèrement plus riches.

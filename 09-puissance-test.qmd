@@ -24,40 +24,67 @@ library(haven)
 library(sf) 
 library(tmap) 
 library(gt)  
+library(codebook)
 library(writexl)
 library(wdpar)
-library(geodata) # Pour avoir le contour de Madagascar
-library(writexl) # Pour faire une sortie sous Excel
-library(units) # Unités de mesure pour les vecteurs R
-library(leaflet) # Pour faire une cartographie interactive
-library(readxl) # Lecture des fichiers excel
-library(tibble)
-
-# Systèmes de coordonnées de référence 
-standard_crs <- 4326
-mdg_crs <- 29702 
 
 # Load data about protected areas 
 wdpa_terrestre_mod <- st_read("data/derived/wdpa_terrestre_mod.shp")
 
 wdpa_before_2008 <- read_csv("data/derived/wdpa_before_2008.csv")
 
-wdpa_from_2008 <- read_csv("data/derived/wdpa_from_2008.csv")
+wdpa_after_2008 <- read_csv("data/derived/wdpa_from_2008.csv")
 
-# Load cluster classification 
-cluster_treatment_classification_staggered <- read.csv("data/derived/cluster_treatment_classification_staggered.csv")
+# Cluster classification
+cluster_treatment_classification <- read.csv("data/derived/cluster_treatment_classification_staggered.csv")
+
 
 # Load data before matching
 hr_1997_final <- readRDS("data/derived/hr_1997_final.rds")
 hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
-#hr_2011_final <- readRDS("data/derived/hr_2011_final.rds")
-#hr_2013_final <- readRDS("data/derived/hr_2013_final.rds")
-#hr_2016_final <- readRDS("data/derived/hr_2016_final.rds")
+hr_2011_final <- readRDS("data/derived/hr_2011_final.rds")
+hr_2013_final <- readRDS("data/derived/hr_2013_final.rds")
+hr_2016_final <- readRDS("data/derived/hr_2016_final.rds")
 hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
-
 ```
 
 L'étude va se focaliser sur les aires protégées créées entre 2008 et 2021. Un tableau croisé présente la comparaison entre celles créées avant et après cette période, en indiquant à la fois les nombres d'aires protégées et leurs superficies.
+
+```{r}
+# Definition de la fonction
+pivot_year <- 2008
+
+summary_table <- wdpa_terrestre_mod %>%
+  st_drop_geometry() %>%
+  mutate(Creation_Period = if_else(STATUS_ < pivot_year,
+                                   paste("Avant", pivot_year),
+                                   paste("À partir de", pivot_year))) %>%
+  group_by(Creation_Period) %>%
+  summarise(
+    Count = n(),
+    Area_km2 = sum(are_km2, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+# Formatage du tableau avec gt
+gt_table <- gt(summary_table) %>%
+  tab_header(
+    title = paste("Aires protégées par période de création (Année pivot = ", pivot_year, ")"),
+    subtitle = "Zones terrestres uniquement"
+  ) %>%
+  cols_label(
+    Creation_Period = "Période de Création",
+    Count = "Nombre d'AP",
+    Area_km2 = "Surface km²"
+  ) %>%
+  fmt_number(
+    columns = c(Count, Area_km2),
+    decimals = 0
+  )
+
+gt_table
+```
 
 ## Calcul de la puissance statistique pour les ménages ruraux
 
@@ -70,133 +97,106 @@ où sont les moyennes des groupes de traitement et de contrôle, et est l'écart
 Nous utilisons les valeurs du groupe de traitement pour les deux groupes car le processus d'appariement n'a pas encore été effectué. Nous supposons que le groupe de contrôle, une fois apparié, sera similaire au groupe de traitement en termes de variabilité et de taille d'échantillon.
 
 ```{r}
-# Select rural treated and control clusters (year 2021)
-clusters_tc <- cluster_treatment_classification_staggered %>%
-  filter(GROUP %in% c("Treatment", "Control"),
-         DHSYEAR == 2021)
 
-treated_clusters <- clusters_tc %>%
-  filter(GROUP == "Treatment") %>%
+# Extraire les clusters traités en 2021
+treatment_clusters_2021 <- cluster_treatment_classification %>%
+  filter(GROUP == "Treatment", DHSYEAR == 2021) %>%
   pull(DHSCLUST)
 
-control_clusters <- clusters_tc %>%
-  filter(GROUP == "Control") %>%
-  pull(DHSCLUST)
 
-# Select rural households
-treated_data <- hr_2021_final %>%
-  filter(hv001 %in% treated_clusters)
+# Filtrer hr_2021_final pour tenir compte que les observations traitées 
+household_treatment_2021 <- hr_2021_final %>%
+  filter(hv001 %in% treatment_clusters_2021)
 
-control_data <- hr_2021_final %>%
-  filter(hv001 %in% control_clusters)
-
-# Function to compute clustered MDE and statistical power
-compute_clustered_mde <- function(treated_data, control_data,
-                                  outcome_var = "wealth_centile_rural_simple",
-                                  alpha = 0.05, power = 0.80) {
+# Function to compute power calculations
+compute_power_stats <- function(data, outcome_var) {
+  # Calculate standard deviation for the specified outcome variable
+  sd_outcome_treatment <- sd(data[[outcome_var]], na.rm=TRUE)
   
-  # Combine treated and control samples
-  data_all <- bind_rows(treated_data, control_data)
+  # Calculate intra-cluster correlation using a mixed-effects model
+  icc_model <- lmer(as.formula(paste(outcome_var, "~ 1 + (1 | hv001)")), 
+                    data=data, REML=TRUE)
   
-  if (nrow(treated_data) == 0 | nrow(control_data) == 0) {
-    stop("Error: Treated or control group is empty.")
-  }
+  # Extract variance components
+  variance_components <- as.data.frame(VarCorr(icc_model)) %>%
+    select(grp, vcov)
   
-  # Standard deviation of the outcome variable
-  sd_outcome <- sd(data_all[[outcome_var]], na.rm = TRUE)
+  between_cluster_variance <- variance_components %>%
+    filter(grp == "hv001") %>%
+    pull(vcov)
   
-  # Intraclass Correlation Coefficient (ICC) using random intercept model
-  icc_model <- lmer(as.formula(paste(outcome_var, "~ 1 + (1 | hv001)")),
-                    data = data_all, REML = TRUE)
+  within_cluster_variance <- variance_components %>%
+    filter(grp == "Residual") %>%
+    pull(vcov)
   
-  vc <- as.data.frame(VarCorr(icc_model))
-  between_var <- vc %>% filter(grp == "hv001") %>% pull(vcov)
-  within_var  <- vc %>% filter(grp == "Residual") %>% pull(vcov)
+  # Calculate ICC
+  icc_value <- between_cluster_variance / 
+    (between_cluster_variance + within_cluster_variance)
   
-  icc_value <- between_var / (between_var + within_var)
+  # Parameters for 2021
+  alpha <- 0.05          # Significance level
+  power <- 0.8           # Desired power
+  rho <- icc_value       # Intra-cluster correlation
   
-  # Sample sizes
-  n_treated <- nrow(treated_data)
-  n_control <- nrow(control_data)
+  # Sample Sizes
+  treated_2021 <- nrow(data)
+  control_2021 <- nrow(data)
+  clusters_treated_2021 <- length(unique(data$hv001))
+  clusters_control_2021 <- clusters_treated_2021
   
-  n_clusters_treated <- length(unique(treated_data$hv001))
-  n_clusters_control <- length(unique(control_data$hv001))
-  
-  # Average cluster size
-  m_treated <- n_treated / n_clusters_treated
-  m_control <- n_control / n_clusters_control
-  
-  # Design effects
-  de_treated <- 1 + (m_treated - 1) * icc_value
-  de_control <- 1 + (m_control - 1) * icc_value
+  # Design effect calculation
+  design_effect_2021_treated <- 
+    1 + (treated_2021 / clusters_treated_2021 - 1) * rho
+  design_effect_2021_control <- 
+    1 + (control_2021 / clusters_control_2021 - 1) * rho
   
   # Effective sample sizes
-  eff_n_treated <- n_treated / de_treated
-  eff_n_control <- n_control / de_control
+  effective_n_2021_treated <- treated_2021 / design_effect_2021_treated
+  effective_n_2021_control <- control_2021 / design_effect_2021_control
   
-  # Minimum Detectable Effect (Cohen's d)
-  power_result <- pwr.t2n.test(
-    n1 = eff_n_treated,
-    n2 = eff_n_control,
-    sig.level = alpha,
-    power = power
+  # Calculate the minimum detectable effect size
+  result <- pwr.t2n.test(
+    n1=effective_n_2021_treated,
+    n2=effective_n_2021_control,
+    sig.level=alpha,
+    power=power
   )
+  cohens_d <- result$d 
   
-  cohens_d <- power_result$d
+  # Convert Cohen's d to outcome units
+  mde_in_units <- cohens_d * sd_outcome_treatment
   
-  # MDE in outcome variable units
-  mde_value <- cohens_d * sd_outcome
-  
-  # Create results table
+    # Create a table with the results
   results_table <- tibble(
-    Metric = c("ICC (Intraclass Correlation Coefficient)",
-               "Adjusted Standard Deviation",
-               "Cohen's d",
-               "MDE in Outcome Variable Units"),
-    Value = c(icc_value, sd_outcome,
-              cohens_d, mde_value)
+    Métrique=c("ICC", "Écart type ajusté", "d de Cohen", 
+               "MDE en unité de la variable de résultat"),
+    Valeur=c(icc_value, sd_outcome_treatment, cohens_d, mde_in_units)
   )
   
-  # Table with gt
-  stat_table <- gt(results_table) %>%
-    tab_header(
-      title = "Statistical Power for Wealth Index Centiles",
-      subtitle = paste0("Outcome variable: ", outcome_var)
-    ) %>%
-    fmt_number(
-      columns = Value,
-      decimals = 4
-    ) %>%
-    cols_align(
-      align = "center",
-      columns = everything()
-    ) %>%
-    tab_source_note(
-      source_note = paste0(
-        "Outcome variable = wealth_centile_rural_simple, centiles of the wealth index."
-      ))
-  
-  return(stat_table)
+  # Display the results using gt
+  gt(results_table) %>%
+    fmt_number(columns="Valeur",
+               decimals=4) %>%
+    cols_label(Métrique="Métrique",
+               Valeur="Valeur") %>%
+    cols_align(align="center",
+               columns=everything())
 }
 
-# Compute MDE for rural households
-stat_table <- compute_clustered_mde(treated_data, control_data,
-                      outcome_var = "wealth_centile_rural_simple")
-
-# Save the file
-stat_power_file <- "data/derived/stat_power.rds"
-saveRDS(stat_table, stat_power_file)
-
+# Calculate for all treatment households using hv270 
+compute_power_stats(hr_2021_final, "wealth_centile_rural_simple") %>%
+  tab_header("Puissance statistique pour une analyse incluant ménages urbains 
+             et ruraux") %>%
+  tab_footnote("Variable de résultat = wealth_centile_rural_simple, indice de niveau de vie commun 
+               aux milieux urbains et ruraux.")
 ```
 
 L'interprétation des résultats pour le calcul de puissance basé sur l'indice de richesse est la suivante:
 
--   L'ICC (Intra-cluster Correlation) est de 0,4767, ce qui indique une forte corrélation intra-grappes. Cela signifie qu'une grande partie de la variabilité de l'indice de richesse est attribuable aux différences entre les aires d'enquête.
+-   L'ICC (Intra-cluster Correlation) est de 0,5360, ce qui indique une forte corrélation intra-grappes. Cela signifie qu'une grande partie de la variabilité de l'indice de richesse est attribuable aux différences entre les aires d'enquête.
 
--   L'écart-type ajusté de 27.9712 indique la dispersion des scores de l'indice de richesse autour de la moyenne. Etant donné que l'indice varie entre 1 et 5, cet écart-type est relativement important.
+-   L'écart-type ajusté de 29,8548 indique la dispersion des scores de l'indice de richesse autour de la moyenne. Etant donné que l'indice varie entre 1 et 5, cet écrat-type est relativement important.
 
--   Le d de Cohen de 0.2653 renvoie à un effet d'une ampleur modérée selon les normes conventionnelles. Cela signifie qu'une différence significative devrait être détectable entre les groupes de traitement et de contrôle après le processus de matching. Il faut cependant le convertir en unités de résultat pour se faire une idée.
+-   Le d de Cohen de 0.1334 renvoie à un effet d'une ampleur modérée selon les normes conventionnelles. Cela signifie qu'une différence significative devrait être détectable entre les groupes de traitement et de contrôle après le processus de matching. Il faut cependant le convertir en unités de résultat pour se faire une idée.
 
--   Le MDE en unités de résultat est de 7.4200, ce qui indique que l'étude est capable de détecter un changement minim
-
-Pour pouvoir être détecté, l'impact des aires protégées devra être de 7.6 points en terme de pourcentile d'actifs.
+-   Le MDE en unités de résultat est de 3,8504, ce qui indique que l'étude est capable de détecter un changement minim
