@@ -1,0 +1,1051 @@
+---
+output: typst
+editor_options: 
+  chunk_output_type: console
+---
+
+# Child health outcomes: anthropometric z-scores and under-5 mortality
+
+## Motivation
+
+The main analysis in @sec-estimation uses a composite wealth index as the outcome. While informative about general household well-being, this measure aggregates multiple asset dimensions and may mask specific channels through which protected areas affect local populations. In this chapter, we use child-level health outcomes — anthropometric z-scores and under-5 mortality — as alternative dependent variables. These outcomes offer several advantages:
+  
+1. **Granularity**: Children's anthropometric measurements (height-for-age, weight-for-age) are individual-level continuous variables measured with standardized protocols, as opposed to the asset-based wealth index that is constructed at the household level.
+
+2. **More observations**: Each matched household may contain multiple children under 5, increasing the effective sample size and potentially the statistical power of the analysis.
+
+3. **Direct welfare interpretation**: Stunting (low height-for-age) and underweight (low weight-for-age) are direct measures of child well-being, reflecting nutritional intake and disease burden. Under-5 mortality is the most extreme welfare outcome.
+
+4. **Policy relevance**: Child malnutrition and mortality are key indicators for SDG 2 (Zero Hunger) and SDG 3 (Good Health and Well-being), and are directly relevant to the debate on whether protected areas improve or worsen local welfare.
+
+We follow the same identification strategy as the main analysis: we reuse the existing matched samples (genetic matching on cluster-level covariates) and estimate both 2×2 and staggered difference-in-differences models. The matching is **not** re-implemented; we join child-level survey data to the pre-existing matched household datasets.
+
+### Data availability summary
+
+Anthropometric z-scores are only available in surveys that measured children's height and weight:
+
+| Year | Source | HAZ | WAZ/WHZ | Mortality | Matched children (anthro) | Matched births (mortality) |
+|------|--------|-----|---------|-----------|---------------------------|----------------------------|
+| 1997 | DHS-III | ✓ | ✓ | ✓ | 396 | 478 |
+| 2008 | DHS-V | ✓ (height only) | ✗ | ✓ | 875 | 2,223 |
+| 2011 | MIS | ✗ | ✗ | ✓ | — | 926 |
+| 2013 | MIS | ✗ | ✗ | ✓ | — | 1,356 |
+| 2016 | MIS | ✗ | ✗ | ✓ | — | 1,163 |
+| 2018 | MICS-6 | ✓ | ✓ | ✓ | 232 | 261 |
+| 2021 | DHS-VIII | ✓ | ✓ | ✓ | 1,243 | 2,714 |
+
+The MIS surveys (2011, 2013, 2016) did not include anthropometric measurements but do contain full birth histories (mortality data). The 2008 DHS measured height but not weight, so only HAZ is available for that year. Consequently:
+
+- **HAZ analysis**: 4 time points (1997, 2008, 2018, 2021), ~2,746 observations.
+- **Under-5 mortality analysis**: 7 time points, ~9,121 observations.
+- For comparison, the household-level wealth analysis uses ~14,128 observations across all years.
+
+## Variable definitions
+
+### Height-for-age z-score (HAZ)
+
+Height-for-age z-scores measure a child's height relative to the WHO Child Growth Standards 2006 reference population of well-nourished children of the same age and sex. A HAZ below −2 SD indicates stunting (chronic malnutrition); below −3 SD indicates severe stunting.
+
+**DHS coding** (source: DHS Guide to Statistics, Nutritional Status chapter):
+
+- Variable `hc70` (PR/HW file) or `hw70` (KR file): Height/Age standard deviation according to WHO 2006 standards. Stored as integer × 100 (e.g., −150 = −1.50 SD). Flag values: 9996 = height out of plausible limits, 9997 = age in days out of plausible limits, 9998 = flagged case, 9999 = missing. Valid z-scores are filtered to [−6, +6] SD.
+- For DHS-III (1997), z-scores based on WHO 2006 standards were retrospectively calculated and stored in the separate HW file (`MDHW31FL.DTA`) as `hc70`.
+- For DHS-V onwards (2008, 2021), `hw70` is included directly in the KR file.
+
+**MICS coding** (Madagascar MICS-6, 2018):
+
+- Variable `HAZ2`: Height-for-age z-score according to WHO 2006 standards. Stored in standard units (e.g., −1.50). Values of 99.99 indicate missing/implausible data. `HAZFLAG = 1` indicates a flagged observation. Valid z-scores: `HAZ2 < 90 & (HAZFLAG == 0 | is.na(HAZFLAG))`.
+
+### Weight-for-age z-score (WAZ)
+
+Weight-for-age z-scores measure a child's weight relative to the WHO 2006 reference. A WAZ below −2 SD indicates underweight; below −3 SD indicates severe underweight. This is a composite indicator reflecting both chronic and acute malnutrition.
+
+- DHS: `hw71` (KR file) or `hc71` (PR/HW file). Same coding as HAZ. Available for 1997 and 2021 only (not measured in 2008 Madagascar DHS).
+- MICS: `WAZ2`. Same coding as `HAZ2`.
+
+### Under-5 mortality
+
+A binary indicator equal to 1 if a child born in the 5 years preceding the survey died before the interview, 0 otherwise. Since the DHS/MICS children's recode (KR/bh) contains only births in the reference period (last 5 years), all deaths recorded (b5 = 0 in DHS, BH5 = 2 in MICS) are by construction under-5 deaths.
+
+- DHS: `b5` (child is alive: 1 = yes, 0 = no). `b7` = age at death in completed months (available in full DHS rounds, NA in MIS surveys).
+- MICS: `BH5` (child alive: 1 = yes, 2 = no). Birth history file restricted to births in 2013–2018 for comparability with DHS 5-year window.
+
+## Data loading and harmonization
+
+```{r}
+#| label: setup
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(haven)
+library(fixest)
+library(did2s)
+library(modelsummary)
+library(broom)
+library(ggplot2)
+library(gt)
+library(sf)
+
+options(scipen = 999)
+```
+
+### Load matched household data
+
+```{r}
+#| label: load-matched
+
+load_matched <- function(path, year, spei_years) {
+  read_rds(path) |>
+    st_drop_geometry() |>
+    mutate(DHSYEAR = year) |>
+    rename(
+      spei_wc_n_2 = !!sym(paste0("spei_wc_", spei_years[1])),
+      spei_wc_n_1 = !!sym(paste0("spei_wc_", spei_years[2])),
+      spei_wc_n   = !!sym(paste0("spei_wc_", spei_years[3]))
+    ) |>
+    mutate(
+      hv219 = zap_labels(hv219),
+      hv220 = as.numeric(zap_labels(hv220))
+    ) |>
+    filter(GROUP %in% c("Treatment", "Control")) |>
+    select(DHSYEAR, hv001, hv002, hv005, GROUP, WDPAID, STATUS_YR, IUCN_CAT,
+           treatment, weights, spei_wc_n_2, spei_wc_n_1, spei_wc_n, hv219, hv220)
+}
+
+matched_all <- bind_rows(
+  load_matched("data/derived/data_matched_1997.rds", 1997, c(1995, 1996, 1997)),
+  load_matched("data/derived/data_matched_2008.rds", 2008, c(2006, 2007, 2008)),
+  load_matched("data/derived/data_matched_2011.rds", 2011, c(2009, 2010, 2011)),
+  load_matched("data/derived/data_matched_2013.rds", 2013, c(2011, 2012, 2013)),
+  load_matched("data/derived/data_matched_2016.rds", 2016, c(2014, 2015, 2016)),
+  load_matched("data/derived/data_matched_2018.rds", 2018, c(2016, 2017, 2018)),
+  load_matched("data/derived/data_matched_2021.rds", 2021, c(2019, 2020, 2021))
+)
+```
+
+### Load children's survey data
+
+#### DHS KR files (1997, 2008, 2011, 2013, 2016, 2021)
+
+```{r}
+#| label: load-kr
+
+clean_z <- function(x) {
+  # DHS z-scores are stored as integers × 100; flag values 9996–9999
+  y <- ifelse(x %in% 9996:9999, NA_real_, as.numeric(x)) / 100
+  ifelse(!is.na(y) & (y < -6 | y > 6), NA_real_, y)
+}
+
+# 1997: HAZ and WAZ in separate HW file, joined by row order with KR
+kr_1997 <- read_dta(
+  "data/raw/dhs/DHS_1997/MDKR31DT/MDKR31FL.DTA",
+  col_select = c(caseid, v001, v002, v005, b5, b7, b3, v008, b4)
+)
+hw_1997 <- read_dta("data/raw/dhs/DHS_1997/MDHW31DT/MDHW31FL.DTA") |>
+  select(hc70, hc71, hc72)
+stopifnot(nrow(kr_1997) == nrow(hw_1997))
+
+kr_1997 <- kr_1997 |>
+  bind_cols(hw_1997) |>
+  transmute(
+    v001, v002, v005,
+    DHSYEAR = 1997L,
+    child_sex  = as.integer(b4),    # 1 = male, 2 = female
+    child_alive = as.integer(b5),   # 1 = alive, 0 = dead
+    age_death_months = as.numeric(b7),
+    haz = clean_z(hc70),
+    waz = clean_z(hc71),
+    whz = clean_z(hc72),
+    died = as.integer(b5 == 0)
+  )
+
+# Helper for DHS years 2008+
+load_kr <- function(path, year, has_waz = FALSE) {
+  cols <- c("v001", "v002", "v005", "b5", "b7", "b3", "v008", "b4", "hw70")
+  if (has_waz) cols <- c(cols, "hw71", "hw72")
+  
+  kr <- read_dta(path, col_select = all_of(cols)) |>
+    mutate(
+      DHSYEAR = as.integer(year),
+      child_sex = as.integer(b4),
+      child_alive = as.integer(b5),
+      age_death_months = as.numeric(b7),
+      haz = clean_z(hw70),
+      died = as.integer(b5 == 0)
+    )
+  
+  if (has_waz) {
+    kr <- kr |> mutate(waz = clean_z(hw71), whz = clean_z(hw72))
+  } else {
+    kr <- kr |> mutate(waz = NA_real_, whz = NA_real_)
+  }
+  
+  kr |> select(v001, v002, v005, DHSYEAR, child_sex, child_alive,
+               age_death_months, haz, waz, whz, died)
+}
+
+kr_2008 <- load_kr("data/raw/dhs/DHS_2008/MDKR51DT/MDKR51FL.DTA", 2008, has_waz = FALSE)
+kr_2011 <- load_kr("data/raw/dhs/DHS_2011/MDKR61DT/MDKR61FL.DTA", 2011, has_waz = FALSE)
+kr_2013 <- load_kr("data/raw/dhs/DHS_2013/MDKR6ADT/MDKR6AFL.DTA", 2013, has_waz = FALSE)
+kr_2016 <- load_kr("data/raw/dhs/DHS_2016/MDKR71DT/MDKR71FL.DTA", 2016, has_waz = FALSE)
+kr_2021 <- load_kr("data/raw/dhs/DHS_2021/MDKR81DT/MDKR81FL.DTA", 2021, has_waz = TRUE)
+```
+
+#### MICS 2018
+
+```{r}
+#| label: load-mics
+
+# Anthropometrics from ch.sav (children measured 0–59 months)
+mics_ch <- read_sav("data/raw/mics/2018/SPSS datasets/ch.sav",
+                    col_select = c(HH1, HH2, HAZ2, WAZ2, WHZ2, HAZFLAG, WAZFLAG, WHZFLAG,
+                                   chweight, CAGE, HL4)) |>
+  transmute(
+    v001 = as.integer(HH1),
+    v002 = as.integer(HH2),
+    DHSYEAR = 2018L,
+    child_sex = as.integer(HL4),   # 1 = male, 2 = female   # 1 = male, 2 = female
+    haz = ifelse(!is.na(HAZ2) & HAZ2 < 90 & (HAZFLAG == 0 | is.na(HAZFLAG)),
+                 HAZ2, NA_real_),
+    waz = ifelse(!is.na(WAZ2) & WAZ2 < 90 & (WAZFLAG == 0 | is.na(WAZFLAG)),
+                 WAZ2, NA_real_),
+    whz = ifelse(!is.na(WHZ2) & WHZ2 < 90 & (WHZFLAG == 0 | is.na(WHZFLAG)),
+                 WHZ2, NA_real_),
+    child_alive = 1L,  # only living measured children in ch.sav
+    died = 0L,
+    age_death_months = NA_real_
+  )
+
+# Mortality from bh.sav (birth history, restricted to last 5 years: 2013–2018)
+mics_bh <- read_sav("data/raw/mics/2018/SPSS datasets/bh.sav",
+                    col_select = c(HH1, HH2, BH5, BH9U, BH9N, BH4Y, BH3)) |>
+  filter(BH4Y >= 2013 & BH4Y <= 2018) |>
+  transmute(
+    v001 = as.integer(HH1),
+    v002 = as.integer(HH2),
+    DHSYEAR = 2018L,
+    child_sex = as.integer(BH3),   # 1 = male, 2 = female
+    child_alive = as.integer(BH5 == 1),
+    died = as.integer(BH5 == 2),
+    age_death_months = case_when(
+      BH9U == 1 ~ BH9N / 30.4,  # days → months
+      BH9U == 2 ~ as.numeric(BH9N),
+      BH9U == 3 ~ BH9N * 12,
+      TRUE ~ NA_real_
+    ),
+    haz = NA_real_,
+    waz = NA_real_,
+    whz = NA_real_
+  )
+```
+
+### Combine and join with matched data
+
+```{r}
+#| label: join-data
+
+# --- Anthropometric dataset (HAZ) ---
+# Years with HAZ data: 1997, 2008, 2018 (MICS ch), 2021
+anthro_raw <- bind_rows(kr_1997, kr_2008, kr_2021, mics_ch) |>
+  filter(!is.na(haz))
+
+dat_haz <- anthro_raw |>
+  inner_join(matched_all, by = c("DHSYEAR", "v001" = "hv001", "v002" = "hv002")) |>
+  mutate(
+    hv219   = factor(hv219, levels = c(1, 2), labels = c("Male", "Female")),
+    treat   = as.integer(GROUP == "Treatment"),
+    w_svy   = hv005 / 1e6,
+    w_all   = w_svy * weights,
+    cluster_uid = interaction(DHSYEAR, v001, drop = TRUE),
+    child_sex_f = factor(child_sex, levels = c(1, 2), labels = c("Male", "Female")),
+    treat_on = as.integer(treatment > 0 & DHSYEAR >= STATUS_YR),
+    rel_year = if_else(STATUS_YR > 0, as.numeric(DHSYEAR - STATUS_YR), Inf)
+  )
+
+# --- Mortality dataset ---
+# All 7 years: DHS KR for 1997/2008/2011/2013/2016/2021 + MICS bh for 2018
+mort_raw <- bind_rows(kr_1997, kr_2008, kr_2011, kr_2013, kr_2016, kr_2021, mics_bh)
+
+dat_mort <- mort_raw |>
+  inner_join(matched_all, by = c("DHSYEAR", "v001" = "hv001", "v002" = "hv002")) |>
+  mutate(
+    hv219   = factor(hv219, levels = c(1, 2), labels = c("Male", "Female")),
+    treat   = as.integer(GROUP == "Treatment"),
+    w_svy   = hv005 / 1e6,
+    w_all   = w_svy * weights,
+    cluster_uid = interaction(DHSYEAR, v001, drop = TRUE),
+    child_sex_f = factor(child_sex, levels = c(1, 2), labels = c("Male", "Female")),
+    treat_on = as.integer(treatment > 0 & DHSYEAR >= STATUS_YR),
+    rel_year = if_else(STATUS_YR > 0, as.numeric(DHSYEAR - STATUS_YR), Inf)
+  )
+
+cat("HAZ dataset:", nrow(dat_haz), "children across", n_distinct(dat_haz$DHSYEAR), "years\n")
+cat("Mortality dataset:", nrow(dat_mort), "births across", n_distinct(dat_mort$DHSYEAR), "years\n")
+```
+
+## Descriptive statistics
+
+```{r}
+#| label: descriptive
+
+# HAZ summary by year and group
+haz_desc <- dat_haz |>
+  summarise(
+    n = n(),
+    mean_haz = mean(haz, na.rm = TRUE),
+    sd_haz = sd(haz, na.rm = TRUE),
+    pct_stunted = mean(haz < -2, na.rm = TRUE) * 100,
+    .by = c(DHSYEAR, GROUP)
+  ) |>
+  arrange(DHSYEAR, GROUP)
+
+haz_desc
+
+# Mortality summary by year and group
+mort_desc <- dat_mort |>
+  summarise(
+    n_births = n(),
+    n_deaths = sum(died),
+    mortality_rate = mean(died) * 1000,  # per 1,000 births
+    .by = c(DHSYEAR, GROUP)
+  ) |>
+  arrange(DHSYEAR, GROUP)
+
+mort_desc
+```
+
+```{r}
+#| label: fig-haz-distribution
+#| fig-cap: "Distribution of height-for-age z-scores by survey year and treatment group"
+
+ggplot(dat_haz, aes(x = haz, fill = GROUP)) +
+  geom_density(alpha = 0.4) +
+  geom_vline(xintercept = -2, linetype = "dashed", colour = "red") +
+  facet_wrap(~DHSYEAR) +
+  labs(x = "Height-for-age z-score (HAZ)",
+       y = "Density",
+       fill = "Group",
+       title = "HAZ distributions by year and group",
+       caption = "Dashed line: stunting threshold (−2 SD)") +
+  theme_minimal(base_size = 13)
+```
+
+```{r}
+#| label: fig-mortality-rates
+#| fig-cap: "Under-5 mortality rates by survey year and treatment group"
+
+ggplot(mort_desc, aes(x = factor(DHSYEAR), y = mortality_rate, fill = GROUP)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  labs(x = "Survey year",
+       y = "Under-5 mortality rate (per 1,000 births)",
+       fill = "Group",
+       title = "Under-5 mortality by year and treatment status") +
+  theme_minimal(base_size = 13)
+```
+
+## Height-for-age z-score (HAZ) analysis
+
+### 2×2 DiD
+
+We follow the same 2×2 DiD design as the main analysis: a placebo test (1997–2008) and the treatment estimation (2008–2021). The model is:
+
+$$HAZ_{ict} = \alpha + \beta_1 \text{Treat}_c + \beta_2 \text{Post}_t + \delta (\text{Treat}_c \times \text{Post}_t) + \mathbf{X}_{ct}'\gamma + \varepsilon_{ict}$$
+
+where $i$ indexes children, $c$ clusters, $t$ survey rounds. Controls $\mathbf{X}$ include SPEI values, household head sex and age, and child sex. Standard errors are clustered at the cluster-year level.
+
+```{r}
+#| label: haz-2x2
+
+# Placebo 1997–2008
+pre_haz <- dat_haz |>
+  filter(DHSYEAR %in% c(1997, 2008)) |>
+  mutate(post = as.integer(DHSYEAR == 2008),
+         treat_post = treat * post)
+
+h_haz_pre <- feols(
+  haz ~ treat + post + treat_post + child_sex_f +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = pre_haz, weights = ~w_all, cluster = ~cluster_uid
+)
+
+# Treatment 2008–2021
+main_haz <- dat_haz |>
+  filter(DHSYEAR %in% c(2008, 2021)) |>
+  mutate(post = as.integer(DHSYEAR == 2021),
+         treat_post = treat * post)
+
+h_haz_main <- feols(
+  haz ~ treat + post + treat_post + child_sex_f +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = main_haz, weights = ~w_all, cluster = ~cluster_uid
+)
+
+etable(h_haz_pre, h_haz_main,
+       headers = c("Placebo 1997–2008", "Treatment 2008–2021"))
+```
+
+```{r}
+#| label: fig-haz-2x2
+#| fig-cap: "2×2 DiD estimates for HAZ"
+
+did_row <- function(model, year_post, term = "treat_post") {
+  tidy(model) |>
+    filter(term == !!term) |>
+    transmute(year = year_post, estimate, se = std.error)
+}
+
+haz_2x2_df <- bind_rows(
+  did_row(h_haz_pre, 2008),
+  did_row(h_haz_main, 2021)
+) |>
+  mutate(
+    period = factor(
+      ifelse(year == 2008, "1997–2008 (placebo)", "2008–2021 (treatment)"),
+      levels = c("1997–2008 (placebo)", "2008–2021 (treatment)")
+    ),
+    lo = estimate - 1.96 * se,
+    hi = estimate + 1.96 * se
+  )
+
+ggplot(haz_2x2_df, aes(x = period, y = estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.2) +
+  geom_point(size = 3) +
+  labs(x = NULL, y = "DiD effect on HAZ (SD units)",
+       title = "Impact on child stunting: 2×2 DiD") +
+  theme_minimal(base_size = 13)
+```
+
+### Staggered DiD — static estimation
+
+We use the Gardner (2022) two-stage DiD estimator (`did2s`) to leverage all available years with HAZ data (1997, 2008, 2018, 2021). This estimator is robust to heterogeneous treatment effects and staggered adoption.
+
+```{r}
+#| label: haz-staggered-static
+
+# Prepare relative year bins (same scheme as main analysis)
+dat_haz2 <- dat_haz |>
+  mutate(
+    rel_year_clipped = case_when(
+      is.infinite(rel_year) ~ NA_real_,
+      TRUE ~ pmax(pmin(rel_year, 10), -10)
+    ),
+    rel_year_2yr = case_when(
+      is.na(rel_year_clipped) ~ NA_integer_,
+      rel_year_clipped <= -9  ~ -5L,
+      rel_year_clipped <= -7  ~ -4L,
+      rel_year_clipped <= -5  ~ -3L,
+      rel_year_clipped <= -3  ~ -2L,
+      rel_year_clipped <= -1  ~ -1L,
+      rel_year_clipped <=  1  ~  0L,
+      rel_year_clipped <=  3  ~  1L,
+      rel_year_clipped <=  5  ~  2L,
+      rel_year_clipped <=  7  ~  3L,
+      rel_year_clipped <=  9  ~  4L,
+      TRUE                    ~  5L
+    ),
+    rel_year_2yr2 = case_when(
+      is.na(rel_year_2yr) ~ "never",
+      TRUE ~ as.character(rel_year_2yr)
+    ),
+    rel_year_2yr2 = factor(
+      rel_year_2yr2,
+      levels = c("-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "never")
+    )
+  )
+
+did2s_haz_static <- did2s(
+  data         = dat_haz2,
+  yname        = "haz",
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(treat_on, ref = FALSE),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+modelsummary(list("did2s HAZ (static)" = did2s_haz_static))
+```
+
+### Staggered DiD — event study
+
+```{r}
+#| label: haz-event-study
+
+did2s_haz_es <- did2s(
+  data         = dat_haz2,
+  yname        = "haz",
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
+  treatment    = "treat_on",
+  cluster_var  = "v001",
+  weights      = "w_all"
+)
+
+etable(did2s_haz_es, headers = "did2s HAZ event-study (2-yr bins)")
+```
+
+```{r}
+#| label: fig-haz-event-study
+#| fig-cap: "Event study for height-for-age z-score"
+
+bin_label <- function(k) {
+  dplyr::case_when(
+    is.na(k) ~ NA_character_,
+    k == "-5" ~ "≤ −9",
+    k == "-4" ~ "−8 to −7",
+    k == "-3" ~ "−6 to −5",
+    k == "-2" ~ "−4 to −3",
+    k == "-1" ~ "−2 to −1",
+    k == "0"  ~ "0 to 1",
+    k == "1"  ~ "2 to 3",
+    k == "2"  ~ "4 to 5",
+    k == "3"  ~ "6 to 7",
+    k == "4"  ~ "8 to 9",
+    k == "5"  ~ "≥ 10",
+    TRUE      ~ as.character(k)
+  )
+}
+
+es_haz_df <- tidy(did2s_haz_es, conf.int = TRUE) |>
+  filter(grepl("^rel_year_2yr2::", term)) |>
+  mutate(
+    k = sub("^rel_year_2yr2::", "", term),
+    k = factor(k, levels = c("-5", "-4", "-3", "-2", "0", "1", "2", "3", "4", "5"))
+  ) |>
+  arrange(k)
+
+ggplot(es_haz_df, aes(k, estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 2.5) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+  labs(x = "Years to treatment (2-year bins)",
+       y = "Effect on HAZ (SD units)",
+       title = "Event study: height-for-age z-score") +
+  scale_x_discrete(labels = bin_label) +
+  theme_minimal(base_size = 13)
+```
+
+
+## Under-5 mortality analysis
+
+### 2×2 DiD
+
+The outcome is a binary indicator (linear probability model). The coefficient $\delta$ estimates the change in the probability of under-5 death attributable to PA establishment.
+
+$$\text{Died}_{ict} = \alpha + \beta_1 \text{Treat}_c + \beta_2 \text{Post}_t + \delta (\text{Treat}_c \times \text{Post}_t) + \mathbf{X}_{ct}'\gamma + \varepsilon_{ict}$$
+
+```{r}
+#| label: mort-2x2
+
+# Placebo 1997–2008
+pre_mort <- dat_mort |>
+  filter(DHSYEAR %in% c(1997, 2008)) |>
+  mutate(post = as.integer(DHSYEAR == 2008),
+         treat_post = treat * post)
+
+h_mort_pre <- feols(
+  died ~ treat + post + treat_post + child_sex_f +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = pre_mort, weights = ~w_all, cluster = ~cluster_uid
+)
+
+# Treatment 2008–2021
+main_mort <- dat_mort |>
+  filter(DHSYEAR %in% c(2008, 2021)) |>
+  mutate(post = as.integer(DHSYEAR == 2021),
+         treat_post = treat * post)
+
+h_mort_main <- feols(
+  died ~ treat + post + treat_post + child_sex_f +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = main_mort, weights = ~w_all, cluster = ~cluster_uid
+)
+
+etable(h_mort_pre, h_mort_main,
+       headers = c("Placebo 1997–2008", "Treatment 2008–2021"))
+```
+
+```{r}
+#| label: fig-mort-2x2
+#| fig-cap: "2×2 DiD estimates for under-5 mortality"
+
+mort_2x2_df <- bind_rows(
+  did_row(h_mort_pre, 2008),
+  did_row(h_mort_main, 2021)
+) |>
+  mutate(
+    period = factor(
+      ifelse(year == 2008, "1997–2008 (placebo)", "2008–2021 (treatment)"),
+      levels = c("1997–2008 (placebo)", "2008–2021 (treatment)")
+    ),
+    lo = estimate - 1.96 * se,
+    hi = estimate + 1.96 * se
+  )
+
+ggplot(mort_2x2_df, aes(x = period, y = estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.2) +
+  geom_point(size = 3) +
+  labs(x = NULL, y = "DiD effect on Pr(under-5 death)",
+       title = "Impact on under-5 mortality: 2×2 DiD") +
+  theme_minimal(base_size = 13)
+```
+
+### Staggered DiD — static estimation
+
+With 7 time points for mortality, the staggered approach can leverage the full variation in treatment timing across PA cohorts.
+
+```{r}
+#| label: mort-staggered-static
+
+dat_mort2 <- dat_mort |>
+  mutate(
+    rel_year_clipped = case_when(
+      is.infinite(rel_year) ~ NA_real_,
+      TRUE ~ pmax(pmin(rel_year, 10), -10)
+    ),
+    rel_year_2yr = case_when(
+      is.na(rel_year_clipped) ~ NA_integer_,
+      rel_year_clipped <= -9  ~ -5L,
+      rel_year_clipped <= -7  ~ -4L,
+      rel_year_clipped <= -5  ~ -3L,
+      rel_year_clipped <= -3  ~ -2L,
+      rel_year_clipped <= -1  ~ -1L,
+      rel_year_clipped <=  1  ~  0L,
+      rel_year_clipped <=  3  ~  1L,
+      rel_year_clipped <=  5  ~  2L,
+      rel_year_clipped <=  7  ~  3L,
+      rel_year_clipped <=  9  ~  4L,
+      TRUE                    ~  5L
+    ),
+    rel_year_2yr2 = case_when(
+      is.na(rel_year_2yr) ~ "never",
+      TRUE ~ as.character(rel_year_2yr)
+    ),
+    rel_year_2yr2 = factor(
+      rel_year_2yr2,
+      levels = c("-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "never")
+    )
+  )
+
+did2s_mort_static <- did2s(
+  data         = dat_mort2,
+  yname        = "died",
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(treat_on, ref = FALSE),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+modelsummary(list("did2s Mortality (static)" = did2s_mort_static))
+```
+
+### Staggered DiD — event study
+
+```{r}
+#| label: mort-event-study
+
+did2s_mort_es <- did2s(
+  data         = dat_mort2,
+  yname        = "died",
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
+  treatment    = "treat_on",
+  cluster_var  = "v001",
+  weights      = "w_all"
+)
+
+etable(did2s_mort_es, headers = "did2s Mortality event-study (2-yr bins)")
+```
+
+```{r}
+#| label: fig-mort-event-study
+#| fig-cap: "Event study for under-5 mortality"
+
+es_mort_df <- tidy(did2s_mort_es, conf.int = TRUE) |>
+  filter(grepl("^rel_year_2yr2::", term)) |>
+  mutate(
+    k = sub("^rel_year_2yr2::", "", term),
+    k = factor(k, levels = c("-5", "-4", "-3", "-2", "0", "1", "2", "3", "4", "5"))
+  ) |>
+  arrange(k)
+
+ggplot(es_mort_df, aes(k, estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 2.5) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+  labs(x = "Years to treatment (2-year bins)",
+       y = "Effect on Pr(under-5 death)",
+       title = "Event study: under-5 mortality") +
+  scale_x_discrete(labels = bin_label) +
+  theme_minimal(base_size = 13)
+```
+
+
+## Heterogeneity by IUCN category
+
+We test whether effects differ between strict PAs (IUCN I–IV) and multi-use PAs (IUCN V–VI), following the same approach as the main analysis (H3).
+
+```{r}
+#| label: heterogeneity-setup
+
+is_strict <- function(x) x %in% c("Ia", "Ib", "II", "III", "IV")
+is_multi  <- function(x) x %in% c("V", "VI")
+```
+
+### HAZ by PA type — 2×2 DiD
+
+```{r}
+#| label: haz-iucn-2x2
+
+dat_haz3 <- dat_haz |>
+  mutate(
+    treat_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
+    treat_multi  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))
+  )
+
+# Placebo strict
+pre_strict_haz <- dat_haz3 |>
+  filter(DHSYEAR %in% c(1997, 2008), treat_strict == 1 | GROUP == "Control") |>
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+m_pre_strict_haz <- feols(
+  haz ~ treat_strict + post + treat_strict:post + child_sex_f +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = pre_strict_haz, weights = ~w_all, cluster = ~v001
+)
+
+# Placebo multi
+pre_multi_haz <- dat_haz3 |>
+  filter(DHSYEAR %in% c(1997, 2008), treat_multi == 1 | GROUP == "Control") |>
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+m_pre_multi_haz <- feols(
+  haz ~ treat_multi + post + treat_multi:post + child_sex_f +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = pre_multi_haz, weights = ~w_all, cluster = ~v001
+)
+
+# Treatment strict
+main_strict_haz <- dat_haz3 |>
+  filter(DHSYEAR %in% c(2008, 2021), treat_strict == 1 | GROUP == "Control") |>
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_strict_haz <- feols(
+  haz ~ treat_strict + post + treat_strict:post + child_sex_f +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = main_strict_haz, weights = ~w_all, cluster = ~v001
+)
+
+# Treatment multi
+main_multi_haz <- dat_haz3 |>
+  filter(DHSYEAR %in% c(2008, 2021), treat_multi == 1 | GROUP == "Control") |>
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_multi_haz <- feols(
+  haz ~ treat_multi + post + treat_multi:post + child_sex_f +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = main_multi_haz, weights = ~w_all, cluster = ~v001
+)
+
+etable(m_pre_strict_haz, m_main_strict_haz, m_pre_multi_haz, m_main_multi_haz,
+       headers = c("Strict plac.", "Strict treat.", "Multi plac.", "Multi treat."))
+```
+
+```{r}
+#| label: fig-haz-iucn-2x2
+#| fig-cap: "2×2 DiD for HAZ by PA type"
+
+haz_iucn_df <- bind_rows(
+  did_row(m_pre_strict_haz, 2008, "treat_strict:post") |> mutate(type = "Strict"),
+  did_row(m_main_strict_haz, 2021, "treat_strict:post") |> mutate(type = "Strict"),
+  did_row(m_pre_multi_haz, 2008, "treat_multi:post") |> mutate(type = "Multi-use"),
+  did_row(m_main_multi_haz, 2021, "treat_multi:post") |> mutate(type = "Multi-use")
+) |>
+  mutate(
+    period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
+                    levels = c("1997–2008", "2008–2021")),
+    lo = estimate - 1.96 * se,
+    hi = estimate + 1.96 * se
+  )
+
+pd <- position_dodge(width = 0.2)
+
+ggplot(haz_iucn_df, aes(x = period, y = estimate, colour = type)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 3, position = pd) +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.2, position = pd) +
+  labs(x = NULL, y = "DiD effect on HAZ",
+       colour = "PA type",
+       title = "HAZ: 2×2 DiD by PA type") +
+  theme_minimal(base_size = 13)
+```
+
+### HAZ by PA type — staggered static
+
+```{r}
+#| label: haz-iucn-staggered
+
+d_strict_haz <- dat_haz2 |>
+  mutate(treat_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT))) |>
+  filter(treat_on == 1 | GROUP == "Control")
+
+did2s_haz_strict <- did2s(
+  data         = d_strict_haz,
+  yname        = "haz",
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(treat_on, ref = FALSE),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+d_multi_haz <- dat_haz2 |>
+  mutate(treat_on = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
+  filter(treat_on == 1 | GROUP == "Control")
+
+did2s_haz_multi <- did2s(
+  data         = d_multi_haz,
+  yname        = "haz",
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(treat_on, ref = FALSE),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+modelsummary(list(
+  "HAZ Strict" = did2s_haz_strict,
+  "HAZ Multi"  = did2s_haz_multi,
+  "HAZ Both"   = did2s_haz_static
+))
+```
+
+### Mortality by PA type — 2×2 DiD
+
+```{r}
+#| label: mort-iucn-2x2
+
+dat_mort3 <- dat_mort |>
+  mutate(
+    treat_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
+    treat_multi  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))
+  )
+
+# Placebo strict
+pre_strict_mort <- dat_mort3 |>
+  filter(DHSYEAR %in% c(1997, 2008), treat_strict == 1 | GROUP == "Control") |>
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+m_pre_strict_mort <- feols(
+  died ~ treat_strict + post + treat_strict:post + child_sex_f +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = pre_strict_mort, weights = ~w_all, cluster = ~v001
+)
+
+# Placebo multi
+pre_multi_mort <- dat_mort3 |>
+  filter(DHSYEAR %in% c(1997, 2008), treat_multi == 1 | GROUP == "Control") |>
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+m_pre_multi_mort <- feols(
+  died ~ treat_multi + post + treat_multi:post + child_sex_f +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = pre_multi_mort, weights = ~w_all, cluster = ~v001
+)
+
+# Treatment strict
+main_strict_mort <- dat_mort3 |>
+  filter(DHSYEAR %in% c(2008, 2021), treat_strict == 1 | GROUP == "Control") |>
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_strict_mort <- feols(
+  died ~ treat_strict + post + treat_strict:post + child_sex_f +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = main_strict_mort, weights = ~w_all, cluster = ~v001
+)
+
+# Treatment multi
+main_multi_mort <- dat_mort3 |>
+  filter(DHSYEAR %in% c(2008, 2021), treat_multi == 1 | GROUP == "Control") |>
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_multi_mort <- feols(
+  died ~ treat_multi + post + treat_multi:post + child_sex_f +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = main_multi_mort, weights = ~w_all, cluster = ~v001
+)
+
+etable(m_pre_strict_mort, m_main_strict_mort, m_pre_multi_mort, m_main_multi_mort,
+       headers = c("Strict plac.", "Strict treat.", "Multi plac.", "Multi treat."))
+```
+
+```{r}
+#| label: fig-mort-iucn-2x2
+#| fig-cap: "2×2 DiD for under-5 mortality by PA type"
+
+mort_iucn_df <- bind_rows(
+  did_row(m_pre_strict_mort, 2008, "treat_strict:post") |> mutate(type = "Strict"),
+  did_row(m_main_strict_mort, 2021, "treat_strict:post") |> mutate(type = "Strict"),
+  did_row(m_pre_multi_mort, 2008, "treat_multi:post") |> mutate(type = "Multi-use"),
+  did_row(m_main_multi_mort, 2021, "treat_multi:post") |> mutate(type = "Multi-use")
+) |>
+  mutate(
+    period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
+                    levels = c("1997–2008", "2008–2021")),
+    lo = estimate - 1.96 * se,
+    hi = estimate + 1.96 * se
+  )
+
+ggplot(mort_iucn_df, aes(x = period, y = estimate, colour = type)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 3, position = pd) +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.2, position = pd) +
+  labs(x = NULL, y = "DiD effect on Pr(under-5 death)",
+       colour = "PA type",
+       title = "Under-5 mortality: 2×2 DiD by PA type") +
+  theme_minimal(base_size = 13)
+```
+
+### Mortality by PA type — staggered static
+
+```{r}
+#| label: mort-iucn-staggered
+
+d_strict_mort <- dat_mort2 |>
+  mutate(treat_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT))) |>
+  filter(treat_on == 1 | GROUP == "Control")
+
+did2s_mort_strict <- did2s(
+  data         = d_strict_mort,
+  yname        = "died",
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(treat_on, ref = FALSE),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+d_multi_mort <- dat_mort2 |>
+  mutate(treat_on = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
+  filter(treat_on == 1 | GROUP == "Control")
+
+did2s_mort_multi <- did2s(
+  data         = d_multi_mort,
+  yname        = "died",
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(treat_on, ref = FALSE),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+modelsummary(list(
+  "Mortality Strict" = did2s_mort_strict,
+  "Mortality Multi"  = did2s_mort_multi,
+  "Mortality Both"   = did2s_mort_static
+))
+```
+
+### Mortality by PA type — event study
+
+```{r}
+#| label: mort-iucn-event-study
+
+d_strict_mort_es <- dat_mort2 |>
+  mutate(treat_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT))) |>
+  filter(treat_on == 1 | GROUP == "Control")
+
+did2s_mort_es_strict <- did2s(
+  data         = d_strict_mort_es,
+  yname        = "died",
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
+  treatment    = "treat_on",
+  cluster_var  = "v001",
+  weights      = "w_all"
+)
+
+d_multi_mort_es <- dat_mort2 |>
+  mutate(treat_on = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
+  filter(treat_on == 1 | GROUP == "Control")
+
+did2s_mort_es_multi <- did2s(
+  data         = d_multi_mort_es,
+  yname        = "died",
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
+  treatment    = "treat_on",
+  cluster_var  = "v001",
+  weights      = "w_all"
+)
+
+# Combined event-study plot
+tidy_es <- function(mod, type) {
+  tidy(mod, conf.int = TRUE) |>
+    filter(grepl("^rel_year_2yr2::", term)) |>
+    mutate(
+      k = sub("^rel_year_2yr2::", "", term),
+      k = factor(k, levels = c("-5", "-4", "-3", "-2", "0", "1", "2", "3", "4", "5")),
+      type = type
+    ) |>
+    arrange(k)
+}
+
+es_mort_iucn <- bind_rows(
+  tidy_es(did2s_mort_es_strict, "Strict"),
+  tidy_es(did2s_mort_es_multi,  "Multi-use"),
+  tidy_es(did2s_mort_es,        "Both")
+)
+
+pd2 <- position_dodge(width = 0.3)
+
+ggplot(es_mort_iucn, aes(k, estimate, colour = type)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(position = pd2, size = 2) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2, position = pd2) +
+  labs(x = "Years to treatment (2-year bins)",
+       y = "Effect on Pr(under-5 death)",
+       colour = "PA type",
+       title = "Event study: under-5 mortality by PA type") +
+  scale_x_discrete(labels = bin_label) +
+  theme_minimal(base_size = 13)
+```
+
+
+## Summary of results
+
+```{r}
+#| label: summary-table
+
+# Compile all static results into one summary
+extract_did2s <- function(mod, label) {
+  tidy(mod, conf.int = TRUE) |>
+    filter(grepl("treat_on", term)) |>
+    transmute(
+      Model = label,
+      Estimate = estimate,
+      SE = std.error,
+      `CI low` = conf.low,
+      `CI high` = conf.high,
+      `p-value` = p.value
+    )
+}
+
+summary_table <- bind_rows(
+  extract_did2s(did2s_haz_static, "HAZ — All PAs"),
+  extract_did2s(did2s_haz_strict, "HAZ — Strict"),
+  extract_did2s(did2s_haz_multi, "HAZ — Multi-use"),
+  extract_did2s(did2s_mort_static, "Mortality — All PAs"),
+  extract_did2s(did2s_mort_strict, "Mortality — Strict"),
+  extract_did2s(did2s_mort_multi, "Mortality — Multi-use")
+)
+
+gt(summary_table) |>
+  fmt_number(columns = c(Estimate, SE, `CI low`, `CI high`), decimals = 4) |>
+  fmt_number(columns = `p-value`, decimals = 3) |>
+  tab_header(title = "Staggered DiD (did2s): static treatment effects on child health outcomes")
+```
