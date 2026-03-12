@@ -1,0 +1,37 @@
+---
+format: 
+   typst: 
+     text-wrap: true
+     hyphenation: true
+     lang: en
+   pdf: default
+   docx: default
+---
+
+[Title]{.underline}: Socioeconomic Impacts of Terrestrial Protected Areas: Evidence from Large-Scale National Surveys in Madagascar
+
+[Authors]{.underline}: Iriana Razafimahenina^1^, Florent Bédécarrats^2^, Ingrid Dallmann^3^, Holimalala Randriamanampisoa^4^
+
+^1^University of Antananarivo, University of Paris Saclay, French National Research Institute for Sustainable Development (IRD)
+
+^2^University of Saint Quentin en Yvelines (UVSQ), UMI-Sustainability and Resilience (SOURCE)
+
+^3^Agence Française de Développement (AFD)
+
+^4^French National Research Institute for Sustainable development (CERED)}
+
+[Corresponding authors]{.underline}: iriana_ny_aina.razafimahenina\@ird.fr\
+
+Abstract
+
+**Research question**: Protected Areas (PAs) are the primary instrument for biodiversity conservation, yet their socioeconomic impacts on nearby populations remain contested, particularly in low income contexts where livelihoods depend heavily on natural resources. This paper asks whether the rapid expansion terrestrial PAs in Madagascar, from 3.6% of national territory in 2008 to 10.8% in 2021, affected the well-being and socioeconomic inequalities of rural households living nearby, and whether such effects vary by PA governance regime.
+
+**Hypotheses**: Drawing on a theory of change that maps opposing mechanisms (farming land- and natural resource- acess restrictions vs. compensation, ecosystem services, and conservation or tourism employment) test three pre-registered hypotheses: H1. PAs reduce average household wealth; H2. PAs increase socioeconomic inequalities within communities by channeling benefits towards better positionned households; H3. multi-use PAs (IUCN category V-VI) generate more favorable outcomes than strictly protected areas (IUCN I-IV)
+
+**Data**: We combine geolocated household data from six nationally representative surveys - Demographic and Health surveys, Malaria Indicator Surveys (2011, 2013, 2016) and Multiple Indicator Cluster Surveys (2018) - with the World Database on Protected Areas and geospatial environmental covariates (forest cover, slope, elevation, population density, accessibility, and precipitation).
+
+**Identification strategy**: Treatment is defined as residence within 10 km of a PA established after 2008 (71 PAs); control units are rural households beyond this threshold. The sample covers the period of rapid PA expansion and includes a pre-expansion wave (1997) to assess pre-treatment trends. The primary outcome is the household wealth index, expressed in percentiles of the rural distribution. The secondary outcome is the standardized Z-score of the wealth index, capturing within-cluster inequality. We apply genetic matching with Mahalanobis distance and a caliper of 0.25 on time-invariant covariates. We then estimate causal effects using a two-period difference-in-differences (DID) design comparing 2008–2021 changes between matched treated and control clusters, with a placebo test on the 1997–2008 period. To exploit additional survey waves and account for staggered PA creation, we implement Gardner's (2022) two-stage DID estimator with two-year binning of event time, accommodating heterogeneous treatment effects across cohorts and dynamic effects over time. Cluster-level fixed effects and time fixed effects absorb unobserved spatial heterogeneity and common shocks. Robustness checks include alternative treatment radii (5 km, 15 km), Benjamini–Hochberg false discovery rate corrections, and Rosenbaum sensitivity bounds for unobserved confounding. The full empirical strategy was pre-registered on the Open Science Framework in March 2025, before any outcome analysis.
+
+**Results**: Across all specifications, We find no statistically significant average effect of protected area creation on household wealth index (H1 not support of households located within 10 km of protected areas established after 20008. A series of robustness checks using alternative data sources and specifications supports this result. The absence of an average effect may reflect offsetting positive and negative mechanisms, heterogeneous impacts across households or sites or limited implementation capacity in a context of weak governance and chronic underfunding of protected areas.
+
+Keywords: Biodiversity Conservation, Well-being, Geolocated socio-demographic surveys, Genetic matching, Difference-in-difference, Madagascar
