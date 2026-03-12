@@ -1,8 +1,6 @@
 ---
 title: "Socioeconomic Impacts of Terrestrial Protected Areas"
 subtitle: "Evidence from Large-Scale National Surveys in Madagascar"
-
-editor: visual
   
 bibliography: references.bib 
   
