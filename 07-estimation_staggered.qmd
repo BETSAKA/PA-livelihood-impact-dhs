@@ -136,7 +136,7 @@ etable(h1_m_pre_2x2, h1_m_main_2x2,
   headers = c("Placebo 97–08", "Traitement 08–21"))
 
 tab_fixest <- modelsummary(
-  list("Placebo 97-08" = m_pre, "Traitement 08-21" = m_main), output = "gt"
+  list("Placebo 97-08" = h1_m_pre_2x2, "Traitement 08-21" = h1_m_main_2x2), output = "gt"
 )
 
 saveRDS(tab_fixest, "paper/tables/table_DID_WI.rds")
@@ -330,7 +330,7 @@ count_binned_obs_plot <- ggplot() +
     legend.box = "horizontal"
   )
 
-write_rds(count_binned_obs_plot, "soumission_articles/figures/count_binned_obs_plot.rds")
+write_rds(count_binned_obs_plot, "paper/figures/count_binned_obs_plot.rds")
 count_binned_obs_plot
 ```
 
