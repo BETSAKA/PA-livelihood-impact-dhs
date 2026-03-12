@@ -539,8 +539,8 @@ treated_sub_clusters <- gps_all_class %>%
   st_drop_geometry() %>%
   filter(groupe == "Treatment") %>%
   mutate(subcat = case_when(
-    !is.na(STATUS_YR) & DHSYEAR <  STATUS_YR ~ "Avant traitement",
-    !is.na(STATUS_YR) & DHSYEAR >= STATUS_YR ~ "Déjà traités",
+    !is.na(STATUS_YR) & DHSYEAR <  STATUS_YR ~ "Before treatment",
+    !is.na(STATUS_YR) & DHSYEAR >= STATUS_YR ~ "Previously treated",
     TRUE ~ NA_character_
   )) %>%
   count(DHSYEAR, subcat, name = "n_clusters") %>%
@@ -550,13 +550,13 @@ treated_sub_clusters <- gps_all_class %>%
 treated_all_clusters <- gps_all_class %>%
   st_drop_geometry() %>%
   filter(groupe == "Treatment") %>%
-  count(DHSYEAR, name = "Ensemble")
+  count(DHSYEAR, name = "All_clusters")
 
 # Colonnes Contrôles / Exclus
 ctrl_excl_clusters <- gps_all_class %>%
   st_drop_geometry() %>%
   filter(groupe %in% c("Control", "Excluded")) %>%
-  mutate(Groupe = recode(groupe, Control = "Contrôles", Excluded = "Exclus")) %>%
+  mutate(Groupe = recode(groupe, Control = "Controls",Excluded = "Excluded")) %>%
   count(DHSYEAR, Groupe, name = "n") %>%
   pivot_wider(names_from = Groupe, values_from = n, values_fill = 0)
 
@@ -571,26 +571,26 @@ tab_wide_clusters <- list(treated_sub_clusters, treated_all_clusters,
 gt_table_clusters <- tab_wide_clusters %>%
   rename(Année = DHSYEAR) %>%
   gt() %>%
-  tab_header(title = "Nombre de grappes par année d'enquête et par groupe") %>%
+  tab_header(title = "Number of Clusters by Survey Year and Group") %>%
   cols_label(
-    `Avant traitement` = "Avant traitement",
-    `Déjà traités`     = "Déjà traités",
-    Ensemble           = "Ensemble",
-    `Contrôles`        = "Contrôles",
-    `Exclus`           = "Exclus"
+    `Before treatment` = "Before treatment",
+    `Previously treated`     = "Previously treated",
+    All_clusters   = "All clusters",
+    `Controls` = "Controls",
+    `Excluded` = "Excluded"
   ) %>%
   tab_spanner(
-    label = "Traitement",
-    columns = c(`Avant traitement`, `Déjà traités`, Ensemble)
+    label = "Treatment",
+    columns = c(`Before treatment`, `Previously treated`, All_clusters)
   ) %>%
   fmt_number(
-    columns = c(`Avant traitement`, `Déjà traités`, Ensemble, `Contrôles`, `Exclus`),
+    columns = c(`Before treatment`, `Previously treated`, All_clusters, `Controls`, `Excluded`),
     decimals = 0,
     use_seps = TRUE
   ) %>%
   cols_align(align = "center", columns = everything()) %>%
   tab_footnote(
-    footnote = md("**Avant traitement** : DHSYEAR < STATUS_YR (AP pas encore créée). **Déjà traités** : DHSYEAR ≥ STATUS_YR. **Ensemble** : total des grappes *Traitement*."),
+    footnote = md("**Before treatment** : DHSYEAR < STATUS_YR (PA are not yet created). **Previously treated** : DHSYEAR ≥ STATUS_YR. **All clusters** : total number of clusters*Treatment*."),
     locations = cells_title(groups = "title")
   )
 
@@ -686,25 +686,25 @@ households_counts_all <- map_dfr(years_all, function(y) {
 gt_table_menages_all <- households_counts_all %>%
   rename(Année = DHSYEAR) %>%
   gt() %>%
-  tab_header(title = "Nombre de ménages par année d'enquête et par groupe") %>%
+  tab_header(title = "Number of households by survey year and group") %>%
   cols_label(
-    `Avant traitement` = "Avant traitement",
-    `Déjà traités`     = "Déjà traités",
-    Ensemble           = "Ensemble",
-    `Contrôles`        = "Contrôles",
-    `Exclus`           = "Exclus"
+    `Avant traitement` = "Before treatment",
+    `Déjà traités`     = "Previously treated",
+    Ensemble           = "All clusters",
+    `Contrôles`        = "Controls",
+    `Exclus`           = "Excluded"
   ) %>%
   tab_spanner(
-    label = "Traitement",
-    columns = c(`Avant traitement`, `Déjà traités`, Ensemble)
+    label = "Treatment",
+    columns = c(`Before treatment`, `Previously treated`, All_clusters)
   ) %>%
   fmt_number(
-    columns = c(`Avant traitement`, `Déjà traités`, Ensemble, `Contrôles`, `Exclus`),
+    columns = c(`Before treatment`, `Previously treated`, All_clusters, `Controls`, `Excluded`),
     decimals = 0, use_seps = TRUE
   ) %>%
   cols_align(align = "center", columns = everything()) %>%
   tab_footnote(
-    footnote = md("**Avant traitement** : DHSYEAR < STATUS_YR (AP pas encore créée). **Déjà traités** : DHSYEAR ≥ STATUS_YR. **Ensemble** : total des ménages du groupe *Traitement*."), locations = cells_title(groups = "title"))
+    footnote = md("**Before treatment** : DHSYEAR < STATUS_YR (PA not yet created). **Previously treated** : DHSYEAR ≥ STATUS_YR. **All clusters** : total number of households in the group *Treatment*."), locations = cells_title(groups = "title"))
 
 gt_table_menages_all   
 ```
