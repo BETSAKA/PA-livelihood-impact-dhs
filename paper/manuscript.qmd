@@ -1,6 +1,34 @@
 ---
 title: "Socioeconomic Impacts of Terrestrial Protected Areas"
 subtitle: "Evidence from Large-Scale National Surveys in Madagascar"
+author: 
+  - name: Iriana Razafimahenina\footnotemark[1]\footnotemark[2]\footnotemark[4]
+    email: \href{mailto:iriana_ny_aina.razafimahenina@ird.fr}{iriana_ny_aina.razafimahenina@ird.fr}
+  - name: Florent Bédécarrats\footnotemark[5]\footnotemark[6]
+  - name: Ingrid Dallmann\footnotemark[7]
+  - name: Holimalala Randriamanampisoa\footnotemark[1]\footnotemark[3]\footnotemark[6]
+affiliations:
+  - id: univ_antananarivo
+    name: \href{https://www.univ-antananarivo.mg}{University of Antananarivo}
+    country: Madagascar
+  - id: univ_paris_saclay
+    name: \href{https://www.universite-paris-saclay.fr}{University of Paris Saclay}
+    country: France
+  - id: cered
+    name: Development Centre for Economic Studies and Research (CERED)
+    country: Madagascar
+  - id: ird_mada
+    name: \href{https://www.ird.fr}{French National Research Institute for Sustainable Development (IRD)}
+    country: Madagascar
+  - id: univ_sqy
+    name: University of Saint Quentin en Yvelines
+    country: France
+  - id: ird_source
+    name: UMI - Sustainability and Resilience (SOURCE), IRD
+    country: France
+  - id: afd
+    name: \href{https://www.afd.fr}{Agence Française de Développement (AFD)}
+    country: France  
   
 bibliography: references.bib 
   
