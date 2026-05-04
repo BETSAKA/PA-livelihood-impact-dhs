@@ -24,11 +24,13 @@ library(haven) # Importer et exporter des données issues de Stata, SPSS ou SAS
 library(sf) #Analyse des données spatiales
 library(tmap) #Analyse cartographique
 library(gt) #Mise en forme des tableaux 
+library(gtExtras) # Extra styling des tableaux
 library(geodata) # Pour avoir le contour de Madagascar
 library(writexl) # Pour faire une sortie sous Excel
 library(units) # Unités de mesure pour les vecteurs R
 library(leaflet) # Pour faire une cartographie interactive
 library(readxl) # Lecture des fichiers excel
+library(webshot2) # Pour faire des captures d'écran de tableaux gt 
 
 # Systèmes de coordonnées de référence 
 standard_crs <- 4326
@@ -368,20 +370,90 @@ summary_table <- wdpa_terrestre_mod %>%
 gt_table <- summary_table %>%
   gt() %>%
   tab_header(
-    title = paste("Protected Areas by period (Reference year =", pivot_year, ")"),
-    subtitle = "Terrestrial areas only"
+    title    = md("**Protected Areas by Period of Creation**"),
+    subtitle = md(paste0("*Madagascar — Reference year: ", pivot_year,
+                         " — Terrestrial areas only*"))
   ) %>%
   cols_label(
-    Creation_Period = "Creation Period",
-    Count = "PA Number",
-    Area_km2 = "Area (km²)"
+    Creation_Period = md("**Creation Period**"),
+    Count           = md("**PA Number**"),
+    Area_km2        = md("**Area (km²)**")
   ) %>%
-  fmt_number(
+  fmt_number(columns = Count,    decimals = 0, use_seps = TRUE) %>%
+  fmt_number(columns = Area_km2, decimals = 2, use_seps = TRUE) %>%
+  cols_align(align = "left",  columns = Creation_Period) %>%
+  cols_align(align = "right", columns = c(Count, Area_km2)) %>%
+  cols_width(
+    Creation_Period ~ px(180),
+    Count           ~ px(120),
+    Area_km2        ~ px(150)
+  ) %>%
+  tab_style(
+    style     = cell_fill(color = "#e8f5e9"),        
+    locations = cells_body(rows = seq(2, nrow(summary_table), 2))  
+  ) %>%
+  tab_style(
+    style     = list(
+      cell_fill(color = "darkgreen"),
+      cell_text(color = "white", weight = "bold", size = px(13))
+    ),
+    locations = cells_column_labels()
+  ) %>%
+  tab_style(
+    style     = cell_text(size = px(18), weight = "bold", color = "darkgreen"),
+    locations = cells_title(groups = "title")
+  ) %>%
+  tab_style(
+    style     = cell_text(size = px(13), color = "grey40", style = "italic"),
+    locations = cells_title(groups = "subtitle")
+  ) %>%
+  grand_summary_rows(
     columns = c(Count, Area_km2),
-    decimals = 0
+    fns     = list(Total = ~ sum(.)),
+    fmt     = ~ fmt_number(., decimals = 0, use_seps = TRUE)
+  ) %>%
+  tab_style(
+    style     = list(
+      cell_fill(color = "darkgreen"),
+      cell_text(color = "white", weight = "bold")
+    ),
+    locations = cells_grand_summary()
+  ) %>%
+  tab_footnote(
+    footnote  = md("PA = Protected Area as defined by IUCN categories I–VI."),
+    locations = cells_column_labels(columns = Count)
+  ) %>%
+  tab_source_note(md("**Source:** World Database on Protected Areas (WDPA), 2025.")) %>%
+  tab_source_note(md("**Note:** Analysis restricted to terrestrial protected areas in Madagascar.")) %>%
+  tab_options(
+    table.font.names                    = "Times New Roman",
+    table.font.size                     = px(13),
+    table.width                         = pct(85),
+    heading.align                       = "left",
+    heading.border.bottom.color         = "darkgreen",
+    heading.border.bottom.width         = px(2),
+    column_labels.border.top.color      = "darkgreen",
+    column_labels.border.top.width      = px(2),
+    column_labels.border.bottom.color   = "darkgreen",
+    column_labels.border.bottom.width   = px(2),
+    column_labels.padding               = px(8),
+    table_body.hlines.color             = "#cccccc",
+    table_body.hlines.width             = px(0.5),
+    table_body.border.bottom.color      = "darkgreen",
+    table_body.border.bottom.width      = px(2),
+    data_row.padding                    = px(8),
+    source_notes.font.size              = px(10),
+    source_notes.border.lr.style        = "none",
+    source_notes.padding                = px(6),
+    footnotes.font.size                 = px(10),
+    footnotes.marks                     = "letters"
   )
-
+  
+# Save as rds
 write_rds(gt_table, "paper/tables/tbl-period-crea.rds")
+
+# Save as high-resolution PNG
+gtsave(gt_table, "paper/tables/tbl-period-crea.png", expand = 10, zoom = 3)
 
 gt_table
 
