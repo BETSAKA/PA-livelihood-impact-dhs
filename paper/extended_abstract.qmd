@@ -1,0 +1,39 @@
+---
+format: 
+   typst: 
+     text-wrap: true
+     hyphenation: true
+     lang: en
+   pdf: default
+   docx: default
+---
+
+[**Title**]{.underline}: Socioeconomic Impacts of Terrestrial Protected Areas: Evidence from Large-Scale National Surveys in Madagascar
+
+[**Authors**]{.underline}: Iriana Razafimahenina^1^, Florent Bédécarrats^2^, Ingrid Dallmann^3^, Holimalala Randriamanampisoa^4^
+
+^1^University of Antananarivo, University of Paris Saclay, French National Research Institute for Sustainable Development (IRD)
+
+^2^University of Saint Quentin en Yvelines (UVSQ), UMI-Sustainability and Resilience (SOURCE)
+
+^3^Agence Française de Développement (AFD)
+
+^4^French National Research Institute for Sustainable development (CERED)
+
+
+[**Corresponding authors**]{.underline}: iriana_ny_aina.razafimahenina\@ird.fr
+
+
+**Research question**: Protected Areas (PAs) are the primary instrument for biodiversity conservation and Madagascar, like most countries, committed to extend their coverage to 30% of national territory by 2030. Yet, PAs' socioeconomic effects on nearby populations remain contested, particularly in low income contexts where livelihoods depend heavily on natural resources. This paper asks whether the rapid expansion terrestrial PAs in Madagascar, from 3.6% of national territory in 2008 to 10.8% in 2021, affected the well-being and within-community socioeconomic inequality of rural households living nearby, and whether such effects vary by PA governance regime.
+
+**Hypotheses**: Drawing on a theory of change that maps opposing mechanisms ( restrictions on faming land and natural resource access vs. compensation, ecosystem services, and conservation and tourism employment), we test three pre-registered hypotheses: (H1) PAs reduce average household wealth; (H2) PAs increase socioeconomic inequalities within communities by differentially channeling benefits toward better positioned households; (H3) multi-use PAs (IUCN categories V-VI) generate more favorable outcomes than strict PAs (IUCN I-IV)
+
+**Data**: We combine geolocated household data from six nationally representative survey waves - Demographic and Health surveys (1997, 2008, 2021), Malaria Indicator Surveys (2011, 2013, 2016) and Multiple Indicator Cluster Surveys (2018) - with the World Database on Protected Areas and geospatial environmental covariates (forest cover, slope, elevation, population density, accessibility, and standardized precipitation-evapotranspiration index).
+
+**Identification strategy**: Treatment is defined as residence within 10 km of a PA established after 2008 (71 PAs); control units are rural households beyond this threshold. The sample covers the period of rapid PA expansion and includes a pre-expansion wave (1997) to assess pre-treatment trends. The primary outcome is the household wealth index, expressed in percentiles of the rural distribution. The secondary outcome is the standardized Z-score of the wealth index, capturing within-cluster inequality. We apply genetic matching with Mahalanobis distance and a caliper of 0.25 on time-invariant covariates. We then estimate causal effects using a two-period difference-in-differences (DID) design comparing 2008–2021 changes between matched treated and control clusters, with a placebo test on the 1997–2008 period. To exploit additional survey waves and account for staggered PA creation, we implement Gardner's (2022) two-stage DID estimator with two-year binning of event time, accommodating heterogeneous treatment effects across cohorts and dynamic effects over time. Cluster-level fixed effects and time fixed effects absorb unobserved spatial heterogeneity and common shocks. Robustness checks include alternative treatment radii (5 km, 15 km), Benjamini–Hochberg false discovery rate corrections, and Rosenbaum sensitivity bounds for unobserved confounding. The full empirical strategy was pre-registered on the Open Science Framework in March 2025, before any outcome analysis.
+
+**Results**: Across all specifications, We find no statistically significant average effect of PA creation on household wealth index (H1 not supported). Dynamic event-study estimates reveal a significantly negative coefficient only at the longest horizon (\>10 years post-treatment), suggesting potential delayed adverse effects for the earliest cohorts of PAs. No significant effect on within-cluster inequality is detected (H2 not supported). Heterogeneity analysis by governance type yields no robust differential effect between strict and multi-use PAs (H3 not supported). As a further robustness check, we replicate the analysis using child-level health outcomes - height-for-age z-scores (approximately 2,700 children) and under-5 mortality (approximately 9,100 births) - which offer larger effective samples finer year-to-treatment granularity; these estimates likewise show no statistically significant average treatment effect, reinforcing the conclusion that the null finding is not driven by insufficient statistical power. Robustness checks across distance thresholds and sensitivity analyses confirm these findings.
+
+Policy implications. The absence of a detectable average effect suggests that the concern - strongly shared among policy makers and the general public in Madagascar - that PA creation substantially undermines rural livelihoods is not supported at a national scale. The negative signal at long horizons points to cumulative costs that may emerge as adaptation margins are exhausted, particularly under population growth. These findings call for the integration of systematic socioeconomic monitoring into PA governance frameworks, the strengthening of transparent compensation mechanisms, and the design of inclusive benefit-sharing arrangements that address equity concerns.
+
+**Keywords**: Biodiversity Conservation, Household Well-being, Household surveys, Matching, Difference-in-Differences, Madagascar

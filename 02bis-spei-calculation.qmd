@@ -114,8 +114,8 @@ ggplot(spei_tbl_one, aes(x = year, y = spei_mean)) +
   ) +
   
   geom_hline(yintercept = 0, linetype = "dashed") +
-  labs(title = "Annual SPEI (scale=12) – cluster de démonstration",
-       x = "Année", y = "SPEI (moyenne annuelle)") +
+  labs(title = "Annual SPEI (scale=12) – Demonstration cluster",
+       x = "Year", y = "SPEI (annual mean)") +
   theme_minimal()
 ```
 
@@ -148,7 +148,7 @@ ggplot(spei_df, aes(x = year, y = spei_mean, group = DHSCLUST)) +
   geom_line(alpha = 0.35) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   labs(title = "Annual SPEI by cluster (1981–2021)",
-       x = "Année", y = "SPEI (moyenne annuelle)") +
+       x = "Year", y = "SPEI (annual mean)") +
   theme_minimal()
 
 ```

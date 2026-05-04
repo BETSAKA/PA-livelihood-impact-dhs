@@ -136,10 +136,10 @@ etable(h1_m_pre_2x2, h1_m_main_2x2,
   headers = c("Placebo 97–08", "Traitement 08–21"))
 
 tab_fixest <- modelsummary(
-  list("Placebo 97-08" = m_pre, "Traitement 08-21" = m_main), output = "gt"
+  list("Placebo 97-08" = h1_m_pre_2x2, "Traitement 08-21" = h1_m_main_2x2), output = "gt"
 )
 
-saveRDS(tab_fixest, "soumission_articles/manuscript/table/table_DID_WI.rds")
+saveRDS(tab_fixest, "paper/tables/table_DID_WI.rds")
 
 # Extraction compacte des deux effets DID
 did_row <- function(model, year_post, vc = ~ cluster_uid, term = "treat_post"){
@@ -163,7 +163,7 @@ h1_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate)) +
   labs(x = NULL, y = "Effect on wealth index centile",
        title = "Impact on well-being: 2x2 DiD impact on local population (< 10km)")
        
-write_rds(h1_2x2_plot, "soumission_articles/manuscript/figures/h1_2x2_plot.rds")
+write_rds(h1_2x2_plot, "paper/figures/h1_2x2_plot.rds")
 
 
 h1_2x2_table <- modelsummary(
@@ -172,7 +172,7 @@ h1_2x2_table <- modelsummary(
     "DID 2x2 (2008-2021)" = h1_m_main_2x2
     )
     )
-write_rds(h1_2x2_table, "soumission_articles/manuscript/figures/h1_2x2_table.rds")
+write_rds(h1_2x2_table, "paper/figures/h1_2x2_table.rds")
 h1_2x2_table
 ```
 
@@ -330,7 +330,7 @@ count_binned_obs_plot <- ggplot() +
     legend.box = "horizontal"
   )
 
-write_rds(count_binned_obs_plot, "soumission_articles/figures/count_binned_obs_plot.rds")
+write_rds(count_binned_obs_plot, "paper/figures/count_binned_obs_plot.rds")
 count_binned_obs_plot
 ```
 
@@ -355,7 +355,7 @@ did2s_static <- did2s(
 
 
 h1_staggered_static_tb <- modelsummary(list("did2s (static)" = did2s_static))
-write_rds(h1_staggered_static_tb, "soumission_articles/table/h1_staggered_static_tb.rds")
+write_rds(h1_staggered_static_tb, "paper/tables/h1_staggered_static_tb.rds")
 
 ```
 
@@ -388,7 +388,7 @@ did2s_es_2yr <- did2s(
 
 etable(did2s_es_2yr, headers = "did2s event-study (2-yr bins ±10)")
 
-saveRDS(did2s_es_2yr, "soumission_articles/manuscript/table/did2s_es_2yr.rds")
+saveRDS(did2s_es_2yr, "paper/tables/did2s_es_2yr.rds")
 
 # Tidy coefficients and plot
 plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
@@ -413,7 +413,7 @@ h1_event_study_plot <- ggplot(plot_did2s_2yr, aes(k, estimate)) +
   ) + 
   scale_x_discrete(labels = bin_label)
 
-write_rds(h1_event_study_plot, "soumission_articles/manuscript/figures/h1_event_study_plot.rds")
+write_rds(h1_event_study_plot, "paper/figures/h1_event_study_plot.rds")
 
 # Return relevant objects
 list(
@@ -463,7 +463,7 @@ tab_fixest <- modelsummary(
   output = "gt"
 )
 
-saveRDS(tab_fixest, "soumission_articles/manuscript/table/table_DID_zscore.rds")
+saveRDS(tab_fixest, "paper/tables/table_DID_zscore.rds")
 
 # Extraction compacte des deux effets DID
 did_row <- function(model, year_post, vc = ~ cluster_uid, term = "treat_post"){
@@ -487,7 +487,7 @@ h2_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate)) +
   labs(x = NULL, y = "Effect on z-score of wealth index centile",
        title = "Impact on inequalities: 2x2 DiD impact on local population (< 10km)")
 
-write_rds(h2_2x2_plot, "soumission_articles/manuscript/figures/h2_2x2_plot.rds")
+write_rds(h2_2x2_plot, "paper/figures/h2_2x2_plot.rds")
 ```
 
 ## Estimation statique
@@ -506,7 +506,7 @@ did2s_static_h2 <- did2s(
 
 
 h2_staggered_static_tb <- modelsummary(list("did2s (static)" = did2s_static_h2))
-write_rds(h2_staggered_static_tb, "soumission_articles/table/h2_staggered_static_tb.rds")
+write_rds(h2_staggered_static_tb, "paper/tables/h2_staggered_static_tb.rds")
 h2_staggered_static_tb
 
 ```
@@ -539,7 +539,7 @@ did2s_es_2yr <- did2s(
 
 etable(did2s_es_2yr, headers = "did2s event-study (2-yr bins ±10)")
 
-saveRDS(did2s_es_2yr, "soumission_articles/manuscript/table/did2s_es_2yr_zscore.rds")
+saveRDS(did2s_es_2yr, "paper/tables/did2s_es_2yr_zscore.rds")
 
 # Tidy coefficients and plot
 plot_did2s_2yr <- broom::tidy(did2s_es_2yr, conf.int = TRUE) %>%
@@ -564,7 +564,7 @@ h2_event_study_plot <- ggplot(plot_did2s_2yr, aes(k, estimate)) +
   ) + 
   scale_x_discrete(labels = bin_label)
 
-write_rds(h2_event_study_plot, "soumission_articles/manuscript/figures/h2_event_study_plot.rds")
+write_rds(h2_event_study_plot, "paper/figures/h2_event_study_plot.rds")
 
 # Return relevant objects
 list(
@@ -682,7 +682,7 @@ h3_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate, colour = type)) +
   labs(x = NULL, y = "Effet DID (centile de richesse)",
        title = "DID 2×2 par type d’AP (strict vs usage multiple)")
 
-write_rds(h3_2x2_plot, "soumission_articles/manuscript/figures/h3_2x2_plot.rds")
+write_rds(h3_2x2_plot, "paper/figures/h3_2x2_plot.rds")
 
 h3_2x2_plot 
 ```
@@ -726,7 +726,7 @@ h3_staggered_static_tb <- modelsummary(list(
   "Both"        = did2s_static
   )
 )
-write_rds(h3_staggered_static_tb, "soumission_articles/table/h3_staggered_static_tb.rds")
+write_rds(h3_staggered_static_tb, "paper/tables/h3_staggered_static_tb.rds")
 h3_staggered_static_tb
 ```
 
@@ -821,7 +821,7 @@ h3_event_study_plot <- ggplot(es_all, aes(k, estimate, colour = type)) +
   ) +
   scale_x_discrete(labels = bin_label)
 
-write_rds(h3_event_study_plot, "soumission_articles/manuscript/figures/h3_event_study_plot.rds")
+write_rds(h3_event_study_plot, "paper/figures/h3_event_study_plot.rds")
 
 
 list(
