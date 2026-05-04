@@ -309,12 +309,14 @@ buffer_10km_before_2008 <- wdpa_before_2008 %>%
 
 buffer_10km_from_2008 <- wdpa_from_2008  %>%
   st_transform(mdg_crs) %>%
-  st_buffer(dist = buffer_dist) %>% 
+  st_buffer(dist = buffer_dist) %>%
   st_make_valid() %>%
   st_union() %>%
   st_as_sf() %>%
   st_make_valid() %>%
   st_transform(standard_crs)
+
+buffer_10km_from_2008 <- sf::st_make_valid(buffer_10km_from_2008)
 
 # Visualisation des cartes 
 tmap_mode("plot")
