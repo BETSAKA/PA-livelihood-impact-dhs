@@ -310,6 +310,7 @@ out <- map_dfr(years, function(y) {
 # Write and print
 dir.create("output", showWarnings = FALSE)
 write_csv(out, file.path("output", "obs_by_year.csv"))
+write_csv(out, file.path("paper/tables", "obs_by_year.csv"))
 print(out)
 ```
 
