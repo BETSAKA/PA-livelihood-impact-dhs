@@ -591,8 +591,8 @@ tm_shape(contour_mada) +
     title = "Aires protégées"
   ) +
   tm_add_legend(
-    type   = "symbol",
-    col    = c("red", "blue", "gray"),
+    type   = "symbols",
+    fill    = c("red", "blue", "gray"),
     labels = c("Treatment", "Control", "Excluded"),
     shape  = 21,
     title  = "Groupes"
@@ -602,6 +602,26 @@ tm_shape(contour_mada) +
     legend.outside = TRUE,
     legend.outside.position = c("center", "bottom")
   )
+
+# Enregistrer la carte------------------------------ 
+# Assigner la carte à un objet
+ma_carte <- tmap_mode("plot")
+tm_shape(contour_mada) +
+  tm_borders(col = "black", lwd = 1) +
+  # ... tout ton code ...
+  tm_layout(
+    legend.outside = TRUE,
+    legend.outside.position = c("center", "bottom")
+  )
+
+# Enregistrer
+tmap_save(
+  tm       = ma_carte,
+  filename = "output/map_all_groups.png",
+  width    = 12,       # largeur en pouces
+  height   = 8,        # hauteur en pouces
+  dpi      = 300       # résolution 
+)
 ```
 
 Nous produisons un tableau récapitulatif du nombre de grappes d'enquête classées dans chaque groupe pour les années 1997, 2008, 2011, 2013, 2016, 2018 et 2021. Afin de faciliter le comptage et la transformation en tableau, nous supprimons les données spatiales pour ne conserver que les informations attributaires (année d'enquête "DHSYEAR" et groupe de classification "groupe").
