@@ -337,7 +337,7 @@ tm_shape(wdpa_from_2008) +
 tm_polygons(fill = "darkgreen", 
             col = "black", 
             fill_alpha = 0.5) +
-tm_add_legend(type = "polygons", fill = c("blue", "darkgreen"), labels = c("avant 2008", "après 2008")) +
+tm_add_legend(type = "polygons", fill = c("blue", "darkgreen"), labels = c("Before 2008", "After 2008")) +
   tm_title("Protected areas by period of creation", fontface = "bold", size = 1) +
   tm_credits("Source: WDPA, 2025", position =  c("BOTTOM", "RIGHT")) +
   tm_scalebar(position = c("TOP", "LEFT"))
