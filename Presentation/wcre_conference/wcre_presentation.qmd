@@ -15,126 +15,7 @@ format:
     slide-level: 2
 bibliography: "references.bib"
 header-includes:
-  - |
-    \usepackage{graphicx}
-    \usepackage[table]{xcolor}
-    \usepackage{colortbl}
-    \usepackage{multirow}
-    \usepackage{booktabs}
-    \usepackage{array}
-    \usepackage{appendixnumberbeamer}
-    \usepackage{mdframed}
-    \usepackage{tikz}
-    \usepackage{amsmath}
-    \usepackage{tikz}
-    \usepackage{tcolorbox}
-    \usepackage{fontawesome5}
-    \usepackage{multicol}
-    \tcbuselibrary{skins, breakable}
-    % Couleurs infographie (xcolor déjà chargé avec [table] plus haut)
-    \definecolor{bleustat}{RGB}{91,143,201}
-    \definecolor{bleustatfond}{RGB}{240,245,252}
-    \definecolor{vertstatfond}{RGB}{240,250,244}
-    \definecolor{orangelacune}{RGB}{230,168,23}
-    \definecolor{orangelacunefond}{RGB}{255,251,240}
-    \definecolor{violetapport}{RGB}{155,114,207}
-    \definecolor{violetapportfond}{RGB}{249,245,255}
-    \usetikzlibrary{shapes.geometric, positioning, shadows}
-     % ── Couleurs vertes
-    \definecolor{vertfonce}{RGB}{46,125,50}
-    \definecolor{vertmoyen}{RGB}{76,153,0}
-    \definecolor{vertclair}{RGB}{200,230,201}
-    \definecolor{vertpale}{RGB}{232,245,233}
-    \definecolor{blancpur}{RGB}{255,255,255}
-    \definecolor{textefonce}{RGB}{33,33,33}
-
-    % ── Thème Beamer en vert
-    \setbeamercolor{background canvas}{bg=blancpur}
-    \setbeamercolor{palette primary}{bg=vertfonce,fg=white}
-    \setbeamercolor{palette secondary}{bg=vertmoyen,fg=white}
-    \setbeamercolor{palette tertiary}{bg=vertclair,fg=textefonce}
-    \setbeamercolor{palette quaternary}{bg=vertfonce,fg=white}
-    \setbeamercolor{structure}{fg=vertfonce}
-    \setbeamercolor{section in toc}{fg=vertfonce}
-    \setbeamercolor{title}{fg=vertfonce,bg=blancpur}
-    \setbeamercolor{subtitle}{fg=vertfonce}
-    \setbeamercolor{author}{fg=textefonce}
-    \setbeamercolor{date}{fg=black}
-    \setbeamercolor{institute}{fg=textefonce}
-    \setbeamercolor{block title}{bg=vertfonce,fg=white}
-    \setbeamercolor{block body}{bg=vertpale,fg=textefonce}
-    \setbeamercolor{itemize item}{fg=vertfonce}
-    \setbeamercolor{itemize subitem}{fg=vertmoyen}
-    \setbeamercolor{frametitle}{bg=blancpur,fg=vertfonce}
-    \setbeamercolor{footline gauche}{bg=vertfonce,fg=white}
-    \setbeamercolor{footline centre}{bg=vertmoyen,fg=white}
-    \setbeamercolor{footline droite}{bg=vertfonce,fg=white}
-
-    % ── Polices équilibrées pour l'amphi
-    \setbeamerfont{normal text}{size=\normalsize}
-    \setbeamerfont{title}{size=\Large,series=\bfseries}
-    \setbeamerfont{subtitle}{size=\normalsize}
-    \setbeamerfont{itemize/enumerate body}{size=\normalsize}
-    \setbeamerfont{itemize/enumerate subbody}{size=\small}
-    \setbeamerfont{block title}{size=\normalsize,series=\bfseries}
-    \setbeamerfont{block body}{size=\normalsize}
-    \setbeamertemplate{headline}{}
-
-    % ── Redéfinition du Frametitle
-    \setbeamertemplate{frametitle}{
-      \nopagebreak
-      \begin{beamercolorbox}[wd=\paperwidth,ht=1.2cm,dp=0.3cm]{frametitle}
-        \vspace{0.2cm}
-        \hspace{0.5cm}
-        \begin{minipage}[c]{0.90\paperwidth}
-          \raggedright
-          \fontsize{15}{17}\selectfont\bfseries\textcolor{vertfonce}{\insertframetitle}
-        \end{minipage}
-      \end{beamercolorbox}
-    }
-
-    % ── Footline compacte (uniquement sur la première slide)
-    \setbeamertemplate{footline}{
-      \ifnum\insertframenumber=1
-        \leavevmode%
-        \begin{beamercolorbox}[wd=.35\paperwidth,ht=0.35cm,dp=0.1cm,left,leftskip=0.3cm]{footline gauche}%
-          \vbox to 0.35cm{\vfil\fontsize{7}{9}\selectfont I. Razafimahenina\vfil}%
-        \end{beamercolorbox}%
-        \begin{beamercolorbox}[wd=.45\paperwidth,ht=0.35cm,dp=0.1cm,center]{footline centre}%
-          \vbox to 0.35cm{\vfil\fontsize{7}{9}\selectfont Protected Areas terrestrial Impact -- Living Conditions\vfil}%
-        \end{beamercolorbox}%
-        \begin{beamercolorbox}[wd=.20\paperwidth,ht=0.35cm,dp=0.1cm,right,rightskip=0.3cm]{footline droite}%
-          \vbox to 0.35cm{\vfil\fontsize{7}{9}\selectfont 1 / \inserttotalframenumber\vfil}%
-        \end{beamercolorbox}%
-      \fi
-    }
-    
-    
-    % ── Appendix
-    \definecolor{monVert}{RGB}{100, 160, 110}
-    \setbeamercolor{button}{bg=monVert, fg=white}
-
-    % ── Slide de transition de section
-    \setbeamercolor{section page}{bg=blancpur,fg=vertfonce}
-    \setbeamertemplate{section page}{
-      \begin{center}
-        \vspace{1.8cm}
-        \begin{mdframed}[
-          linecolor=vertclair,
-          linewidth=1.2pt,
-          roundcorner=6pt,
-          backgroundcolor=white,
-          innertopmargin=15pt,
-          innerbottommargin=15pt
-        ]
-        \centering\textcolor{vertfonce}{\Large\insertsection}
-        \end{mdframed}
-      \end{center}
-    }
-    \AtBeginSection[]{\frame{\sectionpage}}
-
-    % ── Date forcée
-    \date{WCERE Conference -- June 29th - July 3rd 2026}
+  - \input{preamble.tex}
 
 editor_options:
   chunk_output_type: console
@@ -142,6 +23,9 @@ editor_options:
 
 
 ## To what extent do protected areas impact household living standards?
+
+\hyperlink{annexe:evolution-PA}{\beamerbutton{$\triangleright$ Evolution of protected areas (graphics)}}
+
   - **Economic Opportunities**
     - Development of local tourism [@Naidoo2019],
     - Creation of conservation-related jobs [@baliettiLaborMarketImpacts2024]
@@ -176,39 +60,29 @@ Effects vary across evaluation methods, institutional contexts, and geographic l
     inner sep=8pt
   }
 ]
-
 \node[box] (top) {
 \textbf{Hypothesis}\\[6pt]
--- (H1) Protected Areas (PAs) reduce average household wealth?\\[3pt]
--- (H2) Protected Areas (PAs) increase socioeconomic inequalities within communities by differenetially channeling benefits towards better positioned households?\\[3pt]
--- (H3) Multi-use PAs (IUCN categories V-VI) generate more favorable outcomes than strict PAs (IUCN I-IV)?
+-- Protected Areas (PAs) reduce average household wealth?\\[3pt]
+-- Protected Areas (PAs) increase socioeconomic inequalities within communities by differentially channeling benefits towards better positioned households?\\[3pt]
+-- Multi-use PAs (IUCN categories V-VI) generate more favorable outcomes than strict PAs (IUCN I-IV)?
 };
-
 \node[
-smallbox,
-below left=8pt and 0pt of top.south west,
-anchor=north west
+  smallbox,
+  below left=8pt and 0pt of top.south west,
+  anchor=north west
 ] (left) {
-
-\textbf{Hypothesis\\[5pt]
-
+\textbf{Research Question}\\[5pt]
 To what extent do protected areas affect household living standards?
-
 };
-
 \node[
-smallbox,
-below right=8pt and 0pt of top.south east,
-anchor=north east
+  smallbox,
+  below right=8pt and 0pt of top.south east,
+  anchor=north east
 ] (right) {
-
 \textbf{Contribution}\\[6pt]
-
 -- National analysis of 84 protected areas.\\[3pt]
 -- Quantitative assessment of the impact of protected area creation on household living conditions.
-
 };
-
 \end{tikzpicture}
 
 ```
@@ -375,7 +249,6 @@ h2_event_study_plot +
 
 
 ## Heterogeneity: Which Protected Areas Harm Most?  
-![Hétérogénéité des effets sur le bien être](images/result_H3.png){fig-align="center"}
 
 ```{r}
 #| label: fig-h3-2x2
@@ -436,16 +309,16 @@ h3_2x2_plot <- read_rds("images/h3_2x2_plot.rds")
 :::
 
 
+# Appendix {.unnumbered}
+
 \appendix
 
-## Evolution of Protected Areas {#stats-states}
+## Evolution of protected areas (graphics) {.unnumbered}
+
+\hypertarget{annexe:evolution-PA}{}
 
 ![Evolution of protected areas in Madagascar and study period](images/evo_pa.png){fig-align="center"}
 
-\vspace{1em}
-
-% Ce bouton permet de revenir instantanément à la diapositive principale
-\hyperlink{main-slide}{\beamerreturnbutton{Back to Map}}
-
+\hyperlink{slide:context}{\beamerbutton{$\leftarrow$ Back}}
 
 
