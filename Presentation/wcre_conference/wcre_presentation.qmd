@@ -22,11 +22,24 @@ header-includes:
     \usepackage{multirow}
     \usepackage{booktabs}
     \usepackage{array}
+    \usepackage{appendixnumberbeamer}
     \usepackage{mdframed}
     \usepackage{tikz}
     \usepackage{amsmath}
     \usepackage{tikz}
-    \usetikzlibrary{positioning}
+    \usepackage{tcolorbox}
+    \usepackage{fontawesome5}
+    \usepackage{multicol}
+    \tcbuselibrary{skins, breakable}
+    % Couleurs infographie (xcolor déjà chargé avec [table] plus haut)
+    \definecolor{bleustat}{RGB}{91,143,201}
+    \definecolor{bleustatfond}{RGB}{240,245,252}
+    \definecolor{vertstatfond}{RGB}{240,250,244}
+    \definecolor{orangelacune}{RGB}{230,168,23}
+    \definecolor{orangelacunefond}{RGB}{255,251,240}
+    \definecolor{violetapport}{RGB}{155,114,207}
+    \definecolor{violetapportfond}{RGB}{249,245,255}
+    \usetikzlibrary{shapes.geometric, positioning, shadows}
      % ── Couleurs vertes
     \definecolor{vertfonce}{RGB}{46,125,50}
     \definecolor{vertmoyen}{RGB}{76,153,0}
@@ -95,6 +108,11 @@ header-includes:
         \end{beamercolorbox}%
       \fi
     }
+    
+    
+    % ── Appendix
+    \definecolor{monVert}{RGB}{100, 160, 110}
+    \setbeamercolor{button}{bg=monVert, fg=white}
 
     % ── Slide de transition de section
     \setbeamercolor{section page}{bg=blancpur,fg=vertfonce}
@@ -160,10 +178,10 @@ Effects vary across evaluation methods, institutional contexts, and geographic l
 ]
 
 \node[box] (top) {
-\textbf{Research Questions}\\[6pt]
--- Do protected areas (PAs) worsen the living conditions of local communities?\\[3pt]
--- Do protected areas (PAs) increase inequalities among local communities?\\[3pt]
--- Do the impacts of protected areas vary according to the type of protected area?
+\textbf{Hypothesis}\\[6pt]
+-- (H1) Protected Areas (PAs) reduce average household wealth?\\[3pt]
+-- (H2) Protected Areas (PAs) increase socioeconomic inequalities within communities by differenetially channeling benefits towards better positioned households?\\[3pt]
+-- (H3) Multi-use PAs (IUCN categories V-VI) generate more favorable outcomes than strict PAs (IUCN I-IV)?
 };
 
 \node[
@@ -172,7 +190,7 @@ below left=8pt and 0pt of top.south west,
 anchor=north west
 ] (left) {
 
-\textbf{Research Design}\\[6pt]
+\textbf{Hypothesis\\[5pt]
 
 To what extent do protected areas affect household living standards?
 
@@ -196,32 +214,28 @@ anchor=north east
 ```
 
 
-## Why Madagascar?  
-::: {.columns align=top}
+## Madagascar is a relevant study case
+:::: columns
 
-::: {.column width="48%"}
-\small
-
+::: {.column width="52%"}
 **Area of protected areas and Size of the adjacent population exposed to them nearly tripled between 2008 and 2021**
 
-- 2008: 3,6% of the territory — 9% population lived < 10 km of protected area 
-- 2021: 10,8% du territoire — 28% population lived > 10 km of protected area 
+- 2008: 3,6% of the territory — 9% population lived < 10 km of PAs 
+- 2021: 10,8% du territoire — 28% population lived > 10 km of PAs 
 
 **A Vulnerable socio-economic context **
 
-- The world's poorest country based on SDG Indiator 1.1 [@Conceicao2024]  
+- The world's poorest country based on SDG Indicator 1.1 [@Conceicao2024]  
 - High dependence on natural resources [@Llopis2023]  
 - Weak state capacity [@Hanson2021]
 
-:::
 
-::: {.column width="5%"}
+\vspace{0.1cm}
+
 
 :::
 
 ::: {.column width="48%"}
-\small
-
 
 ```{r}
 #| echo: false
@@ -230,10 +244,10 @@ anchor=north east
 knitr::include_graphics("images/carte_AP.png")
 ```
 \tiny Source : Authors
-:::
 
 :::
 
+::::
 
 
 ## Theory of Change
@@ -249,15 +263,16 @@ knitr::include_graphics("images/carte_AP.png")
 # Empirical methodology {background-color="#f8f9fa"}
 
 ## The data at the rural level 
+
   
-  - Combine geolocated household data from six nationally representative survey waves Demographic and Health surveys (1997, 2008, 2021), Malaria Indicator Surveys (2011, 2013, 2016)
-and Multiple Indicator Cluster Surveys (2018) - with the World Database on Protected Areas and
-geospatial environmental covariates (forest cover, slope, elevation, population density, accessibility,
-and standardized precipitation evapotranspiration index).
+  - **Dependent variable**: Protected Areas Implementation, from WDPA 
   
-  - **Dependent variable**: Protected Areas Implementation, from WDPA, SAPM 
+  - **Outcome variable**: Wealth index and z-score of the wealth index from Demographic and Health surveys (DHS) (1997, 2008, 2021), Malaria Indicator Surveys (MIS) (2011, 2013, 2016),and Multiple Indicator Cluster Surveys (MICS) (2018)
   
-  - 
+  - **Matching variables**: forest cover rates in 2000 (m), slope, elevation (%), population density (km²), accessibility (min),
+and standardized precipitation evapotranspiration index, downloaded via mapme.biodiversity
+
+  - **Control variables**: age and sex of the head of household, from DHS, MIS, MICS
   
   - **Treatment group**: households living in rural areas < 10 km of a Protected areas created between 2008 and 2021
   
@@ -275,37 +290,144 @@ and standardized precipitation evapotranspiration index).
 knitr::include_graphics("images/map_2021_groups.png")
 ```
 \tiny Source : DHS,MICS,MIS, Authors
+
+\vspace{1em}
+
+\hyperlink{stats-states}{\beamergotobutton{Summary statistics (states)}}
+
+\appendix
+
+
   
-  
-  
-## Baseline model: protected areas, living conditions, and rural 
+##  Baseline model: protected areas, living conditions, and rural  
+
+- **Genetic matching**
+
+Used to compare observable characteristics and increase the similarity between the treatment group and the control group [@Diamond2013]
+
+- **Difference-in-difference (DID)**
+
+::: {.callout-note title="Baseline Equation"}
+L'Ã©quation de la mÃ©thode de difference-in-difference [@Daw2018]: 
+$$
+Y_{ict} = \alpha + \delta \cdot (\mathrm{Treatment}_c \times \mathrm{Post}_t) + X_{ict}' \theta + \mu_c + \lambda_t + \varepsilon_{ict}
+$$ 
+:::
+
+\begin{small}
+\begin{itemize}
+  \item $Y_{ict}$: wealth index (household $i$, cluster $c$, year $t$ 1997/2008/2021)
+  \item $\alpha$: intercept (mean control group pre-treatment)
+  \item $\mathrm{Treatment}_c$: =1 if cluster affected by protected area, 0 otherwise
+  \item $\mathrm{Post}_t$: =1 for 2021, 0 for 2008
+  \item $(\mathrm{Treatment}_c \times \mathrm{Post}_t)$: interaction term (DID indicator)
+  \item $\delta$: DID estimator (effect of protected areas on welfare)
+  \item $X_{ict}$: controls (age/sex of head, SPEI, access, pop density, forest, slope, altitude)
+  \item $\theta$: coefficients on controls
+  \item $\mu_c$: cluster fixed effects (time-invariant heterogeneity)
+  \item $\lambda_t$: time fixed effects (common shocks)
+  \item $\varepsilon_{ict}$: error term
+\end{itemize}
+\end{small}
 
 
 # Results
 
 ## Protected Areas impact on the household wealth index
 
+```{r}
 
-![Impact des aires protégées sur le bien être: Event study avec un bins de 2 ans](images/result_H1.png){fig-align="center"}
+library(tidyverse,  warn.conflicts = FALSE)
+
+#| label: fig-h1-event-study
+#| fig-cap: "Impact on well-being: Event-study with 2-year bins"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+h1_event_study_plot <- read_rds("images/h1_event_study_plot.rds")
+```
 
 
 ## Protected Areas impact on the household wealth index inequalities 
-![Impact des aires protégées sur l'inégalité des indices de richesse des ménages: Event study avec un bins de 2 ans](images/result_H2.png){fig-align="center"}
+
+```{r}
+#| label: fig-h2-event-study
+#| fig-cap: "Impact on inequalities: Event-study with 2-year bins"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+h2_event_study_plot <- read_rds("images/h2_event_study_plot.rds")
+
+# h2_event_study_plot
+
+# Si tu veux enlever le titreau-dessus du graph, tu peux mettre ça à la place
+h2_event_study_plot + 
+    ggtitle(element_blank())
+```
 
 
 ## Heterogeneity: Which Protected Areas Harm Most?  
 ![Hétérogénéité des effets sur le bien être](images/result_H3.png){fig-align="center"}
 
-## Policy Implications 
+```{r}
+#| label: fig-h3-2x2
+#| fig-cap: "Heterogeneity of impact on well-being"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+h3_2x2_plot <- read_rds("images/h3_2x2_plot.rds")
+
+# # Pour rajouter le titre au-dessus du graph en plus de la caption en dessous
+# h2_2x2_plot
+
+```
+
+## Robustness Test 
+
+- **Distance threshold test of 5 km and 15km**: Proximity to protected areas (PAs) has no significant effect on wealth 
+- **Pseudo-panel analysis** the results confirm the robustness of the conclusions in that environmental and spatial conditions have a stronger influence on household living standards than sociodemographic characteristics
+- **Heterogeneity analysis**: The effects are not robust to the presence of unobserved bias
+- **Other outcome variables (Child size/weight and infant mortality**): No significant effect is found in the estimation 
+
+## Conclusions
+:::: columns
+
+::: {.column width="52%"}
+- PAs do not lower the standard of living, but costs accumulate over time 
+
+- No significant average effect on the standards of living - losses associated with restrictions appear to be offset by adaptation mechanisms and local opportunities 
+
+- No significant effect on inequality - the main determinants remain climate shocks and sociodemographic characteristics
+
+- No differentiated effect based on governance type - formal categories alone do not explain socioeconomic outcomes 
+
+\vspace{0.1cm}
 
 
+:::
 
+::: {.column width="48%"}
 
+**Policy Implications*
+- Integration of systematic socioeconomic monitoring into protected area governance frameworks
+- Strengthening of transparent compensation mechanisms
+- Design of inclusive benefit-sharing mechanisms that address equity concerns
 
+:::
 
-
-
-
+::::
 
 
 ## References
@@ -314,9 +436,16 @@ knitr::include_graphics("images/map_2021_groups.png")
 :::
 
 
+\appendix
 
+## Evolution of Protected Areas {#stats-states}
 
+![Evolution of protected areas in Madagascar and study period](images/evo_pa.png){fig-align="center"}
 
+\vspace{1em}
+
+% Ce bouton permet de revenir instantanément à la diapositive principale
+\hyperlink{main-slide}{\beamerreturnbutton{Back to Map}}
 
 
 
