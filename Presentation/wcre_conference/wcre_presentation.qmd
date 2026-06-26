@@ -25,7 +25,9 @@ header-includes:
     \usepackage{mdframed}
     \usepackage{tikz}
     \usepackage{amsmath}
-                   % ── Couleurs vertes
+    \usepackage{tikz}
+    \usetikzlibrary{positioning}
+     % ── Couleurs vertes
     \definecolor{vertfonce}{RGB}{46,125,50}
     \definecolor{vertmoyen}{RGB}{76,153,0}
     \definecolor{vertclair}{RGB}{200,230,201}
@@ -121,10 +123,7 @@ editor_options:
 ---
 
 
-# Introduction {background-color="#f8f9fa"}
-
 ## To what extent do protected areas impact household living standards?
-
   - **Economic Opportunities**
     - Development of local tourism [@Naidoo2019],
     - Creation of conservation-related jobs [@baliettiLaborMarketImpacts2024]
@@ -137,23 +136,83 @@ Restricted access to natural resources - gathering, hunting, fishing, medicinal 
  - **Heterogeneous results**
 Effects vary across evaluation methods, institutional contexts, and geographic locations [@Kandel2022].
 
-# Why Madagascar? 
 
+## Research design 
+
+```{=latex}
+\begin{tikzpicture}[
+  box/.style={
+    draw,
+    rounded corners=4pt,
+    minimum width=\textwidth,
+    text width=\dimexpr\textwidth-12pt\relax,
+    align=left,
+    inner sep=8pt
+  },
+  smallbox/.style={
+    draw,
+    rounded corners=4pt,
+    minimum width=0.47\textwidth,
+    text width=\dimexpr0.47\textwidth-12pt\relax,
+    align=left,
+    inner sep=8pt
+  }
+]
+
+\node[box] (top) {
+\textbf{Research Questions}\\[6pt]
+-- Do protected areas (PAs) worsen the living conditions of local communities?\\[3pt]
+-- Do protected areas (PAs) increase inequalities among local communities?\\[3pt]
+-- Do the impacts of protected areas vary according to the type of protected area?
+};
+
+\node[
+smallbox,
+below left=8pt and 0pt of top.south west,
+anchor=north west
+] (left) {
+
+\textbf{Research Design}\\[6pt]
+
+To what extent do protected areas affect household living standards?
+
+};
+
+\node[
+smallbox,
+below right=8pt and 0pt of top.south east,
+anchor=north east
+] (right) {
+
+\textbf{Contribution}\\[6pt]
+
+-- National analysis of 84 protected areas.\\[3pt]
+-- Quantitative assessment of the impact of protected area creation on household living conditions.
+
+};
+
+\end{tikzpicture}
+
+```
+
+
+## Why Madagascar?  
 ::: {.columns align=top}
 
 ::: {.column width="48%"}
 \small
 
-**The area od protected areas and the size of the adjacent population exposed to them nearly tripled between 2008 and 2021**
+**Area of protected areas and Size of the adjacent population exposed to them nearly tripled between 2008 and 2021**
 
-- 2008 : 3,6% of the territory — 9% population lived < 10 km of protected area 
-- 2021 : 10,8% du territoire — 28% population lived > 10 km of protected area 
+- 2008: 3,6% of the territory — 9% population lived < 10 km of protected area 
+- 2021: 10,8% du territoire — 28% population lived > 10 km of protected area 
 
 **A Vulnerable socio-economic context **
 
 - The world's poorest country based on SDG Indiator 1.1 [@Conceicao2024]  
 - High dependence on natural resources [@Llopis2023]  
 - Weak state capacity [@Hanson2021]
+
 :::
 
 ::: {.column width="5%"}
@@ -163,9 +222,10 @@ Effects vary across evaluation methods, institutional contexts, and geographic l
 ::: {.column width="48%"}
 \small
 
+
 ```{r}
 #| echo: false
-#| out-width: "100%"
+#| out-width: "105%"
 
 knitr::include_graphics("images/carte_AP.png")
 ```
@@ -174,7 +234,9 @@ knitr::include_graphics("images/carte_AP.png")
 
 :::
 
-# Theory of Change
+
+
+## Theory of Change
 
 \begin{figure}
   \centering
@@ -222,6 +284,7 @@ knitr::include_graphics("images/map_2021_groups.png")
 # Results
 
 ## Protected Areas impact on the household wealth index
+
 
 ![Impact des aires protégées sur le bien être: Event study avec un bins de 2 ans](images/result_H1.png){fig-align="center"}
 
