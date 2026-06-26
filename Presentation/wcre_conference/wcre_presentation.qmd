@@ -1,4 +1,259 @@
 ---
-title: "wcre_presentation"
-editor: visual
+title: "Socioeconomic impacts of Terrestrial Protected Areas"
+subtitle: "Evidence from Large-Scale National Surveys in Madagascar"
+author: 
+  - name: "Iriana Razafimahenina$^{1,4}$"
+  - name: "Florent Bédécarrats$^{2}$"
+  - name: "Ingrid Dallmann$^{3}$"
+  - name: "Holimalala Randriamanampisoa$^{4}$"
+institute: "$^{1}$U.Paris Saclay $\\quad$ $^{2}$UVSQ $\\quad$ $^{3}$AFD $\\quad$ $^{4}$U. Antananarivo"
+format:
+  beamer:
+    aspectratio: 169
+    theme: default
+    navigation: empty
+    slide-level: 2
+bibliography: "references.bib"
+header-includes:
+  - |
+    \usepackage{graphicx}
+    \usepackage[table]{xcolor}
+    \usepackage{colortbl}
+    \usepackage{multirow}
+    \usepackage{booktabs}
+    \usepackage{array}
+    \usepackage{mdframed}
+    \usepackage{tikz}
+    \usepackage{amsmath}
+                   % ── Couleurs vertes
+    \definecolor{vertfonce}{RGB}{46,125,50}
+    \definecolor{vertmoyen}{RGB}{76,153,0}
+    \definecolor{vertclair}{RGB}{200,230,201}
+    \definecolor{vertpale}{RGB}{232,245,233}
+    \definecolor{blancpur}{RGB}{255,255,255}
+    \definecolor{textefonce}{RGB}{33,33,33}
+
+    % ── Thème Beamer en vert
+    \setbeamercolor{background canvas}{bg=blancpur}
+    \setbeamercolor{palette primary}{bg=vertfonce,fg=white}
+    \setbeamercolor{palette secondary}{bg=vertmoyen,fg=white}
+    \setbeamercolor{palette tertiary}{bg=vertclair,fg=textefonce}
+    \setbeamercolor{palette quaternary}{bg=vertfonce,fg=white}
+    \setbeamercolor{structure}{fg=vertfonce}
+    \setbeamercolor{section in toc}{fg=vertfonce}
+    \setbeamercolor{title}{fg=vertfonce,bg=blancpur}
+    \setbeamercolor{subtitle}{fg=vertfonce}
+    \setbeamercolor{author}{fg=textefonce}
+    \setbeamercolor{date}{fg=black}
+    \setbeamercolor{institute}{fg=textefonce}
+    \setbeamercolor{block title}{bg=vertfonce,fg=white}
+    \setbeamercolor{block body}{bg=vertpale,fg=textefonce}
+    \setbeamercolor{itemize item}{fg=vertfonce}
+    \setbeamercolor{itemize subitem}{fg=vertmoyen}
+    \setbeamercolor{frametitle}{bg=blancpur,fg=vertfonce}
+    \setbeamercolor{footline gauche}{bg=vertfonce,fg=white}
+    \setbeamercolor{footline centre}{bg=vertmoyen,fg=white}
+    \setbeamercolor{footline droite}{bg=vertfonce,fg=white}
+
+    % ── Polices équilibrées pour l'amphi
+    \setbeamerfont{normal text}{size=\normalsize}
+    \setbeamerfont{title}{size=\Large,series=\bfseries}
+    \setbeamerfont{subtitle}{size=\normalsize}
+    \setbeamerfont{itemize/enumerate body}{size=\normalsize}
+    \setbeamerfont{itemize/enumerate subbody}{size=\small}
+    \setbeamerfont{block title}{size=\normalsize,series=\bfseries}
+    \setbeamerfont{block body}{size=\normalsize}
+    \setbeamertemplate{headline}{}
+
+    % ── Redéfinition du Frametitle
+    \setbeamertemplate{frametitle}{
+      \nopagebreak
+      \begin{beamercolorbox}[wd=\paperwidth,ht=1.2cm,dp=0.3cm]{frametitle}
+        \vspace{0.2cm}
+        \hspace{0.5cm}
+        \begin{minipage}[c]{0.90\paperwidth}
+          \raggedright
+          \fontsize{15}{17}\selectfont\bfseries\textcolor{vertfonce}{\insertframetitle}
+        \end{minipage}
+      \end{beamercolorbox}
+    }
+
+    % ── Footline compacte (uniquement sur la première slide)
+    \setbeamertemplate{footline}{
+      \ifnum\insertframenumber=1
+        \leavevmode%
+        \begin{beamercolorbox}[wd=.35\paperwidth,ht=0.35cm,dp=0.1cm,left,leftskip=0.3cm]{footline gauche}%
+          \vbox to 0.35cm{\vfil\fontsize{7}{9}\selectfont I. Razafimahenina\vfil}%
+        \end{beamercolorbox}%
+        \begin{beamercolorbox}[wd=.45\paperwidth,ht=0.35cm,dp=0.1cm,center]{footline centre}%
+          \vbox to 0.35cm{\vfil\fontsize{7}{9}\selectfont Protected Areas terrestrial Impact -- Living Conditions\vfil}%
+        \end{beamercolorbox}%
+        \begin{beamercolorbox}[wd=.20\paperwidth,ht=0.35cm,dp=0.1cm,right,rightskip=0.3cm]{footline droite}%
+          \vbox to 0.35cm{\vfil\fontsize{7}{9}\selectfont 1 / \inserttotalframenumber\vfil}%
+        \end{beamercolorbox}%
+      \fi
+    }
+
+    % ── Slide de transition de section
+    \setbeamercolor{section page}{bg=blancpur,fg=vertfonce}
+    \setbeamertemplate{section page}{
+      \begin{center}
+        \vspace{1.8cm}
+        \begin{mdframed}[
+          linecolor=vertclair,
+          linewidth=1.2pt,
+          roundcorner=6pt,
+          backgroundcolor=white,
+          innertopmargin=15pt,
+          innerbottommargin=15pt
+        ]
+        \centering\textcolor{vertfonce}{\Large\insertsection}
+        \end{mdframed}
+      \end{center}
+    }
+    \AtBeginSection[]{\frame{\sectionpage}}
+
+    % ── Date forcée
+    \date{WCERE Conference -- June 29th - July 3rd 2026}
+
+editor_options:
+  chunk_output_type: console
 ---
+
+
+# Introduction {background-color="#f8f9fa"}
+
+## To what extent do protected areas impact household living standards?
+
+  - **Economic Opportunities**
+    - Development of local tourism [@Naidoo2019],
+    - Creation of conservation-related jobs [@baliettiLaborMarketImpacts2024]
+    - Compensation measures [@Poudyal2018]
+    - Improved ecosystem services [@Xu2023]
+      
+ - **Restrictions and Costs** 
+Restricted access to natural resources - gathering, hunting, fishing, medicinal plants [@Kandel2022]
+      
+ - **Heterogeneous results**
+Effects vary across evaluation methods, institutional contexts, and geographic locations [@Kandel2022].
+
+# Why Madagascar? 
+
+::: {.columns align=top}
+
+::: {.column width="48%"}
+\small
+
+**The area od protected areas and the size of the adjacent population exposed to them nearly tripled between 2008 and 2021**
+
+- 2008 : 3,6% of the territory — 9% population lived < 10 km of protected area 
+- 2021 : 10,8% du territoire — 28% population lived > 10 km of protected area 
+
+**A Vulnerable socio-economic context **
+
+- The world's poorest country based on SDG Indiator 1.1 [@Conceicao2024]  
+- High dependence on natural resources [@Llopis2023]  
+- Weak state capacity [@Hanson2021]
+:::
+
+::: {.column width="5%"}
+
+:::
+
+::: {.column width="48%"}
+\small
+
+```{r}
+#| echo: false
+#| out-width: "100%"
+
+knitr::include_graphics("images/carte_AP.png")
+```
+\tiny Source : Authors
+:::
+
+:::
+
+# Theory of Change
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.95\textwidth, height=0.75\textheight, keepaspectratio]{images/theory_of_change.png}
+  \caption{\tiny Logic diagram of the theory of change}
+  \tiny{\textit{Source : Auteurs}}
+\end{figure}
+
+
+# Empirical methodology {background-color="#f8f9fa"}
+
+## The data at the rural level 
+  
+  - Combine geolocated household data from six nationally representative survey waves Demographic and Health surveys (1997, 2008, 2021), Malaria Indicator Surveys (2011, 2013, 2016)
+and Multiple Indicator Cluster Surveys (2018) - with the World Database on Protected Areas and
+geospatial environmental covariates (forest cover, slope, elevation, population density, accessibility,
+and standardized precipitation evapotranspiration index).
+  
+  - **Dependent variable**: Protected Areas Implementation, from WDPA, SAPM 
+  
+  - 
+  
+  - **Treatment group**: households living in rural areas < 10 km of a Protected areas created between 2008 and 2021
+  
+  - **Control group**: households living in rural areas < 10 km of a Protected areas created between 2008 and 2021
+  
+
+
+\definecolor{orangeaccent}{RGB}{46,125,50}
+
+\small
+```{r}
+#| echo: false
+#| out-width: "90%"
+
+knitr::include_graphics("images/map_2021_groups.png")
+```
+\tiny Source : DHS,MICS,MIS, Authors
+  
+  
+  
+## Baseline model: protected areas, living conditions, and rural 
+
+
+# Results
+
+## Protected Areas impact on the household wealth index
+
+![Impact des aires protégées sur le bien être: Event study avec un bins de 2 ans](images/result_H1.png){fig-align="center"}
+
+
+## Protected Areas impact on the household wealth index inequalities 
+![Impact des aires protégées sur l'inégalité des indices de richesse des ménages: Event study avec un bins de 2 ans](images/result_H2.png){fig-align="center"}
+
+
+## Heterogeneity: Which Protected Areas Harm Most?  
+![Hétérogénéité des effets sur le bien être](images/result_H3.png){fig-align="center"}
+
+## Policy Implications 
+
+
+
+
+
+
+
+
+
+
+
+## References
+
+::: {#refs}
+:::
+
+
+
+
+
+
+
+
