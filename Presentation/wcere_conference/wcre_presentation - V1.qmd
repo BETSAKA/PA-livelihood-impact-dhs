@@ -1,0 +1,462 @@
+---
+title: "Socioeconomic impacts of Terrestrial Protected Areas"
+subtitle: "Evidence from Large-Scale National Surveys in Madagascar"
+author: 
+  - name: "Iriana Razafimahenina$^{1,4}$"
+  - name: "Florent Bédécarrats$^{2}$"
+  - name: "Ingrid Dallmann$^{3}$"
+  - name: "Holimalala Randriamanampisoa$^{4}$"
+institute: "$^{1}$U.Paris Saclay $\\quad$ $^{2}$UVSQ $\\quad$ $^{3}$AFD $\\quad$ $^{4}$U. Antananarivo"
+format:
+  beamer:
+    aspectratio: 169
+    theme: default
+    navigation: empty
+    slide-level: 2
+    fig-pos: "H"
+    keep-tex: true
+bibliography: "references.bib"
+header-includes:
+  - \input{preamble.tex}
+
+editor_options:
+  chunk_output_type: console
+---
+
+# Context
+
+## To what extent do protected areas impact household living standards?
+\hyperlink{annexe-theory-change}{\beamerbutton{$\triangleright$ Theory of change}}
+
+  - **Economic Opportunities**
+    - Development of local tourism [@Naidoo2019],
+    - Creation of conservation-related jobs [@baliettiLaborMarketImpacts2024]
+    - Compensation measures [@Poudyal2018]
+    - Improved ecosystem services [@Xu2023]
+      
+ - **Restrictions and Costs** 
+Restricted access to natural resources - gathering, hunting, fishing, medicinal plants [@Kandel2022]
+      
+ - **Heterogeneous results**
+Effects vary across evaluation methods, institutional contexts, and geographic locations [@Kandel2022].
+
+
+## Research design 
+
+```{=latex}
+\begin{tikzpicture}[
+  box/.style={
+    draw,
+    rounded corners=4pt,
+    minimum width=\textwidth,
+    text width=\dimexpr\textwidth-12pt\relax,
+    align=left,
+    inner sep=8pt
+  },
+  smallbox/.style={
+    draw,
+    rounded corners=4pt,
+    minimum width=0.47\textwidth,
+    text width=\dimexpr0.47\textwidth-12pt\relax,
+    align=left,
+    inner sep=8pt
+  }
+]
+\node[box] (top) {
+\textbf{Hypothesis}\\[5pt]
+-- Protected Areas (PAs) reduce average household wealth?\\[3pt]
+-- Protected Areas (PAs) increase socioeconomic inequalities within communities by differentially channeling benefits towards better positioned households?\\[3pt]
+-- Multi-use PAs (IUCN categories V-VI) generate more favorable outcomes than strict PAs (IUCN I-IV)?
+};
+\node[
+  smallbox,
+  below left=8pt and 0pt of top.south west,
+  anchor=north west
+] (left) {
+\textbf{Research Question}\\[3pt]
+To what extent do protected areas affect household living standards?
+};
+\node[
+  smallbox,
+  below right=8pt and 0pt of top.south east,
+  anchor=north east
+] (right) {
+\textbf{Contribution}\\[5pt]
+-- National analysis of 84 PAs.\\[2pt]
+-- Quantitative assessment of the impact of PA creation on household living conditions.
+};
+\end{tikzpicture}
+
+```
+
+
+## Madagascar is a relevant study case
+\hyperlink{annexe-evolution-PA}{\beamerbutton{$\triangleright$ Evolution of protected areas}}
+
+:::: columns
+
+::: {.column width="52%"}
+**Area of protected areas and Size of the adjacent population exposed to them nearly tripled between 2008 and 2021**
+
+- 2008: 3,6% of the territory — 9% population lived < 10 km of PAs 
+- 2021: 10,8% du territoire — 28% population lived > 10 km of PAs 
+
+**A Vulnerable socio-economic context **
+
+- The world's poorest country based on SDG Indicator 1.1 [@Conceicao2024]  
+- High dependence on natural resources [@Llopis2023]  
+- Weak state capacity [@Hanson2021]
+
+
+\vspace{0.1cm}
+
+
+:::
+
+::: {.column width="48%"}
+
+```{r}
+#| echo: false
+#| out-width: "105%"
+
+knitr::include_graphics("images/carte_AP.png")
+```
+\tiny Source : Authors
+
+:::
+
+::::
+
+
+# Empirical methodology {background-color="#f8f9fa"}
+
+## The data at the rural level 
+\hyperlink{annexe-empirical-methodology}{\beamerbutton{$\triangleright$ "Summary statistics}}
+  
+  - **Dependent variable**: Protected Areas Implementation, from WDPA 
+  
+  - **Outcome variable**: Wealth index and z-score of the wealth index from Demographic and Health surveys (DHS) (1997, 2008, 2021), Malaria Indicator Surveys (MIS) (2011, 2013, 2016),and Multiple Indicator Cluster Surveys (MICS) (2018)
+  
+  - **Matching variables**: forest cover rates in 2000 (m), slope, elevation (%), population density (km²), accessibility (min), and standardized precipitation evapotranspiration index, downloaded via mapme.biodiversity
+
+  - **Control variables**: age and sex of the head of household, from DHS, MIS, MICS
+  
+
+## Unit analysis 
+:::: {layout-ncol=2}
+
+::: {}
+```{r}
+#| echo: false
+#| out-width: "100%"
+knitr::include_graphics("images/map_2021.png")
+```
+\tiny Source: DHS, WDPA
+:::
+
+::: {}
+```{r}
+#| echo: false
+#| out-width: "100%"
+knitr::include_graphics("output/map_2021_zoom.png")
+```
+\tiny Source: Authors
+:::
+
+::::
+
+
+##  Baseline model: protected areas, living conditions, and rural  
+
+- **Genetic matching**: To compare observable characteristics between the treatment group and the control group [@Diamond2013] 
+\hyperlink{annexe-matching}{\beamerbutton{$\triangleright$ Matching }}
+
+- **Difference-in-difference (DID)**
+
+
+
+::: {.callout-note title="Baseline Equation"}
+\small
+$$
+Y_{ict} = \alpha + \delta \cdot (\mathrm{Treatment}_c \times \mathrm{Post}_t) + X_{ict}' \theta + \mu_c + \lambda_t + \varepsilon_{ict}
+$$ 
+:::
+
+\begin{scriptsize}
+\setlength{\itemsep}{0pt}
+\setlength{\parskip}{0pt}
+\begin{itemize}
+  \item $Y_{ict}$: wealth index (household $i$, cluster $c$, year $t$)
+  \item $\delta$: DID estimator (effect of protected areas on welfare)
+  \item $\mathrm{Treatment}_c \times \mathrm{Post}_t$: interaction term (DID indicator)
+  \item $\mu_c$, $\lambda_t$: time fixed effects (common shocks)
+  \item $X_{ict}$: controls ((age/sex of head, SPEI, access, pop density, forest, slope, altitude)
+\end{itemize}
+\end{scriptsize}
+
+
+# Results
+
+## Matching
+
+:::: columns
+
+::: {.column width="50%"}
+### Before 2008
+
+![](images/density_before_2008.png){width=100%}
+:::
+
+::: {.column width="50%"}
+### After matching 2008
+
+![](images/density_after_2008.png){width=100%}
+:::
+
+::::
+
+## Protected Areas impact on the household wealth index
+\hyperlink{annexe-result-h1}{\beamerbutton{$\triangleright$ Impact on well-being: Event study with 2 year bins}}
+
+![](images/result_H1.png){width=80%}
+
+
+## Protected Areas impact on the household wealth index inequalities
+\hyperlink{annexe-result-h2}{\beamerbutton{$\triangleright$ "Impact on inequalities: Event-study with 2-year bins}}
+
+
+![](images/result_H2.png){width=80%}
+
+
+## Heterogeneity: Which Protected Areas Harm Most?
+\hyperlink{annexe-result-h3}{\beamerbutton{$\triangleright$ "Heterogeneity of impact on well-being}}
+
+![](images/result_H3.png){width=80%}
+
+## Robustness Test 
+
+- **Distance threshold test of 5 km and 15km**: Proximity to protected areas (PAs) has no significant effect on wealth 
+- **Pseudo-panel analysis** the results confirm the robustness of the conclusions in that environmental and spatial conditions have a stronger influence on household living standards than sociodemographic characteristics
+- **Heterogeneity analysis**: The effects are not robust to the presence of unobserved bias
+- **Other outcome variables (Child size/weight and infant mortality**): No significant effect is found in the estimation 
+
+## Conclusions
+
+- PAs do not lower the standard of living, but costs accumulate over time 
+
+- No significant average effect on the standards of living - losses associated with restrictions appear to be offset by adaptation mechanisms and local opportunities 
+
+- No significant effect on inequality - the main determinants remain climate shocks and sociodemographic characteristics
+
+- No differentiated effect based on governance type - formal categories alone do not explain socioeconomic outcomes 
+
+
+**Policy Implications**:
+- Integration of systematic socioeconomic monitoring into protected area governance frameworks
+- Strengthening of transparent compensation mechanisms
+- Design of inclusive benefit-sharing mechanisms that address equity concerns
+
+
+
+## References
+
+::: {#refs}
+:::
+
+
+# Appendix {.unnumbered}
+
+\appendix
+
+## Theory of Change {.unnumbered}
+
+\hypertarget{annexe-theory-change}{}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.95\textwidth, height=0.75\textheight, keepaspectratio]{images/theory_of_change.png}
+  \caption{\tiny Logic diagram of the theory of change}
+  \tiny{\textit{Source : Auteurs}}
+\end{figure}
+
+
+\hyperlink{slide-context}{\beamerbutton{$\leftarrow$ Back}}
+
+
+## Evolution of protected areas {.unnumbered}
+
+\hypertarget{annexe-evolution-PA}{}
+
+
+```{r}
+#| echo: false
+#| out-width: "90%"
+
+knitr::include_graphics("images/evo_pa.png")
+```
+
+\hyperlink{slide-context}{\beamerbutton{$\leftarrow$ Back}}
+
+
+## Summary statistics: Distribution of the rural wealth index {.unnumbered}
+
+\hypertarget{annexe-empirical-methodology}{}
+
+![Distribution of the rural wealth index (percentile)](images/distr_wi.png){#fig-distr-wi width="80%"}
+
+*Source: Authors*
+
+
+\hyperlink{slide-empirical-methodology}{\beamerbutton{$\leftarrow$ Back}}
+
+
+## Summary statistics: Distribution of the Z-score of the rural wealth index {.unnumbered}
+
+![Distribution of the Z-score of the rural wealth index (percentile)](images/distr_zs.png){#fig-distr-zs width="80%"}
+
+*Source: Authors*
+
+\hyperlink{slide-empirical-methodology}{\beamerbutton{$\leftarrow$ Back}}
+
+## Descriptive statistics {.unnumbered .shrink}
+
+\hyperlink{annexe-empirical-methodology}{\beamerbutton{$\triangleright$ Descriptive statistics}}
+
+
+```{r}
+#| label: tbl-gt-desc-AP
+#| tbl-cap: "Descriptive statistics for protected areas created before 2008 and from 2021"
+#| warning: false
+#| message: false
+#| echo: false
+
+library(tidyverse, warn.conflicts = FALSE)
+library(gt)
+
+library(tidyverse)
+library(gt)
+
+tbl_gt_desc_AP <- read_rds("tables/desc_AP_combined.rds")
+
+tbl_gt_desc_AP %>%
+  gt() %>%                           # <- Transformer le tibble en gt_tbl
+  fmt_number(
+    columns = where(is.numeric),     # Arrondir toutes les colonnes numériques
+    decimals = 2
+  ) %>%
+  tab_options(
+    table.width          = pct(100),
+    column_labels.font.size = 8,     # réduit
+    table.font.size         = 7,     # réduit
+    data_row.padding        = px(2), # réduit l'espacement entre lignes
+    column_labels.padding   = px(2)
+  )
+
+```
+
+
+## Matching {.unnumbered .shrink}
+
+\hypertarget{annexe-evolution-PA}{}
+
+\small
+
+```{r}
+#| label: tbl-balance-long-2008
+#| tbl-cap: "Standardized Mean Difference of the Year 2008 and 2021"
+#| warning: false
+#| message: false
+#| echo: false
+balance_long_2008 <- readRDS("tables/tab_smd.rds")
+balance_long_2008 %>%
+  tab_options(
+    table.width             = pct(100),
+    column_labels.font.size = 8,
+    table.font.size         = 7,
+    data_row.padding        = px(2),
+    column_labels.padding   = px(2)
+  )
+```
+
+\hyperlink{slide-context}{\beamerbutton{$\leftarrow$ Back}}
+
+
+## Impact on well-being: Event-study with 2-year bins {.unnumbered}
+
+
+\hypertarget{annexe-result-h1}{}
+
+```{r}
+#| label: tbl-h1-staggered-static
+#| tbl-cap: "Static treatment effect estimates on well-being"
+#| warning: false
+#| message: false
+#| echo: false
+h1_staggered_static_tb <- read_rds("tables/h1_staggered_static_tb.rds")
+
+# Échapper les underscores
+h1_staggered_static_tb@data <- h1_staggered_static_tb@data %>%
+  mutate(across(where(is.character), ~ gsub("_", "\\\\_", .x)))
+
+h1_staggered_static_tb@data_body <- h1_staggered_static_tb@data_body %>%
+  mutate(across(where(is.character), ~ gsub("_", "\\\\_", .x)))
+
+h1_staggered_static_tb
+
+```
+
+
+\hyperlink{slide-result-h1}{\beamerbutton{$\leftarrow$ Back}}
+
+
+## Impact on inequalities: Event-study with 2-year bins {.unnumbered}
+
+
+\hypertarget{annexe-result_h2}{}
+
+```{r}
+
+
+#| label: tbl-h2-staggered-static
+#| tbl-cap: "Static treatment effect estimates on inequalities"
+#| warning: false
+#| message: false
+#| echo: false
+library(tinytable)
+h2_staggered_static_tb <- read_rds("tables/h2_staggered_static_tb.rds")
+
+# Échapper les underscores dans les données
+h2_staggered_static_tb@data <- h2_staggered_static_tb@data %>%
+  mutate(across(where(is.character), ~ gsub("_", "\\\\_", .x)))
+
+h2_staggered_static_tb@data_body <- h2_staggered_static_tb@data_body %>%
+  mutate(across(where(is.character), ~ gsub("_", "\\\\_", .x)))
+
+h2_staggered_static_tb
+```
+
+
+\hyperlink{slide-result-h2}{\beamerbutton{$\leftarrow$ Back}}
+
+
+## {.unnumbered}
+
+\vfill
+
+\begin{center}
+
+{\Large \textbf{Thank you for your attention}}
+
+\vspace{1cm}
+
+{\normalsize \textit{Questions \& Discussion}}
+
+\vspace{1.5cm}
+
+{\small \textbf{Contact:} iriana\_ny\_aina.razafimahenina@ird.fr}
+
+\end{center}
+
+\vfill
+
+
