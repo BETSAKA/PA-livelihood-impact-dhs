@@ -13,6 +13,12 @@
 \usepackage{multicol}
 \tcbuselibrary{skins, breakable}
 
+
+\newcommand{\annexebutton}[2]{%
+    \hyperlink{#1}{\beamerbutton{$\triangleright$ #2}}
+    \vspace{0.4cm}
+  }
+
 \definecolor{bleustat}{RGB}{91,143,201}
 \definecolor{bleustatfond}{RGB}{240,245,252}
 \definecolor{vertstatfond}{RGB}{240,250,244}
