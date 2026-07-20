@@ -1,0 +1,56 @@
+---
+output: typst
+editor_options: 
+  chunk_output_type: console
+---
+
+# Migration outcomes: household mobility
+
+## Motivation
+
+- On one hand, in the pre-analysis plan, we chose not to include migration among the control variables, as this variable is likely to be influenced not only by the direct effects of the protected areas (reduction in land use, conservation-related jobs, etc.), but also by changes in the standard of living in the areas surrounding the protected area. Migration is considered a "collider", which would introduce an artificial bias if it were treated as a control variable. 
+
+- On the other hand, to determine whether populations are leaving their territory because of the presence of protected areas, or whether migration is one of the mechanisms through which these areas influence living standards, migration should be treated as an outcome variable rather than a control variable. Since migration is likely a result of the presence of the protected areas, and not the other way around. This approach allows us to measure its effect withour introducing bias into the analysis. 
+
+
+
+# Construction the indicator 
+
+We construct our migration outcome variable using survey questions regarding household membership composition across survey visits and waves. 
+  
+  
+  
+  
+  
+  
+
+
+# Indicateur utilisé
+
+HV102: Whether the member is a de jure household member, i.e., whether the member is a usual
+resident of the household.
+
+HV103: Whether the member is a de facto household member, i.e., whether the member slept in the
+household the previous night.
+
+
+MV135: Whether the respondent is a usual resident of the household or is just visiting the household.
+Responses of "Visitor" to MV104 are visitors to the city, town or village where the interview took place, but MV135 shows respondents who were visitors to the household.
+
+MV136: Total number of household members is the number of usual residents plus the number of
+visitors who slept in the house the previous night that were listed in the household schedule.
+
+V135 Whether the respondent is a usual resident of the household or is just visiting the household.
+Responses of "Visitor" to V104 are visitors to the city, town or village where the interview
+took place, but V135 shows respondents who were visitors to the household.
+
+V136 Total number of household members is the number of usual residents plus the number of
+visitors who slept in the house the previous night that were listed in the household schedule.
+
+
+
+
+
+
+
+
