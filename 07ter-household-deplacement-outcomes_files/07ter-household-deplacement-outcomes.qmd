@@ -8,49 +8,95 @@ editor_options:
 
 ## Motivation
 
-- On one hand, in the pre-analysis plan, we chose not to include migration among the control variables, as this variable is likely to be influenced not only by the direct effects of the protected areas (reduction in land use, conservation-related jobs, etc.), but also by changes in the standard of living in the areas surrounding the protected area. Migration is considered a "collider", which would introduce an artificial bias if it were treated as a control variable. 
+In the pre-analysis plan, we chose not to include migration among the control variables, as it is likely influenced both by the direct effects of protected areas and by broader changes in living standards in surrounding areas, making it a collider rather than a valid control. Instead, migration is treated as an outcome variable, since it is more plausibly a consequence of protected areas than an independent cause. This allows us to assess whether populations leave their territory because of protected areas, or whether migration is one of the mechanisms through which these areas affect living standard, without introducing bias into the analysis. In their paper, Jones et al. [-@Jones2018] state that human migration is often considered an important driver of land use change and a threat to protected area integrity. Understanding household mobility and behaviour at the forest frontier is important for guiding conservation and development policies.
 
-- On the other hand, to determine whether populations are leaving their territory because of the presence of protected areas, or whether migration is one of the mechanisms through which these areas influence living standards, migration should be treated as an outcome variable rather than a control variable. Since migration is likely a result of the presence of the protected areas, and not the other way around. This approach allows us to measure its effect withour introducing bias into the analysis. 
+# Variable definition
 
+Among the three available data sources (DHS, MIS, MICS), the indicators that may help explain the movements of household members are as follows:
 
+| Indicateur | Source | Level | Indicator definition |
+|------------------|------------------|------------------|------------------|
+| V104 | DHS/MIS (women) | Individual | Number of years the respondent has lived in the village, town, or city where she was interviewed. Visitors to the community are coded 96 |
+| MV104 | DHS/MIS (men) | Individual | Number of years the respondent has lived in the village, town, or city where he was interviewed. Visitors to the community are coded 96 |
+| WB15 | MICS (women) | Individual | MICS equivalent of V104 |
+| MWB15 | MICS (men) | Individual | MICS equivalent of V104 |
+| HV102 | DHS/MIS | Household | De jure resident status (usual resident) |
+| HV103 | DHS/MIS | Household | De facto resident status (slept there the previous night) |
+| V135 / MV135 | DHS/MIS | Individual | Whether the respondent is a usual resident or just a visitor to the household |
+| V136 / MV136 | DHS/MIS | Household | Total number of household members (residents + visitors who slept there) |
 
-# Construction the indicator 
+# Data availability summary
 
-We construct our migration outcome variable using survey questions regarding household membership composition across survey visits and waves. 
-  
-  
-  
-  
-  
-  
+We use the following indicators
 
+| Year | Source   | V104 | MV104 | MWB15 | WB15 |
+|------|----------|------|-------|-------|------|
+| 1997 | DHS-III  | ✓    | ✓     | ✗     | ✗    |
+| 2008 | DHS-V    | ✓    | ✓     | ✗     | ✗    |
+| 2011 | MIS      | ✓    | ✓     | ✗     | ✗    |
+| 2013 | MIS      | ✓    | ✓     | ✗     | ✗    |
+| 2016 | MIS      | ✓    | ✓     | ✗     | ✗    |
+| 2018 | MICS-6   | ✗    | ✗     | ✓     | ✓    |
+| 2021 | DHS-VIII | ✓    | ✓     | ✗     | ✗    |
 
-# Indicateur utilisé
+## Data loading and harmonization
 
-HV102: Whether the member is a de jure household member, i.e., whether the member is a usual
-resident of the household.
+```{r}
 
-HV103: Whether the member is a de facto household member, i.e., whether the member slept in the
-household the previous night.
-
-
-MV135: Whether the respondent is a usual resident of the household or is just visiting the household.
-Responses of "Visitor" to MV104 are visitors to the city, town or village where the interview took place, but MV135 shows respondents who were visitors to the household.
-
-MV136: Total number of household members is the number of usual residents plus the number of
-visitors who slept in the house the previous night that were listed in the household schedule.
-
-V135 Whether the respondent is a usual resident of the household or is just visiting the household.
-Responses of "Visitor" to V104 are visitors to the city, town or village where the interview
-took place, but V135 shows respondents who were visitors to the household.
-
-V136 Total number of household members is the number of usual residents plus the number of
-visitors who slept in the house the previous night that were listed in the household schedule.
-
-
+#| label: setup
+#| message: false
+#| warning: false
 
 
+library(tidyverse)
+library(haven)
+library(fixest)
+library(did2s)
+library(broom)
+library(ggplot2)
+library(gt)
+library(sf)
+library(modelsummary)
 
 
+options(scipen = 999)
+```
 
+
+## Load matched household data
+
+```{r}
+#| label: load-matched
+
+load_matched <- function(path, year, spei_years) {
+  read_rds(path) |>
+    st_drop_geometry() |>
+    mutate(DHSYEAR = year) |>
+    rename(
+      spei_wc_n_2 = !!sym(paste0("spei_wc_", spei_years[1])),
+      spei_wc_n_1 = !!sym(paste0("spei_wc_", spei_years[2])),
+      spei_wc_n   = !!sym(paste0("spei_wc_", spei_years[3]))
+    ) |>
+    mutate(
+      hv219 = zap_labels(hv219),
+      hv220 = as.numeric(zap_labels(hv220))
+    ) |>
+    filter(GROUP %in% c("Treatment", "Control")) |>
+    select(DHSYEAR, hv001, hv002, hv005, GROUP, WDPAID, STATUS_YR, IUCN_CAT,
+           treatment, weights, spei_wc_n_2, spei_wc_n_1, spei_wc_n, hv219, hv220)
+}
+
+matched_all <- bind_rows(
+  load_matched("data/derived/data_matched_1997.rds", 1997, c(1995, 1996, 1997)),
+  load_matched("data/derived/data_matched_2008.rds", 2008, c(2006, 2007, 2008)),
+  load_matched("data/derived/data_matched_2011.rds", 2011, c(2009, 2010, 2011)),
+  load_matched("data/derived/data_matched_2013.rds", 2013, c(2011, 2012, 2013)),
+  load_matched("data/derived/data_matched_2016.rds", 2016, c(2014, 2015, 2016)),
+  load_matched("data/derived/data_matched_2018.rds", 2018, c(2016, 2017, 2018)),
+  load_matched("data/derived/data_matched_2021.rds", 2021, c(2019, 2020, 2021))
+)
+```
+
+
+### Load migration's survey data
 
