@@ -8,11 +8,11 @@ editor_options:
 
 Les clusters d'enquêtes DHS (1997, 2008 et 2021), MIS (2011, 2013, 2016) et MICS (2018) sont classés par rapport à leur distance aux aires protégées (AP) et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
 
--   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
+-   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters à moins de 10 km des AP créées à partir de 2008 dans les zones rurales
 
--   [Groupe de contrôle]{.underline}: Ménages localisées dans les clusters à plus de 10 km des aires protégées créées à partir de 2008 dans les zones rurales
+-   [Groupe de contrôle]{.underline}: Ménages localisées dans les clusters à plus de 10 km des AP créées à partir de 2008 dans les zones rurales
 
--   [Groupe à exclure]{.underline}: Ménages localisées dans les clusters à moins de 10 km des aire protégées créées avant 2008 et dans la zone urbaine
+-   [Groupe à exclure]{.underline}: Ménages localisées dans les clusters à moins de 10 km des AP créées avant 2008 et dans la zone urbaine
 
 ## Chargement des coordonnées GPS des clusters d'enquête
 
@@ -31,6 +31,16 @@ library(units) # Unités de mesure pour les vecteurs R
 library(leaflet) # Pour faire une cartographie interactive
 library(readxl) # Lecture des fichiers excel
 library(webshot2) # Pour faire des captures d'écran de tableaux gt 
+library(dplyr)
+library(terra)
+library(tidyterra)
+library(progressr)
+#library(rstac)
+library(httr)
+library(wdpar)
+library(tmap)
+library(pbapply)
+
 
 # Systèmes de coordonnées de référence 
 standard_crs <- 4326
@@ -97,194 +107,621 @@ Les coordonnées GPS de neuf clusters de l'enquête 2008 présentent des coordon
 
 ## Chargement des données AP
 
-Afin de disposer de données actualisées sur les aires protégées, nous avons triangulé les données relatives aux aires protégées avec d'autres sources notamment celles du Service de la Gouvernance des Aires Protégées (SGAP) du Ministère de l'Environnement et de Développement Durable de Madagascar (MEDD)", les décrets officiels et la documentation des gestionnaires des aires protégées. Les données de *World Database on Protected Areas* (WDPA) restent néanmoins la plus complète.
+Afin de disposer de données actualisées sur les aires protégées, nous avons triangulé les données relatives aux AP avec d'autres sources notamment celles du Service de la Gouvernance des Aires Protégées (SGAP) du Ministère de l'Environnement et de Développement Durable de Madagascar (MEDD)", les décrets officiels et la documentation des gestionnaires des aires protégées. Les données de *World Database on Protected Areas* (WDPA) restent néanmoins la plus complète.
 
-On charge et nettoie le jeu de données des aires protégées de WDPA, en ne gardant que celles dont le statut est officiellement désigné et en distinguant les zones terrestres, marines et mixtes. On ajoute le contour du pays pour situer ces aires dans l'espace. On crée ensuite une carte interactive pour visualiser ces aires protégées selon leur type, leurs noms et leurs superficies.
+On charge et nettoie le jeu de données des AP de WDPA, en ne gardant que celles dont le statut est officiellement désigné et en distinguant les zones terrestres, marines et mixtes. On ajoute le contour du pays pour situer ces aires dans l'espace. On crée ensuite une carte interactive pour visualiser ces aires protégées selon leur type, leurs noms et leurs superficies.
+
+### Load Prioritaire protected areas
 
 ```{r fig.cap="Figure 2: Protected Areas in Madagascar"}
 library(wdpar)
 
-# Load the work implemented in: https://betsaka.github.io/conservation-dynamic-madagascar/03_legal_docs.html
-legal_texts <- read_rds("data/legal_texts.rds")
-
-# Use the legal analysis made from CNLEGIS to identify early protections
-# that are not registered in WDPA: 
-legal_years <- legal_texts |>
-  filter(str_detect(type_decision, "creation_definitive|mise_protection_temporaire")) |>
-  mutate(
-    date_texte = as.Date(date_texte),
-    legal_year = year(date_texte)
-  ) |>
-  group_by(WDPAID) |>
-  summarize(
-    legal_year = min(legal_year, na.rm = TRUE),
-    .groups = "drop"
+wdpa <- wdpa_read("data/PA_creation/wdpa_data/WDPA_WDOECM_Aug2026_Public_MDG.zip") %>%
+  dplyr::filter(REALM %in% c("Terrestrial", "Coastal")) %>%
+  dplyr::select(
+    SITE_ID,
+    REALM,
+    geometry
   )
 
-
-# Load WDPA data
-wdpa <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
- # wdpa_clean() |> # This might cause to drop existing PAs!
- # Include PAs that exist according to the legal analysis
-  filter(STATUS == "Designated" | WDPAID %in% legal_years$WDPAID) %>%
-  mutate(MARINE = recode(MARINE,
-                         "0" = "Terrestre",
-                         "1" = "Mixte",
-                         "2" = "Marine"),
-        GEOMETRY_TYPE = st_geometry_type(.)) %>%
-  filter(GEOMETRY_TYPE %in% c("POLYGON", "MULTIPOLYGON"),)
-
-# Make sure join keys have compatible types
-legal_years <- legal_years |> mutate(WDPAID = as.numeric(WDPAID))
-wdpa <- wdpa |> mutate(WDPAID = as.numeric(WDPAID))
-
-# Join and replace STATUS_YR where a legal year exists
-wdpa <- wdpa |>
-  left_join(legal_years, by = "WDPAID") |>
+dynamic_wdpa_vect <- vect("data/PA_creation/dynamic_wdpa.gpkg") %>%
+  # Keep Terrestrial and mixed
+  dplyr::filter(MARINE %in% 0:1) %>%
+  # "Complexe des  AP Ambohimirahavavy Marivorahona" does not have a STATUS_YR, we set it to 2015 as per WDPA website: https://protectedareas.mg/fr/landscape/show/79?geoShapeFilterField=location&location=48.727807188419%2C-14.2119746670021%2C49.0930733591917%2C-14.2119746670021%2C49.0930733591917%2C-13.734131335043%2C48.727807188419%2C-13.734131335043%2C48.727807188419%2C-14.2119746670021&max=8&mediaFilter=no_of_images%2Cno_of_videos%2Cno_of_audio&offset=0&sort=created_on&view=stats
   mutate(
-    STATUS_YR = if_else(!is.na(legal_year), as.integer(legal_year), STATUS_YR)
-  ) |>
-  select(-legal_year)
-
-# To check if some are unmatched (on priciple none should be)
-legal_unmatched <- legal_years |> anti_join(st_drop_geometry(wdpa), by = "WDPAID")
-
-# Load boundary
-contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
-  st_as_sf() %>%
-  st_set_crs(standard_crs)
-
-# Visualisation
-tmap_mode("plot")
-
-map <- tm_shape(wdpa) +
-  tm_polygons(
-    fill = "MARINE",
-    fill.scale = tm_scale(
-      values = c(
-        "Terrestre" = "#228B22",
-        "Marine" = "#1E90FF",
-        "Mixte" = "gray"
-      ),
-      labels = c(
-        "Terrestre" = "Terrestrial",
-        "Marine" = "Marine",
-        "Mixte" = "Mixed"
-      )
+    STATUS_YR_DYN = case_when(
+      WDPAID == 555697871 ~ 2015,
+      STATUS == "Proposed" ~ 2026,
+      TRUE ~ as.integer(STATUS_YR)
     ),
-    fill.legend = tm_legend(
-      title = "Protected Areas"
-    ),
-    id = "ORIG_NAME",
-    popup.vars = c("Superficie (ha)" = "REP_AREA")) +
-  tm_shape(contour_mada) +
-  tm_borders(
-    col = "black",
-    lwd = 0.5) +
-  tm_scalebar(position = c("left", "bottom")) + 
-  tm_layout(legend.outside = TRUE)
-
-# Convertir la carte tmap en utilisant Leaflet pour personnaliser la carte interactive
-leaflet_map <- tmap_leaflet(map)
-
-# Ajouter un titre et une source 
-leaflet_map %>% 
-  addControl("<b> Protected Areas in Madagascar</b><br/>Source: WDPA, 2024", position = "topright")
-```
-
-On peut aussi générer un format tabulaire pour visualiser les données.
-
-```{r}
-
-# Tableau complet
-wdpa_tb <- wdpa %>%
-  st_drop_geometry()
-
-dir.create("derived")
-
-write_xlsx(wdpa_tb, "data/derived/WDPA_WDOECM_Jul2025_Public_MDG.xlsx")
-
-# Tableau personnalisé 
-wdpa_tb_sel <- wdpa_tb %>%
-  select(WDPAID, ORIG_NAME, DESIG, DESIG_TYPE, IUCN_CAT, MARINE, REP_AREA, STATUS, STATUS_YR, GOV_TYPE, OWN_TYPE, MANG_AUTH, VERIF, GEOMETRY_TYPE)
-
-write_xlsx(wdpa_tb_sel, "data/derived/WDPA_selection_MDG.xlsx")
-
-DT::datatable(wdpa_tb_sel)
-```
-
-## Sélection des parties terrestres des AP
-
-On récupère les limites administratives nationales de Madagascar, dont on attribue un système de coordonnées 4326. Ces limites sont ensuite croisées avec les aires protégées de WDPA pour extraire uniquement les zones terrestres situées à l'intérieur du pays. Après la transformation en coordonnées de Laborde (29702), nous calculons la superficie de chaque aire protégée terrestre, et visualisons le tout sur une carte.
-
-Seules les aires protégées de la WDPA contenues dans les frontières nationales de Madagascar sont conservées.
-
-```{r fig.cap="Figure 3: Terrestrial Protected Areas in Madagascar"}
-
-# Load boundary
-contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
-  st_as_sf() %>%
-  st_set_crs(standard_crs)
-
-# Intersection des AP de WDPA avec la limite de Madagascar
-wdpa_terrestre <- wdpa %>% 
-  st_transform(crs = standard_crs) %>%
-  st_make_valid() %>%
-  st_intersection(contour_mada) %>% 
-  st_transform(mdg_crs) %>%
-  mutate(
-    area_m2  = as.numeric(st_area(.)),
-    area_ha  = area_m2 / 1e4,
-    area_km2 = area_m2 / 1e6
+    WDPAID = as.integer(WDPAID)
   ) %>%
-  st_transform(standard_crs)
+  # remove RAMSAR, see https://github.com/BETSAKA/PA-impact-on-deforestation/issues/46
+  filter(DESIG != "Ramsar Site, Wetland of International Importance") %>%
+  filter(STATUS != "Inscribed") %>%
+  select(WDPAID, NAME, DESIG, MANG_AUTH, IUCN_CAT, STATUS, STATUS_YR_DYN, zone_type)
 
+
+dynamic_wdpa_metadata <- dynamic_wdpa_vect %>%
+  as.data.frame() %>%
+  # Remove core
+  dplyr::filter(zone_type == "external_boundary") %>%
+  group_by(WDPAID) %>%
+  mutate(
+    STATUS_YR = min(STATUS_YR_DYN, na.rm = TRUE),
+    STATUS_YR_WDPA = max(STATUS_YR_DYN),
+    STATUS_YR_PERM = min(STATUS_YR_DYN[DESIG != "Protection Temporaire"])
+  ) %>%
+  ungroup() %>%
+  arrange(WDPAID, STATUS_YR) %>%
+  group_by(WDPAID) %>%
+  slice_tail(n=1) %>%
+  ungroup() %>%
+  mutate(
+    STATUS_YR_PERM = ifelse(is.infinite(STATUS_YR_PERM), 2026, STATUS_YR_PERM),
+    # For those without websites, IUCN_CAT is based on status (Décret 2015-005)
+    # Paysage Harmonieux protégée = V
+    # Réserve naturelle = IV
+    # Parc naturel = II
+    IUCN_CAT = case_when(
+      WDPAID == 352239 ~ "IV",  # Analamerana (RS)
+      WDPAID == 555547961 ~ "V", # Mandrozo (PHP): FAPBM.org/aire_protegee/mandrozo
+      WDPAID == 555697872 ~ "VI", # Antrema (RRN): ProtectedPlanet.net/555697872
+      WDPAID == 555697914 ~ "V", # Bombetoka Beloboka (PHP): FAPBM.org/aire_protegee/bombetoka
+      WDPAID == 555697915 ~ "V", # Ambohidray (PHP): mbev.univ-antananarivo.mg/Ambohidray.php
+      WDPAID == 555697916 ~ "V", # Ambararata Londa (PHP)
+      WDPAID == 555549449 ~ "V", # Vohidefo (PHP)
+      WDPAID == 555549450 ~ "V", # Angavo (PHP)
+      WDPAID == 555549451 ~ "V", # Behara-Tranomaro (PHP)
+      WDPAID == 555549452 ~ "V", # Sud-Ouest Ifotaky (PHP)
+      WDPAID == 555549460 ~ "V", # Ranobe PK 32 (PHP)
+      WDPAID == 555697871 ~ "II", # Ambohimirahavavy Marivorahona (PN)
+      WDPAID == 555790172 ~ "V", # Ankafobe (PHP)
+      WDPAID == 555790168 ~ "Protection temporaire", # Tsinjoarivo Ambalaomby, still temporary
+      STATUS == "Proposed" ~ "Proposed AP",
+      TRUE ~ IUCN_CAT
+    ),
+    SHORT_NAME = case_match(NAME,
+                            "Betampona"                                              ~ "Betampona",
+                            "Tsimanampesotse"                                        ~ "Tsimanampe",
+                            "Befotaka Midongy"                                       ~ "Befotaka",
+                            "Isalo"                                                  ~ "Isalo",
+                            "Mantadia"                                               ~ "Mantadia",
+                            "Mananara Nord"                                          ~ "Mananara",
+                            "Ranomafana"                                             ~ "Ranomafana",
+                            "Tsaratanana"                                            ~ "Tsarata.",
+                            "Masoala"                                                ~ "Masoala",
+                            "Baie de Baly"                                           ~ "Baie Baly",
+                            "Bemaraha"                                               ~ "Bemaraha",
+                            "Marojejy"                                               ~ "Marojejy",
+                            "Andringitra"                                            ~ "Andringi.",
+                            "Namoroka"                                               ~ "Namoroka",
+                            "Mikea"                                                  ~ "Mikea",
+                            "Makira"                                                 ~ "Makira",
+                            "Ankarafantsika"                                         ~ "Ankaraf.",
+                            "Andohahela"                                             ~ "Andohahela",
+                            "Montagne d'Ambre"                                       ~ "Mont Ambre",
+                            "Analamazaotra"                                          ~ "Analamaz.",
+                            "Analamerana"                                            ~ "Analamer.",
+                            "Zombitse Vohibasia"                                     ~ "Zombitse",
+                            "Zahamena"                                               ~ "Zahamena",
+                            "Complexe des lacs Ambondro et Sirave (CLAS)"            ~ "CLAS Lakes",
+                            "Marolambo"                                              ~ "Marolambo",
+                            "Zones Humides Ankarafantsika  (CLSA)"                   ~ "CLSA Ank.",
+                            "Analavelona"                                            ~ "Analavelon",
+                            "Allées des Baobabs"                                     ~ "Baobabs",
+                            "Bemarivo"                                               ~ "Bemarivo",
+                            "Bora"                                                   ~ "Bora",
+                            "Kasijy"                                                 ~ "Kasijy",
+                            "Maningoza"                                              ~ "Maningoza",
+                            "Ambohijanahary"                                         ~ "Ambohijan.",
+                            "Ambatovaky"                                             ~ "Ambatovaky",
+                            "Mangerivola"                                            ~ "Mangeri.",
+                            "Kalambatrika"                                           ~ "Kalamba.",
+                            "Tampoketsa Analamaitso"                                 ~ "Tampoketsa",
+                            "Manombo"                                                ~ "Manombo",
+                            "Ivohibe"                                                ~ "Ivohibe",
+                            "Ambohitantely"                                          ~ "Ambohita.",
+                            "Beza Mahafaly"                                          ~ "Beza Maha.",
+                            "Le Lac Alaotra : Les Zones Humides et Bassins Versants" ~ "Lac Alaotra",
+                            "Anjanaharibe_sud"                                       ~ "Anjanaha.",
+                            "Ankarana"                                               ~ "Ankarana",
+                            "Manongarivo"                                            ~ "Manongari.",
+                            "Marotandrano"                                           ~ "Marotandra",
+                            "Nosy Mangabe"                                           ~ "Nosy Manga",
+                            "Andranomena"                                            ~ "Andranome.",
+                            "Cap Sainte Marie"                                       ~ "Cap Ste Ma",
+                            "Analalava"                                              ~ "Analalava",
+                            "Réserve spéciale Pointe à Larrée"                       ~ "Pte Larree",
+                            "Kinkony Lake"                                           ~ "Kinkony Lk",
+                            "Site Bioculturel d'Antrema"                             ~ "Antrema",
+                            "Complexe Tsimembo Manambolomaty"                        ~ "Tsimembo",
+                            "Parc Alarobia"                                          ~ "Alarobia",
+                            "Zones humides de Bedo"                                  ~ "Bedo",
+                            "Rivière Nosivolo et affluents"                          ~ "Nosivo Af",
+                            "Lac Mandrozo"                                           ~ "Mandrozo",
+                            "Complexe Anjozorobe Angavo"                             ~ "Anjozorobe",
+                            "Ankodida"                                               ~ "Ankodida",
+                            "Corridor forestier Bongolava"                           ~ "Bongolava",
+                            "Nord fotaky"                                            ~ "Fotaky",
+                            "Mandena"                                                ~ "Mandena",
+                            "Menabe Antimena"                                        ~ "Menabe Ant",
+                            "Ambohitr'Antsingy Montagne des Français"                ~ "Mont Franc",
+                            "Amoron'i Onilahy"                                       ~ "Amoro Onil",
+                            "Ambatoatsinanana"                                       ~ "Ambatoatsi",
+                            "Réserve de Tampolo"                                     ~ "Tampolo",
+                            "Rivière Nosivolo"                                       ~ "Nosivolo",
+                            "Complexe Lac Forêt Ambondrobe"                          ~ "Lac Ambond.",
+                            "Complexe Zones Humides Mangoky Ihotry"                  ~ "Mangoky",
+                            "Beanka"                                                 ~ "Beanka",
+                            "Sahafina"                                               ~ "Sahafina",
+                            "Corridor Forestier Ambositra Vondrozo"                  ~ "Ambositra",
+                            "Massif d'Itremo"                                        ~ "Itremo",
+                            "Ambatofotsy"                                            ~ "Ambatofo.",
+                            "Ampotaka Ankorabe"                                      ~ "Ampotaka",
+                            "Ampanganandehibe-Behasina"                              ~ "Ampanga.",
+                            "Ampasindava"                                            ~ "Ampasindav",
+                            "Galoko Kalobinono"                                      ~ "Galoko Kal",
+                            "Oronjia"                                                ~ "Oronjia",
+                            "Massif d'Ibity"                                         ~ "Ibity",
+                            "Forêt Naturel de Petriky"                               ~ "Petriky",
+                            "Andreba"                                                ~ "Andreba",
+                            "COMATSA Sud"                                            ~ "COMATSA S",
+                            "Bemanevika"                                             ~ "Bemanevika",
+                            "Loky Manambato"                                         ~ "Loky Manam",
+                            "Andrafiamena Andavakoera"                               ~ "Andrafiame",
+                            "Complexe des Zones Humides de Bemanevika"               ~ "ZH Bemane.",
+                            "Zones humides de l'Onilahy"                             ~ "Onilahy",
+                            "Anjajavy"                                               ~ "Anjajavy",
+                            "Ivohiboro"                                              ~ "Ivohiboro",
+                            "Corridor Ankeniheny Zahamena"                           ~ "Ankeniheny",
+                            "Forêt Naturelle de Tsitongambarika"                     ~ "Tsitongamb",
+                            "Maromizaha"                                             ~ "Maromizaha",
+                            "Mangabe-Ranomena-Sahasarotra"                           ~ "Mangabe",
+                            "Analabe-Betanatanana"                                   ~ "Analabe",
+                            "Agnalazaha"                                             ~ "Agnalazaha",
+                            "Makirovana Tsihomanaomby"                               ~ "Makirovana",
+                            "Vohidava Betsimalao"                                    ~ "Vohidava",
+                            "Ankarabolava"                                           ~ "Ankarabola",
+                            "Agnakatrika"                                            ~ "Agnakatri.",
+                            "Mahimborondro"                                          ~ "Mahimboron",
+                            "COMATSA Nord"                                           ~ "COMATSA N",
+                            "Manjakatompo Ankaratra"                                 ~ "Ankaratra",
+                            "Zones humides d'Ambondrobe"                             ~ "ZH Ambond.",
+                            "Parc national Tsimanampesotse"                          ~ "PN Tsimana",
+                            "Torotorofotsy"                                          ~ "Torotorofo",
+                            "Ambatotsirongorongo"                                    ~ "Ambatotsir",
+                            "Vohidefo"                                               ~ "Vohidefo",
+                            "Angavo"                                                 ~ "Angavo",
+                            "Behara-Tranomaro"                                       ~ "Behara",
+                            "Sud-Ouest Ifotaky"                                      ~ "Ifotaky",
+                            "Ranobe PK 32"                                           ~ "Ranobe",
+                            "Ambohidray"                                             ~ "Ambohidray",
+                            "Ambararata Londa"                                       ~ "Ambararata",
+                            "Vohimana"                                               ~ "Vohimana",
+                            "Madiro Mirafy"                                          ~ "Madiro Mir",
+                            "APC Miary"                                              ~ "APC Miary",
+                            "Makay"                                                  ~ "Makay",
+                            "Lac Sofia"                                              ~ "Lac Sofia",
+                            "Ankafobe"                                               ~ "Ankafobe",
+                            "APC Vezo"                                               ~ "APC Vezo",
+                            "Beampingaratsy"                                         ~ "Beampinga.",
+                            "Ankirihitra"                                            ~ "Ankirihi.",
+                            "APC Agnala"                                             ~ "APC Agnala",
+                            "APC Loharano"                                           ~ "APC Lohara",
+                            "APC Lovasoa"                                            ~ "APC Lovaso",
+                            "APC Mikea Mitambatra"                                   ~ "APC Mikea",
+                            "Tsinjoarivo Ambalaomby"                                 ~ "Tsinjoariv",
+                            "Complexe Bobaomby"                                      ~ "Bobaomby",
+                            "Complexe des  AP Ambohimirahavavy Marivorahona"         ~ "Ambohimira",
+                            "Andrefana Dry Forests"                                  ~ "Andrefana",
+                            "Forêts humides de l’Atsinanana"                         ~ "Atsinanana",
+                            "Kirindy Mite"                                           ~ "Kirindy M",
+                            "Sahamalaza Iles Radama"                                 ~ "Sahamalaza",
+                            "Lokobe"                                                 ~ "Lokobe",
+                            "Complexe Zones Humides Mahavavy Kinkony"                ~ "Mahavavy K",
+                            "Nosy Antsoha"                                           ~ "Nosy Antso",
+                            "Tsinjoriake"                                            ~ "Tsinjoriak",
+                            "Mangroves de Tsiribihina"                               ~ "Tsiribihi.",
+                            "Bombetoka Beloboka"                                     ~ "Bombetoka",
+                            "Ankingabe"                                              ~ "Ankingabe",
+                            "Mangroves de la Baie d'Ambaro"                          ~ "Ambaro",
+                            "Le Lac Alaotra: les zones humides et basin" ~ "Aloatra ZH",
+                            "Parc de Tsarasaotra"                                    ~ "Tsarasaotra",
+                            "Rainforests of the Atsinanana"                          ~ "Atsinanana",
+                            "Lac Kinkony" ~ "Kinkony",
+                            "Mandrozo" ~ "Mandrozo",
+                            "Zones Humides de Sahamalaza" ~ "Sahamalaza",
+                            "Lac Alaotra" ~ "Alaotra",
+                            "Mahialambo" ~ "Mahialambo",
+                            .default = NAME
+    )) %>%
+  mutate(
+    MANAGER = case_when(
+      MANG_AUTH %in% c("Ministry of Environment and Sustainable Development", "Not Reported") ~ "Not Reported",
+      MANG_AUTH %in% c("Ministry of Environment and Sustainable Development, MNP", "Madagascar National Parks", "Adresse 1: Madagascar National Parks Lot AI 10C Ambatobe Antananarivo (101)\nAdresse 2: Madagascar National Parks Ankarafantsika Ampijoroanala RN4 Marovay (416)", "Direction de MNP (Toliara)") ~ "Madagascar National Parks",
+      MANG_AUTH %in% c("Ministry of Environment and Sustainable Development, DURRELL", "DURRELL  lot II Y 39 J Ampasanimalo, 101 Antananrivo Madagascar\n DURRELL  lot 14433 Avaradrova Immeuble CECAM AMBATONDRAZAKA, Région Alaotra Mangoro, Madagascar", "Durrell Wildlife Conservation Trust, Programme Madagascar", "Durrell Wildlife Conservation Trust - Madagascar", "DURRELL Madagascar") ~ "Durrell Wildlife Conservation Trust",
+      MANG_AUTH %in% c("Ministry of Environment and Sustainable Development, FANAMBY", "ONG FANAMBY") ~ "Association Fanamby",
+      MANG_AUTH %in% c("Ministry of Environment and Sustainable Development, WWF", "WWF MDCO") ~ "World Wide Fund for Nature",
+      MANG_AUTH %in% c("Ministry of Environment and Sustainable Development, TPF", "The Peregrine Fund") ~ "The Peregrine Fund",
+      MANG_AUTH %in% c("Ministry of Environment and Sustainable Development, MAVOA", "Ministry of Environment and Sustainable Development,MAVOA") ~ "Association Mavoa",
+      MANG_AUTH %in% c("Ministry of Environment and Sustainable Development, LEMURIA LAND", "Ministry of Environment and Sustainable Development, Lemuria Land") ~ "Lemuria Land",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, MBG" ~ "Missouri Botanical Garden",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, WCS" ~ "Wildlife Conservation Society",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, VELONALA Association" ~ "Association Velonala",
+      MANG_AUTH == "Site Bioculturel d'Antrema\nAntananarivo" ~ "Museum National d'Histoire Naturelle",
+      MANG_AUTH == "Association Parc Tsarasaotra (APT)" ~ "Association Parc Tsarasaotra",
+      MANG_AUTH == "Plate-forme de gestion « Filongoa Mandrozo » avec trois COBAs (Communauté Locale de Base) : ZAMAMI, FIVOMA et FIMITOVE." ~ "The Peregrine Fund",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, FBM" ~ "Fikambanana Bongolava Maitso",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, QMM" ~ "QIT Madagascar Minerals",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, SAGE" ~ "Service d'Appui à la Gestion de l'Environnement",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, ESSA FOREST" ~ "Ecole Supérieure des Sciences Agronomiques - Forêts",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, ASITY Mcar" ~ "Asity Madagascar",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, BCM" ~ "Biodiversity Conservation Madagascar",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, THIS" ~ "Conservation International",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, RBG KEW" ~ "Royal Botanic Gardens, Kew",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, FAMELONA Association" ~ "Association Famelona",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, Anjajavy Lodge" ~ "Anjajavy Lodge",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, MICET" ~ "Madagascar Institute for the Conservation of Tropical Environments",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, GERP" ~ "Groupe d'Étude et de Recherche sur les Primates de Madagascar",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, LIVELY" ~ "Association Lively",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, MNHN" ~ "Museum National d'Histoire Naturelle",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, DBEV" ~ "Département de Biologie et Écologie Végétales",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, Man and the Environment" ~ "Man and the Environment",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, Impact Madagascar" ~ "Impact Madagascar",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, Malagasy Miarony Natiora" ~ "Malagasy Miarony Natiora",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, NITIDEA" ~ "Nitidae",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, NGO SADABE" ~ "NGO Sadabe",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, CI" ~ "Conservation International",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, Blue Ventures" ~ "Blue Ventures",
+      MANG_AUTH == "Blue Ventures Madagascar / WWF MDCO" ~ "Blue Ventures / World Wide Fund for Nature",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, TAMIA Association" ~ "Association Tamia",
+      MANG_AUTH == "Ministry of Environment and Sustainable Development, DELC" ~ "Development and Environmental Law Center",
+      TRUE ~ MANG_AUTH
+    ),
+    MANAGER_SHORT = case_when(
+      MANAGER == "Not Reported" ~ "Not Reported",
+      MANAGER == "Madagascar National Parks" ~ "MNP",
+      MANAGER == "Missouri Botanical Garden" ~ "MBG",
+      MANAGER == "Association Fanamby" ~ "Fanamby",
+      MANAGER == "Wildlife Conservation Society" ~ "WCS",
+      MANAGER == "Durrell Wildlife Conservation Trust" ~ "Durell",
+      MANAGER == "Association Velonala" ~ "Velonal",
+      MANAGER == "Site Bioculturel d'Antrema" ~ "SBA",
+      MANAGER == "Association Parc Tsarasaotra" ~ "APT",
+      MANAGER == "Plate-forme de gestion Filongoa Mandrozo" ~ "PFGM",
+      MANAGER == "World Wide Fund for Nature" ~ "WWF",
+      MANAGER == "Fikambanana Bongolava Maitso" ~ "FBM",
+      MANAGER == "QIT Madagascar Minerals" ~ "QMM",
+      MANAGER == "Service d'Appui à la Gestion de l'Environnement" ~ "SAGE",
+      MANAGER == "Ecole Supérieure des Sciences Agronomiques - Forêts" ~ "ESSA-Forêts",
+      MANAGER == "Asity Madagascar" ~ "ASITY",
+      MANAGER == "Biodiversity Conservation Madagascar" ~ "BCM",
+      MANAGER == "Royal Botanic Gardens, Kew" ~ "RBG Kew",
+      MANAGER == "Association Mavoa" ~ "MAVOA",
+      MANAGER == "Association Famelona" ~ "FAMELONA",
+      MANAGER == "The Peregrine Fund" ~ "TPF",
+      MANAGER == "Anjajavy Lodge" ~ "Anjajavy",
+      MANAGER == "Madagascar Institute for the Conservation of Tropical Environments" ~ "MICET",
+      MANAGER == "Groupe d'Étude et de Recherche sur les Primates de Madagascar" ~ "GERP",
+      MANAGER == "Association Lively" ~ "LIVELY",
+      MANAGER == "Museum National d'Histoire Naturelle" ~ "MNHN",
+      MANAGER == "Département de Biologie et Écologie Végétales" ~ "DBEV",
+      MANAGER == "Man and the Environment" ~ "MATE",
+      MANAGER == "Impact Madagascar" ~ "IM",
+      MANAGER == "Malagasy Miarony Natiora" ~ "MMN",
+      MANAGER == "Nitidae" ~ "NITIDAE",
+      MANAGER == "NGO Sadabe" ~ "SADABE",
+      MANAGER == "Conservation International" ~ "CI",
+      MANAGER == "Blue Ventures" ~ "BV",
+      MANAGER == "Blue Ventures / World Wide Fund for Nature" ~ "BV/WWF",
+      MANAGER == "Lemuria Land" ~ "LEMURIA",
+      MANAGER == "Association Tamia" ~ "TAMIA",
+      MANAGER == "Development and Environmental Law Center" ~ "DELC",
+      TRUE ~ MANAGER
+    ),
+    MANAGER_TYPE = case_when(
+      MANAGER_SHORT == "MNP" ~ "MNP",
+      MANAGER_SHORT %in% c("MBG", "WCS", "Durell", "WWF", "RBG Kew", "TPF", "MNHN", "NITIDAE", "CI", "BV", "BV/WWF", "SADABE") ~ "International ONG",
+      MANAGER_SHORT %in% c("Fanamby", "Velonal", "SBA", "APT", "PFGM", "FBM", "SAGE", "ASITY", "BCM", "MAVOA", "FAMELONA", "MICET", "GERP", "LIVELY", "MATE", "IM", "MMN", "TAMIA", "DELC", "QMM", "ESSA-Forêts", "Anjajavy", "DBEV", "LEMURIA") ~ "Local ONG",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  select(
+    WDPAID, NAME, SHORT_NAME, DESIG, IUCN_CAT, STATUS,
+    STATUS_YR, STATUS_YR_PERM, STATUS_YR_WDPA,
+    MANG_AUTH, MANAGER, MANAGER_SHORT, MANAGER_TYPE
+  )
+print(dynamic_wdpa_metadata)
+
+
+# Export metadata of WDPA
+write.csv(dynamic_wdpa_metadata, "data/PA_creation/wdpa_data/dynamic_wdpa_metadata.csv", row.names = FALSE)
+
+merged_sf <- left_join(dynamic_wdpa_metadata, wdpa, by = c("WDPAID" = "SITE_ID"))
+
+wdpa_corrected <- merged_sf %>%
+  filter(STATUS != "Proposed")
+
+wdpa_corrected <- wdpa_corrected %>%
+  mutate(
+    NAME = trimws(NAME),
+    NAME = case_when(
+      NAME == "Agnakatrika"  ~ "Agnatrika",
+      NAME == "Nord fotaky"  ~ "Nord Ifotaky",
+      NAME == "Kalambatrika" ~ "Kalambatritra",
+      TRUE ~ NAME
+    )
+  )
+
+# Table de correction manuelle : année corrigée pour ces AP, identifiées par leur NAME
+year_corrections <- tribble(
+  ~NAME,                                          ~STATUS_YR_CORRECTED,
+  "Tsaratanana",                                   1927,
+  "Ivohibe",                                       1954,
+  "Marotandrano",                                  1956,
+  "Tampoketsa Analamaitso",                        1958,
+  "Zombitse Vohibasia",                            1997,
+  "Ranomafana",                                    1989,
+  "Complexe Tsimembo Manambolomaty",               1998,
+  "Masoala",                                       1927,
+  "Ambatotsirongorongo",                           2006,
+  "Complexe Zones Humides Mahavavy Kinkony",       2006,
+  "Amoron'i Onilahy",                              2006,
+  "Réserve de Tampolo",                            2006,
+  "Nosy Antsoha",                                  2010,
+  "Massif d'Itremo",                               1951,
+  "Agnatrika",                                     2008,
+  "Forêt Naturel de Petriky",                      2006,
+  "Andreba",                                       2006,
+  "Loky Manambato",                                2005,
+  "Manjakatompo Ankaratra",                        2010,
+  "Tsinjoarivo Ambalaomby",                        2020
+)
+
+# --- Vérification AVANT d'appliquer : est-ce que chaque nom trouve bien
+# une correspondance dans wdpa_corrected ? ---
+year_corrections %>%
+  left_join(
+    wdpa_corrected %>% st_drop_geometry() %>%
+      transmute(NAME = trimws(NAME), STATUS_YR_avant = STATUS_YR),
+    by = "NAME"
+  ) %>%
+  print(n = Inf)
+
+wdpa_corrected <- wdpa_corrected %>%
+  mutate(NAME = trimws(NAME)) %>%
+  left_join(year_corrections, by = "NAME") %>%
+  mutate(
+    STATUS_YR = if_else(!is.na(STATUS_YR_CORRECTED), STATUS_YR_CORRECTED, STATUS_YR)
+  ) %>%
+  select(-STATUS_YR_CORRECTED)
+```
+
+
+### Database with fixed boundaries
+
+Nous transformons les données dynamiques des AP en trois jeux de données distincts afin de disposer de limites spatiales fixes. Cette transformation est faite car la superficie et les frontières des AP peuvent évoluer au fil des années depuis leur création. Nous créons ainsi une couche avec la dernière limite disponible, correspondant à la portion du territoire commune à toutes les limites observées au cours du temps, ainsi que les noyaux dur de chaque aire. Ces jeux de données permettent de travailler avec des limites stables et de comparer les AP de manière cohérente dans les analyses temporelles. 
+
+```{r fig.cap="Figure 2: Protected Areas in Madagascar"}
+### Take last boundary
+dynamic_pa_last <- dynamic_pa_vect %>%
+  dplyr::filter(zone_type == "external_boundary") %>%
+  select(WDPAID) %>%
+  group_by(WDPAID) %>%
+  slice_tail(n = 1) %>%
+  ungroup() %>%
+  mutate(PA_AREA_KM2 = expanse(., unit="km"))
+
+#Export the cleaned data
+writeVector(
+  dynamic_pa_last,
+  filename = "data/PA_creation/wdpa_data/dynamic_pa_fixed_last.gpkg",
+  overwrite = TRUE
+)
+
+### Take intersection boundary
+dynamic_pa_intersec <- pblapply(
+  unique(dynamic_pa_vect$WDPAID), 
+  function(id) {
+    sub <- dynamic_pa_vect %>%
+      filter(zone_type == "external_boundary") %>%
+      filter(WDPAID == id) %>%
+      select(WDPAID)
+    # Intersect all polygons in the group iteratively
+    if (nrow(sub)>=2) {
+      inter <- sub[1, ]
+      for (i in seq(2, nrow(sub))) {
+        inter <- intersect(inter, sub[i, ])
+      }
+    } else {
+      inter <- sub
+    }
+    inter$WDPAID = id
+    inter %>% select(WDPAID)
+  }) %>%
+  bind_spat_rows() %>%
+  mutate(PA_AREA_KM2 = expanse(., unit="km"))
+
+#Export the cleaned data
+writeVector(
+  dynamic_pa_intersec,
+  filename = "data/PA_creation/wdpa_data/dynamic_pa_fixed_intersec.gpkg",
+  overwrite = TRUE
+)
+
+### Core zone
+
+# Take last boundary : several frontier exsit but there are all equivalent
+core_pa_last <- dynamic_pa_vect %>%
+  dplyr::filter(zone_type == "secondary_zoning") %>%
+  select(WDPAID) %>%
+  group_by(WDPAID) %>%
+  slice_tail(n = 1) %>%
+  ungroup() %>%
+  mutate(CORE_AREA_KM2 = expanse(., unit="km")) %>%
+  # Remove the core with area of e-9
+  filter(CORE_AREA_KM2 >= 0.01)
+
+#Export the cleaned data
+writeVector(
+  core_pa_last,
+  filename = "data/PA_creation/wdpa_data/core_pa.gpkg",
+  overwrite = TRUE
+)
+
+### Visualisation des cartes interactives des aires protégées 
+
+## Préparation des couches avec les informations nécessaires 
+
+pa_info <- dynamic_wdpa_vect |>
+  as.data.frame() |>
+  distinct(WDPAID, .keep_all = TRUE) |>
+  select(WDPAID, NAME, STATUS_YR_DYN, STATUS, IUCN_CAT)
+
+# Dernière frontière
+pa_last_map <- merge(
+  dynamic_pa_last,
+  pa_info,
+  by = "WDPAID"
+)
+
+# Intersection des frontières
+pa_inter_map <- merge(
+  dynamic_pa_intersec,
+  pa_info,
+  by = "WDPAID"
+)
+
+# Zones cœur
+core_map <- merge(
+  core_pa_last,
+  pa_info,
+  by = "WDPAID"
+)
+
+
+## Créer la carte interactive des aires protégées (dernière frontière)
 tmap_mode("view")
 
-tmap_leaflet(
+tm_shape(pa_last_map) +
+  tm_polygons(
+    fill = "PA_AREA_KM2",
+    fill.scale = tm_scale(values = "viridis"),
+    fill.legend = tm_legend(title = "Surface (km²)"),
+    fill_alpha = 0.6,
+    col = "white",
+    lwd = 0.5,
+    id = "NAME",
+    popup.vars = c(
+      "Nom" = "NAME",
+      "Année de création" = "STATUS_YR_DYN",
+      "Catégorie UICN" = "IUCN_CAT",
+      "Surface (km²)" = "PA_AREA_KM2"
+    )
+  )
+
+# Ajouter les noyaux durs sur la carte 
+
+tm_shape(pa_last_map) +
+  tm_polygons(
+    fill = "PA_AREA_KM2",
+    fill.scale = tm_scale(values = "viridis"),
+    fill.legend = tm_legend(title = "Surface (km²)"),
+    fill_alpha = 0.5,
+    id = "NAME",
+    popup.vars = c(
+      "Nom" = "NAME",
+      "Surface (km²)" = "PA_AREA_KM2"
+    )
+  ) +
+  
+  tm_shape(core_map) +
+  tm_polygons(
+    fill = "red",
+    fill_alpha = 0.5,
+    col = "darkred",
+    id = "NAME",
+    group = "Zone cœur",
+    popup.vars = c(
+      "Nom" = "NAME",
+      "Noyaux durs (km²)" = "CORE_AREA_KM2"
+    )
+  )
+
+# Ajout de fond OpenStreetMap à la carte
+
+tm_basemap("OpenStreetMap") +
+tm_shape(pa_last_map) +
+tm_polygons(
+  fill = "PA_AREA_KM2",
+  fill.scale = tm_scale(values = "viridis"),
+  fill_alpha = 0.6,
+  id = "NAME",
+  popup.vars = c(
+    "Nom" = "NAME",
+    "Année" = "STATUS_YR_DYN",
+    "Surface km²" = "PA_AREA_KM2"
+  )
+)
+```
+
+
+### View an interactive map of Madagascar protected areas
+
+```{r fig.cap="Figure 2: Protected Areas in Madagascar"}
+
+# Convertir en sf (dynamic_pa_last est un SpatVector terra)
+pa_sf <- sf::st_as_sf(dynamic_pa_last) %>%
+  left_join(dynamic_pa_metadata, by = "WDPAID") %>% 
+  st_make_valid()
+
+# Charger le contour de Madagascar
+contour_mada <- geodata::gadm(country = "Madagascar", level = 0, path = "data") %>%
+  st_as_sf()
+
+# Carte tmap avec toutes les aires en vert
+tmap_mode("plot")
+
+map <- tm_shape(pa_sf) +
+  tm_polygons(
+    fill = "green",
+    fill_alpha = 0.6,
+    col = "darkgreen",
+    lwd = 0.5,
+    id = "NAME",
+    popup.vars = c(
+      "Status" = "STATUS",
+      "IUCN Category" = "IUCN_CAT",
+      "Year created" = "STATUS_YR",
+      "Area (km²)" = "PA_AREA_KM2",
+      "Manager" = "MANAGER"
+    )
+  ) +
   tm_shape(contour_mada) +
-    tm_borders() +
-    tm_shape(wdpa_terrestre) +
-    tm_polygons(
-      fill = "green",
-      id = "ORIG_NAME",
-      popup.vars = c("Superficie terrestre (ha)" = "REP_AREA")
-    ) +
-    tm_scalebar(position = c("RIGHT", "BOTTOM")) +
-    tmap_options(check_and_fix = TRUE)
-) %>%
-  leaflet::addControl(
-    html = "<b>Terrestrial Protected Areas in Madagascar</b><br/>Source: WDPA, 2024",
+  tm_borders(col = "black", lwd = 0.5) +
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_layout(legend.outside = TRUE)
+
+# Convertir la carte tmap en Leaflet pour personnaliser la carte interactive
+leaflet_map <- tmap_leaflet(map)
+
+# Ajouter un titre et une source
+leaflet_map %>%
+  addControl(
+    "<b>Protected Areas of Madagascar</b><br/>Source: WDPA, 2025",
     position = "topright"
   )
 ```
 
-::: callout-warning
-On a un problème avec les unités pour les surfaces dans la carte.
-:::
 
-## Ajout de la date de création manquante des aires protégées
-
-En examinant la base de donnée, nous avons constaté qu'il manquait la date de création de l'une des aires protégées. Nous allons donc ajouter l'année de création de l'aire protégée "Complexe des aires protégées Ambohimirahavavy Marivorahona", créée par le décret 2015-782 du 28 avril 2015 [@goodman2018].
-
-```{r, message=FALSE, warning=FALSE}
-# Ajout de la date de création du complexe des aires protégées Ambohimirahavavy Marivorahona 
-
-wdpa_terrestre_mod <- wdpa_terrestre %>%
-  mutate(STATUS_YR = ifelse(WDPAID == 555697871, 2015, STATUS_YR))
-
-# Sauvegarder le shapefile modifié 
-st_write(wdpa_terrestre_mod, "data/derived/wdpa_terrestre_mod.shp", delete_layer = TRUE)
-
-```
-
-Comme nos données sont complètes, nous allons maintenant créé un buffer zone de 10 km autour des aires protégées créées avant et après 2008 pour définir le groupe de traitement et de contrôle. Ce seuil de 10 km correspond à la distance la plus fréquemment utilisée dans la littérature concernant les évaluations d'impact.
+Comme nos données sont complètes, nous allons maintenant créé un buffer zone de 10 km autour des AP créées avant et après 2008 pour définir le groupe de traitement et de contrôle. Ce seuil de 10 km correspond à la distance la plus fréquemment utilisée dans la littérature concernant les évaluations d'impact.
 
 ## Création de buffer pour les AP avant et après 2008
 
 On travaille toujours avec les portions terrestres des AP.
 
-Pour analyser l'impact des aires protégées selon leur période de création, on spécifie les aires protégées créées avant 2008 et à partir de 2008. On applique ensuite un buffer zone de 10 km autour de chaque groupe d'aires protégées. Chaque groupe a été reprojeté dans le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702) pour les calculs de distances. Nous créons ensuite une carte pour visualiser les aires protégées et leurs zones d'influence.
+Pour analyser l'impact des AP selon leur période de création, on spécifie les AP créées avant 2008 et à partir de 2008. On applique ensuite un buffer zone de 10 km autour de chaque groupe d'AP. Chaque groupe a été reprojeté dans le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702) pour les calculs de distances. Nous créons ensuite une carte pour visualiser les AP et leurs zones d'influence.
 
 ```{r fig.cap="Figure 4: Protected areas by period  of creation"}
 
@@ -292,15 +729,15 @@ Pour analyser l'impact des aires protégées selon leur période de création, o
 buffer_dist <- 10000 
 
 # Spécification des aires protégées avant 2008
-wdpa_before_2008 <- wdpa_terrestre_mod %>%
+pa_before_2008 <- pa_sf %>%
   filter(STATUS_YR < 2008)
 
 # Spécification des aires protégées après 2008
-wdpa_from_2008 <- wdpa_terrestre_mod %>%
+pa_from_2008 <- pa_sf %>%
   filter(STATUS_YR >= 2008)
 
 # Créer des buffers de 10 km autour des AP
-buffer_10km_before_2008 <- wdpa_before_2008 %>%
+buffer_10km_before_2008 <- pa_before_2008 %>%
   st_transform(mdg_crs) %>%
   st_buffer(dist = buffer_dist) %>%
   st_make_valid() %>%
@@ -309,7 +746,7 @@ buffer_10km_before_2008 <- wdpa_before_2008 %>%
   st_make_valid() %>%
   st_transform(standard_crs)
 
-buffer_10km_from_2008 <- wdpa_from_2008  %>%
+buffer_10km_from_2008 <- pa_from_2008  %>%
   st_transform(mdg_crs) %>%
   st_buffer(dist = buffer_dist) %>%
   st_make_valid() %>%
@@ -325,7 +762,7 @@ tmap_mode("plot")
 
 tm_shape(contour_mada) + 
   tm_borders() +
-tm_shape(wdpa_before_2008) +
+tm_shape(pa_before_2008) +
 tm_polygons(fill = "blue", 
             col =  "black", 
             fill_alpha = 0.5) +
@@ -333,7 +770,7 @@ tm_shape(buffer_10km_from_2008) +
 tm_borders(col = "darkgreen", lwd = 1, fill.legend = tm_legend_hide()) +
 tm_shape(buffer_10km_before_2008) +
 tm_borders(col = "blue", lwd = 1, fill.legend = tm_legend_hide()) +
-tm_shape(wdpa_from_2008) +
+tm_shape(pa_from_2008) +
 tm_polygons(fill = "darkgreen", 
             col = "black", 
             fill_alpha = 0.5) +
@@ -341,6 +778,63 @@ tm_add_legend(type = "polygons", fill = c("blue", "darkgreen"), labels = c("avan
   tm_title("Protected areas by period of creation", fontface = "bold", size = 1) +
   tm_credits("Source: WDPA, 2025", position =  c("BOTTOM", "RIGHT")) +
   tm_scalebar(position = c("TOP", "LEFT"))
+
+library(tmap)
+library(leaflet)
+
+# Carte en mode interactif
+tmap_mode("view")
+
+map <- tm_shape(contour_mada) +
+  tm_borders() +
+tm_shape(pa_before_2008) +
+  tm_polygons(
+    fill = "blue",
+    col = "black",
+    fill_alpha = 0.5,
+    id = "NAME",
+    popup.vars = c(
+      "Status" = "STATUS",
+      "Year Created" = "STATUS_YR",
+      "Area (km²)" = "PA_AREA_KM2"
+    )
+  ) +
+tm_shape(buffer_10km_from_2008) +
+  tm_borders(col = "darkgreen", lwd = 1) +
+tm_shape(buffer_10km_before_2008) +
+  tm_borders(col = "blue", lwd = 1) +
+tm_shape(pa_from_2008) +
+  tm_polygons(
+    fill = "darkgreen",
+    col = "black",
+    fill_alpha = 0.5,
+    id = "NAME",
+    popup.vars = c(
+      "Status" = "STATUS",
+      "Period Creation" = "STATUS_YR",
+      "Area (km²)" = "PA_AREA_KM2"
+    )
+  ) +
+  tm_add_legend(
+    type = "polygons",
+    fill = c("blue", "darkgreen"),
+    labels = c("Before 2008", "After 2008")
+  ) +
+  tm_scalebar(position = c("left", "top"))
+
+# Convertir en Leaflet pour personnaliser
+leaflet_map <- tmap_leaflet(map)
+
+# Ajouter titre et source (remplace tm_title et tm_credits, non supportés tel quel en Leaflet)
+leaflet_map %>%
+  addControl(
+    "<b>Protected Areas by Period of Creation</b><br/>Source: WDPA, 2025",
+    position = "topright"
+  ) %>%
+  addControl(
+    "Source: WDPA, 2025",
+    position = "bottomright"
+  )
 ```
 
 On agrège les données pour chaque groupe, en calculant le nombre total d'aires protégées et leur superficie totale, que l'on présente sous forme de tableau.
@@ -349,10 +843,10 @@ On agrège les données pour chaque groupe, en calculant le nombre total d'aires
 # Definition de la fonction
 library(gt)
 
-pivot_year <- 2008
+pivot_year <- 2008  
 
-# Préparer le tableau
-summary_table <- wdpa_terrestre_mod %>%
+# Tableau — Comparaison Before / Starting in 2008
+summary_table <- pa_sf %>%
   st_drop_geometry() %>%
   mutate(Creation_Period = if_else(
            STATUS_YR < pivot_year,
@@ -362,11 +856,10 @@ summary_table <- wdpa_terrestre_mod %>%
   group_by(Creation_Period) %>%
   summarise(
     Count = n(),
-    Area_km2 = sum(area_km2, na.rm = TRUE),
+    Area_km2 = sum(PA_AREA_KM2, na.rm = TRUE),
     .groups = "drop"
   )
 
-# Créer l'objet gt
 gt_table <- summary_table %>%
   gt() %>%
   tab_header(
@@ -389,8 +882,8 @@ gt_table <- summary_table %>%
     Area_km2        ~ px(150)
   ) %>%
   tab_style(
-    style     = cell_fill(color = "#e8f5e9"),        
-    locations = cells_body(rows = seq(2, nrow(summary_table), 2))  
+    style     = cell_fill(color = "#e8f5e9"),
+    locations = cells_body(rows = seq(2, nrow(summary_table), 2))
   ) %>%
   tab_style(
     style     = list(
@@ -448,40 +941,200 @@ gt_table <- summary_table %>%
     footnotes.font.size                 = px(10),
     footnotes.marks                     = "letters"
   )
-  
-# Save as rds
+
 write_rds(gt_table, "paper/tables/tbl-period-crea.rds")
-
-# Save as high-resolution PNG
 gtsave(gt_table, "paper/tables/tbl-period-crea.png", expand = 10, zoom = 3)
-
 gt_table
+
+# Tableau Récapitulatif par année, PA créées depuis 2008
+
+summary_table_since2008 <- pa_sf %>%
+  st_drop_geometry() %>%
+  filter(STATUS_YR >= pivot_year) %>%
+  group_by(STATUS_YR) %>%
+  summarise(
+    Count    = n(),
+    Area_km2 = sum(PA_AREA_KM2, na.rm = TRUE),
+    .groups  = "drop"
+  ) %>%
+  arrange(STATUS_YR)
+
+gt_table_since2008 <- summary_table_since2008 %>%
+  gt() %>%
+  tab_header(
+    title    = md("**Protected Areas Created Since 2008**"),
+    subtitle = md(paste0("*Madagascar — Reference year: ", pivot_year,
+                         " — Terrestrial areas only*"))
+  ) %>%
+  cols_label(
+    STATUS_YR = md("**Year**"),
+    Count     = md("**PA Number**"),
+    Area_km2  = md("**Area (km²)**")
+  ) %>%
+  fmt_number(columns = Count,    decimals = 0, use_seps = TRUE) %>%
+  fmt_number(columns = Area_km2, decimals = 2, use_seps = TRUE) %>%
+  cols_align(align = "left",  columns = STATUS_YR) %>%
+  cols_align(align = "right", columns = c(Count, Area_km2)) %>%
+  cols_width(
+    STATUS_YR ~ px(120),
+    Count     ~ px(120),
+    Area_km2  ~ px(150)
+  ) %>%
+  tab_style(
+    style     = cell_fill(color = "#e8f5e9"),
+    locations = cells_body(rows = seq(2, nrow(summary_table_since2008), 2))
+  ) %>%
+  tab_style(
+    style     = list(
+      cell_fill(color = "darkgreen"),
+      cell_text(color = "white", weight = "bold", size = px(13))
+    ),
+    locations = cells_column_labels()
+  ) %>%
+  tab_style(
+    style     = cell_text(size = px(18), weight = "bold", color = "darkgreen"),
+    locations = cells_title(groups = "title")
+  ) %>%
+  tab_style(
+    style     = cell_text(size = px(13), color = "grey40", style = "italic"),
+    locations = cells_title(groups = "subtitle")
+  ) %>%
+  grand_summary_rows(
+    columns = c(Count, Area_km2),
+    fns     = list(Total = ~ sum(.)),
+    fmt     = ~ fmt_number(., decimals = 0, use_seps = TRUE)
+  ) %>%
+  tab_style(
+    style     = list(
+      cell_fill(color = "darkgreen"),
+      cell_text(color = "white", weight = "bold")
+    ),
+    locations = cells_grand_summary()
+  ) %>%
+  tab_footnote(
+    footnote  = md("PA = Protected Area as defined by IUCN categories I–VI."),
+    locations = cells_column_labels(columns = Count)
+  ) %>%
+  tab_source_note(md("**Source:** World Database on Protected Areas (WDPA), 2025.")) %>%
+  tab_source_note(md("**Note:** Analysis restricted to terrestrial protected areas created from 2008 onward in Madagascar.")) %>%
+  tab_options(
+    table.font.names                    = "Times New Roman",
+    table.font.size                     = px(13),
+    table.width                         = pct(85),
+    heading.align                       = "left",
+    heading.border.bottom.color         = "darkgreen",
+    heading.border.bottom.width         = px(2),
+    column_labels.border.top.color      = "darkgreen",
+    column_labels.border.top.width      = px(2),
+    column_labels.border.bottom.color   = "darkgreen",
+    column_labels.border.bottom.width   = px(2),
+    column_labels.padding               = px(8),
+    table_body.hlines.color             = "#cccccc",
+    table_body.hlines.width             = px(0.5),
+    table_body.border.bottom.color      = "darkgreen",
+    table_body.border.bottom.width      = px(2),
+    data_row.padding                    = px(8),
+    source_notes.font.size              = px(10),
+    source_notes.border.lr.style        = "none",
+    source_notes.padding                = px(6),
+    footnotes.font.size                 = px(10),
+    footnotes.marks                     = "letters"
+  )
+
+write_rds(gt_table_since2008, "paper/tables/tbl-pa-since-2008.rds")
+gtsave(gt_table_since2008, "paper/tables/tbl-pa-since-2008.png", expand = 10, zoom = 3)
+gt_table_since2008
+
+# Liste détaillée des PA créées depuis 2008 
+
+pa_list_since2008 <- pa_sf %>%
+  st_drop_geometry() %>%
+  filter(STATUS_YR >= pivot_year) %>%
+  select(NAME, STATUS_YR, IUCN_CAT, PA_AREA_KM2, STATUS, MANAGER) %>%
+  arrange(STATUS_YR, NAME)
+
+# Créer l'objet gt à partir du dataframe déjà trié
+gt_pa_list_since2008 <- pa_list_since2008 %>%
+  gt() %>%
+  tab_header(
+    title    = md("**Protected Areas Created Since 2008**"),
+    subtitle = md(paste0("*Madagascar — Sorted by year of creation — Reference year: ",
+                         pivot_year, "*"))
+  ) %>%
+  cols_label(
+    NAME        = md("**Name**"),
+    STATUS_YR   = md("**Year**"),
+    IUCN_CAT    = md("**IUCN Category**"),
+    PA_AREA_KM2 = md("**Area (km²)**"),
+    STATUS      = md("**Status**"),
+    MANAGER     = md("**Manager**")
+  ) %>%
+  fmt_number(columns = PA_AREA_KM2, decimals = 2, use_seps = TRUE) %>%
+  cols_align(align = "left",  columns = c(NAME, IUCN_CAT, STATUS, MANAGER)) %>%
+  cols_align(align = "right", columns = c(STATUS_YR, PA_AREA_KM2)) %>%
+  tab_style(
+    style     = cell_fill(color = "#e8f5e9"),
+    locations = cells_body(rows = seq(2, nrow(pa_list_since2008), 2))
+  ) %>%
+  tab_style(
+    style     = list(
+      cell_fill(color = "darkgreen"),
+      cell_text(color = "white", weight = "bold", size = px(13))
+    ),
+    locations = cells_column_labels()
+  ) %>%
+  tab_style(
+    style     = cell_text(size = px(18), weight = "bold", color = "darkgreen"),
+    locations = cells_title(groups = "title")
+  ) %>%
+  tab_style(
+    style     = cell_text(size = px(13), color = "grey40", style = "italic"),
+    locations = cells_title(groups = "subtitle")
+  ) %>%
+  tab_source_note(md("**Source:** World Database on Protected Areas (WDPA), 2025.")) %>%
+  tab_options(
+    table.font.names               = "Times New Roman",
+    table.font.size                = px(13),
+    heading.align                  = "left",
+    heading.border.bottom.color    = "darkgreen",
+    heading.border.bottom.width    = px(2),
+    column_labels.border.top.color = "darkgreen",
+    column_labels.border.top.width = px(2),
+    data_row.padding               = px(6)
+  )
+
+# Sauvegarde
+write_rds(gt_pa_list_since2008, "paper/tables/tbl-pa-list-since-2008.rds")
+gtsave(gt_pa_list_since2008, "paper/tables/tbl-pa-list-since-2008.png", expand = 10, zoom = 3)
+
+gt_pa_list_since2008
 
 ```
 
+Sur la période de 2008-2021, 57 aires protégées ont été créées.
 ## Classification des clusters
 
-Les grappes d'enquête sont classées selon leur proximité aux aires protégées créées avant 2008 et à partir de 2008. A l'aide de la fonction classify_clusters(), nous catégorisons chaque cluster en trois groupes: traitement, contrôle ou exclu, selon leur localisation par rapport aux aires protégées et leur statut urbain ou rural. Cette classification est appliquée aux clusters de 1997, 2008, 2011, 2013, 2016, 2018 et 2021. Parmi les clusters considérés comme "traités", on identifie l'année de création de l'AP, son type et le numéro WDPAID ou l'identifiant unique de l'AP en question. Les résultats obtenus sont fusionnés. Nous créons ensuite une carte par année d'étude pour visualiser la localisation des aires protégées et la répartition spatiale des clusters selon leur groupe.
+Les grappes d'enquête sont classées selon leur proximité aux AP créées avant 2008 et à partir de 2008. A l'aide de la fonction classify_clusters(), nous catégorisons chaque cluster en trois groupes: traitement, contrôle ou exclu, selon leur localisation par rapport aux AP et leur statut urbain ou rural. Cette classification est appliquée aux clusters de 1997, 2008, 2011, 2013, 2016, 2018 et 2021. Parmi les clusters considérés comme "traités", on identifie l'année de création de l'AP, son type et le numéro WDPAID ou l'identifiant unique de l'AP en question. Les résultats obtenus sont fusionnés. Nous créons ensuite une carte par année d'étude pour visualiser la localisation des AP et la répartition spatiale des clusters selon leur groupe.
 
 ```{r fig.cap="Figure 5: DHS survey clusters relative to existing protected areas"}
 
 
 classify_clusters_with_pa <- function(cluster_gps,
                                       buffer_before,   # union of <2008
-                                      wdpa_after,      # polygons >=2008 (no union)
+                                      pa_after,      # polygons >=2008 (no union)
                                       buffer_dist = 10000,
                                       label_treat = "Treatment",
                                       label_excl  = "Excluded",
                                       label_ctrl  = "Control") {
 
   # per-PA buffers (keep attrs)
-  wdpa_after_buf <- wdpa_after %>%
+  pa_after_buf <- pa_after %>%
     st_transform(mdg_crs) %>%
     mutate(geometry = st_buffer(geometry, buffer_dist)) %>%
     st_transform(standard_crs)
 
   # flags
-  in_after  <- st_within(cluster_gps, st_union(wdpa_after_buf),  sparse = FALSE)[,1]
+  in_after  <- st_within(cluster_gps, st_union(pa_after_buf),  sparse = FALSE)[,1]
   in_before <- st_within(cluster_gps, buffer_before,            sparse = FALSE)[,1]
 
   base <- cluster_gps %>%
@@ -496,13 +1149,13 @@ classify_clusters_with_pa <- function(cluster_gps,
 
   if (nrow(treated_pts) == 0) return(base)
 
-  cand <- st_join(treated_pts, wdpa_after_buf, join = st_within, left = FALSE) %>%
+  cand <- st_join(treated_pts, pa_after_buf, join = st_within, left = FALSE) %>%
   mutate(
-    .idx = match(WDPAID, wdpa_after$WDPAID),
+    .idx = match(WDPAID, pa_after$WDPAID),
     dist_km = as.numeric(
       st_distance(
         geometry,
-        wdpa_after$geometry[.idx],
+        pa_after$geometry[.idx],
         by_element = TRUE
       )
     ) / 1000
@@ -521,19 +1174,19 @@ classify_clusters_with_pa <- function(cluster_gps,
 }
 
 gps_1997_class <- classify_clusters_with_pa(gps_1997, buffer_10km_before_2008, 
-                                            wdpa_from_2008)
+                                            pa_from_2008)
 gps_2008_class <- classify_clusters_with_pa(gps_2008, buffer_10km_before_2008, 
-                                            wdpa_from_2008)
+                                            pa_from_2008)
 gps_2011_class <- classify_clusters_with_pa(gps_2011, buffer_10km_before_2008, 
-                                            wdpa_from_2008)
+                                            pa_from_2008)
 gps_2013_class <- classify_clusters_with_pa(gps_2013, buffer_10km_before_2008,
-                                            wdpa_from_2008)
+                                            pa_from_2008)
 gps_2016_class <- classify_clusters_with_pa(gps_2016, buffer_10km_before_2008,
-                                            wdpa_from_2008)
+                                            pa_from_2008)
 gps_2018_class <- classify_clusters_with_pa(gps_2018, buffer_10km_before_2008,
-                                            wdpa_from_2008)
+                                            pa_from_2008)
 gps_2021_class <- classify_clusters_with_pa(gps_2021, buffer_10km_before_2008,
-                                            wdpa_from_2008)
+                                            pa_from_2008)
 
 
 gps_all_class <- bind_rows(
@@ -548,7 +1201,7 @@ gps_all_class <- bind_rows(
 
 tmap_mode("plot")
 
-tm_shape(contour_mada) +
+map_ap <- tm_shape(contour_mada) +
   tm_borders(col = "black", lwd = 1) +
 
   tm_shape(buffer_10km_from_2008) +
@@ -559,12 +1212,12 @@ tm_shape(contour_mada) +
   tm_borders("darkgreen", lwd = 2, lty = "dashed",
              fill.legend = tm_legend_hide()) +
 
-  tm_shape(wdpa_from_2008) +
+  tm_shape(pa_from_2008) +
   tm_polygons(fill = "green", fill_alpha = 0.5,
               col = "black",
               fill.legend = tm_legend_hide()) +
 
-  tm_shape(wdpa_before_2008) +
+  tm_shape(pa_before_2008) +
   tm_polygons(fill = "darkgreen", fill_alpha = 0.5,
               col = "black",
               fill.legend = tm_legend_hide()) +
@@ -582,20 +1235,20 @@ tm_shape(contour_mada) +
     shape = 21
   ) +
 
-  tm_facets("DHSYEAR", nrow = 2, ncol = 3) +
+  tm_facets("DHSYEAR", nrow = 3, ncol = 3) +
 
   tm_add_legend(
     type  = "polygons",
     fill  = c("green", "darkgreen"),
-    labels = c("à partir de 2008", "avant 2008"),
-    title = "Aires protégées"
+    labels = c("Starting in 2008", "Before 2008"),
+    title = "Protected Areas"
   ) +
   tm_add_legend(
     type   = "symbols",
     fill    = c("red", "blue", "gray"),
     labels = c("Treatment", "Control", "Excluded"),
     shape  = 21,
-    title  = "Groupes"
+    title  = "Groups"
   ) +
 
   tm_layout(
@@ -603,20 +1256,11 @@ tm_shape(contour_mada) +
     legend.outside.position = c("center", "bottom")
   )
 
-# Enregistrer la carte------------------------------ 
-# Assigner la carte à un objet
-ma_carte <- tmap_mode("plot")
-tm_shape(contour_mada) +
-  tm_borders(col = "black", lwd = 1) +
-  # ... tout ton code ...
-  tm_layout(
-    legend.outside = TRUE,
-    legend.outside.position = c("center", "bottom")
-  )
+map_ap
 
-# Enregistrer
+# Enregistrer la carte------------------------------ 
 tmap_save(
-  tm       = ma_carte,
+  tm       = map_ap,
   filename = "output/map_all_groups.png",
   width    = 12,       # largeur en pouces
   height   = 8,        # hauteur en pouces
