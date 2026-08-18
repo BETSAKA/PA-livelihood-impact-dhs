@@ -116,15 +116,15 @@ On charge et nettoie le jeu de données des AP de WDPA, en ne gardant que celles
 ```{r fig.cap="Figure 2: Protected Areas in Madagascar"}
 library(wdpar)
 
-wdpa <- wdpa_read("data/PA_creation/wdpa_data/WDPA_WDOECM_Aug2026_Public_MDG.zip") %>%
-  dplyr::filter(REALM %in% c("Terrestrial", "Coastal")) %>%
-  dplyr::select(
-    SITE_ID,
-    REALM,
-    geometry
-  )
+#wdpa <- wdpa_read("data/PA_creation/wdpa_data/WDPA_WDOECM_Aug2026_Public_MDG.zip") %>%
+#  dplyr::filter(REALM %in% c("Terrestrial", "Coastal")) %>%
+#  dplyr::select(
+#    SITE_ID,
+#    REALM,
+#    geometry
+#  )
 
-dynamic_wdpa_vect <- vect("data/PA_creation/dynamic_wdpa.gpkg") %>%
+dynamic_wdpa_vect <- vect("data/PA_creation/dynamic_wdpa(1).gpkg") %>%
   # Keep Terrestrial and mixed
   dplyr::filter(MARINE %in% 0:1) %>%
   # "Complexe des  AP Ambohimirahavavy Marivorahona" does not have a STATUS_YR, we set it to 2015 as per WDPA website: https://protectedareas.mg/fr/landscape/show/79?geoShapeFilterField=location&location=48.727807188419%2C-14.2119746670021%2C49.0930733591917%2C-14.2119746670021%2C49.0930733591917%2C-13.734131335043%2C48.727807188419%2C-13.734131335043%2C48.727807188419%2C-14.2119746670021&max=8&mediaFilter=no_of_images%2Cno_of_videos%2Cno_of_audio&offset=0&sort=created_on&view=stats
@@ -438,64 +438,64 @@ print(dynamic_wdpa_metadata)
 # Export metadata of WDPA
 write.csv(dynamic_wdpa_metadata, "data/PA_creation/wdpa_data/dynamic_wdpa_metadata.csv", row.names = FALSE)
 
-merged_sf <- left_join(dynamic_wdpa_metadata, wdpa, by = c("WDPAID" = "SITE_ID"))
+#merged_sf <- left_join(dynamic_wdpa_metadata, wdpa, by = c("WDPAID" = "SITE_ID"))
 
-wdpa_corrected <- merged_sf %>%
-  filter(STATUS != "Proposed")
+#wdpa_corrected <- merged_sf %>%
+#  filter(STATUS != "Proposed")
 
-wdpa_corrected <- wdpa_corrected %>%
-  mutate(
-    NAME = trimws(NAME),
-    NAME = case_when(
-      NAME == "Agnakatrika"  ~ "Agnatrika",
-      NAME == "Nord fotaky"  ~ "Nord Ifotaky",
-      NAME == "Kalambatrika" ~ "Kalambatritra",
-      TRUE ~ NAME
-    )
-  )
+#wdpa_corrected <- wdpa_corrected %>%
+#  mutate(
+#    NAME = trimws(NAME),
+#    NAME = case_when(
+#      NAME == "Agnakatrika"  ~ "Agnatrika",
+#      NAME == "Nord fotaky"  ~ "Nord Ifotaky",
+#      NAME == "Kalambatrika" ~ "Kalambatritra",
+#      TRUE ~ NAME
+#    )
+#  )
 
 # Table de correction manuelle : année corrigée pour ces AP, identifiées par leur NAME
-year_corrections <- tribble(
-  ~NAME,                                          ~STATUS_YR_CORRECTED,
-  "Tsaratanana",                                   1927,
-  "Ivohibe",                                       1954,
-  "Marotandrano",                                  1956,
-  "Tampoketsa Analamaitso",                        1958,
-  "Zombitse Vohibasia",                            1997,
-  "Ranomafana",                                    1989,
-  "Complexe Tsimembo Manambolomaty",               1998,
-  "Masoala",                                       1927,
-  "Ambatotsirongorongo",                           2006,
-  "Complexe Zones Humides Mahavavy Kinkony",       2006,
-  "Amoron'i Onilahy",                              2006,
-  "Réserve de Tampolo",                            2006,
-  "Nosy Antsoha",                                  2010,
-  "Massif d'Itremo",                               1951,
-  "Agnatrika",                                     2008,
-  "Forêt Naturel de Petriky",                      2006,
-  "Andreba",                                       2006,
-  "Loky Manambato",                                2005,
-  "Manjakatompo Ankaratra",                        2010,
-  "Tsinjoarivo Ambalaomby",                        2020
-)
+#year_corrections <- tribble(
+#  ~NAME,                                          ~STATUS_YR_CORRECTED,
+#  "Tsaratanana",                                   1927,
+#  "Ivohibe",                                       1954,
+#  "Marotandrano",                                  1956,
+#  "Tampoketsa Analamaitso",                        1958,
+#  "Zombitse Vohibasia",                            1997,
+#  "Ranomafana",                                    1989,
+#  "Complexe Tsimembo Manambolomaty",               1998,
+#  "Masoala",                                       1927,
+#  "Ambatotsirongorongo",                           2006,
+#  "Complexe Zones Humides Mahavavy Kinkony",       2006,
+#  "Amoron'i Onilahy",                              2006,
+#  "Réserve de Tampolo",                            2006,
+#  "Nosy Antsoha",                                  2010,
+#  "Massif d'Itremo",                               1951,
+#  "Agnatrika",                                     2008,
+#  "Forêt Naturel de Petriky",                      2006,
+#  "Andreba",                                       2006,
+#  "Loky Manambato",                                2005,
+#  "Manjakatompo Ankaratra",                        2010,
+#  "Tsinjoarivo Ambalaomby",                        2020
+#)
 
 # --- Vérification AVANT d'appliquer : est-ce que chaque nom trouve bien
 # une correspondance dans wdpa_corrected ? ---
-year_corrections %>%
-  left_join(
-    wdpa_corrected %>% st_drop_geometry() %>%
-      transmute(NAME = trimws(NAME), STATUS_YR_avant = STATUS_YR),
-    by = "NAME"
-  ) %>%
-  print(n = Inf)
+#year_corrections %>%
+#  left_join(
+#    wdpa_corrected %>% st_drop_geometry() %>%
+#      transmute(NAME = trimws(NAME), STATUS_YR_avant = STATUS_YR),
+#    by = "NAME"
+#  ) %>%
+#  print(n = Inf)
 
-wdpa_corrected <- wdpa_corrected %>%
-  mutate(NAME = trimws(NAME)) %>%
-  left_join(year_corrections, by = "NAME") %>%
-  mutate(
-    STATUS_YR = if_else(!is.na(STATUS_YR_CORRECTED), STATUS_YR_CORRECTED, STATUS_YR)
-  ) %>%
-  select(-STATUS_YR_CORRECTED)
+#wdpa_corrected <- wdpa_corrected %>%
+#  mutate(NAME = trimws(NAME)) %>%
+#  left_join(year_corrections, by = "NAME") %>%
+#  mutate(
+#    STATUS_YR = if_else(!is.na(STATUS_YR_CORRECTED), STATUS_YR_CORRECTED, STATUS_YR)
+#  ) %>%
+#  select(-STATUS_YR_CORRECTED)
 ```
 
 
@@ -504,8 +504,9 @@ wdpa_corrected <- wdpa_corrected %>%
 Nous transformons les données dynamiques des AP en trois jeux de données distincts afin de disposer de limites spatiales fixes. Cette transformation est faite car la superficie et les frontières des AP peuvent évoluer au fil des années depuis leur création. Nous créons ainsi une couche avec la dernière limite disponible, correspondant à la portion du territoire commune à toutes les limites observées au cours du temps, ainsi que les noyaux dur de chaque aire. Ces jeux de données permettent de travailler avec des limites stables et de comparer les AP de manière cohérente dans les analyses temporelles. 
 
 ```{r fig.cap="Figure 2: Protected Areas in Madagascar"}
+
 ### Take last boundary
-dynamic_pa_last <- dynamic_pa_vect %>%
+dynamic_pa_last <- dynamic_wdpa_vect %>%
   dplyr::filter(zone_type == "external_boundary") %>%
   select(WDPAID) %>%
   group_by(WDPAID) %>%
@@ -522,9 +523,9 @@ writeVector(
 
 ### Take intersection boundary
 dynamic_pa_intersec <- pblapply(
-  unique(dynamic_pa_vect$WDPAID), 
+  unique(dynamic_wdpa_vect$WDPAID), 
   function(id) {
-    sub <- dynamic_pa_vect %>%
+    sub <- dynamic_wdpa_vect %>%
       filter(zone_type == "external_boundary") %>%
       filter(WDPAID == id) %>%
       select(WDPAID)
@@ -553,7 +554,7 @@ writeVector(
 ### Core zone
 
 # Take last boundary : several frontier exsit but there are all equivalent
-core_pa_last <- dynamic_pa_vect %>%
+core_pa_last <- dynamic_wdpa_vect %>%
   dplyr::filter(zone_type == "secondary_zoning") %>%
   select(WDPAID) %>%
   group_by(WDPAID) %>%
@@ -673,7 +674,7 @@ tm_polygons(
 
 # Convertir en sf (dynamic_pa_last est un SpatVector terra)
 pa_sf <- sf::st_as_sf(dynamic_pa_last) %>%
-  left_join(dynamic_pa_metadata, by = "WDPAID") %>% 
+  left_join(dynamic_wdpa_metadata, by = "WDPAID") %>% 
   st_make_valid()
 
 # Charger le contour de Madagascar
@@ -1109,9 +1110,111 @@ gtsave(gt_pa_list_since2008, "paper/tables/tbl-pa-list-since-2008.png", expand =
 
 gt_pa_list_since2008
 
+# Liste détaillée des PA créées entre 2008 et 2021
+
+start_year <- 2008
+end_year   <- 2021
+
+ pa_list_2008_2021 <- pa_list_since2008 %>%
+  filter(
+    STATUS_YR >= start_year,
+    STATUS_YR <= end_year
+  ) %>%
+  arrange(STATUS_YR)
+
+# Créer le tableau gt
+gt_pa_list_2008_2021 <- pa_list_2008_2021 %>%
+  gt() %>%
+  tab_header(
+    title = md("**Protected Areas Created 2008–2021**"),
+    subtitle = md(
+      paste0(
+        "*Madagascar — Sorted by year of creation — Period: ",
+        start_year, "–", end_year, "*"
+      )
+    )
+  ) %>%
+  cols_label(
+    NAME        = md("**Name**"),
+    STATUS_YR   = md("**Year**"),
+    IUCN_CAT    = md("**IUCN Category**"),
+    PA_AREA_KM2 = md("**Area (km²)**"),
+    STATUS      = md("**Status**"),
+    MANAGER     = md("**Manager**")
+  ) %>%
+  fmt_number(
+    columns = PA_AREA_KM2,
+    decimals = 2,
+    use_seps = TRUE
+  ) %>%
+  cols_align(
+    align = "left",
+    columns = c(NAME, IUCN_CAT, STATUS, MANAGER)
+  ) %>%
+  cols_align(
+    align = "right",
+    columns = c(STATUS_YR, PA_AREA_KM2)
+  ) %>%
+  tab_style(
+    style = cell_fill(color = "#e8f5e9"),
+    locations = cells_body(
+      rows = seq(2, nrow(pa_list_2008_2021), 2)
+    )
+  ) %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "darkgreen"),
+      cell_text(
+        color = "white",
+        weight = "bold",
+        size = px(13)
+      )
+    ),
+    locations = cells_column_labels()
+  ) %>%
+  tab_style(
+    style = cell_text(
+      size = px(18),
+      weight = "bold",
+      color = "darkgreen"
+    ),
+    locations = cells_title(groups = "title")
+  ) %>%
+  tab_style(
+    style = cell_text(
+      size = px(13),
+      color = "grey40",
+      style = "italic"
+    ),
+    locations = cells_title(groups = "subtitle")
+  ) %>%
+  tab_source_note(
+    md("**Source:** World Database on Protected Areas (WDPA), 2025.")
+  ) %>%
+  tab_options(
+    table.font.names = "Times New Roman",
+    table.font.size = px(13),
+    heading.align = "left",
+    heading.border.bottom.color = "darkgreen",
+    heading.border.bottom.width = px(2),
+    column_labels.border.top.color = "darkgreen",
+    column_labels.border.top.width = px(2),
+    data_row.padding = px(6)
+  )
+
+# Sauvegarde
+write_rds(gt_pa_list_2008_2021, "paper/tables/tbl_pa_list_2008_2021.rds")
+gtsave(gt_pa_list_2008_2021, "paper/tables/tbl_pa_list_2008_2021.png", expand = 10, zoom = 3)
+
+
+write_csv(gt_pa_list_2008_2021[["_data"]], "paper/tables/pa_list_2008_2021.csv")
+
+gt_pa_list_2008_2021
+
 ```
 
 Sur la période de 2008-2021, 57 aires protégées ont été créées.
+
 ## Classification des clusters
 
 Les grappes d'enquête sont classées selon leur proximité aux AP créées avant 2008 et à partir de 2008. A l'aide de la fonction classify_clusters(), nous catégorisons chaque cluster en trois groupes: traitement, contrôle ou exclu, selon leur localisation par rapport aux AP et leur statut urbain ou rural. Cette classification est appliquée aux clusters de 1997, 2008, 2011, 2013, 2016, 2018 et 2021. Parmi les clusters considérés comme "traités", on identifie l'année de création de l'AP, son type et le numéro WDPAID ou l'identifiant unique de l'AP en question. Les résultats obtenus sont fusionnés. Nous créons ensuite une carte par année d'étude pour visualiser la localisation des AP et la répartition spatiale des clusters selon leur groupe.
