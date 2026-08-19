@@ -730,15 +730,15 @@ Pour analyser l'impact des AP selon leur période de création, on spécifie les
 buffer_dist <- 10000 
 
 # Spécification des aires protégées avant 2008
-pa_before_2008 <- pa_sf %>%
+wdpa_before_2008 <- pa_sf %>%
   filter(STATUS_YR < 2008)
 
 # Spécification des aires protégées après 2008
-pa_from_2008 <- pa_sf %>%
+wdpa_from_2008 <- pa_sf %>%
   filter(STATUS_YR >= 2008)
 
 # Créer des buffers de 10 km autour des AP
-buffer_10km_before_2008 <- pa_before_2008 %>%
+buffer_10km_before_2008 <- wdpa_before_2008 %>%
   st_transform(mdg_crs) %>%
   st_buffer(dist = buffer_dist) %>%
   st_make_valid() %>%
@@ -747,7 +747,7 @@ buffer_10km_before_2008 <- pa_before_2008 %>%
   st_make_valid() %>%
   st_transform(standard_crs)
 
-buffer_10km_from_2008 <- pa_from_2008  %>%
+buffer_10km_from_2008 <- wdpa_from_2008  %>%
   st_transform(mdg_crs) %>%
   st_buffer(dist = buffer_dist) %>%
   st_make_valid() %>%
@@ -763,7 +763,7 @@ tmap_mode("plot")
 
 tm_shape(contour_mada) + 
   tm_borders() +
-tm_shape(pa_before_2008) +
+tm_shape(wdpa_before_2008) +
 tm_polygons(fill = "blue", 
             col =  "black", 
             fill_alpha = 0.5) +
@@ -771,7 +771,7 @@ tm_shape(buffer_10km_from_2008) +
 tm_borders(col = "darkgreen", lwd = 1, fill.legend = tm_legend_hide()) +
 tm_shape(buffer_10km_before_2008) +
 tm_borders(col = "blue", lwd = 1, fill.legend = tm_legend_hide()) +
-tm_shape(pa_from_2008) +
+tm_shape(wdpa_from_2008) +
 tm_polygons(fill = "darkgreen", 
             col = "black", 
             fill_alpha = 0.5) +
@@ -788,7 +788,7 @@ tmap_mode("view")
 
 map <- tm_shape(contour_mada) +
   tm_borders() +
-tm_shape(pa_before_2008) +
+tm_shape(wdpa_before_2008) +
   tm_polygons(
     fill = "blue",
     col = "black",
@@ -804,7 +804,7 @@ tm_shape(buffer_10km_from_2008) +
   tm_borders(col = "darkgreen", lwd = 1) +
 tm_shape(buffer_10km_before_2008) +
   tm_borders(col = "blue", lwd = 1) +
-tm_shape(pa_from_2008) +
+tm_shape(wdpa_from_2008) +
   tm_polygons(
     fill = "darkgreen",
     col = "black",
@@ -1277,19 +1277,19 @@ classify_clusters_with_pa <- function(cluster_gps,
 }
 
 gps_1997_class <- classify_clusters_with_pa(gps_1997, buffer_10km_before_2008, 
-                                            pa_from_2008)
+                                            wdpa_from_2008)
 gps_2008_class <- classify_clusters_with_pa(gps_2008, buffer_10km_before_2008, 
-                                            pa_from_2008)
+                                            wdpa_from_2008)
 gps_2011_class <- classify_clusters_with_pa(gps_2011, buffer_10km_before_2008, 
-                                            pa_from_2008)
+                                            wdpa_from_2008)
 gps_2013_class <- classify_clusters_with_pa(gps_2013, buffer_10km_before_2008,
-                                            pa_from_2008)
+                                            wdpa_from_2008)
 gps_2016_class <- classify_clusters_with_pa(gps_2016, buffer_10km_before_2008,
-                                            pa_from_2008)
+                                            wdpa_from_2008)
 gps_2018_class <- classify_clusters_with_pa(gps_2018, buffer_10km_before_2008,
-                                            pa_from_2008)
+                                            wdpa_from_2008)
 gps_2021_class <- classify_clusters_with_pa(gps_2021, buffer_10km_before_2008,
-                                            pa_from_2008)
+                                            wdpa_from_2008)
 
 
 gps_all_class <- bind_rows(
@@ -1315,12 +1315,12 @@ map_ap <- tm_shape(contour_mada) +
   tm_borders("darkgreen", lwd = 2, lty = "dashed",
              fill.legend = tm_legend_hide()) +
 
-  tm_shape(pa_from_2008) +
+  tm_shape(wdpa_from_2008) +
   tm_polygons(fill = "green", fill_alpha = 0.5,
               col = "black",
               fill.legend = tm_legend_hide()) +
 
-  tm_shape(pa_before_2008) +
+  tm_shape(wdpa_before_2008) +
   tm_polygons(fill = "darkgreen", fill_alpha = 0.5,
               col = "black",
               fill.legend = tm_legend_hide()) +
@@ -1537,10 +1537,10 @@ gt_table_menages_all <- households_counts_all %>%
   ) %>%
   tab_spanner(
     label = "Treatment",
-    columns = c(`Before treatment`, `Previously treated`, All_clusters)
+    columns = c(`Avant traitement`, `Déjà traités`, Ensemble)
   ) %>%
   fmt_number(
-    columns = c(`Before treatment`, `Previously treated`, All_clusters, `Controls`, `Excluded`),
+    columns = c(`Avant traitement`, `Déjà traités`, Ensemble, `Contrôles`, `Exclus`),
     decimals = 0, use_seps = TRUE
   ) %>%
   cols_align(align = "center", columns = everything()) %>%
