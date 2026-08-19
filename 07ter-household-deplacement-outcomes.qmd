@@ -1,0 +1,475 @@
+---
+output: typst
+editor_options: 
+  chunk_output_type: console
+---
+
+# Migration outcomes: household mobility
+
+## Motivation
+
+In the pre-analysis plan, we chose not to include migration among the control variables, as it is likely influenced both by the direct effects of protected areas and by broader changes in living standards in surrounding areas, making it a collider rather than a valid control. Instead, migration is treated as an outcome variable, since it is more plausibly a consequence of protected areas than an independent cause. This allows us to assess whether populations leave their territory because of protected areas, or whether migration is one of the mechanisms through which these areas affect living standard, without introducing bias into the analysis. In their paper, Jones et al. [-@Jones2018] state that human migration is often considered an important driver of land use change and a threat to protected area integrity. Understanding household mobility and behaviour at the forest frontier is important for guiding conservation and development policies.
+
+## Variable definition
+
+Among the three available data sources (DHS, MIS, MICS), the indicators that may help explain the movements of household members are as follows:
+
+| Indicateur | Source | Level | Indicator definition |
+|------------------|------------------|------------------|------------------|
+| V104 | DHS/MIS (women) | Individual | Number of years the respondent has lived in the village, town, or city where she was interviewed. Visitors to the community are coded 96 |
+| MV104 | DHS/MIS (men) | Individual | Number of years the respondent has lived in the village, town, or city where he was interviewed. Visitors to the community are coded 96 |
+| WB15 | MICS (women) | Individual | MICS equivalent of V104 |
+| MWB15 | MICS (men) | Individual | MICS equivalent of V104 |
+| HV102 | DHS/MIS | Household | De jure resident status (usual resident) |
+| HV103 | DHS/MIS | Household | De facto resident status (slept there the previous night) |
+| V135 / MV135 | DHS/MIS | Individual | Whether the respondent is a usual resident or just a visitor to the household |
+| V136 / MV136 | DHS/MIS | Household | Total number of household members (residents + visitors who slept there) |
+
+## Data availability summary
+
+We use the following indicators
+
+| Year | Source   | V104 | MV104 | MWB15 | WB15 |
+|------|----------|------|-------|-------|------|
+| 1997 | DHS-III  | ✓    | ✓     | ✗     | ✗    |
+| 2008 | DHS-V    | ✓    | ✓     | ✗     | ✗    |
+| 2011 | MIS      | ✓    | ✓     | ✗     | ✗    |
+| 2013 | MIS      | ✓    | ✓     | ✗     | ✗    |
+| 2016 | MIS      | ✓    | ✓     | ✗     | ✗    |
+| 2018 | MICS-6   | ✗    | ✗     | ✓     | ✓    |
+| 2021 | DHS-VIII | ✓    | ✓     | ✗     | ✗    |
+
+## Data loading and harmonization
+
+```{r}
+
+#| label: setup
+#| message: false
+#| warning: false
+
+
+library(tidyverse)
+library(haven)
+library(fixest)
+library(did2s)
+library(broom)
+library(ggplot2)
+library(gt)
+library(sf)
+library(modelsummary)
+library(labelled)
+
+
+options(scipen = 999)
+```
+
+### Load matched household data
+
+```{r}
+#| label: load-matched
+
+load_matched <- function(path, year, spei_years) {
+  read_rds(path) |>
+    st_drop_geometry() |>
+    mutate(DHSYEAR = year) |>
+    rename(
+      spei_wc_n_2 = !!sym(paste0("spei_wc_", spei_years[1])),
+      spei_wc_n_1 = !!sym(paste0("spei_wc_", spei_years[2])),
+      spei_wc_n   = !!sym(paste0("spei_wc_", spei_years[3]))
+    ) |>
+    mutate(
+      hv219 = zap_labels(hv219),
+      hv220 = as.numeric(zap_labels(hv220))
+    ) |>
+    filter(GROUP %in% c("Treatment", "Control")) |>
+    select(DHSYEAR, hv001, hv002, hv005, GROUP, WDPAID, STATUS_YR, IUCN_CAT,
+           treatment, weights, spei_wc_n_2, spei_wc_n_1, spei_wc_n, hv219, hv220)
+}
+
+matched_all <- bind_rows(
+  load_matched("data/derived/data_matched_1997.rds", 1997, c(1995, 1996, 1997)),
+  load_matched("data/derived/data_matched_2008.rds", 2008, c(2006, 2007, 2008)),
+  load_matched("data/derived/data_matched_2011.rds", 2011, c(2009, 2010, 2011)),
+  load_matched("data/derived/data_matched_2013.rds", 2013, c(2011, 2012, 2013)),
+  load_matched("data/derived/data_matched_2016.rds", 2016, c(2014, 2015, 2016)),
+  load_matched("data/derived/data_matched_2018.rds", 2018, c(2016, 2017, 2018)),
+  load_matched("data/derived/data_matched_2021.rds", 2021, c(2019, 2020, 2021))
+)
+
+# Vérification avant jointure 
+
+matched_all |> count(DHSYEAR, GROUP)
+matched_all |> summarise(prop_status_yr_na = mean(is.na(STATUS_YR)))
+```
+
+
+### Load migration's survey data
+
+#### Définition du statut de résidence et de la migration 
+
+```{r}
+# Nettoyage de la durée de résidence (DHS/MIS: v104/mv104, MICS: wb15/mwb15)---
+# 95 = toujours vécu ici | 96 = visiteur | 99 = ne sait pas
+
+clean_duration <- function(x) {
+  y <- as.numeric(x)
+  y <- ifelse(y == 99, NA_real_, y)
+  y
+}
+
+# Identification du statut de résidence 
+
+derive_migrant <- function(duree){
+  
+  statut_residence <- case_when(
+    duree == 95 ~ "toujours ici",
+    duree == 96 ~ "visiteur",
+    duree >= 0 & duree < 95 ~ "duree_connue",
+    TRUE ~ NA_character_
+  )
+  
+  # Indicateur de migration 
+  migrant <- case_when(
+    duree == 95 ~ OL,              # non migrant 
+    duree == 96 ~ NA_integer_,     # visiteur
+    duree >= 0 & duree < 95 ~ 1L,  # migrant
+    TRUE ~ NA_integer_
+  )
+  
+  # Indicateur de migration récente (migration depuis 5 ans ou moins)
+  migrant_recent <- case_when(
+    duree == 96 ~ NA_integer_,     # Visiteur
+    duree == 95 ~ NA_integer_,     # non-migrant
+    duree >= 0 & duree <= 5 ~ 1L,  # migrant récent
+    duree > 5 & duree < 95 ~ 0L,    # migrant ancien
+    TRUE ~ NA_integer_
+  )
+  
+  tibble(
+    statut_residence = statut_residence, 
+    migrant = migrant, 
+    migrant_recent = migrant_recent
+    )
+}
+
+# Identification du type de migration 
+derive_type_migration <- function(
+    migrant,
+    residence_precedente) {
+  
+  case_when(
+    migrant == 1 & residence_precedente == 1 ~
+      "urbain_vers_rural",
+    
+    migrant == 1 & residence_precedente == 2 ~
+      "rural_vers_rural",
+    
+    migrant == 0 ~
+      "non_migrant",
+    TRUE ~ NA_character_
+  )
+}
+```
+
+
+##### DHS/MIS files (1997, 2008, 2011, 2013, 2016, 2021)
+
+```{r}
+
+# Helper DHS/MIS, Femmes-----------------------------
+
+load_migration_ir <- function(path, year, source, extra_vars = c("v012", "v106", "v024"), filter_rural = TRUE){
+  
+  cols <- c("v001", "v002", "v005", "v021", "v023",  "v024", "v025", "v104", "v105", extra_vars)
+  
+  df <- read_dta(path, col_select = all_of(cols)) 
+  
+  if (filter_rural) {
+    df <- df |> filter(v025 == 2)
+  }
+  
+  df <- df |>
+    mutate(
+      DHSYEAR = as.integer(year),
+      source_enquete = source,
+      sexe = "femme",
+      duree_residence = clean_duration(v104),
+      residence_precedente = case_when(
+        v104 %in% c(95,96) ~ NA_real_,
+        TRUE ~ as.numeric(v105)
+      ),
+      # Année d'arrivée estimée dans le cluster actuel
+      annee_arrivee = ifelse(!is.na(duree_residence)& duree_residence < 95,
+                             DHSYEAR - duree_residence, NA_real_)
+    )
+  
+  
+  df <- bind_cols(df, derive_migrant(df$duree_residence))
+  
+  
+  df <- df |>
+    mutate(
+      type_migration = case_when(
+         migrant == 1 & residence_precedente == 1 ~ "urbain_vers_rural",
+        migrant == 1 & residence_precedente == 2 ~ "rural_vers_rural",
+        migrant == 0 ~ "non_migrant",
+        TRUE ~ NA_character_
+        
+      )
+    )
+  
+  df |> 
+    select(v001, v002, v005, v021, v023, DHSYEAR, source_enquete, sexe, duree_residence, statut_residence, migrant, migrant_recent, residence_precedente, region_residence, all_of(extra_vars))
+}
+
+
+# Helper DHS/MIS, hommes ----------------------------------------------
+
+load_migration_mr <- function(path, year, source, filtrer_rural = TRUE) {
+
+  cols <- c("mv001", "mv002", "mv005", "mv021", "mv023", "mv104", "mv105", "mv025",
+            "mv012", "mv106", "mv024")
+
+  df <- read_dta(path, col_select = all_of(cols)) |>
+    rename(
+      v001 = mv001, v002 = mv002, v005 = mv005, v021 = mv021, v023 = mv023,
+      v012 = mv012, v106 = mv106, v024 = mv024, v025 = mv025
+    )
+
+  if (filtrer_rural) {
+    df <- df |> filter(v025 == 2)
+  }
+
+  df <- df |>
+    mutate(
+      DHSYEAR = as.integer(year),
+      source_enquete = source,
+      sexe = "homme",
+      duree_residence = clean_duration(mv104),
+      residence_precedente = case_when(
+        mv104 %in% c(95, 96) ~ NA_real_,
+        TRUE ~ as.numeric(mv105)
+      ),
+      annee_arrivee = ifelse(!is.na(duree_residence) & duree_residence < 95,
+                              DHSYEAR - duree_residence, NA_real_)
+    )
+
+  df <- bind_cols(df, derive_migrant(df$duree_residence))
+
+  df <- df |>
+    mutate(type_migration = derive_type_migration(migrant, residence_precedente))
+
+  df |>
+    select(v001, v002, v005, v021, v023, DHSYEAR, source_enquete, sexe,
+           duree_residence, statut_residence, migrant, migrant_recent,
+           residence_precedente, type_migration, annee_arrivee,
+           v025, v012, v106, v024)
+}
+
+# Femme 
+ir_1997 <- load_migration_ir("data/raw/dhs/DHS_1997/MDIR31DT/MDIR31FL.DTA", 1997, "DHS-III")
+ir_2008 <- load_migration_ir("data/raw/dhs/DHS_2008/MDIR51DT/MDIR51FL.DTA", 2008, "DHS-V")
+ir_2011 <- load_migration_ir("data/raw/dhs/MIS_2011/MDIR61DT/MDIR61FL.DTA", 2011, "MIS")
+ir_2013 <- load_migration_ir("data/raw/dhs/MIS_2013/MDIR6ADT/MDIR6AFL.DTA", 2013, "MIS")
+ir_2016 <- load_migration_ir("data/raw/dhs/MIS_2016/MDIR71DT/MDIR71FL.DTA", 2016, "MIS")
+ir_2021 <- load_migration_ir("data/raw/dhs/DHS_2021/MDIR81DT/MDIR81FL.DTA", 2021, "DHS-VIII")
+
+#Homme
+mr_1997 <- load_migration_mr("data/raw/dhs/DHS_1997/MDMR31DT/MDMR31FL.DTA", 1997, "DHS-III")
+mr_2008 <- load_migration_mr("data/raw/dhs/DHS_2008/MDMR51DT/MDMR51FL.DTA", 2008, "DHS-V")
+mr_2011 <- load_migration_mr("data/raw/dhs/MIS_2011/MDMR61DT/MDMR61FL.DTA", 2011, "MIS")
+mr_2013 <- load_migration_mr("data/raw/dhs/MIS_2013/MDMR6ADT/MDMR6AFL.DTA", 2013, "MIS")
+mr_2016 <- load_migration_mr("data/raw/dhs/MIS_2016/MDMR71DT/MDMR71FL.DTA", 2016, "MIS")
+mr_2021 <- load_migration_mr("data/raw/dhs/DHS_2021/MDMR81DT/MDMR81FL.DTA", 2021, "DHS-VIII")
+
+
+```
+
+
+##### MICS Data (2018)
+
+```{r}
+
+# Femme
+load_migration_mics_femme <- function(path, year = 2018, source = "MICS-6",
+                                       filtrer_rural = TRUE) {
+
+  df <- read_dta(
+    path,
+    col_select = c(HH1, wmweight, wb15, wb16, WB4, welevel, windex5, HH6, HH7)
+  )
+
+  if (filtrer_rural) {
+    df <- df |> filter(HH6 == 2)
+  }
+
+  df <- df |>
+    mutate(
+      DHSYEAR = as.integer(year),
+      source_enquete = source,
+      sexe = "femme",
+      duree_residence = clean_duration(wb15),
+      residence_precedente = case_when(
+        wb15 %in% c(95, 96) ~ NA_real_,
+        TRUE ~ as.numeric(wb16)
+      ),
+      annee_arrivee = ifelse(!is.na(duree_residence) & duree_residence < 95,
+                              DHSYEAR - duree_residence, NA_real_)
+    )
+
+  df <- bind_cols(df, derive_migrant(df$duree_residence))
+
+  df <- df |>
+    mutate(type_migration = derive_type_migration(migrant, residence_precedente))
+
+  df |>
+    transmute(
+      v001 = HH1, v002 = NA_real_, v005 = wmweight, v021 = HH1, v023 = NA_real_,
+      DHSYEAR, source_enquete, sexe,
+      duree_residence, statut_residence, migrant, migrant_recent,
+      residence_precedente, type_migration, annee_arrivee,
+      v025 = HH6, v012 = WB4, v106 = welevel, v024 = HH7
+    )
+}
+
+wm_2018 <- load_migration_mics_femme("data/raw/mics/MICS6_2018/wm.dta")
+
+# Homme 
+load_migration_mics_homme <- function(path, year = 2018, source = "MICS-6",
+                                       filtrer_rural = TRUE) {
+
+  df <- read_dta(
+    path,
+    col_select = c(HH1, mnweight, mwb15, mwb16, MWB4, mnlevel, windex5, HH6, HH7)
+  )
+
+  if (filtrer_rural) {
+    df <- df |> filter(HH6 == 2)
+  }
+
+  df <- df |>
+    mutate(
+      DHSYEAR = as.integer(year),
+      source_enquete = source,
+      sexe = "homme",
+      duree_residence = clean_duration(mwb15),
+      residence_precedente = case_when(
+        mwb15 %in% c(95, 96) ~ NA_real_,
+        TRUE ~ as.numeric(mwb16)
+      ),
+      annee_arrivee = ifelse(!is.na(duree_residence) & duree_residence < 95,
+                              DHSYEAR - duree_residence, NA_real_)
+    )
+
+  df <- bind_cols(df, derive_migrant(df$duree_residence))
+
+  df <- df |>
+    mutate(type_migration = derive_type_migration(migrant, residence_precedente))
+
+  df |>
+    transmute(
+      v001 = HH1, v002 = NA_real_, v005 = mnweight, v021 = HH1, v023 = NA_real_,
+      DHSYEAR, source_enquete, sexe,
+      duree_residence, statut_residence, migrant, migrant_recent,
+      residence_precedente, type_migration, annee_arrivee,
+      v025 = HH6, v012 = MWB4, v106 = mnlevel, v024 = HH7
+    )
+}
+
+
+mn_2018 <- load_migration_mics_homme("data/raw/mics/MICS6_2018/mn.dta")
+
+```
+
+##### Combiner les données en une seule base 
+
+```{r}
+dhs_pooled <- bind_rows(
+  ir_1997, ir_2008, ir_2011, ir_2013, ir_2016, wm_2018, ir_2021,
+  mr_1997, mr_2008, mr_2011, mr_2013, mr_2016, mn_2018, mr_2021
+)
+
+# Vérifications
+dhs_pooled |> count(DHSYEAR, statut_residence)
+dhs_pooled |> count(DHSYEAR, v025)   # doit valoir 2 partout (filtrage rural)
+```
+
+
+### Join with matched data
+
+```{r}
+dhs_pooled <- dhs_pooled |>
+  left_join(
+    matched_all,
+    by = c("DHSYEAR" = "DHSYEAR", "v001" = "hv001", "v002" = "hv002")
+  )
+
+# Taux de non-appariement (individus dont le ménage n'a pas été matché)
+dhs_pooled |> group_by(DHSYEAR) |> summarise(prop_non_matche = mean(is.na(GROUP)))
+```
+
+
+### Identification des clusters arrivées avant/ après création de l'AP 
+
+```{r}
+dhs_pooled <- dhs_pooled |>
+  mutate(
+    arrivee_vs_AP = case_when(
+      migrant == 0 ~ "toujours_ici",
+      migrant == 1 & is.na(STATUS_YR) ~ NA_character_,
+      migrant == 1 & annee_arrivee < STATUS_YR ~ "arrive_avant_AP",
+      migrant == 1 & annee_arrivee >= STATUS_YR ~ "arrive_apres_AP",
+      TRUE ~ NA_character_
+    )
+  )
+
+dhs_pooled |> count(DHSYEAR, GROUP, arrivee_vs_AP)
+
+# Tendance de la migration selon Treatment vs Control
+tab_migration_AP <- svyby(~migrant, ~DHSYEAR + GROUP, dhs_design_matched, svymean, na.rm = TRUE)
+print(tab_migration_AP)
+
+ggplot(tab_migration_AP, aes(x = DHSYEAR, y = migrant, color = GROUP)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = migrant - se, ymax = migrant + se), width = 0.3) +
+  theme_minimal() +
+  labs(x = "Année d'enquête", y = "Proportion de migrants",
+       title = "Migration selon la proximité aux aires protégées (Treatment vs Control)")
+
+# Modèle : la migration dépend-elle du groupe, dans le temps, en contrôlant pour le climat ?
+modele_migration_AP <- svyglm(
+  migrant ~ factor(DHSYEAR) * GROUP + sexe + hv219 + hv220 + spei_wc_n,
+  design = dhs_design_matched,
+  family = quasibinomial()
+)
+summary(modele_migration_AP)
+```
+
+
+### Descriptive statistics 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
