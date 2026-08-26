@@ -17,13 +17,14 @@ Among the three available data sources (DHS, MIS, MICS), the indicators that may
 | Indicateur | Source | Level | Indicator definition |
 |------------------|------------------|------------------|------------------|
 | V104 | DHS/MIS (women) | Individual | Number of years the respondent has lived in the village, town, or city where she was interviewed. Visitors to the community are coded 96 |
+| V135 / MV135 | DHS/MIS | Individual | Whether the respondent is a usual resident or just a visitor to the household |
+| V136 / MV136 | DHS/MIS | Household | Total number of household members (residents + visitors who slept there) |
 | MV104 | DHS/MIS (men) | Individual | Number of years the respondent has lived in the village, town, or city where he was interviewed. Visitors to the community are coded 96 |
 | WB15 | MICS (women) | Individual | MICS equivalent of V104 |
 | MWB15 | MICS (men) | Individual | MICS equivalent of V104 |
 | HV102 | DHS/MIS | Household | De jure resident status (usual resident) |
 | HV103 | DHS/MIS | Household | De facto resident status (slept there the previous night) |
-| V135 / MV135 | DHS/MIS | Individual | Whether the respondent is a usual resident or just a visitor to the household |
-| V136 / MV136 | DHS/MIS | Household | Total number of household members (residents + visitors who slept there) |
+
 
 ## Data availability summary
 
@@ -51,6 +52,7 @@ We use the following indicators
 
 library(tidyverse)
 library(haven)
+library(purrr)
 library(fixest)
 library(survey)
 library(did2s)
@@ -107,17 +109,20 @@ matched_all |> summarise(prop_status_yr_na = mean(is.na(STATUS_YR)))
 ```
 
 
-### Load migration's survey data
+## Load migration's survey data
 
-#### Définition du statut de résidence et de la migration 
+### Définition du statut de résidence et de la migration 
 
 ```{r}
-# Nettoyage de la durée de résidence (DHS/MIS: v104/mv104, MICS: wb15/mwb15)---
-# 95 = toujours vécu ici | 96 = visiteur | 99 = ne sait pas
+# Nettoyage de la durée de résidence -----------------------------------
+# DHS/MIS (v104/mv104, 1997/2008/2011/2013/2016/2021)
+# 95 = toujours vécu ici | 96 = visiteur | 97 = Inconsistent | 98 = Don't know | 99 = ne sait pas
+# MICS (wb15/mwb15, 2018)
+# 99 = Non reponse 
 
 clean_duration <- function(x) {
-  y <- as.numeric(x)
-  y <- ifelse(y == 99, NA_real_, y)
+  y <- as.numeric(zap_labels(x))
+  y <- ifelse(y %in% c(97, 98, 99), NA_real_, y)
   y
 }
 
@@ -162,251 +167,422 @@ derive_type_migration <- function(
     residence_precedente) {
   
   case_when(
-    migrant == 1 & residence_precedente == 1 ~
-      "urbain_vers_rural",
-    
-    migrant == 1 & residence_precedente == 2 ~
-      "rural_vers_rural",
-    
-    migrant == 0 ~
-      "non_migrant",
+    migrant == 1 & residence_precedente == "urbain"   ~ "urbain_vers_rural",
+    migrant == 1 & residence_precedente == "rural"    ~ "rural_vers_rural",
+    migrant == 1 & residence_precedente == "etranger" ~ "etranger_vers_rural",
+    migrant == 0 ~ "non_migrant",
     TRUE ~ NA_character_
   )
 }
 ```
 
 
-##### DHS/MIS files (1997, 2008, 2011, 2013, 2016, 2021)
+### Harmonization of the education variable (v106 vs WB6A/MWB6A)
+
+The variables related to education in the three data sources are not categorized in the same way. In the DHS/MIS Data, variable v106 uses only 4 categories (0 = No education, 1 = Primary, 2 = Secondary, 3 = Higher), whereas in the MICS data, variable WB6A for women and MWB6A for men use more categories (0 = Preschool, 1 = Primary, 2 = Seconday 1, 3 = Secondary 2, 4 = Higher, 8 = Don't know, 9 = No response). We will therefore harmonize these variables into 5 categories (None, Preschool, Primary, Secondary, Higher). 
+
+```{r}
+# Fonction 
+
+education_labels <- c("Aucune", "Prescolaire", "Primaire", "Secondaire", "Supérieur")
+
+recode_education_dhs <- function(v106) {
+  x <- as.numeric(zap_labels(v106))
+  case_when(
+    x == 0 ~ 0L,  # Aucune
+    x == 1 ~ 2L,  # Primaire
+    x == 2 ~ 3L,  # Secondaire
+    x == 3 ~ 4L,  # Superieur
+    TRUE   ~ NA_integer_
+  )
+}
+
+recode_education_mics <- function(wbx){
+  x <- as.numeric(zap_labels(wbx))
+  case_when(
+    x == 0        ~ 1L,          # prescolaire 
+    x == 1        ~ 2L,          # primaire
+    x %in% c(2,3) ~ 3L,          # secondaire 1 + 2 -> secondaire
+    x == 4        ~ 4L,          # superieur
+    x %in% c(8,9) ~ NA_integer_, # NSP / pas de reponse
+    TRUE          ~ NA_integer_
+  )
+}
+
+var_education <- function(code){
+  factor(code, levels = 0:4, labels = education_labels)
+}
+```
 
 
+### Harmonization of place of residence (v105/mv105 vs WB16A/MWB16A)
+
+The variables related to respondent's place of residence in the three data sources are not categorized in the same way. In the DHS/MIS Data, variable v105/mv105 uses these categories (0 = capital, large city, 1 = Small city, 2 = Town, 3 = Countryside, 4 = Abroad), whereas in the MICS data, variable WB16A for women and MWB16A for men use more categories ( 1 = Large city, 2 = Other city, 3 = rural area, 9 = No response). We will therefore harmonize these variables into 5 categories (None, Preschool, Primary, Secondary, Higher). 
+
+#### Women Data
+
+```{r}
+
+# DHS 
+
+lieu_precedent_dhs <- function(v105){
+  x <- as.numeric(zap_labels(v105))
+  case_when(
+       x %in% c(0, 1, 2) ~ "urbain",   # Capital/large city, Small city, Town
+    x == 3            ~ "rural",    # Countryside
+    x == 4            ~ "etranger", # Abroad
+    TRUE              ~ NA_character_
+  )
+}
+
+# MICS
+
+lieu_precedent_mics <- function(WB16A){
+    x <- as.numeric(zap_labels(WB16A))
+    case_when(
+      x %in% c(1, 2) ~ "urbain", # Grande ville, Autre ville
+      x == 3         ~ "rural",  # Milieu rural
+      x == 9         ~ NA_character_, # Non reponse
+      TRUE           ~ NA_character_
+    )
+}
+
+```
+
+
+### DHS/MIS files (1997, 2008, 2011, 2013, 2016, 2021)
+
+The sampling stratum variable is designated as "v022" for the year 1997, and "v023" for all other DHS/MIS waves (2008, 2011, 2013, 2016, 2021). We rename the "sample stratum" variable to v023.  
+
+#### Women
 
 ```{r}
 
 # Helper DHS/MIS, Femmes-----------------------------
-# v012/mv012: respondent's age
-# v106/mv106: Highest education level attended
-# v024/mv024: De facto region of residence 
-# v025/mv025: De facto type of place of residence
-# v001/mv001: cluster number
-# v002/mv002: household number 
-# v005/mv005: sample weight
-# v021/mv025: Primary sample unit
-# v023/mv023: Sample strate
-# v104/mv104: Number of years the respondent has lived
-# v105/mv105: Type of place of previous residence 
+# v001: cluster number
+# v002: household number 
+# v005: sample weight
+# v012: respondent's age
+# v021: Primary sample unit
+# v023: Sample strate
+# v024: De facto region of residence 
+# v025: De facto type of place of residence
+# v104: Number of years the respondent has lived
+# v105: Type of place of previous residence 
+# v106: Highest education level attended
 
-load_migration_ir <- function(path, year, source,
-                               extra_vars = c("v012", "v106", "v024"),
-                               filter_rural = TRUE) {
 
-  cols <- c("v001", "v002", "v005", "v021", "v023", "v024", "v025", "v104", "v105", extra_vars)
-
-  df <- read_dta(path, col_select = all_of(cols))
-
+load_migration_ir <- function(path, year, strate_var_source,
+                              extra_vars = c("v012", "v106"),
+                              filter_rural = TRUE) {
+  
+  cols <- c(
+    "v001", "v002", "v005", "v021", strate_var_source,
+    "v024", "v025", "v026", "v104", "v105", extra_vars
+  )
+  
+  df <- read_dta(
+    path,
+    col_select = all_of(unique(cols))
+  )
+  
+  if (strate_var_source != "v023") {
+    df <- df |> rename(v023 = !!sym(strate_var_source))
+  }
+  
   if (filter_rural) {
     df <- df |> filter(v025 == 2)
   }
-
+  
   df <- df |>
     mutate(
       DHSYEAR = as.integer(year),
-      source_enquete = source,
       sexe = "femme",
       duree_residence = clean_duration(v104),
+      
       residence_precedente = case_when(
-        v104 %in% c(95, 96) ~ NA_real_,
-        TRUE ~ as.numeric(v105)
+        v104 %in% c(95, 96) ~ NA_character_,
+        TRUE ~ lieu_precedent_dhs(v105)
       ),
-      annee_arrivee = ifelse(!is.na(duree_residence) & duree_residence < 95,
-                              DHSYEAR - duree_residence, NA_real_)  # annee_arrivee: année d'enquête moins durée de résidence pour situer l'arrivée dans le temps
-    )
-
-  df <- bind_cols(df, derive_migrant(df$duree_residence))
-
-  df <- df |>
-    mutate(type_migration = derive_type_migration(migrant, residence_precedente))
-
-  df |>
-    select(v001, v002, v005, v021, v023, DHSYEAR, source_enquete, sexe,
-           duree_residence, statut_residence, migrant, migrant_recent,
-           residence_precedente, type_migration, annee_arrivee,
-           v025, all_of(extra_vars))
-}
-
-ir_1997 <- load_migration_ir("data/raw/dhs/DHS_1997/MDIR31DT/MDIR31FL.DTA", 1997, "DHS-III")
-ir_2008 <- load_migration_ir("data/raw/dhs/DHS_2008/MDIR51DT/MDIR51FL.DTA", 2008, "DHS-V")
-ir_2011 <- load_migration_ir("data/raw/dhs/DHS_2011/MDIR61DT/MDIR61FL.DTA", 2011, "MIS")
-ir_2013 <- load_migration_ir("data/raw/dhs/DHS_2013/MDIR6ADT/MDIR6AFL.DTA", 2013, "MIS")
-ir_2016 <- load_migration_ir("data/raw/dhs/DHS_2016/MDIR71DT/MDIR71FL.DTA", 2016, "MIS")
-ir_2021 <- load_migration_ir("data/raw/dhs/DHS_2021/MDIR81DT/MDIR81FL.DTA", 2021, "DHS-VIII")
-
-```
-
-
-```{r}
-# Helper DHS/MIS, hommes ----------------------------------------------
-# v012/mv012: respondent's age
-# v106/mv106: Highest education level attended
-# v024/mv024: De facto region of residence 
-# v025/mv025: De facto type of place of residence
-# v001/mv001: cluster number
-# v002/mv002: household number 
-# v005/mv005: sample weight
-# v021/mv025: Primary sample unit
-# v023/mv023: Sample strate
-# v104/mv104: Number of years the respondent has lived
-# v105/mv105: Type of place of previous residence 
-
-load_migration_mr <- function(path, year, source, filtrer_rural = TRUE) {
-
-  if (!file.exists(path)) {
-    warning("Fichier MR introuvable pour ", year, " (", source, ") : ", path,
-            " -- pas de module hommes (questionnaire individuel) pour cette enquête. ",
-            "Le fichier PR, s'il existe, ne contient pas de variable équivalente ",
-            "a la duree de residence (hv104/hv105 = sexe/age, pas migration).")
-    return(NULL)
-  }
-
-  cols_voulues <- c("mv001", "mv002", "mv005", "mv021", "mv023",
-                     "mv104", "mv105", "mv025", "mv012", "mv106", "mv024")
-
-  noms_reels   <- names(read_dta(path, n_max = 0))
-  noms_lower   <- tolower(noms_reels)
-  idx          <- match(cols_voulues, noms_lower)
-  cols_reelles <- noms_reels[idx]
-
-  manquantes <- cols_voulues[is.na(idx)]
-  if (length(manquantes) > 0) {
-    warning("Variables manquantes dans le fichier MR ", year, " (", source, ") : ",
-            paste(manquantes, collapse = ", "))
-  }
-  cols_reelles <- cols_reelles[!is.na(cols_reelles)]
-
-  df <- read_dta(path, col_select = all_of(cols_reelles))
-  names(df) <- tolower(names(df))
-
-  essentielles <- c("mv001", "mv005", "mv104", "mv105", "mv025")
-  if (!all(essentielles %in% names(df))) {
-    warning("Variables essentielles absentes pour ", year, " (", source,
-            ") -- impossible de deriver la migration. Fichier ignore.")
-    return(NULL)
-  }
-
-  df <- df |>
-    rename(
-      v001 = mv001, v002 = mv002, v005 = mv005,
-      v021 = mv021, v023 = mv023,
-      v012 = mv012, v106 = mv106, v024 = mv024, v025 = mv025
-    )
-
-  if (filtrer_rural) {
-    df <- df |> filter(v025 == 2)
-  }
-
-  df <- df |>
-    mutate(
-      DHSYEAR = as.integer(year),
-      source_enquete = source,
-      sexe = "homme",
-      duree_residence = clean_duration(mv104),
-      residence_precedente = case_when(
-        mv104 %in% c(95, 96) ~ NA_real_,
-        TRUE ~ as.numeric(mv105)
-      ),
-      annee_arrivee = ifelse(!is.na(duree_residence) & duree_residence < 95,
-                              DHSYEAR - duree_residence, NA_real_)
-    )
-
-  df <- bind_cols(df, derive_migrant(df$duree_residence))
-
-  df <- df |>
-    mutate(type_migration = derive_type_migration(migrant, residence_precedente))
-
-  cols_finales <- c("v001", "v002", "v005", "v021", "v023", "DHSYEAR",
-                     "source_enquete", "sexe", "duree_residence", "statut_residence",
-                     "migrant", "migrant_recent", "residence_precedente",
-                     "type_migration", "annee_arrivee", "v025", "v012", "v106", "v024")
-  cols_presentes <- intersect(cols_finales, names(df))
-
-  df |> select(all_of(cols_presentes))
-}
-
-#Homme
-mr_1997 <- load_migration_mr("data/raw/dhs/DHS_1997/MDPR31DT/MDPR31FL.DTA", 1997, "DHS-III")
-mr_2008 <- load_migration_mr("data/raw/dhs/DHS_2008/MDMR51DT/MDMR51FL.DTA", 2008, "DHS-V")
-mr_2011 <- load_migration_mr("data/raw/dhs/DHS_2011/MDIR61DT/MDIR61FL.DTA", 2011, "MIS")
-mr_2013 <- load_migration_mr("data/raw/dhs/DHS_2013/MDMR6ADT/MDMR6AFL.DTA", 2013, "MIS")
-mr_2016 <- load_migration_mr("data/raw/dhs/DHS_2016/MDMR71DT/MDMR71FL.DTA", 2016, "MIS")
-mr_2021 <- load_migration_mr("data/raw/dhs/DHS_2021/MDMR81DT/MDMR81FL.DTA", 2021, "DHS-VIII")
-
-```
-
-
-##### MICS Data (2018)
-
-```{r}
-
-# Femme--------------------------------------------------
-
-# HH1: cluster number
-# HH2: Household number 
-# WB4: respondent's age 
-# WB6A: Highest education level attended (Préscolaire = 0, Primaire = 1, Secondaire 1 = 2, Secondaire 2 = 3, Supérieur = 4)
-# WB16A: lieu de vie (Grande ville = 1, Autre ville = 2, Milieu rural = 3, non reponse = 9)
-# mnweight: sample weight
-
-load_migration_mics_femme <- function(path, year = 2018, source = "MICS-6") {
-
-  df <- read_sav(
-    path,
-    col_select = c(HH1, HH2, wmweight, WB4, WB6A, WB15, WB16A)
-  )
-
-  df <- df |>
-    mutate(
-      DHSYEAR = as.integer(year),
-      source_enquete = source,
-      sexe = "femme",
-      duree_residence = clean_duration(WB15),
-      residence_precedente = case_when(
-        WB15 %in% c(95, 96) ~ NA_real_,
-        TRUE ~ as.numeric(WB16A)
-      ),
+      
+      region_precedente = NA_real_,
+      
+      taille_localite = as.numeric(zap_labels(v026)),
+      
       annee_arrivee = ifelse(
         !is.na(duree_residence) & duree_residence < 95,
         DHSYEAR - duree_residence,
         NA_real_
       )
     )
-
-  df <- bind_cols(df, derive_migrant(df$duree_residence))
-
+  
+  df <- bind_cols(
+    df,
+    derive_migrant(df$duree_residence)
+  )
+  
   df <- df |>
-    mutate(type_migration = derive_type_migration(migrant, residence_precedente))
+    mutate(
+      type_migration = derive_type_migration(
+        migrant,
+        residence_precedente
+      ),
+      education = var_education(
+        recode_education_dhs(v106)
+      )
+    )
+  
+  df |>
+    select(
+      v001, v002, v005, v021, v023,
+      DHSYEAR, sexe,
+      duree_residence,
+      statut_residence,
+      migrant,
+      migrant_recent,
+      residence_precedente,
+      region_precedente,
+      type_migration,
+      annee_arrivee,
+      education,
+      taille_localite,
+      v025, v024,
+      all_of(extra_vars)
+    )
+}
 
+ir_1997 <- load_migration_ir("data/raw/dhs/DHS_1997/MDIR31DT/MDIR31FL.DTA", 1997, "v023")
+ir_2008 <- load_migration_ir("data/raw/dhs/DHS_2008/MDIR51DT/MDIR51FL.DTA", 2008, "v023")
+ir_2011 <- load_migration_ir("data/raw/dhs/DHS_2011/MDIR61DT/MDIR61FL.DTA", 2011, "v023")
+ir_2013 <- load_migration_ir("data/raw/dhs/DHS_2013/MDIR6ADT/MDIR6AFL.DTA", 2013, "v023")
+ir_2016 <- load_migration_ir("data/raw/dhs/DHS_2016/MDIR71DT/MDIR71FL.DTA", 2016, "v023")
+ir_2021 <- load_migration_ir("data/raw/dhs/DHS_2021/MDIR81DT/MDIR81FL.DTA", 2021, "v023")
+
+```
+
+#### Men Data
+
+```{r}
+# Helper DHS/MIS, hommes ----------------------------------------------
+# mv012: respondent's age
+# mv106: Highest education level attended
+# mv024: De facto region of residence 
+# mv025: De facto type of place of residence
+# mv001: cluster number
+# mv002: household number 
+# mv005: sample weight
+# mv025: Primary sample unit
+# mv023: Sample strate
+# mv104: Number of years the respondent has lived
+# mv105: Type of place of previous residence 
+
+load_migration_mr <- function(path, year, filtrer_rural = TRUE) {
+  
+  cols <- c(
+    "mv001", "mv002", "mv005", "mv021", "mv023",
+    "mv104", "mv105", "mv025", "mv026",
+    "mv012", "mv106", "mv024"
+  )
+  
+  df <- read_dta(
+    path,
+    col_select = all_of(cols)
+  ) |>
+    rename(
+      v001 = mv001,
+      v002 = mv002,
+      v005 = mv005,
+      v021 = mv021,
+      v023 = mv023,
+      v012 = mv012,
+      v106 = mv106,
+      v024 = mv024,
+      v025 = mv025
+    )
+  
+  if (filtrer_rural) {
+    df <- df |> filter(v025 == 2)
+  }
+  
+  df <- df |>
+    mutate(
+      DHSYEAR = as.integer(year),
+      sexe = "homme",
+      
+      duree_residence = clean_duration(mv104),
+      
+      residence_precedente = case_when(
+        mv104 %in% c(95, 96) ~ NA_character_,
+        TRUE ~ lieu_precedent_dhs(mv105)
+      ),
+      
+      region_precedente = NA_real_,
+      
+      taille_localite = as.numeric(zap_labels(mv026)),
+      
+      annee_arrivee = ifelse(
+        !is.na(duree_residence) & duree_residence < 95,
+        DHSYEAR - duree_residence,
+        NA_real_
+      )
+    )
+  
+  df <- bind_cols(
+    df,
+    derive_migrant(df$duree_residence)
+  )
+  
+  df <- df |>
+    mutate(
+      type_migration = derive_type_migration(
+        migrant,
+        residence_precedente
+      ),
+      education = var_education(
+        recode_education_dhs(v106)
+      )
+    )
+  
+  df |>
+    select(
+      v001, v002, v005, v021, v023,
+      DHSYEAR, sexe,
+      duree_residence,
+      statut_residence,
+      migrant,
+      migrant_recent,
+      residence_precedente,
+      region_precedente,
+      type_migration,
+      annee_arrivee,
+      education,
+      taille_localite,
+      v025, v012, v106, v024
+    )
+}
+
+#Homme
+#mr_1997 <- load_migration_mr("data/raw/dhs/DHS_1997/MDPR31DT/MDPR31FL.DTA", 1997, "DHS-III")
+mr_2008 <- load_migration_mr("data/raw/dhs/DHS_2008/MDMR51DT/MDMR51FL.DTA", 2008)
+#mr_2011 <- load_migration_mr("data/raw/dhs/DHS_2011/MDIR61DT/MDIR61FL.DTA", 2011, "MIS")
+#mr_2013 <- load_migration_mr("data/raw/dhs/DHS_2013/MDMR6ADT/MDMR6AFL.DTA", 2013, "MIS")
+#mr_2016 <- load_migration_mr("data/raw/dhs/DHS_2016/MDMR71DT/MDMR71FL.DTA", 2016, "MIS")
+mr_2021 <- load_migration_mr("data/raw/dhs/DHS_2021/MDMR81DT/MDMR81FL.DTA", 2021)
+
+```
+
+
+### MICS Data (2018)
+
+#### Women data 
+
+```{r}
+
+# Femme--------------------------------------------------
+
+# v001/mv001: cluster number
+# v002/mv002: household number 
+# v005/mv005: sample weight
+# v012/mv012: respondent's age
+# v021/mv025: Primary sample unit
+# v023/mv023: Sample strate
+# v024/mv024: De facto region of residence 
+# v025/mv025: De facto type of place of residence
+# v104/mv104: Number of years the respondent has lived
+# v105/mv105: Type of place of previous residence 
+# v106/mv106: Highest education level attended
+# mnweight: sample weight
+
+load_migration_mics_femme <- function(path, year = 2018, filter_rural = TRUE) {
+  
+  df <- read_sav(
+    path,
+    col_select = c(
+      HH1, HH2, stratum, wmweight,
+      WB4, WB6A, WB15, WB16A, WB17,
+      welevel, HH6, HH7
+    )
+  )
+  
+  if (filter_rural) {
+    df <- df |> filter(HH6 == 2)
+  }
+  
+  df <- df |>
+    mutate(
+      DHSYEAR = as.integer(year),
+      sexe = "femme",
+      
+      duree_residence = clean_duration(WB15),
+      
+      residence_precedente = case_when(
+        WB15 %in% c(95, 96) ~ NA_character_,
+        TRUE ~ lieu_precedent_mics(WB16A)
+      ),
+      
+      region_precedente = as.numeric(zap_labels(WB17)),
+      
+      taille_localite = NA_real_,
+      
+      annee_arrivee = ifelse(
+        !is.na(duree_residence) & duree_residence < 95,
+        DHSYEAR - duree_residence,
+        NA_real_
+      )
+    )
+  
+  df <- bind_cols(
+    df,
+    derive_migrant(df$duree_residence)
+  )
+  
+  df <- df |>
+    mutate(
+      type_migration = derive_type_migration(
+        migrant,
+        residence_precedente
+      ),
+      
+      education = var_education(
+        recode_education_mics(WB6A)
+      )
+    )
+  
   df |>
     transmute(
       v001 = HH1,
-      v002 = HH2,
+      v002 = as.numeric(HH2),
       v005 = wmweight,
       v021 = HH1,
-      v023 = NA_real_,
+      v023 = as.numeric(zap_labels(stratum)),
       DHSYEAR,
-      source_enquete,
       sexe,
       duree_residence,
       statut_residence,
       migrant,
       migrant_recent,
       residence_precedente,
+      region_precedente,
       type_migration,
       annee_arrivee,
+      education,
+      taille_localite,
+      v025 = HH6,
       v012 = WB4,
-      v106 = WB6A
+      v106 = welevel,
+      v024 = HH7
     )
 }
 
+
 wm_2018 <- load_migration_mics_femme("data/raw/mics/2018/SPSS datasets/wm.sav")
+
+```
+
+
+#### Men data
+
+```{r}
 
 # Homme-----------------------------------------------------------
 
@@ -421,163 +597,84 @@ wm_2018 <- load_migration_mics_femme("data/raw/mics/2018/SPSS datasets/wm.sav")
 # mnweight: sample weight
 
 
-load_migration_mics_homme <- function(
-    path,
-    year = 2018,
-    source = "MICS-6",
-    filtrer_rural = TRUE
-) {
-
-  # -------------------------------------------------------
-  # 1. Lecture des données
-  # -------------------------------------------------------
-
+load_migration_mics_homme <- function(path, year = 2018,
+                                      filter_rural = TRUE) {
+  
   df <- read_sav(
     path,
     col_select = c(
-      HH1,
-      HH2,
-      mnweight,
-      MWB4,
-      MWB6,
-      mwelevel,
-      MWB15,
-      MWB16A,
-      MWB17,
-      HH6
+      HH1, HH2, HH6, HH7, stratum, mnweight,
+      MWB4, MWB15, MWB16A, MWB17, MWB6A, mwelevel
     )
   )
-
-  # -------------------------------------------------------
-  # 2. Garder uniquement les hommes vivant en milieu rural
-  # -------------------------------------------------------
-
-  if (filtrer_rural) {
-    df <- df |>
-      filter(HH6 == 2)
+  
+  if (filter_rural) {
+    df <- df |> filter(HH6 == 2)
   }
-
-  # -------------------------------------------------------
-  # 3. Création des variables de base
-  # -------------------------------------------------------
-
+  
   df <- df |>
     mutate(
       DHSYEAR = as.integer(year),
-      source_enquete = source,
       sexe = "homme",
-
-      # Âge du répondant
-      v012 = as.numeric(MWB4),
-
-      # Niveau d'éducation
-      v106 = as.numeric(mwelevel),
-
-      # Durée de résidence dans le lieu actuel
+      
       duree_residence = clean_duration(MWB15),
-
-      # Type de lieu de résidence précédent
-      type_milieu_precedent = case_when(
-        MWB16A == 1 ~ "ville",
-        MWB16A == 2 ~ "bourgade",
-        MWB16A == 3 ~ "rural",
-        MWB16A %in% c(5, 8) ~ NA_character_,
-        TRUE ~ NA_character_
+      
+      residence_precedente = case_when(
+        MWB15 %in% c(95, 96) ~ NA_character_,
+        TRUE ~ lieu_precedent_mics(MWB16A)
       ),
-
-      # Région de résidence précédente
-      region_precedente = case_when(
-        MWB17 == 96 ~ "hors_pays",
-        MWB17 == 8 ~ NA_character_,
-        TRUE ~ as.character(MWB17)
-      ),
-
-      # Année approximative d'arrivée
+      
+      region_precedente = as.numeric(zap_labels(MWB17)),
+      
+      taille_localite = NA_real_,
+      
       annee_arrivee = ifelse(
-        !is.na(duree_residence) &
-          duree_residence < 95,
+        !is.na(duree_residence) & duree_residence < 95,
         DHSYEAR - duree_residence,
         NA_real_
       )
     )
-
-  # -------------------------------------------------------
-  # 4. Indicateurs de migration
-  # -------------------------------------------------------
-
+  
   df <- bind_cols(
     df,
     derive_migrant(df$duree_residence)
   )
-
-  # -------------------------------------------------------
-  # 5. Type de migration
-  # -------------------------------------------------------
-
+  
   df <- df |>
     mutate(
-      type_migration = case_when(
-
-        migrant == 0 ~ "non_migrant",
-
-        migrant == 1 &
-          type_milieu_precedent == "ville" ~
-          "ville_vers_rural",
-
-        migrant == 1 &
-          type_milieu_precedent == "bourgade" ~
-          "bourgade_vers_rural",
-
-        migrant == 1 &
-          type_milieu_precedent == "rural" ~
-          "rural_vers_rural",
-
-        TRUE ~ NA_character_
+      type_migration = derive_type_migration(
+        migrant,
+        residence_precedente
+      ),
+      
+      education = var_education(
+        recode_education_mics(MWB6A)
       )
     )
-
-  # -------------------------------------------------------
-  # 6. Harmonisation avec DHS/MIS
-  # -------------------------------------------------------
-
+  
   df |>
     transmute(
-      # Identifiants
       v001 = HH1,
-      v002 = HH2,
-
-      # Poids d'échantillonnage
+      v002 = as.numeric(HH2),
       v005 = mnweight,
-
-      # Identifiant du cluster
       v021 = HH1,
-
-      # Variable non disponible / non utilisée
-      v023 = NA_real_,
-
-      # Informations sur l'enquête
+      v023 = as.numeric(zap_labels(stratum)),
       DHSYEAR,
-      source_enquete,
       sexe,
-
-      # Migration
       duree_residence,
       statut_residence,
       migrant,
       migrant_recent,
-      annee_arrivee,
-
-      # Origine migratoire
-      type_milieu_precedent,
+      residence_precedente,
       region_precedente,
       type_migration,
-
-      # Caractéristiques individuelles
-      v012,
-      v106,
-
-      # Milieu de résidence
-      v025 = HH6
+      annee_arrivee,
+      education,
+      taille_localite,
+      v025 = HH6,
+      v012 = MWB4,
+      v106 = mwelevel,
+      v024 = HH7
     )
 }
 
@@ -588,6 +685,28 @@ mn_2018 <- load_migration_mics_homme("data/raw/mics/2018/SPSS datasets/mn.sav")
 
 
 ##### Combiner les données en une seule base 
+
+```{r}
+# DHS------------------------------
+dhs_only <- bind_rows(ir_1997, ir_2008, ir_2021, mr_2008, mr_2021)
+ 
+# Verification : 1997 ne doit contenir que des femmes
+dhs_only |> count(DHSYEAR, sexe)
+
+# MIS------------------------------
+mis_only <- bind_rows(ir_2011, ir_2013, ir_2016)
+
+# MICS-----------------------------
+mics_only <- bind_rows(wm_2018, mn_2018)
+
+# Combiner tous les données 
+migration_raw <- bind_rows(dhs_only, mis_only, mics_only)
+ 
+migration_raw |> count(DHSYEAR, sexe)
+migration_raw |> count(DHSYEAR, v025)
+
+
+```
 
 
 
