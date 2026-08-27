@@ -1058,10 +1058,221 @@ ggplot(event_study_df, aes(k, estimate)) +
 ```
 
 
+## Migration by PA type - 2×2 DiD
+
+We test whether effects differ between strict PAs (IUCN I–IV) and multi-use PAs (IUCN V–VI), following the same approach as the main analysis (H3). Given the sex-composition imbalance documented ealier (1997, 2011, 2013, 2016 are women-only waves), we use the women-only panel (`dat_migrant_femmes`)/ (`dat_migrant2_femmes`) as the base sample here, consistent with the main specification adopted for the pooled migration DiD. 
+
+```{r}
+#| label: migrant-iucn-2x2
+
+dat_migrant3 <- dat_migrant_femmes |>
+  mutate(
+    treat_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
+    treat_multi  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))
+  )
+
+# Placebo strict
+pre_strict_migrant <- dat_migrant3 |>
+  filter(DHSYEAR %in% c(1997, 2008), treat_strict == 1 | GROUP == "Control") |>
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+m_pre_strict_migrant <- feols(
+  migrant ~ treat_strict + post + treat_strict:post + education +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = pre_strict_migrant, weights = ~w_all, cluster = ~cluster_uid
+)
+
+# Placebo multi
+pre_multi_migrant <- dat_migrant3 |>
+  filter(DHSYEAR %in% c(1997, 2008), treat_multi == 1 | GROUP == "Control") |>
+  mutate(post = as.integer(DHSYEAR == 2008))
+
+m_pre_multi_migrant <- feols(
+  migrant ~ treat_multi + post + treat_multi:post + education +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = pre_multi_migrant, weights = ~w_all, cluster = ~cluster_uid
+)
+
+# Treatment strict
+main_strict_migrant <- dat_migrant3 |>
+  filter(DHSYEAR %in% c(2008, 2021), treat_strict == 1 | GROUP == "Control") |>
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_strict_migrant <- feols(
+  migrant ~ treat_strict + post + treat_strict:post + education +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = main_strict_migrant, weights = ~w_all, cluster = ~cluster_uid
+)
+
+# Treatment multi
+main_multi_migrant <- dat_migrant3 |>
+  filter(DHSYEAR %in% c(2008, 2021), treat_multi == 1 | GROUP == "Control") |>
+  mutate(post = as.integer(DHSYEAR == 2021))
+
+m_main_multi_migrant <- feols(
+  migrant ~ treat_multi + post + treat_multi:post + education +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = main_multi_migrant, weights = ~w_all, cluster = ~cluster_uid
+)
+
+etable(m_pre_strict_migrant, m_main_strict_migrant, m_pre_multi_migrant, m_main_multi_migrant,
+       headers = c("Strict plac.", "Strict treat.", "Multi plac.", "Multi treat."))
+```
+
+
+```{r}
+#| label: fig-migrant-iucn-2x2
+#| fig-cap: "2×2 DiD for migration by PA type"
+
+migrant_iucn_df <- bind_rows(
+  did_row(m_pre_strict_migrant, 2008, "treat_strict:post") |> mutate(type = "Strict"),
+  did_row(m_main_strict_migrant, 2021, "treat_strict:post") |> mutate(type = "Strict"),
+  did_row(m_pre_multi_migrant, 2008, "treat_multi:post") |> mutate(type = "Multi-use"),
+  did_row(m_main_multi_migrant, 2021, "treat_multi:post") |> mutate(type = "Multi-use")
+) |>
+  mutate(
+    period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
+                    levels = c("1997–2008", "2008–2021")),
+    lo = estimate - 1.96 * se,
+    hi = estimate + 1.96 * se
+  )
+
+ggplot(migrant_iucn_df, aes(x = period, y = estimate, colour = type)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 3, position = pd) +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.2, position = pd) +
+  labs(x = NULL, y = "DiD effect on Pr(migration)",
+       colour = "PA type",
+       title = "Migration: 2×2 DiD by PA type") +
+  theme_minimal(base_size = 13)
+```
+
+
+### Migration by PA type — staggered static
+
+```{r}
+#| label: migrant-iucn-staggered
+
+d_strict_migrant <- dat_migrant2_femmes |>
+  filter(GROUP == "Control" | (GROUP == "Treatment" & is_strict(IUCN_CAT))) |>
+  mutate(treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR))
+
+did2s_migrant_strict <- did2s(
+  data         = d_strict_migrant,
+  yname        = "migrant",
+  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(treat_on, ref = FALSE),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+d_multi_migrant <- dat_migrant2_femmes |>
+  filter(GROUP == "Control" | (GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
+  mutate(treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR))
+
+
+did2s_migrant_multi <- did2s(
+  data         = d_multi_migrant,
+  yname        = "migrant",
+  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(treat_on, ref = FALSE),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+modelsummary(list(
+  "Migration Strict" = did2s_migrant_strict,
+  "Migration Multi"  = did2s_migrant_multi,
+  "Migration Both"   = did2s_migrant_static_femmes
+))
+
+```
+
+
+### Migration by PA type — event study
+
+```{r}
+#| label: migrant-iucn-event-study
+
+d_strict_migrant_es <- dat_migrant2_femmes |>
+  filter(GROUP == "Control" | (GROUP == "Treatment" & is_strict(IUCN_CAT))) |>
+  mutate(treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR))
+
+did2s_migrant_es_strict <- did2s(
+  data         = d_strict_migrant_es,
+  yname        = "migrant",
+  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+d_multi_migrant_es <- dat_migrant2_femmes |>
+  filter(GROUP == "Control" | (GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
+  mutate(treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR))
+
+did2s_migrant_es_multi <- did2s(
+  data         = d_multi_migrant_es,
+  yname        = "migrant",
+  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+```
 
 
 
+```{r}
+# covariate on the full sample, which is not the right comparator here).
+did2s_migrant_es_femmes <- did2s(
+  data         = dat_migrant2_femmes,
+  yname        = "migrant",
+  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+es_migrant_iucn <- bind_rows(
+  tidy_es(did2s_migrant_es_strict, "Strict"),
+  tidy_es(did2s_migrant_es_multi,  "Multi-use"),
+  tidy_es(did2s_migrant_es_femmes, "Both")
+)
+
+ggplot(es_migrant_iucn, aes(k, estimate, colour = type)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(position = pd2, size = 2) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2, position = pd2) +
+  labs(x = "Years to treatment (2-year bins)",
+       y = "Effect on Pr(migration)",
+       colour = "PA type",
+       title = "Event study: migration by PA type") +
+  scale_x_discrete(labels = bin_label) +
+  theme_minimal(base_size = 13)
+```
 
 
+## Summary of results
+
+```{r}
+summary_table <- bind_rows(
+  extract_did2s(did2s_haz_static, "HAZ — All PAs"),
+  extract_did2s(did2s_haz_strict, "HAZ — Strict"),
+  extract_did2s(did2s_haz_multi, "HAZ — Multi-use"),
+  extract_did2s(did2s_mort_static, "Mortality — All PAs"),
+  extract_did2s(did2s_mort_strict, "Mortality — Strict"),
+  extract_did2s(did2s_mort_multi, "Mortality — Multi-use"),
+  extract_did2s(did2s_migrant_static_femmes, "Migration — All PAs (women)"),
+  extract_did2s(did2s_migrant_strict, "Migration — Strict (women)"),
+  extract_did2s(did2s_migrant_multi, "Migration — Multi-use (women)")
+)
+```
 
 
