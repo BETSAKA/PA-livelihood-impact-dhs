@@ -684,7 +684,7 @@ mn_2018 <- load_migration_mics_homme("data/raw/mics/2018/SPSS datasets/mn.sav")
 ```
 
 
-##### Combiner les données en une seule base 
+### Combine the data into a single dataset 
 
 ```{r}
 # DHS------------------------------
@@ -700,33 +700,362 @@ mis_only <- bind_rows(ir_2011, ir_2013, ir_2016)
 mics_only <- bind_rows(wm_2018, mn_2018)
 
 # Combiner tous les données 
-migration_raw <- bind_rows(dhs_only, mis_only, mics_only)
+migration_pooled <- bind_rows(dhs_only, mis_only, mics_only)
  
-migration_raw |> count(DHSYEAR, sexe)
-migration_raw |> count(DHSYEAR, v025)
+migration_pooled |> count(DHSYEAR, sexe)
+migration_pooled |> count(DHSYEAR, v025)
 
 
 ```
 
+### Join with matched data
+
+```{r}
+migration_pooled <- migration_pooled |>
+  left_join(matched_all, by = c("DHSYEAR" = "DHSYEAR", "v001" = "hv001", "v002" = "hv002"))
+ 
+# voir si on a une prop_non_matche anormalement elevee ou non (proche de 1).
+migration_pooled <- migration_pooled |>
+  mutate(poids_brut = ifelse(DHSYEAR == 2018, v005, v005 / 1000000)) |>
+  group_by(DHSYEAR, sexe) |>
+  mutate(poids_norm = poids_brut / mean(poids_brut, na.rm = TRUE)) |>
+  ungroup() |>
+  mutate(
+    w_all       = poids_norm * weights,
+    cluster_uid = paste(DHSYEAR, v001, sep = "_"),
+    treat       = as.integer(GROUP == "Treatment"),
+    sexe_chef_menage = as_factor(hv219),
+    age_chef_menage  = hv220
+  )
+
+```
 
 
-### Descriptive statistics 
+## Descriptive statistics 
+
+```{r}
+#| label: setup-svy-design 
+# Primary sampling unit =v021, Sample strate = v023, weights = w_all
+
+migration_svy_data <- migration_pooled |>
+  filter(!is.na(w_all), !is.na(v021), !is.na(v023), !is.na(GROUP))
+
+
+design_migration <- svydesign(
+  ids     = ~v021,
+  strata  = ~v023,
+  weights = ~w_all,
+  data    = migration_svy_data,
+  nest    = TRUE
+)
+
+```
+
+
+```{r}
+#| label: descriptive
+
+# Statistiques pondérées (design-based) par année et par groupe
+migrant_desc_svy <- svyby(
+  ~migrant + migrant_recent,
+  ~DHSYEAR + GROUP,
+  design_migration,
+  svymean,
+  na.rm = TRUE,
+  vartype = "ci"
+) |>
+  as_tibble() |>
+  arrange(DHSYEAR, GROUP)
+
+migrant_desc_svy
+
+# Effectifs bruts 
+migration_svy_data |> 
+  summarise(n = n(), .by = c(DHSYEAR, GROUP))
+
+
+# Type de migration par année et groupe (pondéré)
+type_migration_desc_svy <- svytable(
+  ~DHSYEAR + GROUP + type_migration,
+  design_migration
+) |>
+  as_tibble() |>
+  mutate(pct = n / sum(n) * 100, .by = c(DHSYEAR, GROUP))
+
+type_migration_desc_svy
+```
+
+
+
+```{r}
+#| label: fig-migration-rate
+#| fig-cap: "Share of migrants by survey year and treatment group (weighted)"
+
+ggplot(migrant_desc_svy, aes(x = factor(DHSYEAR), y = migrant * 100, fill = GROUP)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  geom_errorbar(
+    aes(ymin = ci_l.migrant * 100, ymax = ci_u.migrant * 100),
+    position = position_dodge(width = 0.7), width = 0.2
+  ) +
+  labs(x = "Survey year", y = "Share of migrants (%)", fill = "Group",
+       title = "Migration prevalence by year and treatment status (weighted)") +
+  theme_minimal(base_size = 13)
+```
 
 
 
 
+```{r}
+#| label: tbl-balance
+#| tbl-cap: "Équilibre des covariables entre groupe traité et groupe contrôle"
+
+datasummary_balance(
+  ~GROUP,
+  data = migration_svy_data |>
+    select(GROUP, age_chef_menage, education, sexe_chef_menage,
+           duree_residence, taille_localite),
+  output = "gt"
+)
+```
 
 
 
 
+```{r}
+#| label: fig-migration-recent
+#| fig-cap: "Share of recent migrants by survey year and treatment group (weighted)"
+
+ggplot(migrant_desc_svy, aes(x = factor(DHSYEAR), y = migrant_recent * 100, fill = GROUP)) +
+  geom_col(position = position_dodge(width = 0.7), width = 0.6) +
+  geom_errorbar(
+    aes(ymin = ci_l.migrant_recent * 100, ymax = ci_u.migrant_recent * 100),
+    position = position_dodge(width = 0.7), width = 0.2
+  ) +
+  labs(x = "Survey year",
+       y = "Share of recent migrants (%)",
+       fill = "Group",
+       title = "Recent migration prevalence by year and treatment status (weighted)") +
+  theme_minimal(base_size = 13)
+```
 
 
 
+```{r}
+#| label: fig-migration-type
+#| fig-cap: "Distribution of migration types by survey year and treatment group (weighted)"
+
+ggplot(type_migration_desc_svy, aes(x = factor(DHSYEAR), y = pct, fill = type_migration)) +
+  geom_col(position = "stack", width = 0.6) +
+  facet_wrap(~GROUP) +
+  labs(x = "Survey year",
+       y = "Share (%)",
+       fill = "Type de migration",
+       title = "Composition des types de migration par année et groupe (pondéré)") +
+  theme_minimal(base_size = 13)
+```
 
 
 
+## Migration analysis
+
+### 2×2 DiD
+
+We follow the same 2×2 DiD design as the main analysis: a placebo test (1997–2008) and the treatment estimation (2008–2021). The model is:
+
+$$Migrant_{ict} = \alpha + \beta_1 \text{Treat}_c + \beta_2 \text{Post}_t + \delta (\text{Treat}_c \times \text{Post}_t) + \mathbf{X}_{ct}'\gamma + \varepsilon_{ict}$$
+
+where $i$ indexes individuals (women or men depending on the specification), $c$ clusters (PSU), $t$ survey rounds. $Migrant_{ict}$ is a binary variable (moved to current place of residence vs. has always lived there). Controls $\mathbf{X}$ include SPEI values, household head sex and age, education level and the individual's gender. Standard errors are clustered at the cluster-year level and all estimates are weighted by the combined survey weights $w_{ict}$. 
 
 
+```{r}
+#| label: migrant-2x2
+
+# Placebo 1997–2008
+pre_migrant <- migration_pooled |>
+  filter(DHSYEAR %in% c(1997, 2008)) |>
+  mutate(post = as.integer(DHSYEAR == 2008),
+         treat_post = treat * post)
+
+# Women analysis 
+m_migrant_pre_A <- feols(
+  migrant ~ treat + post + treat_post + education +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = pre_migrant |> filter(sexe == "femme"),
+  weights = ~w_all, cluster = ~cluster_uid
+)
+
+# Sex as a covariate (full sample)
+m_migrant_pre_B <- feols(
+  migrant ~ treat + post + treat_post + sexe + education +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = pre_migrant, weights = ~w_all, cluster = ~cluster_uid
+)
+
+# Treatment 2008–2021
+main_migrant <- migration_pooled |>
+  filter(DHSYEAR %in% c(2008, 2021)) |>
+  mutate(post = as.integer(DHSYEAR == 2021),
+         treat_post = treat * post)
+
+m_migrant_main <- feols(
+  migrant ~ treat + post + treat_post + sexe + education +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = main_migrant, weights = ~w_all, cluster = ~cluster_uid
+)
+
+etable(m_migrant_pre_A, m_migrant_pre_B, m_migrant_main,
+       headers = c("Placebo 1997-2008 (women only)",
+                   "Placebo 1997-2008 (sex as covariate)",
+                   "Treatment 2008-2021"))
+```
+
+
+```{r}
+#| label: fig-migrant-2x2
+#| fig-cap: "2×2 DiD estimates for migrant"
+
+did_row <- function(model, year_post, term = "treat_post") {
+  tidy(model) |>
+    filter(term == !!term) |>
+    transmute(year = year_post, estimate, se = std.error)
+}
+
+migrant_2x2_df <- bind_rows(
+  did_row(m_migrant_pre_B, 2008),
+  did_row(m_migrant_main, 2021)
+) |>
+  mutate(
+    period = factor(
+      ifelse(year == 2008, "1997–2008 (placebo)", "2008–2021 (treatment)"),
+      levels = c("1997–2008 (placebo)", "2008–2021 (treatment)")
+    ),
+    lo = estimate - 1.96 * se,
+    hi = estimate + 1.96 * se
+  )
+
+ggplot(migrant_2x2_df, aes(x = period, y = estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.2) +
+  geom_point(size = 3) +
+  labs(x = NULL, y = "DiD effect on the probability of migration",
+       title = "Impact of protected areas on migration: 2×2 DiD") +
+  theme_minimal(base_size = 13)
+```
+
+
+### Staggered DiD — static estimation
+
+We use the Gardner (2022) two-stage DiD estimator (`did2s`) to leverage all available years with migration data (1997, 2008, 2018, 2021). This estimator is robust to heterogeneous treatment effects and staggered adoption.
+
+```{r}
+#| label: haz-staggered-static
+
+# Prepare relative year bins (same scheme as main analysis)
+dat_migration <- migration_pooled |>
+  mutate(
+    rel_year = DHSYEAR - STATUS_YR,
+    rel_year_clipped = case_when(
+      is.infinite(rel_year) ~ NA_real_,
+      TRUE ~ pmax(pmin(rel_year, 10), -10)
+    ),
+    rel_year_2yr = case_when(
+      is.na(rel_year_clipped) ~ NA_integer_,
+      rel_year_clipped <= -9  ~ -5L,
+      rel_year_clipped <= -7  ~ -4L,
+      rel_year_clipped <= -5  ~ -3L,
+      rel_year_clipped <= -3  ~ -2L,
+      rel_year_clipped <= -1  ~ -1L,
+      rel_year_clipped <=  1  ~  0L,
+      rel_year_clipped <=  3  ~  1L,
+      rel_year_clipped <=  5  ~  2L,
+      rel_year_clipped <=  7  ~  3L,
+      rel_year_clipped <=  9  ~  4L,
+      TRUE                    ~  5L
+    ),
+    rel_year_2yr2 = case_when(
+      is.na(rel_year_2yr) ~ "never",
+      TRUE ~ as.character(rel_year_2yr)
+    ),
+    rel_year_2yr2 = factor(
+      rel_year_2yr2,
+      levels = c("-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "never")
+    ),
+    treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR)
+  )
+
+did2s_static_migration <- did2s(
+  data         = dat_migration ,
+  yname        = "migrant",
+  first_stage  = ~ sexe + education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(treat_on, ref = FALSE),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+modelsummary(list("did2s migration (static, pooled men + women)" = did2s_static_migration))
+```
+
+
+### Staggered DiD — event study
+
+```{r}
+#| label: migration-event-study
+
+did2s_migration_es <- did2s(
+  data         = dat_migration,
+  yname        = "migrant",
+  first_stage  = ~ sexe + education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+etable(did2s_migration_es, headers = "did2s migration event study (2-year bins)")
+
+```
+
+
+```{r}
+bin_label <- function(k) {
+  dplyr::case_when(
+    is.na(k) ~ NA_character_,
+    k == "-5" ~ "<= -9",
+    k == "-4" ~ "-8 to -7",
+    k == "-3" ~ "-6 to -5",
+    k == "-2" ~ "-4 to -3",
+    k == "-1" ~ "-2 to -1",
+    k == "0"  ~ "0 to 1",
+    k == "1"  ~ "2 to 3",
+    k == "2"  ~ "4 to 5",
+    k == "3"  ~ "6 to 7",
+    k == "4"  ~ "8 to 9",
+    k == "5"  ~ ">= 10",
+    TRUE      ~ as.character(k)
+  )
+}
+ 
+event_study_df <- tidy(did2s_migration_es, conf.int = TRUE) |>
+  filter(grepl("^rel_year_2yr2::", term)) |>
+  mutate(
+    k = sub("^rel_year_2yr2::", "", term),
+    k = factor(k, levels = c("-5", "-4", "-3", "-2", "0", "1", "2", "3", "4", "5"))
+  ) |>
+  arrange(k)
+ 
+ggplot(event_study_df, aes(k, estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 2.5) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+  labs(x = "Years relative to protected area creation (2-year bins)",
+       y = "Effect on the probability of migration",
+       title = "Event study: migration around the creation of protected areas") +
+  scale_x_discrete(labels = bin_label) +
+  theme_minimal(base_size = 13)
+
+
+```
 
 
 
