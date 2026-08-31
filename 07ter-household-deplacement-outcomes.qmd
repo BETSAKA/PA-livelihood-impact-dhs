@@ -1145,7 +1145,7 @@ pre_migrant <- dat_migrant |>
 migrant_pre <- feols(
   migrant ~ treat + post + treat_post + sexe + education +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = placebo_migrant,
+  data = pre_migrant,
   weights = ~w_all,
   cluster = ~cluster_uid
 )
@@ -1179,6 +1179,8 @@ etable(
 )
 ```
 
+The results show that there is no statistically significant effect of the treatment on the probability of migration. The next figure presents the results of the 2x2 DID estimation comparing the treatment groups (households living within 10 km of protected area) and the control groups (household located more than 10 Km away) before (1997-2008) and after (2008-2021) the creation of the protected areas. The placebo test for the pre-intervention period (1997-2008) yields a small ans statistically insignificant coefficient (-0.0265), indicating that no differential trend was detected prior to the intervention. This confirms the parallel trends hypothesis. In contrast, for the intervention period (2008-2021), the estimated effect is positive but statistically insignificant (+5.23). Beyond the treatment effect, several factors are strongly associated with migration: women living in male-headed households are 14% less likely to migrate, while higher education increases the probability of migration by nearly 50%. Water stress in the previous year significantly increases the probability of migration. Although our models explain only 5 to 11% of the variation in female migration, these results highlight the importance of structural determinants (education, household composition), and environmental factors (climatic conditions) in migration decisions, independent of the intervention under study. 
+
 
 
 
@@ -1203,7 +1205,7 @@ did_row <- function(model, year_post, term = "treat_post") {
 # Combine placebo and main effects
 migrant_2x2_df <- bind_rows(
   did_row(migrant_pre, 2008),      # Placebo: 1997-2008
-  did_row(migrant_post, 2021)      # Treatment: 2008-2021
+  did_row(migrant_main, 2021)      # Treatment: 2008-2021
 ) |>
   mutate(
     period = factor(
@@ -1240,10 +1242,17 @@ ggplot(migrant_2x2_df, aes(x = period, y = estimate, color = period)) +
 ```{r}
 # Women analysis 
 
+pre_migrant <- dat_migrant |>
+  filter(DHSYEAR %in% c(1997, 2008)) |>
+  mutate(
+    post = as.integer(DHSYEAR == 2008),
+    treat_post = treat * post
+  )
+
  migrant_pre_wm <- feols(
   migrant ~ treat + post + treat_post + education +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = placebo_migrant |> filter(sexe == "femme"),
+  data = pre_migrant |> filter(sexe == "femme"),
   weights = ~w_all,
   cluster = ~cluster_uid
 )
@@ -1268,16 +1277,13 @@ etable(
 )
 ```
 
-
+Our DID analysis specifically for women reveals that there is no statistically significant effect of treatment on the probability of migration. The placebo test for the period 1997-2008 yields a small, non significant coefficient (60.0285) and an estimated positive effect for the period 2008-2021 (+0.0759). The results also show that higher education remains the major determinant, increasing the probability of migration by 75% in the placebo group and 50% in the treatment group, while water stress in the previous year and household structure (male-headed households) significantly reduce the probability of migration. However, when the analysis is restricted to women, the statistical power is also reduced. 
 
 
 ```{r}
 #| label: fig-migrant-2x2 women
 #| fig-cap: "2×2 DiD estimates for migration outcomes (women only)"
 
-
-#| label: fig-migrant-2x2-women
-#| fig-cap: "2×2 DiD estimates for migration outcomes (Women only)"
 
 # Extract DID coefficients and confidence intervals (Women)
 
@@ -1341,40 +1347,28 @@ We use the Gardner (2022) two-stage DiD estimator (`did2s`) to leverage all avai
 #| label: migrant-staggered-static
 
 # Prepare relative year bins (same scheme as main analysis)
-dat_migrant_st <- dat_migrant |>
+dat_migrant_did2s <- dat_migrant |>
   mutate(
     rel_year = DHSYEAR - STATUS_YR,
-    rel_year_clipped = case_when(
-      is.infinite(rel_year) ~ NA_real_,
-      TRUE ~ pmax(pmin(rel_year, 10), -10)
+    rel_year_bin = case_when(
+      is.infinite(rel_year)        ~ "never",
+      is.na(rel_year)               ~ "never",
+      rel_year <= -10                ~ "pre_lointain",
+      rel_year >= -9 & rel_year <= -1 ~ "pre_proche",
+      rel_year >=  0 & rel_year <=  9 ~ "post_proche",
+      rel_year >= 10                ~ "post_lointain",
+      TRUE                           ~ NA_character_
     ),
-    rel_year_2yr = case_when(
-      is.na(rel_year_clipped) ~ NA_integer_,
-      rel_year_clipped <= -9  ~ -5L,
-      rel_year_clipped <= -7  ~ -4L,
-      rel_year_clipped <= -5  ~ -3L,
-      rel_year_clipped <= -3  ~ -2L,
-      rel_year_clipped <= -1  ~ -1L,
-      rel_year_clipped <=  1  ~  0L,
-      rel_year_clipped <=  3  ~  1L,
-      rel_year_clipped <=  5  ~  2L,
-      rel_year_clipped <=  7  ~  3L,
-      rel_year_clipped <=  9  ~  4L,
-      TRUE                    ~  5L
-    ),
-    rel_year_2yr2 = case_when(
-      is.na(rel_year_2yr) ~ "never",
-      TRUE ~ as.character(rel_year_2yr)
-    ),
-    rel_year_2yr2 = factor(
-      rel_year_2yr2,
-      levels = c("-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "never")
+    rel_year_bin = factor(
+      rel_year_bin,
+      levels = c("pre_lointain", "pre_proche", "post_proche", "post_lointain", "never")
     ),
     treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR)
   )
 
+
 did2s_static_migration <- did2s(
-  data         = dat_migration ,
+  data         = dat_migrant_did2s,
   yname        = "migrant",
   first_stage  = ~ sexe + education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
@@ -1382,8 +1376,9 @@ did2s_static_migration <- did2s(
   cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
+ 
+modelsummary(list("did2s migration (static, pooled men + women, 4 vagues)" = did2s_static_migration))
 
-modelsummary(list("did2s migration (static, pooled men + women)" = did2s_static_migration))
 ```
 
 
@@ -1392,17 +1387,20 @@ modelsummary(list("did2s migration (static, pooled men + women)" = did2s_static_
 ```{r}
 #| label: migration-event-study
 
+#| label: migration-event-study
+
 did2s_migration_es <- did2s(
-  data         = dat_migrant_st,
+  data         = dat_migrant_did2s,
   yname        = "migrant",
   first_stage  = ~ sexe + education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
+  second_stage = ~ i(rel_year_bin, ref = c("pre_proche", "never")),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
-etable(did2s_migration_es, headers = "did2s migration event study (2-year bins)")
+etable(did2s_migration_es, headers = "did2s migration event study")
+
 
 ```
 
@@ -1410,39 +1408,33 @@ etable(did2s_migration_es, headers = "did2s migration event study (2-year bins)"
 ```{r}
 bin_label <- function(k) {
   dplyr::case_when(
-    is.na(k) ~ NA_character_,
-    k == "-5" ~ "<= -9",
-    k == "-4" ~ "-8 to -7",
-    k == "-3" ~ "-6 to -5",
-    k == "-2" ~ "-4 to -3",
-    k == "-1" ~ "-2 to -1",
-    k == "0"  ~ "0 to 1",
-    k == "1"  ~ "2 to 3",
-    k == "2"  ~ "4 to 5",
-    k == "3"  ~ "6 to 7",
-    k == "4"  ~ "8 to 9",
-    k == "5"  ~ ">= 10",
-    TRUE      ~ as.character(k)
+    is.na(k)             ~ NA_character_,
+    k == "pre_lointain"  ~ "Pre (>1 vague d'ecart)",
+    k == "post_proche"   ~ "Post (meme intervalle)",
+    k == "post_lointain" ~ "Post (>1 vague d'ecart)",
+    TRUE                 ~ as.character(k)
   )
 }
  
 event_study_df <- tidy(did2s_migration_es, conf.int = TRUE) |>
-  filter(grepl("^rel_year_2yr2::", term)) |>
+  filter(grepl("^rel_year_bin::", term)) |>
   mutate(
-    k = sub("^rel_year_2yr2::", "", term),
-    k = factor(k, levels = c("-5", "-4", "-3", "-2", "0", "1", "2", "3", "4", "5"))
+    k = sub("^rel_year_bin::", "", term),
+    k = factor(k, levels = c("pre_lointain", "post_proche", "post_lointain"))
   ) |>
   arrange(k)
+
  
 ggplot(event_study_df, aes(k, estimate)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_point(size = 2.5) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
-  labs(x = "Years relative to protected area creation (2-year bins)",
+  labs(x = "Position par rapport a la creation de l'AP (panel a 4 vagues)",
        y = "Effect on the probability of migration",
        title = "Event study: migration around the creation of protected areas") +
   scale_x_discrete(labels = bin_label) +
   theme_minimal(base_size = 13)
+
 
 
 ```
@@ -1450,12 +1442,13 @@ ggplot(event_study_df, aes(k, estimate)) +
 
 ## Migration by PA type - 2×2 DiD
 
-We test whether effects differ between strict PAs (IUCN I–IV) and multi-use PAs (IUCN V–VI), following the same approach as the main analysis (H3). Given the sex-composition imbalance documented ealier (1997, 2011, 2013, 2016 are women-only waves), we use the women-only panel (`dat_migrant_femmes`)/ (`dat_migrant2_femmes`) as the base sample here, consistent with the main specification adopted for the pooled migration DiD. 
+We test whether effects differ between strict PAs (IUCN I–IV) and multi-use PAs (IUCN V–VI), following the same approach as the main analysis (H3). Given the sex-composition imbalance documented ealier (1997, 2008, 2021 are women-only waves), we use the women-only panel (`dat_migrant_femmes`)/ (`dat_migrant2_femmes`) as the base sample here, consistent with the main specification adopted for the pooled migration DiD. 
 
 ```{r}
 #| label: migrant-iucn-2x2
 
-dat_migrant3 <- migrant_2x2_women_df |>
+
+dat_migrant3 <- dat_migrant_femmes |>
   mutate(
     treat_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
     treat_multi  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))
