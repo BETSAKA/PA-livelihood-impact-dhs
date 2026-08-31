@@ -784,8 +784,6 @@ migration_data <- migration_data |>
     w_all            = poids_norm * weights,
     cluster_uid      = paste(DHSYEAR, v001, sep = "_"),
     treat            = as.integer(GROUP == "Treatment"),
-    sexe_chef_menage = as_factor(hv219),
-    age_chef_menage  = hv220
   )
 
 
@@ -833,8 +831,7 @@ dat_migrant %>%
   ungroup()
 ```
 
-The data show a significant increase in the number of respondents over time. The ratio of women to men aged 15 to 49 is relatively stable (~ 65 to 67% women, 33 to 35% men)
-, except in 1997, when only women were surveyed. 
+The data show a significant increase in the number of respondents over time. The ratio of women to men aged 15 to 49 is relatively stable (~ 26 to 49% women, 16 to 20% men), except in 1997, when only women were surveyed. 
 
 
 ```{r}
@@ -855,13 +852,7 @@ dat_migrant %>%
       na.rm = TRUE
     ) * 100
   )
-```
 
-
-
-
-
-```{r}
 # Nombre de migration récente parmi les migrants 
 dat_migrant %>%
   filter(migrant == 1) %>%
@@ -876,36 +867,32 @@ dat_migrant %>%
   )
 ```
 
-
-
-
-
-
-
-
-
-
+Between 2008 et 2021, approximately 50% of migrants associated with protected areas were recent migrants (49.9% in 2008, 49.6% in 2021), with a slight decline in 2018 (43.1%). This stability in the rate of recent migration indicates a steady and continuous migratory flow in areas near protected areas, where the migrant population is renewed at a constant rate: each year, approximately half of the migrants are recent arrivals. It should be noted that this analysis focuses solely on identified migrants (2,669 individuals, or 26.2% of the matched sample), with the remaining observations corresponding to non-migrants. These results reflect active and predictable mobility in the study areas. 
 
 
 ```{r}
 # Vérification du statut_residence par année 
-dhs_only %>%
+dat_migrant %>%
   count(statut_residence) %>%
   mutate(
     pct = 100 * n / sum(n)
   )
 
-dhs_only %>%
+dat_migrant %>%
   count(DHSYEAR, statut_residence) %>%
   group_by(DHSYEAR) %>%
   mutate(
     pct = 100 * n / sum(n)
   ) %>%
   ungroup()
+```
 
+The majority of migrants linked to protected areas are permanent residents ("always here"): 76.2% in 2008, 75.8% in 2021, and 63.4% in 2018. Conversely, only 23.8% to 36.6% of migrants have a known and measurable length of residence, meaning they migrated at a specific time. This predominance of permanent residents (about 3 out of 4) indicates that most of the migrants surveyed do not remember or do not have precise information about their year of arrival. The exception in 2018, when 36.6% had a known duration of residence, may reflect a different sample or improved data collection. These results suggest that only a minority of migrants can provide precise information on their duration of residence, limiting the temporal analysis of migration. 
+ 
 
+```{r}
 # Vérification de la durée de résidence par année 
-dhs_only %>%
+dat_migrant %>%
   filter(statut_residence == "duree_connue") %>%
   group_by(DHSYEAR) %>%
   summarise(
@@ -917,9 +904,14 @@ dhs_only %>%
     maximum = max(duree_residence, na.rm = TRUE)
   ) %>%
   ungroup()
+```
 
+Migrants matched to protected areas have lived at their current place of residence for an average of 8 to 9 years (8.04 years in 2008, 9.14 years in 2018, 8.69 years in 2021), with a median of around 6 - 7 years. This stability in the average duration indicates that the migrant population does not change drastically between survey years. The high standard deviations (7-8 years) reveal significant variability: some migrants have just arrived (minimum = 0 years), while others have been settled for a long time (maximum = 40-51 years).
+
+
+```{r}
 # Vérification de l'année d'arrivée sur le lieu de résidence par année d'enquête 
-dhs_only %>%
+dat_migrant %>%
   filter(!is.na(annee_arrivee)) %>%
   group_by(DHSYEAR) %>%
   summarise(
@@ -929,16 +921,21 @@ dhs_only %>%
     maximum = max(annee_arrivee)
   ) %>%
   ungroup()
+```
+
+Among migrants with a known length of residence, the median year of arrival naturally increases over time: 2002 in 2008, 2011 in 2018, and 2015 in 2021. This simply reflects the fact that migrants interviewed in more recent surveys arrived later. On average, migrants surveyed in 2008 arrived around 2000, those surveyed in 2018 around 2009, and those surveyed in 2021 around 2012. The majority of arrivals occured between 200 and 2015, with a few very long-term migrants dating back to 1968-1983. These results confirm thata reas near protected areas experienced significant migration beginning in the 2000s, with a continuous influx through 2021. 
 
 
+
+```{r}
 # Type de migration par année 
-dhs_only %>%
+dat_migrant %>%
   count(type_migration) %>%
   mutate(
     pct = 100 * n / sum(n)
   )
 
-dhs_only %>%
+dat_migrant %>%
   count(DHSYEAR, type_migration) %>%
   group_by(DHSYEAR) %>%
   mutate(
@@ -946,8 +943,17 @@ dhs_only %>%
   ) %>%
   ungroup()
 
+dat_migrant %>% count(type_migration)
+
+```
+
+Migration in areas near protected areas is dominated by rural-to-rural migration: 17.5% in 2008, 31.6% in 2018, and 16.9% in 2021. Urban-to-rural migration is a minority but still present: 5.89% in 2008, 5.08% in 2018, and 7.25% in 2021. These results indicate that the majority of migrants come from other rural areas (17-32%), while a small proportion come from urban areas (5-7%). The year 2018 stands out with a higher share of rural-to-rural migration (31.6%) and a lower proportion of non-migrants (63.4%), suggesting a different survey profile. Overall, these data show that protected areas primarily attract migrants from other rural areas, confirming intra-regional rural mobility rather than an urban exodus. 
+
+
+
+```{r}
 # Analyse descriptive de migrants et non-migrants 
-dhs_only %>%
+dat_migrant %>%
   group_by(migrant) %>%
   summarise(
     n = n(),
@@ -960,18 +966,13 @@ dhs_only %>%
     )
   )
 
-
-migration_data %>% count(education)
-migration_data %>% count(type_migration)
+# Ajouter un test t
+t.test(v012 ~ migrant, data = dat_migrant)
+t.test(as.numeric(education) ~ migrant, data = dat_migrant)
 
 ```
 
-
-
-
-
-
-
+Migrants and non-migrants share very similar characteristics. The average age of migrants (30.1 years) is slightly higher than that of non-migrants (29.0 years), with medians of 29 and 27 years, respectively. The educational level of migrants (2.88) is also slightly higher than that of non-migrants (2.58), suggesting that migrants, on average, possess slightly higher educational capital. However, these differences remain modest, indicating that migration to areas near protected areas does not select a very distinct population: migrants and non-migrants share comparable demographic and educational profiles. 
 
 
 
@@ -979,7 +980,7 @@ migration_data %>% count(type_migration)
 #| label: setup-svy-design 
 # Primary sampling unit =v021, Sample strate = v023, weights = w_all
 
-migration_svy_data <- migration_pooled |>
+dat_migrant_svy <- dat_migrant |>
   filter(!is.na(w_all), !is.na(v021), !is.na(v023), !is.na(GROUP))
 
 
@@ -987,7 +988,7 @@ design_migration <- svydesign(
   ids     = ~v021,
   strata  = ~v023,
   weights = ~w_all,
-  data    = migration_svy_data,
+  data    = dat_migrant_svy,
   nest    = TRUE
 )
 
@@ -997,7 +998,7 @@ design_migration <- svydesign(
 ```{r}
 #| label: descriptive
 
-# Statistiques pondérées (design-based) par année et par groupe
+# Statistiques pondérées (design-based) par année et par groupe des migrants récents
 migrant_desc_svy <- svyby(
   ~migrant + migrant_recent,
   ~DHSYEAR + GROUP,
@@ -1012,24 +1013,29 @@ migrant_desc_svy <- svyby(
 migrant_desc_svy
 
 # Effectifs bruts 
-migration_svy_data |> 
+dat_migrant_svy |> 
   summarise(n = n(), .by = c(DHSYEAR, GROUP))
+```
+
+Recent migration rates are similar between the Control and Treatment groups: approximately 50% in 2008 (52.8% for Control vs 48.6% for Treatment), 40% in 2018 (40.4% for Control and 40.1% for Treatment), and 50% in 2021 (52.3% for Control vs 49.2% for Treatment). This similarity in rates between the groups suggests no visible difference in the impact of protected areas on recent migration, at least at this stage of the analysis. 
 
 
+```{r}
 # Type de migration par année et groupe (pondéré)
-type_migration_desc_svy <- svytable(
+type_dat_migrant_svy <- svytable(
   ~DHSYEAR + GROUP + type_migration,
   design_migration
 ) |>
   as_tibble() |>
   mutate(pct = n / sum(n) * 100, .by = c(DHSYEAR, GROUP))
 
-type_migration_desc_svy
+type_dat_migrant_svy
 
-migration_data |> group_by(DHSYEAR, sexe) |>
+dat_migrant |> group_by(DHSYEAR, sexe) |>
   summarise(pct_na_type_migration = mean(is.na(type_migration)), n = n())
 ```
 
+Rural-to-rural migration predominates, but with a notable variation in 2018: it accounts for 53.3% in the Control Group versus 72.9% in the treatment group. In 2008 and 2021, the differences are minimal (17-18% for rural-to-rural, 5-8% for urban-to-rural). The year 2018 stands out with a very different profile: 53.29% of non-migrants in the Control group versus 72.9% in the Treatment group, suggesting a different survey profile. 
 
 
 ```{r}
@@ -1049,21 +1055,34 @@ ggplot(migrant_desc_svy, aes(x = factor(DHSYEAR), y = migrant * 100, fill = GROU
 
 
 
-
 ```{r}
 #| label: tbl-balance
-#| tbl-cap: "Équilibre des covariables entre groupe traité et groupe contrôle"
+#| tbl-cap: "Balance of covariates between treatment and control groups"
 
-datasummary_balance(
-  ~GROUP,
-  data = migration_svy_data |>
-    select(GROUP, age_chef_menage, education, sexe_chef_menage,
-           duree_residence, taille_localite),
-  output = "gt"
-)
+dat_migrant_svy |>
+  mutate(
+    education = fct_recode(education,
+      "No education" = "Aucune",
+      "Pre-primary" = "Prescolaire",
+      "Primary" = "primary",
+      "Secondary" = "secondary",
+      "Higher" = "higher"
+    )
+  ) |>
+  rename(
+    "Age" = v012,
+    "Education" = education,
+    "Sex" = hv219,
+    "Household head age" = hv220,
+    "Duration of residence" = duree_residence,
+    "Locality size" = taille_localite
+  ) |>
+  select(GROUP, "Age", "Education", "Sex", 
+         "Household head age", "Duration of residence", "Locality size") |>
+  datasummary_balance(~GROUP, data = _, output = "gt")
 ```
 
-
+The following balance table compares the sociodemographic characteristics between the treatment and control groups. In the control group, respondents are, on average, women aged 29, with a household head aged 40. Approximately 50.4% have a primary school education. The average length of residence in the area is 73 years. In the treatment group, respondents are, on average, mean aged 29, with a household head also aged 40. The educational distribution is similar to that of the control group. As for the population's length of residence, it averages 71.1%. 
 
 
 ```{r}
@@ -1089,7 +1108,7 @@ ggplot(migrant_desc_svy, aes(x = factor(DHSYEAR), y = migrant_recent * 100, fill
 #| label: fig-migration-type
 #| fig-cap: "Distribution of migration types by survey year and treatment group (weighted)"
 
-ggplot(type_migration_desc_svy, aes(x = factor(DHSYEAR), y = pct, fill = type_migration)) +
+ggplot(type_dat_migrant_svy, aes(x = factor(DHSYEAR), y = pct, fill = type_migration)) +
   geom_col(position = "stack", width = 0.6) +
   facet_wrap(~GROUP) +
   labs(x = "Survey year",
