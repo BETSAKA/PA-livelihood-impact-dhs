@@ -1134,77 +1134,203 @@ where $i$ indexes individuals (women or men depending on the specification), $c$
 ```{r}
 #| label: migrant-2x2
 
-# Placebo 1997–2008
-pre_migrant <- migration_pooled |>
+# Placebo test: 1997–2008 (no treatment expected)
+pre_migrant <- dat_migrant |>
   filter(DHSYEAR %in% c(1997, 2008)) |>
-  mutate(post = as.integer(DHSYEAR == 2008),
-         treat_post = treat * post)
+  mutate(
+    post = as.integer(DHSYEAR == 2008),
+    treat_post = treat * post
+  )
 
-# Women analysis 
-m_migrant_pre_A <- feols(
-  migrant ~ treat + post + treat_post + education +
-    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = pre_migrant |> filter(sexe == "femme"),
-  weights = ~w_all, cluster = ~cluster_uid
-)
-
-# Sex as a covariate (full sample)
-m_migrant_pre_B <- feols(
+migrant_pre <- feols(
   migrant ~ treat + post + treat_post + sexe + education +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = pre_migrant, weights = ~w_all, cluster = ~cluster_uid
+  data = placebo_migrant,
+  weights = ~w_all,
+  cluster = ~cluster_uid
 )
 
-# Treatment 2008–2021
-main_migrant <- migration_pooled |>
+
+# Main analysis: 2008–2021 (treatment period)
+main_migrant <- dat_migrant |>
   filter(DHSYEAR %in% c(2008, 2021)) |>
-  mutate(post = as.integer(DHSYEAR == 2021),
-         treat_post = treat * post)
+  mutate(
+    post = as.integer(DHSYEAR == 2021),
+    treat_post = treat * post
+  )
 
-m_migrant_main <- feols(
+migrant_main <- feols(
   migrant ~ treat + post + treat_post + sexe + education +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = main_migrant, weights = ~w_all, cluster = ~cluster_uid
+  data = main_migrant,
+  weights = ~w_all,
+  cluster = ~cluster_uid
 )
 
-etable(m_migrant_pre_A, m_migrant_pre_B, m_migrant_main,
-       headers = c("Placebo 1997-2008 (women only)",
-                   "Placebo 1997-2008 (sex as covariate)",
-                   "Treatment 2008-2021"))
+
+etable(
+  migrant_pre,
+  migrant_main,
+  headers = c(
+    "Placebo 1997-2008\n(Full sample)",
+    "Treatment 2008-2021\n(Full sample)"
+  ),
+  title = "DID Estimates: Migration Effects (Both sexes)"
+)
 ```
+
+
 
 
 ```{r}
 #| label: fig-migrant-2x2
-#| fig-cap: "2×2 DiD estimates for migrant"
+#| fig-cap: "2×2 DiD estimates for migration outcomes"
+
+# Extract DID coefficients and confidence intervals
 
 did_row <- function(model, year_post, term = "treat_post") {
   tidy(model) |>
     filter(term == !!term) |>
-    transmute(year = year_post, estimate, se = std.error)
+    transmute(
+      year = year_post,
+      estimate,
+      se = std.error,
+      ci_lower = estimate - 1.96 * std.error,
+      ci_upper = estimate + 1.96 * std.error
+    )
 }
 
+# Combine placebo and main effects
 migrant_2x2_df <- bind_rows(
-  did_row(m_migrant_pre_B, 2008),
-  did_row(m_migrant_main, 2021)
+  did_row(migrant_pre, 2008),      # Placebo: 1997-2008
+  did_row(migrant_post, 2021)      # Treatment: 2008-2021
 ) |>
   mutate(
     period = factor(
-      ifelse(year == 2008, "1997–2008 (placebo)", "2008–2021 (treatment)"),
-      levels = c("1997–2008 (placebo)", "2008–2021 (treatment)")
-    ),
-    lo = estimate - 1.96 * se,
-    hi = estimate + 1.96 * se
+      c("Placebo (1997–2008)", "Treatment (2008–2021)"),
+      levels = c("Placebo (1997–2008)", "Treatment (2008–2021)")
+    )
   )
 
-ggplot(migrant_2x2_df, aes(x = period, y = estimate)) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.2) +
-  geom_point(size = 3) +
-  labs(x = NULL, y = "DiD effect on the probability of migration",
-       title = "Impact of protected areas on migration: 2×2 DiD") +
-  theme_minimal(base_size = 13)
+# Visualization
+
+ggplot(migrant_2x2_df, aes(x = period, y = estimate, color = period)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", size = 0.8) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.15, size = 1) +
+  geom_point(size = 4) +
+  scale_color_manual(
+    values = c("Placebo (1997–2008)" = "#E69F00", "Treatment (2008–2021)" = "#56B4E9"),
+    guide = "none"
+  ) +
+  labs(
+    x = NULL,
+    y = "Difference-in-Differences Effect",
+    title = "Impact on Migration: Placebo and Treatment Estimates",
+    subtitle = "Effect sizes with 95% confidence intervals"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11, color = "gray30"),
+    axis.text.x = element_text(size = 12)
+  )
 ```
+
+
+```{r}
+# Women analysis 
+
+ migrant_pre_wm <- feols(
+  migrant ~ treat + post + treat_post + education +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = placebo_migrant |> filter(sexe == "femme"),
+  weights = ~w_all,
+  cluster = ~cluster_uid
+)
+
+# Main treatment effect: Women only
+main_migrant_wm <- feols(
+  migrant ~ treat + post + treat_post + education +
+    spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
+  data = main_migrant |> filter(sexe == "femme"),
+  weights = ~w_all,
+  cluster = ~cluster_uid
+)
+
+etable(
+  migrant_pre_wm,
+  main_migrant_wm,
+  headers = c(
+    "Placebo 1997-2008\n(Women only)",
+    "Treatment 2008-2021\n(Women only)"
+  ),
+  title = "DID Estimates: Migration Effects (Women only)"
+)
+```
+
+
+
+
+```{r}
+#| label: fig-migrant-2x2 women
+#| fig-cap: "2×2 DiD estimates for migration outcomes (women only)"
+
+
+#| label: fig-migrant-2x2-women
+#| fig-cap: "2×2 DiD estimates for migration outcomes (Women only)"
+
+# Extract DID coefficients and confidence intervals (Women)
+
+did_row <- function(model, year_post, term = "treat_post") {
+  tidy(model) |>
+    filter(term == !!term) |>
+    transmute(
+      year = year_post,
+      estimate,
+      se = std.error,
+      ci_lower = estimate - 1.96 * std.error,
+      ci_upper = estimate + 1.96 * std.error
+    )
+}
+
+# Combine placebo and main effects (Women only)
+migrant_2x2_women_df <- bind_rows(
+  did_row(migrant_pre_wm, 2008),    # Placebo: 1997-2008 (Women)
+  did_row(main_migrant_wm, 2021)    # Treatment: 2008-2021 (Women)
+) |>
+  mutate(
+    period = factor(
+      c("Placebo (1997–2008)", "Treatment (2008–2021)"),
+      levels = c("Placebo (1997–2008)", "Treatment (2008–2021)")
+    )
+  )
+
+
+# Visualization
+
+ggplot(migrant_2x2_women_df, aes(x = period, y = estimate, color = period)) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", size = 0.8) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), width = 0.15, size = 1) +
+  geom_point(size = 4) +
+  scale_color_manual(
+    values = c("Placebo (1997–2008)" = "#E69F00", "Treatment (2008–2021)" = "#56B4E9"),
+    guide = "none"
+  ) +
+  labs(
+    x = NULL,
+    y = "Difference-in-Differences Effect",
+    title = "Impact on Migration: Placebo and Treatment Estimates (Women)",
+    subtitle = "Effect sizes with 95% confidence intervals"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11, color = "gray30"),
+    axis.text.x = element_text(size = 12)
+  )
+
+```
+
 
 
 ### Staggered DiD — static estimation
@@ -1212,10 +1338,10 @@ ggplot(migrant_2x2_df, aes(x = period, y = estimate)) +
 We use the Gardner (2022) two-stage DiD estimator (`did2s`) to leverage all available years with migration data (1997, 2008, 2018, 2021). This estimator is robust to heterogeneous treatment effects and staggered adoption.
 
 ```{r}
-#| label: haz-staggered-static
+#| label: migrant-staggered-static
 
 # Prepare relative year bins (same scheme as main analysis)
-dat_migration <- migration_pooled |>
+dat_migrant_st <- dat_migrant |>
   mutate(
     rel_year = DHSYEAR - STATUS_YR,
     rel_year_clipped = case_when(
@@ -1267,7 +1393,7 @@ modelsummary(list("did2s migration (static, pooled men + women)" = did2s_static_
 #| label: migration-event-study
 
 did2s_migration_es <- did2s(
-  data         = dat_migration,
+  data         = dat_migrant_st,
   yname        = "migrant",
   first_stage  = ~ sexe + education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
@@ -1329,7 +1455,7 @@ We test whether effects differ between strict PAs (IUCN I–IV) and multi-use PA
 ```{r}
 #| label: migrant-iucn-2x2
 
-dat_migrant3 <- dat_migrant_femmes |>
+dat_migrant3 <- migrant_2x2_women_df |>
   mutate(
     treat_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
     treat_multi  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))
