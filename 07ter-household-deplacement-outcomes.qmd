@@ -25,7 +25,9 @@ Among the three available data sources (DHS, MIS, MICS), the indicators that may
 | HV102 | DHS/MIS | Household | De jure resident status (usual resident) |
 | HV103 | DHS/MIS | Household | De facto resident status (slept there the previous night) |
 
-Migration is not direcly observed in the DHS, MIS, MICS data. Instead, it is derived from respondents' reported duration of continuous residence in their current place of residence (V104/MV104 in DHS/MIS and WB15/MWB15 in MICS). Based on this information, we construct an indicator for migration (`migrant`) and an indicator for recent migration (`migrant_recent`), defined as having arrived in the current place of residence within the previous five years. 
+Migration is not direcly observed in the DHS, MIS, and MICS data. Instead, it is derived from respondents' reported duration of continuous residence in their current place of residence (V104/MV104 in DHS and WB15/MWB15 in MICS). Unlike the DHS and MICS, the 2011, 2013, and 2016 MIS surveys do not include the migration/length of residence module. Although the corresponding variable (v104) is present in the files, it was not filled in (the column contains only "NA" entries). These three waves are therefore excluded from the migration analysis, which is based on a panel limited to 4 waves (1997, 2008, 2018, 2021), compared to 7 waves that do not depend on this variable. 
+
+Based on this information, we construct an indicator for migration (`migrant`) and an indicator for recent migration (`migrant_recent`), defined as having arrived in the current place of residence within the previous five years. 
 
 This measure captures whether an individual has migrated to their current place of residence rather than an annual migration flow. Consequently, the DID estimates interpreted as changes in the probability of having migrated to the current place of residence, rather than changes in an annual migration rate. 
 
@@ -38,9 +40,9 @@ We use the following indicators
 |------|----------|------|-------|-------|------|
 | 1997 | DHS-III  | ✓    | ✗     | ✗     | ✗    |
 | 2008 | DHS-V    | ✓    | ✓     | ✗     | ✗    |
-| 2011 | MIS      | ✓    | ✗     | ✗     | ✗    |
-| 2013 | MIS      | ✓    | ✗     | ✗     | ✗    |
-| 2016 | MIS      | ✓    | ✗     | ✗     | ✗    |
+| 2011 | MIS      | ✗    | ✗     | ✗     | ✗    |
+| 2013 | MIS      | ✗    | ✗     | ✗     | ✗    |
+| 2016 | MIS      | ✗    | ✗     | ✗     | ✗    |
 | 2018 | MICS-6   | ✗    | ✗     | ✓     | ✓    |
 | 2021 | DHS-VIII | ✓    | ✓     | ✗     | ✗    |
 
@@ -258,15 +260,15 @@ lieu_precedent_mics <- function(WB16A){
 ```
 
 
-### DHS/MIS files (1997, 2008, 2011, 2013, 2016, 2021)
+### DHS files (1997, 2008, 2021)
 
-The sampling stratum variable is designated as "v022" for the year 1997, and "v023" for all other DHS/MIS waves (2008, 2011, 2013, 2016, 2021). We rename the "sample stratum" variable to v023.  
+The sampling stratum variable is designated as "v022" for the year 1997, and "v023" for all other DHS/MIS waves (2008,2021). We rename the "sample stratum" variable to v023.  
 
 #### Women Data
 
 ```{r}
 
-# Helper DHS/MIS, Femmes-----------------------------
+# Helper DHS, Femmes-----------------------------
 # v001: cluster number
 # v002: household number 
 # v005: sample weight
@@ -361,9 +363,9 @@ load_migration_ir <- function(path, year, strate_var_source,
 
 ir_1997 <- load_migration_ir("data/raw/dhs/DHS_1997/MDIR31DT/MDIR31FL.DTA", 1997, "v023")
 ir_2008 <- load_migration_ir("data/raw/dhs/DHS_2008/MDIR51DT/MDIR51FL.DTA", 2008, "v023")
-ir_2011 <- load_migration_ir("data/raw/dhs/DHS_2011/MDIR61DT/MDIR61FL.DTA", 2011, "v023")
-ir_2013 <- load_migration_ir("data/raw/dhs/DHS_2013/MDIR6ADT/MDIR6AFL.DTA", 2013, "v023")
-ir_2016 <- load_migration_ir("data/raw/dhs/DHS_2016/MDIR71DT/MDIR71FL.DTA", 2016, "v023")
+#ir_2011 <- load_migration_ir("data/raw/dhs/DHS_2011/MDIR61DT/MDIR61FL.DTA", 2011, "v023")
+#ir_2013 <- load_migration_ir("data/raw/dhs/DHS_2013/MDIR6ADT/MDIR6AFL.DTA", 2013, "v023")
+#ir_2016 <- load_migration_ir("data/raw/dhs/DHS_2016/MDIR71DT/MDIR71FL.DTA", 2016, "v023")
 ir_2021 <- load_migration_ir("data/raw/dhs/DHS_2021/MDIR81DT/MDIR81FL.DTA", 2021, "v023")
 
 ```
@@ -372,7 +374,7 @@ ir_2021 <- load_migration_ir("data/raw/dhs/DHS_2021/MDIR81DT/MDIR81FL.DTA", 2021
 #### Men Data
 
 ```{r}
-# Helper DHS/MIS, hommes ----------------------------------------------
+# Helper DHS, hommes ----------------------------------------------
 # mv012: respondent's age
 # mv106: Highest education level attended
 # mv024: De facto region of residence 
@@ -711,11 +713,11 @@ dhs_femmes <- dhs_only %>%
   filter(sexe == "femme")
 
 # MIS--------------------------------------------------------------
-mis_only <- bind_rows(
-  haven::zap_labels(ir_2011),
-  haven::zap_labels(ir_2013),
-  haven::zap_labels(ir_2016)
-)
+#mis_only <- bind_rows(
+#  haven::zap_labels(ir_2011),
+#  haven::zap_labels(ir_2013),
+#  haven::zap_labels(ir_2016)
+#)
 
 # MICS--------------------------------------------------------------
 mics_only <- bind_rows(wm_2018,mn_2018)
@@ -723,59 +725,105 @@ mics_only <- bind_rows(wm_2018,mn_2018)
 # Combiner tous les données 
 migration_data <- bind_rows(
   haven::zap_labels(dhs_only),
-  haven::zap_labels(mis_only),
   haven::zap_labels(mics_only)
 )
  
 migration_data|> count(DHSYEAR, sexe)
 migration_data |> count(DHSYEAR, v025)
 
-
 ```
 
-Across the three mixed data sources, the proportion of men has remained remar
-
-
+In total, for the analysis of migration, we included 57,568 individuals (men and women aged 15 to 49) from four survey waves. 
 
 
 ### Join with matched data
 
 ```{r}
 migration_data <- migration_data |>
-  left_join(matched_all, by = c("DHSYEAR" = "DHSYEAR", "v001" = "hv001", "v002" = "hv002"))
+  mutate(
+    DHSYEAR = as.integer(DHSYEAR),
+    v001    = as.numeric(v001),
+    v002    = as.numeric(v002)
+  )
  
-# voir si on a une prop_non_matche anormalement elevee ou non (proche de 1).
+matched_all <- matched_all |>
+  mutate(
+    DHSYEAR = as.integer(DHSYEAR),
+    hv001   = as.numeric(hv001),
+    hv002   = as.numeric(hv002)
+  )
+
+migration_data <- migration_data |>
+  left_join(matched_all, by = c("DHSYEAR" = "DHSYEAR", "v001" = "hv001", "v002" = "hv002"))
+
+stopifnot(all(c("GROUP", "STATUS_YR", "IUCN_CAT", "hv219", "hv220") %in% names(migration_data)))
+
+# Contrôle de taux de correspondance 
+diagnostic_matching <- migration_data |>
+  group_by(DHSYEAR) |>
+  summarise(
+    clusters_totaux    = n_distinct(v001),
+    n_individus        = n(),
+    prop_non_matche    = mean(is.na(GROUP)),
+    .groups = "drop"
+  ) |>
+  left_join(
+    matched_all |> group_by(DHSYEAR) |> summarise(clusters_apparies = n_distinct(hv001), .groups = "drop"),
+    by = "DHSYEAR"
+  ) |>
+  mutate(ratio_clusters_apparies = clusters_apparies / clusters_totaux)
+ 
+print(diagnostic_matching)
+
 migration_data <- migration_data |>
   mutate(poids_brut = ifelse(DHSYEAR == 2018, v005, v005 / 1000000)) |>
   group_by(DHSYEAR, sexe) |>
   mutate(poids_norm = poids_brut / mean(poids_brut, na.rm = TRUE)) |>
   ungroup() |>
   mutate(
-    w_all       = poids_norm * weights,
-    cluster_uid = paste(DHSYEAR, v001, sep = "_"),
-    treat       = as.integer(GROUP == "Treatment"),
+    w_all            = poids_norm * weights,
+    cluster_uid      = paste(DHSYEAR, v001, sep = "_"),
+    treat            = as.integer(GROUP == "Treatment"),
     sexe_chef_menage = as_factor(hv219),
     age_chef_menage  = hv220
   )
 
+
+# Base contenant que les individus appartenant à des observations matchées et dont le statut migratoire est connu
+migration_data <- migration_data |>
+  mutate(
+    matched = !is.na(GROUP)
+  )
+
+dat_migrant <- migration_data |>
+  filter(!is.na(GROUP), !is.na(migrant))
+ 
+dat_migrant |> count(DHSYEAR, sexe, treat)
+
+
 ```
+
+After the data merge, we observe that the 2018 MICS data show a significantly lower rate of association wit protected areas than the other three waves (2.2% of clusters, compared with 15-25% for 1997, 2008, and 2021), reducing the usable estimation sample for this wave to approximately 370 observations. 
 
 
 ## Descriptive statistics 
 
 ### Descriptive Statistics of Migration in DHS Data
 ```{r}
-
 # Nombre d'observation par année et par sexe 
-dhs_only %>% count(DHSYEAR, sexe) %>%
+dat_migrant %>% count(DHSYEAR, sexe) %>%
   group_by(DHSYEAR) %>%
   mutate(
     pct = 100 * n / sum(n)
   ) %>%
   ungroup()
+```
 
+All respondents in the 1997 survey were women, as noted at the beginning of the analysis. Starting in 2008, the composition was much more balanced, but still predominantly female (about two-thirs women and one-third men). 
+
+```{r}
 # Nombre de migrant par année et par sexe 
-dhs_only %>%
+dat_migrant %>%
   group_by(DHSYEAR, sexe) %>%
   summarise(
     n = n(),
@@ -783,15 +831,21 @@ dhs_only %>%
     migrant_pct = mean(migrant == 1, na.rm = TRUE) * 100
   ) %>%
   ungroup()
+```
 
+The data show a significant increase in the number of respondents over time. The ratio of women to men aged 15 to 49 is relatively stable (~ 65 to 67% women, 33 to 35% men)
+, except in 1997, when only women were surveyed. 
+
+
+```{r}
 # Nombre de migration récente par année 
-dhs_only %>%
+dat_migrant %>%
   count(migrant_recent) %>%
   mutate(
     pct = 100 * n / sum(n)
   )
 
-dhs_only %>%
+dat_migrant %>%
   group_by(DHSYEAR) %>%
   summarise(
     n = n(),
@@ -801,9 +855,15 @@ dhs_only %>%
       na.rm = TRUE
     ) * 100
   )
+```
 
+
+
+
+
+```{r}
 # Nombre de migration récente parmi les migrants 
-dhs_only %>%
+dat_migrant %>%
   filter(migrant == 1) %>%
   group_by(DHSYEAR) %>%
   summarise(
@@ -814,7 +874,20 @@ dhs_only %>%
       na.rm = TRUE
     ) * 100
   )
+```
 
+
+
+
+
+
+
+
+
+
+
+
+```{r}
 # Vérification du statut_residence par année 
 dhs_only %>%
   count(statut_residence) %>%
@@ -888,7 +961,17 @@ dhs_only %>%
   )
 
 
+migration_data %>% count(education)
+migration_data %>% count(type_migration)
+
 ```
+
+
+
+
+
+
+
 
 
 
@@ -942,6 +1025,9 @@ type_migration_desc_svy <- svytable(
   mutate(pct = n / sum(n) * 100, .by = c(DHSYEAR, GROUP))
 
 type_migration_desc_svy
+
+migration_data |> group_by(DHSYEAR, sexe) |>
+  summarise(pct_na_type_migration = mean(is.na(type_migration)), n = n())
 ```
 
 
