@@ -1671,12 +1671,6 @@ ggplot(es_migrant_iucn, aes(k, estimate, colour = type)) +
 
 ```{r}
 summary_table <- bind_rows(
-  extract_did2s(did2s_haz_static, "HAZ — All PAs"),
-  extract_did2s(did2s_haz_strict, "HAZ — Strict"),
-  extract_did2s(did2s_haz_multi, "HAZ — Multi-use"),
-  extract_did2s(did2s_mort_static, "Mortality — All PAs"),
-  extract_did2s(did2s_mort_strict, "Mortality — Strict"),
-  extract_did2s(did2s_mort_multi, "Mortality — Multi-use"),
   extract_did2s(did2s_migrant_static_femmes, "Migration — All PAs (women)"),
   extract_did2s(did2s_migrant_strict, "Migration — Strict (women)"),
   extract_did2s(did2s_migrant_multi, "Migration — Multi-use (women)")
