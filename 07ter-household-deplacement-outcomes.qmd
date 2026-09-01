@@ -1183,7 +1183,6 @@ The results show that there is no statistically significant effect of the treatm
 
 
 
-
 ```{r}
 #| label: fig-migrant-2x2
 #| fig-cap: "2×2 DiD estimates for migration outcomes"
@@ -1381,6 +1380,9 @@ modelsummary(list("did2s migration (static, pooled men + women, 4 vagues)" = did
 
 ```
 
+The static DID estimation suggests a positive, but statistically insignificant, association between treatment and the probability of migration (+3.5 percentage points, standard error of 2.2). Given the magnitude of the uncertainty, this estimates does not allow us to reject the null hypothesis of no effect, which justifies the use of a dynamic event study analysis. 
+
+
 
 ### Staggered DiD — event study
 
@@ -1403,6 +1405,8 @@ etable(did2s_migration_es, headers = "did2s migration event study")
 
 
 ```
+
+Unlike the static DID analysis, the event study reveals temporal heterogeneity in the treatment effect on migration (for men and women combined). Long before treatment, no significant difference is found prior to the intervention. However, immediately after treatment, the event study reveals a positive and significant effect (+5.2), but in the long term, the effect disappears. The coefficient approaches zero and becomes insignificant, suggesting that the treated and control regions converge toward the same level of migration. This positive effect can be explained by the fact the protected area creation may have disrupted local economic activities, temporarily prompting people to seek opportunities elsewhere. Conversely, it may have improved local economic conditions just enough to allow people to migrate, or it may have simply provided a period for the population to adapt before turning to normal. The graph below illustrates this variation in effects. 
 
 
 ```{r}
@@ -1429,7 +1433,7 @@ ggplot(event_study_df, aes(k, estimate)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_point(size = 2.5) +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
-  labs(x = "Position par rapport a la creation de l'AP (panel a 4 vagues)",
+  labs(x = NULL,
        y = "Effect on the probability of migration",
        title = "Event study: migration around the creation of protected areas") +
   scale_x_discrete(labels = bin_label) +
@@ -1442,76 +1446,100 @@ ggplot(event_study_df, aes(k, estimate)) +
 
 ## Migration by PA type - 2×2 DiD
 
-We test whether effects differ between strict PAs (IUCN I–IV) and multi-use PAs (IUCN V–VI), following the same approach as the main analysis (H3). Given the sex-composition imbalance documented ealier (1997, 2008, 2021 are women-only waves), we use the women-only panel (`dat_migrant_femmes`)/ (`dat_migrant2_femmes`) as the base sample here, consistent with the main specification adopted for the pooled migration DiD. 
+We test whether effects differ between strict PAs (IUCN I–IV) and multi-use PAs (IUCN V–VI), following the same approach as the main analysis (H3). Given that migration is only observable on 4 waves (2008, 2018, 2021, only 1997 is women-only), we use the pooled sample (men + women, with a sex as a covariate) as the main specification here, consistent with the main migration DID. The women-only panel (`dat_migrant_femmes`)/ (`dat_migrant2_femmes`) is reported alongside as a robustness check, not as the primary estimate. 
 
 ```{r}
 #| label: migrant-iucn-2x2
 
+# Définir les fonctions
+is_strict <- function(iucn_cat) {
+  iucn_cat %in% c("Ia", "Ib", "II")  # Strictes
+}
 
-dat_migrant3 <- dat_migrant_femmes |>
+is_multi <- function(iucn_cat) {
+  iucn_cat %in% c("IV", "V", "VI")   # Multi-usages
+}
+
+
+dat_migrant_iucn <- dat_migrant |>
   mutate(
     treat_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
     treat_multi  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))
   )
 
-# Placebo strict
-pre_strict_migrant <- dat_migrant3 |>
+
+# Formule commune
+formula_did <- ~ treat + post + treat:post + education +
+                  spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220
+
+# PLACEBO (1997-2008) 
+
+# Strict placebo
+pre_strict_migrant <- dat_migrant_iucn |>
   filter(DHSYEAR %in% c(1997, 2008), treat_strict == 1 | GROUP == "Control") |>
   mutate(post = as.integer(DHSYEAR == 2008))
 
-m_pre_strict_migrant <- feols(
+iucn_strict_pre <- feols(
   migrant ~ treat_strict + post + treat_strict:post + education +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
   data = pre_strict_migrant, weights = ~w_all, cluster = ~cluster_uid
 )
 
-# Placebo multi
-pre_multi_migrant <- dat_migrant3 |>
+# Multi placebo
+pre_multi_migrant <- dat_migrant_iucn |>
   filter(DHSYEAR %in% c(1997, 2008), treat_multi == 1 | GROUP == "Control") |>
   mutate(post = as.integer(DHSYEAR == 2008))
 
-m_pre_multi_migrant <- feols(
+iucn_multi_pre <- feols(
   migrant ~ treat_multi + post + treat_multi:post + education +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
   data = pre_multi_migrant, weights = ~w_all, cluster = ~cluster_uid
 )
 
-# Treatment strict
-main_strict_migrant <- dat_migrant3 |>
+# TREATMENT (2008-2021)
+
+# Strict treatment
+main_strict_migrant <- dat_migrant_iucn |>
   filter(DHSYEAR %in% c(2008, 2021), treat_strict == 1 | GROUP == "Control") |>
   mutate(post = as.integer(DHSYEAR == 2021))
 
-m_main_strict_migrant <- feols(
+iucn_strict_main <- feols(
   migrant ~ treat_strict + post + treat_strict:post + education +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
   data = main_strict_migrant, weights = ~w_all, cluster = ~cluster_uid
 )
 
-# Treatment multi
-main_multi_migrant <- dat_migrant3 |>
+# Multi treatment
+main_multi_migrant <- dat_migrant_iucn |>
   filter(DHSYEAR %in% c(2008, 2021), treat_multi == 1 | GROUP == "Control") |>
   mutate(post = as.integer(DHSYEAR == 2021))
 
-m_main_multi_migrant <- feols(
+iucn_multi_main <- feols(
   migrant ~ treat_multi + post + treat_multi:post + education +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
   data = main_multi_migrant, weights = ~w_all, cluster = ~cluster_uid
 )
 
-etable(m_pre_strict_migrant, m_main_strict_migrant, m_pre_multi_migrant, m_main_multi_migrant,
+etable(iucn_strict_pre, iucn_strict_main, iucn_multi_pre, iucn_multi_main,
        headers = c("Strict plac.", "Strict treat.", "Multi plac.", "Multi treat."))
 ```
+
+
+No category of protected area has a significant effect on migration. The treatment x post interaction coefficients are close to zero. This can be interpreted to mean that protected areas neither reduce migration nor stimulate it (no positive or negative effect was detected). Instead, the major determinants of migration and household needs, rather than the presence or absence of protected areas. 
 
 
 ```{r}
 #| label: fig-migrant-iucn-2x2
 #| fig-cap: "2×2 DiD for migration by PA type"
 
+# Définir le positionnement pour éviter la superposition
+pd <- position_dodge(width = 0.2)
+
 migrant_iucn_df <- bind_rows(
-  did_row(m_pre_strict_migrant, 2008, "treat_strict:post") |> mutate(type = "Strict"),
-  did_row(m_main_strict_migrant, 2021, "treat_strict:post") |> mutate(type = "Strict"),
-  did_row(m_pre_multi_migrant, 2008, "treat_multi:post") |> mutate(type = "Multi-use"),
-  did_row(m_main_multi_migrant, 2021, "treat_multi:post") |> mutate(type = "Multi-use")
+  did_row(iucn_strict_pre, 2008, "treat_strict:post") |> mutate(type = "Strict"),
+  did_row(iucn_strict_main, 2021, "treat_strict:post") |> mutate(type = "Strict"),
+  did_row(iucn_multi_pre, 2008, "treat_multi:post") |> mutate(type = "Multi-use"),
+  did_row(iucn_multi_main, 2021, "treat_multi:post") |> mutate(type = "Multi-use")
 ) |>
   mutate(
     period = factor(ifelse(year == 2008, "1997–2008", "2008–2021"),
@@ -1536,12 +1564,13 @@ ggplot(migrant_iucn_df, aes(x = period, y = estimate, colour = type)) +
 ```{r}
 #| label: migrant-iucn-staggered
 
-d_strict_migrant <- dat_migrant2_femmes |>
+# Strict
+pre_strict_migrant <- dat_migrant_iucn |>
   filter(GROUP == "Control" | (GROUP == "Treatment" & is_strict(IUCN_CAT))) |>
   mutate(treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR))
 
-did2s_migrant_strict <- did2s(
-  data         = d_strict_migrant,
+iucn_strict_staggered <- did2s(
+  data         = pre_strict_migrant,
   yname        = "migrant",
   first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
@@ -1550,13 +1579,13 @@ did2s_migrant_strict <- did2s(
   weights      = "w_all"
 )
 
-d_multi_migrant <- dat_migrant2_femmes |>
+# Multi-usage
+pre_multi_migrant <- dat_migrant_iucn |>
   filter(GROUP == "Control" | (GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
   mutate(treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR))
 
-
-did2s_migrant_multi <- did2s(
-  data         = d_multi_migrant,
+iucn_multi_staggered <- did2s(
+  data         = pre_multi_migrant,
   yname        = "migrant",
   first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
@@ -1566,9 +1595,8 @@ did2s_migrant_multi <- did2s(
 )
 
 modelsummary(list(
-  "Migration Strict" = did2s_migrant_strict,
-  "Migration Multi"  = did2s_migrant_multi,
-  "Migration Both"   = did2s_migrant_static_femmes
+  "Strict (Staggered)" = iucn_strict_staggered,
+  "Multi (Staggered)"  = iucn_multi_staggered
 ))
 
 ```
@@ -1579,29 +1607,26 @@ modelsummary(list(
 ```{r}
 #| label: migrant-iucn-event-study
 
-d_strict_migrant_es <- dat_migrant2_femmes |>
+# Strict
+pre_strict_migrant_es <- dat_migrant_iucn |>
   filter(GROUP == "Control" | (GROUP == "Treatment" & is_strict(IUCN_CAT))) |>
-  mutate(treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR))
+  mutate(
+    treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR),
+    rel_year_2yr2 = as.factor(DHSYEAR - STATUS_YR)
+  )
 
-did2s_migrant_es_strict <- did2s(
-  data         = d_strict_migrant_es,
+# Vérifier les valeurs
+print(table(pre_strict_migrant_es$rel_year_2yr2, useNA = "ifany"))
+
+# Supprimer NA
+pre_strict_migrant_es <- pre_strict_migrant_es |>
+  filter(!is.na(rel_year_2yr2))
+
+iucn_strict_es <- did2s(
+  data         = pre_strict_migrant_es,
   yname        = "migrant",
   first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
-  treatment    = "treat_on",
-  cluster_var  = "cluster_uid",
-  weights      = "w_all"
-)
-
-d_multi_migrant_es <- dat_migrant2_femmes |>
-  filter(GROUP == "Control" | (GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
-  mutate(treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR))
-
-did2s_migrant_es_multi <- did2s(
-  data         = d_multi_migrant_es,
-  yname        = "migrant",
-  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
+  second_stage = ~ i(rel_year_2yr2, ref = "-1"), 
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
   weights      = "w_all"
@@ -1613,8 +1638,8 @@ did2s_migrant_es_multi <- did2s(
 
 ```{r}
 # covariate on the full sample, which is not the right comparator here).
-did2s_migrant_es_femmes <- did2s(
-  data         = dat_migrant2_femmes,
+did2s_migrant_es <- did2s(
+  data         = dat_migrant_iucn,
   yname        = "migrant",
   first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
