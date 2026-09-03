@@ -124,7 +124,7 @@ library(wdpar)
 #    geometry
 #  )
 
-dynamic_wdpa_vect <- vect("data/PA_creation/dynamic_wdpa(1).gpkg") %>%
+dynamic_wdpa_vect <- vect("data/PA_creation/dynamic_wdpa(2).gpkg") %>%
   # Keep Terrestrial and mixed
   dplyr::filter(MARINE %in% 0:1) %>%
   # "Complexe des  AP Ambohimirahavavy Marivorahona" does not have a STATUS_YR, we set it to 2015 as per WDPA website: https://protectedareas.mg/fr/landscape/show/79?geoShapeFilterField=location&location=48.727807188419%2C-14.2119746670021%2C49.0930733591917%2C-14.2119746670021%2C49.0930733591917%2C-13.734131335043%2C48.727807188419%2C-13.734131335043%2C48.727807188419%2C-14.2119746670021&max=8&mediaFilter=no_of_images%2Cno_of_videos%2Cno_of_audio&offset=0&sort=created_on&view=stats
