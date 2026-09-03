@@ -61,6 +61,22 @@ desc_AP_combined <- bind_rows(desc_AP_before, desc_AP_from) %>%
   arrange(mean) %>%
   select(periode, n, mean, sd, median, min, aire_min, max, aire_max)
 
+
+desc_AP_combined <- bind_rows(desc_AP_before, desc_AP_from) %>%
+  arrange(mean) %>%
+  select(periode, n, mean, sd, median, min, aire_min, max, aire_max) %>%
+  rename(
+    Period = periode,
+    `Number of PAs` = n,
+    `Mean (km²)` = mean,
+    `Standard deviation (km²)` = sd,
+    `Median (km²)` = median,
+    `Minimum (km²)` = min,
+    `Minimum PA` = aire_min,
+    `Maximum (km²)` = max,
+    `Maximum PA` = aire_max
+  )
+
 # Affichage du tableau 
 kable(desc_AP_combined, digits = 2, caption = "Statistiques descriptives des aires protégées (PA_AREA_KM2)")
 
