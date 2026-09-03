@@ -18,6 +18,7 @@ library(tidyverse)
 library(sf)
 library(haven)
 library(lubridate)
+library(gt)
 
 # Covariates spatio-temporelles + classification de traitement
 spatial_covars_spei <- readRDS("data/derived/spatial_covars_spei_staggered.rds")
@@ -242,10 +243,10 @@ out <- map_dfr(years, function(y) {
   }
 
   tibble(
-    Year              = y,
-    Survey            = survey_map[y_chr],
-    Raw_HH_all        = Raw_HH_all,
-    Raw_HH_rural      = Raw_HH_rural,
+    Year                         = y,
+    Survey                       = survey_map[y_chr],
+    Total_number_of_households   = Raw_HH_all,
+    Rural_sub_sample             = Raw_HH_rural,
     Excluded_group    = Excluded_group,
     Treatment_Control = Treatment_Control,
     After_NA_drop     = After_NA_drop,
@@ -258,5 +259,11 @@ out <- map_dfr(years, function(y) {
 dir.create("output", showWarnings = FALSE)
 write_csv(out, file.path("output", "obs_by_year.csv"))
 print(out)
+
+write_rds(out, "paper/tables/tbl_obs_by_year.rds")
+
+out %>%
+  gt() %>%
+  gtsave("output/obs_by_year.png")
 ```
 
