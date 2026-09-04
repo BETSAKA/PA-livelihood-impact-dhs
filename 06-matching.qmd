@@ -202,6 +202,16 @@ bal_tabs <- purrr::imap(res_list, ~ {if (!is.null(.x)) {
   }
 })
 
+result_list <- result_list %>%
+  rename(
+    Year = Année,
+    Total_observations = `Total des observations`,
+    after_filtre_NA = `Après filtre/NA`,
+    Traited = Traités,
+    Controls = Contrôles,
+    N_matched = `N appariés`
+  )
+
 saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years.rds")
 
 print(result_list)
