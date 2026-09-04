@@ -67,93 +67,39 @@ gps_2013 <- check_coordinates(gps_2013_initial, contour_mada)
 gps_2016 <- check_coordinates(gps_2016_initial, contour_mada)
 gps_2018 <- check_coordinates(gps_2018_initial, contour_mada)
 gps_2021 <- check_coordinates(gps_2021_initial, contour_mada)
+```
 
+
+```{r fig.cap="Figure 2: Protected Areas in Madagascar"}
 library(wdpar)
 
-# Load the work implemented in: https://betsaka.github.io/conservation-dynamic-madagascar/03_legal_docs.html
-legal_texts <- read_rds("data/legal_texts.rds")
-
-# Use the legal analysis made from CNLEGIS to identify early protections
-# that are not registered in WDPA: 
-legal_years <- legal_texts |>
-  filter(str_detect(type_decision, "creation_definitive|mise_protection_temporaire")) |>
-  mutate(
-    date_texte = as.Date(date_texte),
-    legal_year = year(date_texte)
-  ) |>
-  group_by(WDPAID) |>
-  summarize(
-    legal_year = min(legal_year, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-
 # Load WDPA data
-wdpa <- wdpa_read("data/raw/WDPA_WDOECM_Jul2025_Public_MDG.zip") %>%
- # wdpa_clean() |> # This might cause to drop existing PAs!
- # Include PAs that exist according to the legal analysis
-  filter(STATUS == "Designated" | WDPAID %in% legal_years$WDPAID) %>%
-  mutate(MARINE = recode(MARINE,
-                         "0" = "Terrestre",
-                         "1" = "Mixte",
-                         "2" = "Marine"),
-        GEOMETRY_TYPE = st_geometry_type(.)) %>%
-  filter(GEOMETRY_TYPE %in% c("POLYGON", "MULTIPOLYGON"),)
+dynamic_wdpa_metadata <- st_read("data/PA_creation/wdpa_data/dynamic_wdpa_metadata.csv")
 
-# Make sure join keys have compatible types
-legal_years <- legal_years |> mutate(WDPAID = as.numeric(WDPAID))
-wdpa <- wdpa |> mutate(WDPAID = as.numeric(WDPAID))
+dynamic_pa_last <- st_read("data/PA_creation/wdpa_data/dynamic_pa_fixed_last.gpkg")
 
-# Join and replace STATUS_YR where a legal year exists
-wdpa <- wdpa |>
-  left_join(legal_years, by = "WDPAID") |>
-  mutate(
-    STATUS_YR = if_else(!is.na(legal_year), as.integer(legal_year), STATUS_YR)
-  ) |>
-  select(-legal_year)
-
-# To check if some are unmatched (on priciple none should be)
-legal_unmatched <- legal_years |> anti_join(st_drop_geometry(wdpa), by = "WDPAID")
-
-# Load boundary
-contour_mada <- gadm(country = "Madagascar", level = 0, path = "data") %>%
-  st_as_sf() %>%
-  st_set_crs(standard_crs)
-
-# Intersection des AP de WDPA avec la limite de Madagascar
-wdpa_terrestre <- wdpa %>% 
-  st_transform(crs = standard_crs) %>%
-  st_make_valid() %>%
-  st_intersection(contour_mada) %>%
-  st_transform(mdg_crs) %>%
-  mutate(
-    area_m2  = as.numeric(st_area(.)),
-    area_ha  = area_m2 / 1e4,
-    area_km2 = area_m2 / 1e6
+# Convertir en sf (dynamic_pa_last est un SpatVector terra)
+pa_sf <- sf::st_as_sf(dynamic_pa_last) %>%
+  mutate(WDPAID = as.character(WDPAID)) %>%
+  left_join(
+    dynamic_wdpa_metadata %>% mutate(WDPAID = as.character(WDPAID)),
+    by = "WDPAID"
   ) %>%
-  st_transform(standard_crs)
-
-# Ajout de la date de création du complexe des aires protégées Ambohimirahavavy Marivorahona 
-
-wdpa_terrestre_mod <- wdpa_terrestre %>%
-  mutate(STATUS_YR = ifelse(WDPAID == 555697871, 2015, STATUS_YR))
-
-# Sauvegarder le shapefile modifié 
-st_write(wdpa_terrestre_mod, "data/derived/wdpa_terrestre_mod.shp", delete_layer = TRUE)
+  st_make_valid()
 
 
 # Buffer de 5 km
 buffer_dist <- 5000
 
 # Spécification des AP avant-après 2008--------
-wdpa_before_2008 <- wdpa_terrestre_mod %>%
+wdpa_before_2008 <- pa_sf %>%
   filter(STATUS_YR < 2008)
-wdpa_from_2008 <- wdpa_terrestre_mod %>%
+
+wdpa_from_2008 <- pa_sf %>%
   filter(STATUS_YR >= 2008)
 
 # Créer des buffers de 5 km autour des AP
-buffer_5km_before_2008 <- 
-  wdpa_before_2008 %>%
+buffer_5km_before_2008 <- wdpa_before_2008 %>%
   st_transform(mdg_crs) %>%
   st_buffer(dist = buffer_dist) %>%
   st_make_valid() %>%
@@ -172,67 +118,65 @@ buffer_5km_from_2008 <- wdpa_from_2008  %>%
   st_make_valid() %>%
   st_transform(standard_crs)
 
+buffer_5km_from_2008 <- sf::st_make_valid(buffer_5km_from_2008) # corriger les géométries invalides 
+
+# Charger le contour de Madagascar
+contour_mada <- geodata::gadm(country = "Madagascar", level = 0, path = "data") %>%
+  st_as_sf()
+
+
 # Visualisation des cartes---------------------
 tmap_mode("plot")
 
 tm_shape(contour_mada) + 
-  tm_borders(col = "black", lwd = 1) +
-  
-  tm_shape(wdpa_before_2008) +
-  tm_polygons(fill = "blue", 
-              col =  "black", 
-              fill_alpha = 0.5,
-              id = "ORIG_NAME", 
-              popup.vars = c("Année de création" = "STATUS_YR")) +
-  
-  tm_shape(wdpa_from_2008) +
-  tm_polygons(fill = "darkgreen", 
-              col = "black", 
-              fill_alpha = 0.5,
-              id = "ORIG_NAME", 
-              popup.vars = c("Année de création" = "STATUS_YR")) + 
-  
+  tm_borders() +
+tm_shape(wdpa_before_2008) +
+tm_polygons(fill = "blue", 
+            col =  "black", 
+            fill_alpha = 0.5) +
 tm_shape(buffer_5km_from_2008) +
-tm_borders(col = "darkgreen", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
-  
+tm_borders(col = "darkgreen", lwd = 1, fill.legend = tm_legend_hide()) +
 tm_shape(buffer_5km_before_2008) +
-tm_borders(col = "blue", lwd = 2, lty = "dashed", fill.legend = tm_legend_hide()) +
-tm_add_legend(
-  type = "polygons", 
-  fill = c("blue", "darkgreen"), 
-  labels = c("avant 2008", "après 2008")) +
-  tm_title("Aires protégées du WDPA par période de création</b><br/>Source: WDPA, 2024") +
-  tm_layout(
-    legend.outside = TRUE, 
-    legend.position = c("left", "top"),
-    frame = FALSE,
-    legend.title.size = 1.2,
-    legend.text.size = 0.8
-  ) +
-  tm_compass(type = "8star", position = c("right", "top")) +
-  tm_scalebar(position = c("right", "bottom"))
+tm_borders(col = "blue", lwd = 1, fill.legend = tm_legend_hide()) +
+tm_shape(wdpa_from_2008) +
+tm_polygons(fill = "darkgreen", 
+            col = "black", 
+            fill_alpha = 0.5) +
+tm_add_legend(type = "polygons", fill = c("blue", "darkgreen"), labels = c("Before 2008", "From 2008")) +
+  tm_title("Protected areas by period of creation", fontface = "bold", size = 1) +
+  tm_credits("Source: WDPA, 2025", position =  c("BOTTOM", "RIGHT")) +
+  tm_scalebar(position = c("TOP", "LEFT"))
+```
 
-# Classification des clusters---------------------------------------------------------
+
+```{r DHS survey clusters relative to existing protected areas}
+
+
+# Classification des clusters-----------------------------------------------
 #| fig-cap: "Grappes d'enquêtes DHS par rapport aux aires protégées existantes"
 
 
 classify_clusters_with_pa <- function(cluster_gps,
                                       buffer_before,   # union of <2008
-                                      wdpa_after,      # polygons >=2008 (no union)
+                                      pa_after,        # polygons >=2008 (no union)
                                       buffer_dist = 5000,
                                       label_treat = "Treatment",
                                       label_excl  = "Excluded",
                                       label_ctrl  = "Control") {
 
+  # Harmoniser le CRS de pa_after une bonne fois pour toutes
+  pa_after <- pa_after %>% st_transform(standard_crs)
+
   # per-PA buffers (keep attrs)
-  wdpa_after_buf <- wdpa_after %>%
-    st_transform(mdg_crs) %>%
-    mutate(geometry = st_buffer(geometry, buffer_dist)) %>%
-    st_transform(standard_crs)
+  # On buffer la géométrie active directement (évite de créer une colonne
+  # "geometry" parallèle qui resterait dans le mauvais CRS et ne serait jamais utilisée)
+  pa_after_buf <- pa_after %>% st_transform(mdg_crs)
+  sf::st_geometry(pa_after_buf) <- sf::st_buffer(sf::st_geometry(pa_after_buf), buffer_dist)
+  pa_after_buf <- pa_after_buf %>% st_transform(standard_crs)
 
   # flags
-  in_after  <- st_within(cluster_gps, st_union(wdpa_after_buf),  sparse = FALSE)[,1]
-  in_before <- st_within(cluster_gps, buffer_before,            sparse = FALSE)[,1]
+  in_after  <- st_within(cluster_gps, st_union(pa_after_buf), sparse = FALSE)[,1]
+  in_before <- st_within(cluster_gps, buffer_before,           sparse = FALSE)[,1]
 
   base <- cluster_gps %>%
     mutate(groupe = case_when(
@@ -246,18 +190,18 @@ classify_clusters_with_pa <- function(cluster_gps,
 
   if (nrow(treated_pts) == 0) return(base)
 
-  cand <- st_join(treated_pts, wdpa_after_buf, join = st_within, left = FALSE) %>%
-  mutate(
-    .idx = match(WDPAID, wdpa_after$WDPAID),
-    dist_km = as.numeric(
-      st_distance(
-        geometry,
-        wdpa_after$geometry[.idx],
-        by_element = TRUE
-      )
-    ) / 1000
-  ) %>%
-  dplyr::select(-.idx)
+  cand <- st_join(treated_pts, pa_after_buf, join = st_within, left = FALSE) %>%
+    mutate(
+      .idx = match(WDPAID, pa_after$WDPAID),
+      dist_km = as.numeric(
+        st_distance(
+          geometry,
+          pa_after$geom[.idx],
+          by_element = TRUE
+        )
+      ) / 1000
+    ) %>%
+    select(-.idx)
 
   best <- cand %>%
     group_by(DHSCLUST) %>%
@@ -292,11 +236,12 @@ gps_all_class_5km <- bind_rows(
   gps_2011_class,
   gps_2013_class,
   gps_2016_class,
+  gps_2018_class,
   gps_2021_class
 )
 
 # Créer un plot pour visualiser la carte des AP avec les clusters----------------------
-tm_shape(buffer_5km_from_2008) +
+map_ap_5km <- tm_shape(buffer_5km_from_2008) +
   tm_borders("green", 
              lwd = 2, 
              lty = "dashed", 
@@ -319,7 +264,7 @@ tm_shape(buffer_5km_from_2008) +
   tm_shape(gps_all_class_5km) +
   tm_symbols(
     fill = "groupe", 
-    fill.legend = tm_legend(title = "Groupes"),
+    fill.legend = tm_legend(title = "Groups"),
     fill.scale = tm_scale(values = c("Treatment" = "red", "Control" = "blue", "Excluded" = "gray")),
      size = 0.5,
     shape = 21
@@ -335,13 +280,24 @@ tm_shape(buffer_5km_from_2008) +
   ) +
   tm_scalebar(position = c("left", "bottom"))
 
+map_ap_5km
+
+# Enregistrer la carte------------------------------ 
+tmap_save(
+  tm       = map_ap_5km,
+  filename = "output/map_all_groups_5km.png",
+  width    = 12,       # largeur en pouces
+  height   = 8,        # hauteur en pouces
+  dpi      = 300       # résolution 
+)
+
 # Tableau récapitulatif du nombre de grappes d'enquête classées dans chaque groupe-----
 treated_sub_clusters <- gps_all_class_5km %>%
   st_drop_geometry() %>%
   filter(groupe == "Treatment") %>%
   mutate(subcat = case_when(
-    !is.na(STATUS_YR) & DHSYEAR <  STATUS_YR ~ "Avant traitement",
-    !is.na(STATUS_YR) & DHSYEAR >= STATUS_YR ~ "Déjà traités",
+    !is.na(STATUS_YR) & DHSYEAR <  STATUS_YR ~ "Before treatment",
+    !is.na(STATUS_YR) & DHSYEAR >= STATUS_YR ~ "Previously treated",
     TRUE ~ NA_character_
   )) %>%
   count(DHSYEAR, subcat, name = "n_clusters") %>%
@@ -351,13 +307,13 @@ treated_sub_clusters <- gps_all_class_5km %>%
 treated_all_clusters <- gps_all_class_5km %>%
   st_drop_geometry() %>%
   filter(groupe == "Treatment") %>%
-  count(DHSYEAR, name = "Ensemble")
+  count(DHSYEAR, name = "All_clusters")
 
 # Colonnes Contrôles / Exclus
 ctrl_excl_clusters <- gps_all_class_5km %>%
   st_drop_geometry() %>%
   filter(groupe %in% c("Control", "Excluded")) %>%
-  mutate(Groupe = recode(groupe, Control = "Contrôles", Excluded = "Exclus")) %>%
+  mutate(Groupe = recode(groupe, Control = "Controls",Excluded = "Excluded")) %>%
   count(DHSYEAR, Groupe, name = "n") %>%
   pivot_wider(names_from = Groupe, values_from = n, values_fill = 0)
 
@@ -370,28 +326,28 @@ tab_wide_clusters <- list(treated_sub_clusters, treated_all_clusters,
 
 # Tableau gt : spanner "Traitement" + colonnes Contrôles / Exclus
 gt_table_clusters <- tab_wide_clusters %>%
-  rename(Année = DHSYEAR) %>%
+  rename(Year = DHSYEAR) %>%
   gt() %>%
-  tab_header(title = "Nombre de grappes par année d'enquête et par groupe") %>%
+  tab_header(title = "Number of Clusters by Survey Year and Group") %>%
   cols_label(
-    `Avant traitement` = "Avant traitement",
-    `Déjà traités`     = "Déjà traités",
-    Ensemble           = "Ensemble",
-    `Contrôles`        = "Contrôles",
-    `Exclus`           = "Exclus"
+    `Before treatment` = "Before treatment",
+    `Previously treated`     = "Previously treated",
+    All_clusters   = "All clusters",
+    `Controls` = "Controls",
+    `Excluded` = "Excluded"
   ) %>%
   tab_spanner(
-    label = "Traitement",
-    columns = c(`Avant traitement`, `Déjà traités`, Ensemble)
+    label = "Treatment",
+    columns = c(`Before treatment`, `Previously treated`, All_clusters)
   ) %>%
   fmt_number(
-    columns = c(`Avant traitement`, `Déjà traités`, Ensemble, `Contrôles`, `Exclus`),
+    columns = c(`Before treatment`, `Previously treated`, All_clusters, `Controls`, `Excluded`),
     decimals = 0,
     use_seps = TRUE
   ) %>%
   cols_align(align = "center", columns = everything()) %>%
   tab_footnote(
-    footnote = md("**Avant traitement** : DHSYEAR < STATUS_YR (AP pas encore créée). **Déjà traités** : DHSYEAR ≥ STATUS_YR. **Ensemble** : total des grappes *Traitement*."),
+    footnote = md("**Before treatment** : DHSYEAR < STATUS_YR (PA are not yet created). **Previously treated** : DHSYEAR ≥ STATUS_YR. **All clusters** : total number of clusters*Treatment*."),
     locations = cells_title(groups = "title")
   )
 
@@ -429,15 +385,26 @@ load_dhs_data <- function(dhs_folder, year, identifier) {
 
 dhs_folder <- "data/raw/dhs"
 
-
 # Années disponibles
 years_all <- sort(unique(gps_all_class_5km$DHSYEAR))
 
 # Compte ménages (toutes observations) 
 households_counts_all <- map_dfr(years_all, function(y) {
+  
+  # Load data depending on year
+  if (y == 2018) {
+    hr <- read_spss("data/raw/mics/2018/SPSS datasets/hh.sav") %>%
+      transmute(
+        hv001 = HH1,
+        hv002 = HH2,
+        DHSYEAR = y
+      )
+  } else {
   # HR de l'année
   hr <- load_dhs_data(dhs_folder, y, "HR") %>%
-    mutate(DHSYEAR = y)  # pour la jointure avec la classification
+    mutate(DHSYEAR = y) %>%
+      select(hv001, hv002, DHSYEAR)
+  }
 
   # Classification des grappes de l'année
   cl_y <- gps_all_class_5km %>%
@@ -469,18 +436,18 @@ households_counts_all <- map_dfr(years_all, function(y) {
 
 # Tableau gt (ménages, toutes observations)
 gt_table_menages_all <- households_counts_all %>%
-  rename(Année = DHSYEAR) %>%
+  rename(Year = DHSYEAR) %>%
   gt() %>%
-  tab_header(title = "Nombre de ménages par année d'enquête et par groupe") %>%
+  tab_header(title = "Number of households by survey year and group") %>%
   cols_label(
-    `Avant traitement` = "Avant traitement",
-    `Déjà traités`     = "Déjà traités",
-    Ensemble           = "Ensemble",
-    `Contrôles`        = "Contrôles",
-    `Exclus`           = "Exclus"
+    `Avant traitement` = "Before treatment",
+    `Déjà traités`     = "Previously treated",
+    Ensemble           = "All clusters",
+    `Contrôles`        = "Controls",
+    `Exclus`           = "Excluded"
   ) %>%
   tab_spanner(
-    label = "Traitement",
+    label = "Treatment",
     columns = c(`Avant traitement`, `Déjà traités`, Ensemble)
   ) %>%
   fmt_number(
@@ -489,9 +456,9 @@ gt_table_menages_all <- households_counts_all %>%
   ) %>%
   cols_align(align = "center", columns = everything()) %>%
   tab_footnote(
-    footnote = md("**Avant traitement** : DHSYEAR < STATUS_YR (AP pas encore créée). **Déjà traités** : DHSYEAR ≥ STATUS_YR. **Ensemble** : total des ménages du groupe *Traitement*."), locations = cells_title(groups = "title"))
+    footnote = md("**Before treatment** : DHSYEAR < STATUS_YR (PA not yet created). **Previously treated** : DHSYEAR ≥ STATUS_YR. **All clusters** : total number of households in the group *Treatment*."), locations = cells_title(groups = "title"))
 
-gt_table_menages_all   
+gt_table_menages_all 
 
 # Sauvegarde des classifications des clusters 
 all_class_5km <- gps_all_class_5km %>%
@@ -503,25 +470,25 @@ write_csv(wdpa_before_2008, "data/derived/wdpa_before_2008_5km.csv")
 write_csv(wdpa_from_2008, "data/derived/wdpa_from_2008_5km.csv")
 
 # Classification des clusters avec les données HR des ménages--------------------------- 
-for(year in years_all) {
-  hr_data <- load_dhs_data(dhs_folder, year, "HR") %>%
-    mutate(DHSYEAR = year)
+#for(year in years_all) {
+ # hr_data <- load_dhs_data(dhs_folder, year, "HR") %>%
+  #  mutate(DHSYEAR = year)
   
-  cluster_class <- gps_all_class_5km %>%
-    st_drop_geometry() %>%
-    filter(DHSYEAR == year) %>%
-    select(DHSYEAR, DHSCLUST, groupe, STATUS_YR)
+  #cluster_class <- gps_all_class_5km %>%
+   # st_drop_geometry() %>%
+  #  filter(DHSYEAR == year) %>%
+   # select(DHSYEAR, DHSCLUST, groupe, STATUS_YR)
   
-  hr_final_5km <- hr_data %>%
-    rename(DHSCLUST = hv001) %>%
-    left_join(cluster_class, by = c("DHSYEAR", "DHSCLUST")) %>%
+  #hr_final_5km <- hr_data %>%
+   # rename(DHSCLUST = hv001) %>%
+    #left_join(cluster_class, by = c("DHSYEAR", "DHSCLUST")) %>%
     
-    mutate(treatment = if_else(groupe == "Treatment", 1L, 0L),
-           control = if_else(groupe == "Control", 1L, 0L))
+    #mutate(treatment = if_else(groupe == "Treatment", 1L, 0L),
+     #      control = if_else(groupe == "Control", 1L, 0L))
   
-  saveRDS(hr_final_5km, glue("data/derived/hr_{year}_final_5km.rds"))
+#  saveRDS(hr_final_5km, glue("data/derived/hr_{year}_final_5km.rds"))
     
-}
+#}
 ```
 
 #### Covariates Calculation
@@ -879,7 +846,7 @@ Dans l'ensemble, la série oscille autour de zéro, alternant des périodes humi
 
 #### Variable consolidation
 
-Nous combinons les clusters de 1997, 2008, 2011, 2013, 2016 et 2021 avec leurs caractéristiques géophysiques et leur variable de résultat respectif dans un seul dataframe.
+Nous combinons les clusters de 1997, 2008, 2011, 2013, 2016, 2018 et 2021 avec leurs caractéristiques géophysiques et leur variable de résultat respectif dans un seul dataframe.
 
 ```{r}
 
