@@ -677,6 +677,9 @@ pa_sf <- sf::st_as_sf(dynamic_pa_last) %>%
   left_join(dynamic_wdpa_metadata, by = "WDPAID") %>% 
   st_make_valid()
 
+# Export the cleaned data 
+sf::st_write(pa_sf, "data/derived/pa_sf.csv", delete_dsn = TRUE)
+
 # Charger le contour de Madagascar
 contour_mada <- geodata::gadm(country = "Madagascar", level = 0, path = "data") %>%
   st_as_sf()
@@ -1523,7 +1526,7 @@ tab_wide_clusters <- list(treated_sub_clusters, treated_all_clusters,
 
 # Tableau gt : spanner "Traitement" + colonnes Contrôles / Exclus
 gt_table_clusters <- tab_wide_clusters %>%
-  rename(Année = DHSYEAR) %>%
+  rename(Year = DHSYEAR) %>%
   gt() %>%
   tab_header(title = "Number of Clusters by Survey Year and Group") %>%
   cols_label(
@@ -1638,7 +1641,7 @@ households_counts_all <- map_dfr(years_all, function(y) {
 
 # Tableau gt (ménages, toutes observations)
 gt_table_menages_all <- households_counts_all %>%
-  rename(Année = DHSYEAR) %>%
+  rename(Year = DHSYEAR) %>%
   gt() %>%
   tab_header(title = "Number of households by survey year and group") %>%
   cols_label(
