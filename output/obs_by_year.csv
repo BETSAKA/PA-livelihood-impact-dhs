@@ -1,4 +1,4 @@
-Year,Survey,Total_number_of_households,Rural_sub_sample,Excluded_group,Treatment_Control,After_NA_drop,Treated,Matched_rows
+Year,Survey,Raw_HH_all,Raw_HH_rural,Excluded_group,Treatment_Control,After_NA_drop,Treated,Matched_rows
 1997,DHS,7171,5124,1133,3991,3934,431,858
 2008,DHS,17857,13364,2331,10850,10681,1427,2814
 2011,MIS,8094,6025,971,5026,4754,469,1066
