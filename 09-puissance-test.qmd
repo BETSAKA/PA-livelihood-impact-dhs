@@ -34,6 +34,7 @@ dynamic_wdpa_metadata <- st_read("data/PA_creation/wdpa_data/dynamic_wdpa_metada
 
 dynamic_pa_last <- st_read("data/PA_creation/wdpa_data/dynamic_pa_fixed_last.gpkg")
 
+# Convertir sf 
 pa_sf <- sf::st_as_sf(dynamic_pa_last) %>%
   mutate(WDPAID = as.character(WDPAID)) %>%
   left_join(
