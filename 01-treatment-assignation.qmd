@@ -778,7 +778,7 @@ tm_shape(wdpa_from_2008) +
 tm_polygons(fill = "darkgreen", 
             col = "black", 
             fill_alpha = 0.5) +
-tm_add_legend(type = "polygons", fill = c("blue", "darkgreen"), labels = c("avant 2008", "après 2008")) +
+tm_add_legend(type = "polygons", fill = c("blue", "darkgreen"), labels = c("Before 2008", "After 2008")) +
   tm_title("Protected areas by period of creation", fontface = "bold", size = 1) +
   tm_credits("Source: WDPA, 2025", position =  c("BOTTOM", "RIGHT")) +
   tm_scalebar(position = c("TOP", "LEFT"))
@@ -1476,14 +1476,65 @@ map_ap <- tm_shape(contour_mada) +
   )
 
 map_ap
+# Enregistrer la carte------------------------------
+tmap_mode("plot")
+
+# Assigner la carte à un objet
+ma_carte <- tm_shape(contour_mada) +
+  tm_borders(col = "black", lwd = 1) +
+
+  tm_shape(buffer_10km_from_2008) +
+  tm_borders("green", lwd = 2, lty = "dashed") +
+
+  tm_shape(buffer_10km_before_2008) +
+  tm_borders("darkgreen", lwd = 2, lty = "dashed") +
+
+  tm_shape(wdpa_from_2008) +
+  tm_polygons(fill = "green", fill_alpha = 0.5, col = "black") +
+
+  tm_shape(wdpa_before_2008) +
+  tm_polygons(fill = "darkgreen", fill_alpha = 0.5, col = "black") +
+
+  tm_shape(gps_all_class) +
+  tm_symbols(
+    fill = "groupe",
+    fill.scale = tm_scale(values = c(
+      "Treatment" = "red",
+      "Control"   = "blue",
+      "Excluded"  = "gray"
+    )),
+    size = 0.5,
+    shape = 21
+  ) +
+
+  tm_facets("DHSYEAR", nrow = 2, ncol = 3) +
+
+  tm_add_legend(
+    type   = "polygons",
+    fill   = c("green", "darkgreen"),
+    labels = c("Starting in 2008", "Before 2008"),
+    title  = "Protected Areas"
+  ) +
+  tm_add_legend(
+    type   = "symbols",
+    fill   = c("red", "blue", "gray"),
+    labels = c("Treatment", "Control", "Excluded"),
+    shape  = 21,
+    title  = "Groups"
+  ) +
+
+  tm_layout(
+    legend.outside = TRUE,
+    legend.outside.position = c("center", "bottom")
+  )
 
 # Enregistrer la carte------------------------------ 
 tmap_save(
   tm       = map_ap,
   filename = "output/map_all_groups.png",
-  width    = 12,       # largeur en pouces
-  height   = 8,        # hauteur en pouces
-  dpi      = 300       # résolution 
+  width    = 12,
+  height   = 8,
+  dpi      = 300
 )
 ```
 

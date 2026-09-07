@@ -40,6 +40,19 @@ library(gtExtras)
 library(did2s)
 library(modelsummary)
 
+# Dictionnaire de noms de variables
+var_labels <- c(
+  "treat_post" = "Treatment × Post",
+  "treat"      = "Treatment",
+  "post"       = "Post",
+  "spei_wc_n_2"= "SPEI (t-2)",
+  "spei_wc_n_1"= "SPEI (t-1)",
+  "spei_wc_n"  = "SPEI (t)",
+  "hv219Femme"      = "Sex (ref.Male)",
+  "hv220"      = "Age",
+  "(Intercept)"= "Constant"
+  )
+
 # Chargement des données
 d97 <- read_rds("data/derived/data_matched_1997.rds") %>%
   rename(spei_wc_n_2 = spei_wc_1995,
@@ -136,7 +149,8 @@ etable(h1_m_pre_2x2, h1_m_main_2x2,
   headers = c("Placebo 97–08", "Traitement 08–21"))
 
 tab_fixest <- modelsummary(
-  list("Placebo 97-08" = h1_m_pre_2x2, "Traitement 08-21" = h1_m_main_2x2), output = "gt"
+  list("Placebo 97-08" = h1_m_pre_2x2, "Traitement 08-21" = h1_m_main_2x2),
+  coef_rename = var_labels, output = "gt"
 )
 
 saveRDS(tab_fixest, "paper/tables/table_DID_WI.rds")
@@ -168,43 +182,35 @@ write_rds(h1_2x2_plot, "paper/figures/h1_2x2_plot.rds")
 
 h1_2x2_table <- modelsummary(
   list(
-    "Placebo (1997-2008)" = h1_m_pre_2x2, 
-    "Treatment effect (2008-2021)" = h1_m_main_2x2
+h1_2x2_table <- modelsummary(
+  list(
+    "DID 2x2 placebo (1997-2008)" = h1_m_pre_2x2,
+    "DID 2x2 (2008-2021)" = h1_m_main_2x2
   ),
-  coef_map = c(
-    "treat_post" = "Treatment x Post (DiD)",
-    "treat" = "Treated",
-    "post" = "Post-period",
-    "spei_wc_n_2" = "SPEI (t-2)",
-    "spei_wc_n_1" = "SPEI (t-1)",
-    "spei_wc_n" = "SPEI (t)",
-    "hv219Femme" = "Female household head",
-    "hv220" = "Age of household head"
-  )
+  coef_rename = var_labels
 )
+
 write_rds(h1_2x2_table, "paper/figures/h1_2x2_table.rds")
 h1_2x2_table
 
-```
-
-Le test placebo donne une estimation avec un coefficient faible (+1.8 centile) et non significatif: pas de différence détectée avant intervention dans les tendances du groupe traitement et du groupe contrôle. L'estimation du traitement présente une plus grande magnitude (-4.3 centiles), mais il reste non significatif. Les ménages vivant près des AP semblent connaître, un niveau de bien-être légèrement inférieur à celui des ménages contrôle, mais l'effet n'est pas significatif. A ce stade, l'analyse ne confirme pas l'hypothèse 1 (que les AP réduise le niveau de vie) : le sens de la relation est négatif, mais on ne peut pas rejeter l'hypothèse nulle. L'intervalle de confiance couvre encore largement 0, ce qui signifie qu'on a une précision insuffisante pour détecter un effet. L'effet est donc soit nul, soit inférieur à notre capacité de détection. Dans le PAP, on avait estimé que l'effet devrait être d'au moins 7.5 centiles pour pouvoir être détecté.
-
-### Staggered diff-in-diff
-
-#### Survey years and binning
-
-In our PAP, we stated:
-
-> "The MIS data can therefore be mobilized for this study. However, the periods covered by MIS only allow for comparisons beyond a simple “before” and “after” framework, which complicates the analysis and necessitates methods with limited methodological consensus. Since 2020, the state of the art in difference-in-difference methods has been challenged by the recognition that classical two-way fixed effects methods can yield spurious results when the effects of an intervention are heterogeneous and assessed over multiple periods. Since then, a dozen alternative approaches have been developed, but econometricians continue to debate their reliability (Roth et al. 2023). To avoid undermining the credibility of our results, we will initially limit ourselves to two study periods (DHS 2008 and 2021). Only if this approach lacks sufficient statistical power will we consider incorporating additional data. \[...\] Additionally, if we incorporate data from MIS 1997, MIS 2011, and MIS 2013, we could apply an estimator suitable for staggered adoption and multiple study periods accounting for potential heterogeneous treatment effects (Borusyak, Jaravel, and Spiess 2024). This will only be performed if power is insufficient with two periods of data."
-
-We also add MICS 2018, as it presents the same design as MIS and DHS surveys, and has 17 870 surveyed households in a year for which we have no other data source. It enables us to have a more complete coverage of pre-and post year.
-
-```{r}
-
-
-# compute relative years and binned relative years
-dat2 <- dat %>%
-  mutate(
+# Format Latex
+modelsummary(
+  list(
+    "DID 2x2 placebo (1997-2008)" = h1_m_pre_2x2,
+    "DID 2x2 (2008-2021)" = h1_m_main_2x2
+  ),
+  coef_rename = var_labels,
+  vcov = ~ cluster_uid,
+  stars = c("*" = .1, "**" = .05, "***" = .01),
+  gof_map = list(
+    list(raw = "nobs", clean = "Observations", fmt = 0),
+    list(raw = "r.squared", clean = "R²", fmt = 3),
+    list(raw = "adj.r.squared", clean = "Adjusted R²", fmt = 3)
+  ),
+  title = "Impact on well-being: 2x2 DiD",
+  notes = "Standard errors clustered at the survey cluster level.",
+  output = "Presentation/conference_betsaka/tables/h1_2x2_table.tex"
+)
     treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
     rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
     rel_year_clipped = case_when(

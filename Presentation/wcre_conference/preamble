@@ -1,0 +1,110 @@
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{colortbl}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{appendixnumberbeamer}
+\usepackage{mdframed}
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{tcolorbox}
+\usepackage{fontawesome5}
+\usepackage{multicol}
+\tcbuselibrary{skins, breakable}
+
+\definecolor{bleustat}{RGB}{91,143,201}
+\definecolor{bleustatfond}{RGB}{240,245,252}
+\definecolor{vertstatfond}{RGB}{240,250,244}
+\definecolor{orangelacune}{RGB}{230,168,23}
+\definecolor{orangelacunefond}{RGB}{255,251,240}
+\definecolor{violetapport}{RGB}{155,114,207}
+\definecolor{violetapportfond}{RGB}{249,245,255}
+\usetikzlibrary{shapes.geometric, positioning, shadows}
+
+\definecolor{vertfonce}{RGB}{46,125,50}
+\definecolor{vertmoyen}{RGB}{76,153,0}
+\definecolor{vertclair}{RGB}{200,230,201}
+\definecolor{vertpale}{RGB}{232,245,233}
+\definecolor{blancpur}{RGB}{255,255,255}
+\definecolor{textefonce}{RGB}{33,33,33}
+
+\setbeamercolor{background canvas}{bg=blancpur}
+\setbeamercolor{palette primary}{bg=vertfonce,fg=white}
+\setbeamercolor{palette secondary}{bg=vertmoyen,fg=white}
+\setbeamercolor{palette tertiary}{bg=vertclair,fg=textefonce}
+\setbeamercolor{palette quaternary}{bg=vertfonce,fg=white}
+\setbeamercolor{structure}{fg=vertfonce}
+\setbeamercolor{section in toc}{fg=vertfonce}
+\setbeamercolor{title}{fg=vertfonce,bg=blancpur}
+\setbeamercolor{subtitle}{fg=vertfonce}
+\setbeamercolor{author}{fg=textefonce}
+\setbeamercolor{date}{fg=black}
+\setbeamercolor{institute}{fg=textefonce}
+\setbeamercolor{block title}{bg=vertfonce,fg=white}
+\setbeamercolor{block body}{bg=vertpale,fg=textefonce}
+\setbeamercolor{itemize item}{fg=vertfonce}
+\setbeamercolor{itemize subitem}{fg=vertmoyen}
+\setbeamercolor{frametitle}{bg=blancpur,fg=vertfonce}
+\setbeamercolor{footline gauche}{bg=vertfonce,fg=white}
+\setbeamercolor{footline centre}{bg=vertmoyen,fg=white}
+\setbeamercolor{footline droite}{bg=vertfonce,fg=white}
+
+\setbeamerfont{normal text}{size=\normalsize}
+\setbeamerfont{title}{size=\Large,series=\bfseries}
+\setbeamerfont{subtitle}{size=\normalsize}
+\setbeamerfont{itemize/enumerate body}{size=\normalsize}
+\setbeamerfont{itemize/enumerate subbody}{size=\small}
+\setbeamerfont{block title}{size=\normalsize,series=\bfseries}
+\setbeamerfont{block body}{size=\normalsize}
+\setbeamertemplate{headline}{}
+
+\setbeamertemplate{frametitle}{
+  \nopagebreak
+  \begin{beamercolorbox}[wd=\paperwidth,ht=1.2cm,dp=0.3cm]{frametitle}
+    \vspace{0.2cm}
+    \hspace{0.5cm}
+    \begin{minipage}[c]{0.90\paperwidth}
+      \raggedright
+      \fontsize{15}{17}\selectfont\bfseries\textcolor{vertfonce}{\insertframetitle}
+    \end{minipage}
+  \end{beamercolorbox}
+}
+
+\setbeamertemplate{footline}{
+  \ifnum\insertframenumber=1
+    \leavevmode%
+    \begin{beamercolorbox}[wd=.35\paperwidth,ht=0.35cm,dp=0.1cm,left,leftskip=0.3cm]{footline gauche}%
+      \vbox to 0.35cm{\vfil\fontsize{7}{9}\selectfont I. Razafimahenina\vfil}%
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.45\paperwidth,ht=0.35cm,dp=0.1cm,center]{footline centre}%
+      \vbox to 0.35cm{\vfil\fontsize{7}{9}\selectfont Protected Areas terrestrial Impact -- Living Conditions\vfil}%
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.20\paperwidth,ht=0.35cm,dp=0.1cm,right,rightskip=0.3cm]{footline droite}%
+      \vbox to 0.35cm{\vfil\fontsize{7}{9}\selectfont 1 / \inserttotalframenumber\vfil}%
+    \end{beamercolorbox}%
+  \fi
+}
+
+\definecolor{monVert}{RGB}{100, 160, 110}
+\setbeamercolor{button}{bg=monVert, fg=white}
+
+\setbeamercolor{section page}{bg=blancpur,fg=vertfonce}
+\setbeamertemplate{section page}{
+  \begin{center}
+    \vspace{1.8cm}
+    \begin{mdframed}[
+      linecolor=vertclair,
+      linewidth=1.2pt,
+      roundcorner=6pt,
+      backgroundcolor=white,
+      innertopmargin=15pt,
+      innerbottommargin=15pt
+    ]
+    \centering\textcolor{vertfonce}{\Large\insertsection}
+    \end{mdframed}
+  \end{center}
+}
+\AtBeginSection[]{\begin{frame}\sectionpage\end{frame}}
+
+\date{WCERE Conference -- June 29th - July 3rd 2026}
