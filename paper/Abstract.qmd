@@ -1,0 +1,58 @@
+---
+title: "Socioeconomic Impacts of Terrestrial Protected Areas"
+subtitle: "Evidence from Large-Scale National Surveys in Madagascar"
+author: 
+  - name: " Iriana Razafimahenina¹²⁴"
+  - name: "Florent Bédécarrats⁵⁶"
+  - name: "Ingrid Dallmann⁷"
+  - name: "Holimalala Randriamanampisoa¹³⁶"
+  
+format:
+  typst:
+    text-wrap: true
+    hyphenation: true
+    lang: en
+    number-sections: true
+    fig-cap-location: top
+    bibliographystyle: chicago-author-date
+    fig-dpi: 150
+    fig-format: png
+    fig-width: 6
+    fig-height: 4
+    page-numbering: none
+
+  docx: default
+
+header-includes:
+  - |
+    #set page(
+      numbering: none,
+      header: none,
+      footer: none
+    )
+---
+
+<small>
+¹ University of Antananarivo, Madagascar  
+² University of Paris Saclay, France  
+³ Development Centre for Economic Studies and Research (CERED), Madagascar  
+⁴ French National Research Institute for Sustainable Development (IRD), Madagascar, France  
+⁵ University of Saint Quentin en Yvelines (UVSQ), France  
+⁶ UMI - Sustainability and Resilience (SOURCE), France  
+⁷ Agence Française de Développement (AFD), France
+
+
+
+
+
+
+  Protected areas are the most widely used instrument for biodiversity conservation, yet their socioeconomic effects on nearby populations remain contested, particularly in low income contexts where livelihoods depend heavily on natural resources. This paper evaluates the impact of terrestrial protected areas on rural household well-being in Madagascar, exploiting geolocated socio-demographic surveys covering the period of rapid protected area expansion between 2008 and 2021. To support identification, we draw on an earlier survey wave from 1997 to assess the plausibility of parallel trends prior to treatment. We combine spatially derived socio environmental indicators with genetic matching and difference-in-difference to construct a credible counterfactual. The study follows a pre-analysis plan registered before any outcome analysis, including an ex ante power calculation indicating the ability to detect effects of approximately 7.5 wealth percentiles. We find no statistically significant average effect of protected area creation on the wealth index of households located within 10 km of protected areas established after 2008. A series of robustness checks using alternative data sources and specifications supports this result. The absence of an average effect may reflect offsetting positive and negative mechanisms, heterogeneous impacts across households or sites, or limited implementation capacity in a context of weak governance and chronic underfunding of protected areas
+
+**Keywords:** Biodiversity Conservation, Well-being, Demographic and Health surveys, Genetic matching, difference-in-difference, Madagascar
+
+**JEL classification**: Q57, I31, C31, Q56, O55
+
+
+**Corresponding authors**: iriana_ny_aina.razafimahenina@ird.fr
+
+

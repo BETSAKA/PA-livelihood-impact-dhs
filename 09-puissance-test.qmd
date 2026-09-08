@@ -17,6 +17,7 @@ Nous utilisons comme données sur les aires protégées les données de World Da
 library(tidyverse)
 library(gt)
 library(lme4)
+library(lubridate)
 library(pwr)
 library(fixest)
 library(readr)
@@ -29,7 +30,19 @@ library(writexl)
 library(wdpar)
 
 # Load data about protected areas 
-wdpa_terrestre_mod <- st_read("data/derived/wdpa_terrestre_mod.shp")
+dynamic_wdpa_metadata <- st_read("data/PA_creation/wdpa_data/dynamic_wdpa_metadata.csv") 
+
+dynamic_pa_last <- st_read("data/PA_creation/wdpa_data/dynamic_pa_fixed_last.gpkg")
+
+# Convertir sf 
+pa_sf <- sf::st_as_sf(dynamic_pa_last) %>%
+  mutate(WDPAID = as.character(WDPAID)) %>%
+  left_join(
+    dynamic_wdpa_metadata %>% mutate(WDPAID = as.character(WDPAID)),
+    by = "WDPAID"
+  ) %>%
+  st_make_valid()
+
 
 wdpa_before_2008 <- read_csv("data/derived/wdpa_before_2008.csv")
 
@@ -45,6 +58,7 @@ hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
 hr_2011_final <- readRDS("data/derived/hr_2011_final.rds")
 hr_2013_final <- readRDS("data/derived/hr_2013_final.rds")
 hr_2016_final <- readRDS("data/derived/hr_2016_final.rds")
+hr_2018_final <- readRDS("data/derived/hr_2018_final.rds")
 hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
 ```
 
@@ -54,15 +68,15 @@ L'étude va se focaliser sur les aires protégées créées entre 2008 et 2021. 
 # Definition de la fonction
 pivot_year <- 2008
 
-summary_table <- wdpa_terrestre_mod %>%
+summary_table <- pa_sf %>%
   st_drop_geometry() %>%
-  mutate(Creation_Period = if_else(STATUS_ < pivot_year,
+  mutate(Creation_Period = if_else(STATUS_YR < pivot_year,
                                    paste("Avant", pivot_year),
                                    paste("À partir de", pivot_year))) %>%
   group_by(Creation_Period) %>%
   summarise(
     Count = n(),
-    Area_km2 = sum(are_km2, na.rm = TRUE),
+    Area_km2 = sum(PA_AREA_KM2, na.rm = TRUE),
     .groups = "drop"
   )
 
@@ -98,13 +112,12 @@ Nous utilisons les valeurs du groupe de traitement pour les deux groupes car le 
 
 ```{r}
 
-# Extraire les clusters traités en 2021
+# Extract clusters treated in 2021
 treatment_clusters_2021 <- cluster_treatment_classification %>%
   filter(GROUP == "Treatment", DHSYEAR == 2021) %>%
   pull(DHSCLUST)
 
-
-# Filtrer hr_2021_final pour tenir compte que les observations traitées 
+# Filter hr_2021_final to keep only treated observations
 household_treatment_2021 <- hr_2021_final %>%
   filter(hv001 %in% treatment_clusters_2021)
 
@@ -166,37 +179,47 @@ compute_power_stats <- function(data, outcome_var) {
   # Convert Cohen's d to outcome units
   mde_in_units <- cohens_d * sd_outcome_treatment
   
-    # Create a table with the results
+  # Create a table with the results
   results_table <- tibble(
-    Métrique=c("ICC", "Écart type ajusté", "d de Cohen", 
-               "MDE en unité de la variable de résultat"),
-    Valeur=c(icc_value, sd_outcome_treatment, cohens_d, mde_in_units)
+    Metric=c("ICC", "Adjusted standard deviation", "Cohen's d", 
+             "MDE in outcome variable units"),
+    Value=c(icc_value, sd_outcome_treatment, cohens_d, mde_in_units)
   )
   
   # Display the results using gt
   gt(results_table) %>%
-    fmt_number(columns="Valeur",
+    fmt_number(columns="Value",
                decimals=4) %>%
-    cols_label(Métrique="Métrique",
-               Valeur="Valeur") %>%
+    cols_label(Metric="Metric",
+               Value="Value") %>%
     cols_align(align="center",
                columns=everything())
 }
 
-# Calculate for all treatment households using hv270 
-compute_power_stats(hr_2021_final, "wealth_centile_rural_simple") %>%
-  tab_header("Puissance statistique pour une analyse incluant ménages urbains 
-             et ruraux") %>%
-  tab_footnote("Variable de résultat = wealth_centile_rural_simple, indice de niveau de vie commun 
-               aux milieux urbains et ruraux.")
+# Calculate for treatment households only using wealth_centile_rural_simple
+power_table <- compute_power_stats(household_treatment_2021, "wealth_centile_rural_simple") %>%
+  tab_header("Statistical power for an analysis including urban 
+             and rural households") %>%
+  tab_footnote("Outcome variable = wealth_centile_rural_simple, a standard of living index common 
+               to urban and rural settings.")
+power_table
+
+# Save 
+gtsave(
+  data     = power_table,
+  filename = "output/power_analysis_table.png",
+  vwidth   = 1000,     # largeur en pixels
+  vheight  = 800,      # hauteur en pixels
+  zoom     = 3         # facteur de résolution (plus haut = plus net)
+)
 ```
 
 L'interprétation des résultats pour le calcul de puissance basé sur l'indice de richesse est la suivante:
 
--   L'ICC (Intra-cluster Correlation) est de 0,5360, ce qui indique une forte corrélation intra-grappes. Cela signifie qu'une grande partie de la variabilité de l'indice de richesse est attribuable aux différences entre les aires d'enquête.
+- L'ICC (Intra-cluster Correlation) est de 0.4478, ce qui indique une forte corrélation intra-grappes. Cela signifie qu'une grande partie de la variabilité de l'indice de richesse est attribuable aux différences entre les aires d'enquête.
 
--   L'écart-type ajusté de 29,8548 indique la dispersion des scores de l'indice de richesse autour de la moyenne. Etant donné que l'indice varie entre 1 et 5, cet écrat-type est relativement important.
+- L'écart-type ajusté de 27.3465 indique la dispersion des scores de l'indice de richesse autour de la moyenne. Etant donné que l'indice varie entre 1 et 5, cet écrat-type est relativement important.
 
--   Le d de Cohen de 0.1334 renvoie à un effet d'une ampleur modérée selon les normes conventionnelles. Cela signifie qu'une différence significative devrait être détectable entre les groupes de traitement et de contrôle après le processus de matching. Il faut cependant le convertir en unités de résultat pour se faire une idée.
+- Le d de Cohen de 0.3504 renvoie à un effet d'une ampleur modérée selon les normes conventionnelles. Cela signifie qu'une différence significative devrait être détectable entre les groupes de traitement et de contrôle après le processus de matching. Il faut cependant le convertir en unités de résultat pour se faire une idée.
 
--   Le MDE en unités de résultat est de 3,8504, ce qui indique que l'étude est capable de détecter un changement minim
+- Le MDE en unités de résultat est de 9.5820, ce qui indique que l'étude est capable de détecter un changement minim

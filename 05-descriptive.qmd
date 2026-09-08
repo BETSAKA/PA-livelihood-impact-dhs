@@ -26,19 +26,19 @@ wdpa_from_2008 <- read.csv("data/derived/wdpa_from_2008.csv")
 
 # Fonction utilitaire pour produire les statistiques d'une période
 get_descriptive_stats <- function(data, periode_label) {
-  rep_area_num <- as.numeric(data$REP_AREA)
+  pa_area_num <- as.numeric(data$PA_AREA_KM2)
   
-  stats <- psych::describe(rep_area_num)[, c("n", "mean", "sd", "median", "min", "max")]
+  stats <- psych::describe(pa_area_num)[, c("n", "mean", "sd", "median", "min", "max")]
   
   min_name <- data %>%
-    filter(rep_area_num == min(rep_area_num, na.rm = TRUE)) %>%
-    pull(ORIG_NAME) %>%
+    filter(pa_area_num == min(pa_area_num, na.rm = TRUE)) %>%
+    pull(NAME) %>%
     unique() %>%
     paste(collapse = "; ")
   
   max_name <- data %>%
-    filter(rep_area_num == max(rep_area_num, na.rm = TRUE)) %>%
-    pull(ORIG_NAME) %>%
+    filter(pa_area_num == max(pa_area_num, na.rm = TRUE)) %>%
+    pull(NAME) %>%
     unique() %>%
     paste(collapse = "; ")
   
@@ -61,8 +61,24 @@ desc_AP_combined <- bind_rows(desc_AP_before, desc_AP_from) %>%
   arrange(mean) %>%
   select(periode, n, mean, sd, median, min, aire_min, max, aire_max)
 
+
+desc_AP_combined <- bind_rows(desc_AP_before, desc_AP_from) %>%
+  arrange(mean) %>%
+  select(periode, n, mean, sd, median, min, aire_min, max, aire_max) %>%
+  rename(
+    Period = periode,
+    `Number of PAs` = n,
+    `Mean (km²)` = mean,
+    `Standard deviation (km²)` = sd,
+    `Median (km²)` = median,
+    `Minimum (km²)` = min,
+    `Minimum PA` = aire_min,
+    `Maximum (km²)` = max,
+    `Maximum PA` = aire_max
+  )
+
 # Affichage du tableau 
-kable(desc_AP_combined, digits = 2, caption = "Statistiques descriptives des aires protégées (REP_AREA)")
+kable(desc_AP_combined, digits = 2, caption = "Statistiques descriptives des aires protégées (PA_AREA_KM2)")
 
 # Enregistrement du tableau
 write_csv(desc_AP_combined, "data/derived/tableau_descriptive des aires protégée.csv")
@@ -70,14 +86,14 @@ write_csv(desc_AP_combined, "data/derived/tableau_descriptive des aires protég�
 # Fonction pour produire les 10 plus petites aires protégées
 get_top_small_aires <- function(df, periode, top_n = 10) {
   df %>%
-    mutate(REP_AREA = as.numeric(REP_AREA)) %>%
-    arrange(REP_AREA) %>%
+    mutate(PA_AREA_KM2 = as.numeric(PA_AREA_KM2)) %>%
+    arrange(PA_AREA_KM2) %>%
     slice_head(n = top_n) %>%
     mutate(
       rank_number = row_number(),
       periode = periode
     ) %>% 
-    select(rank_number, ORIG_NAME, REP_AREA, periode) 
+    select(rank_number, NAME, PA_AREA_KM2, periode) 
 }
 
 # Appliquer aux deux périodes

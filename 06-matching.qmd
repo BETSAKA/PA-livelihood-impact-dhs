@@ -169,7 +169,7 @@ need_overwrite <- function(year) {
 }
 
 # --- Exécution avec progression ---
-yrs <- c(1997, 2008, 2011, 2013, 2016, 2021)
+yrs <- c(1997, 2008, 2011, 2013, 2016, 2018, 2021)
 
 
 res_list <- vector("list", length(yrs))
@@ -202,12 +202,127 @@ bal_tabs <- purrr::imap(res_list, ~ {if (!is.null(.x)) {
   }
 })
 
+result_list <- result_list %>%
+  rename(
+    Year = Année,
+    Total_observations = `Total des observations`,
+    after_filtre_NA = `Après filtre/NA`,
+    Traited = Traités,
+    Controls = Contrôles,
+    N_matched = `N appariés`
+  )
+
 saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years.rds")
 
 print(result_list)
 ```
 
 Nous obtenons un tableau qui présente, pour chaque année d'analyse, le nombre total d'observations initialement disponibles, le nombre d'observations conservées après exclusion des observations ne relevant ni du groupe Treatment ni du groupe Control, ainsi que celles présentant des valeurs manquantes sur les variables utilisées pour le matching. Le tableau indique également les effectifs des groupes traités et contrôles avant et après le matching.
+
+
+## Number of observations by survey round 
+
+```{r}
+# Produce a table of observation counts by survey year
+# Columns: Year, Survey, Raw_HH_all, Raw_HH_rural, Excluded_group,
+#          Treatment_Control, After_NA_drop, Treated, Matched_rows
+
+library(tidyverse)
+library(haven)
+
+years <- c(1997, 2008, 2011, 2013, 2016, 2018, 2021)
+survey_map <- c(
+  `1997` = "DHS", `2008` = "DHS", `2011` = "MIS",
+  `2013` = "MIS", `2016` = "MIS", `2018` = "MICS", `2021` = "DHS"
+)
+
+derived_dir  <- "data/derived"
+dhs_raw_dir  <- "data/raw/dhs"
+mics_hh_file <- "data/raw/mics/2018/SPSS datasets/hh.sav"
+
+# --- Pre-compute Raw_HH_all from raw source files ---
+
+# DHS/MIS: read only first column of each HR .DTA (fast row count)
+dhs_hr_paths <- list.files(dhs_raw_dir, pattern = "HR.*\\.DTA$",
+                           recursive = TRUE, full.names = TRUE, ignore.case = TRUE)
+dhs_hr_paths <- dhs_hr_paths[!grepl("SPSS|wealth", dhs_hr_paths, ignore.case = TRUE)]
+
+dhs_all_map <- map_int(dhs_hr_paths, function(f) {
+  tryCatch(nrow(read_dta(f, col_select = 1L)), error = function(e) NA_integer_)
+}) |>
+  set_names(str_extract(dhs_hr_paths, "DHS_(\\d{4})", group = 1))
+
+# MICS 2018: household questionnaire file
+mics_all <- tryCatch(
+  nrow(read_sav(mics_hh_file, col_select = 1L)),
+  error = function(e) NA_integer_
+)
+
+# --- Build table row by row ---
+
+out <- map_dfr(years, function(y) {
+  y_chr         <- as.character(y)
+  hr_file       <- file.path(derived_dir, paste0("hr_", y_chr, "_final.rds"))
+  matched_file  <- file.path(derived_dir, paste0("data_matched_", y_chr, ".rds"))
+  matchres_file <- file.path(derived_dir, paste0("matching_result_", y_chr, ".rds"))
+
+  # Raw HH (all): from raw source files
+  Raw_HH_all <- if (y == 2018) mics_all else as.integer(dhs_all_map[y_chr])
+
+  # Defaults
+  Raw_HH_rural      <- NA_integer_
+  Excluded_group    <- NA_integer_
+  Treatment_Control <- NA_integer_
+  After_NA_drop     <- NA_integer_
+  Treated           <- NA_integer_
+  Matched_rows      <- NA_integer_
+
+  # hr_final: rural-only file with GROUP assigned and matching covariates
+  if (file.exists(hr_file)) {
+    hr           <- readRDS(hr_file)
+    Raw_HH_rural <- nrow(hr)
+    if ("GROUP" %in% names(hr)) {
+      Excluded_group    <- sum(hr$GROUP == "Excluded", na.rm = TRUE)
+      Treatment_Control <- sum(hr$GROUP %in% c("Treatment", "Control"), na.rm = TRUE)
+      Treated           <- sum(hr$GROUP == "Treatment", na.rm = TRUE)
+    }
+  }
+
+  # matching_result: matchit object — X matrix rows = inputs to matching (after NA drop)
+  if (file.exists(matchres_file)) {
+    mr <- readRDS(matchres_file)
+    if (is.list(mr) && "X" %in% names(mr)) {
+      After_NA_drop <- nrow(mr$X)
+      if (is.na(Treated) && "treat" %in% names(mr)) {
+        Treated <- sum(mr$treat == 1L)
+      }
+    }
+  }
+
+  # Matched rows: actual row count from matched dataset (not 2 × Treated)
+  if (file.exists(matched_file)) {
+    Matched_rows <- nrow(readRDS(matched_file))
+  }
+
+  tibble(
+    Year              = y,
+    Survey            = survey_map[y_chr],
+    Raw_HH_all        = Raw_HH_all,
+    Raw_HH_rural      = Raw_HH_rural,
+    Excluded_group    = Excluded_group,
+    Treatment_Control = Treatment_Control,
+    After_NA_drop     = After_NA_drop,
+    Treated           = Treated,
+    Matched_rows      = Matched_rows
+  )
+})
+
+# Write and print
+dir.create("output", showWarnings = FALSE)
+write_csv(out, file.path("output", "obs_by_year.csv"))
+write_csv(out, file.path("paper/tables", "obs_by_year.csv"))
+print(out)
+```
 
 ## Checking covariate balance
 
@@ -284,6 +399,7 @@ hr_2008_final <- readRDS("data/derived/hr_2008_final.rds")
 hr_2011_final <- readRDS("data/derived/hr_2011_final.rds")
 hr_2013_final <- readRDS("data/derived/hr_2013_final.rds")
 hr_2016_final <- readRDS("data/derived/hr_2016_final.rds")
+hr_2018_final <- readRDS("data/derived/hr_2018_final.rds")
 hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
 
 # Distribution des covariables
@@ -293,6 +409,7 @@ data_list <- list(
   "2011" = hr_2011_final,
   "2013" = hr_2013_final,
   "2016" = hr_2016_final,
+  "2018" = hr_2018_final,
   "2021" = hr_2021_final 
 )
 
@@ -308,8 +425,8 @@ data_list <- list(
     scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
     labs(
       title = paste("Covariate distribution before matching(", year, ")", sep = ""),
-      x = "Valeur de la covariable",
-      y = "Densité",
+      x = "Covariate value",
+      y = "Density",
       fill = "Group"
     ) + 
     theme_minimal()
@@ -320,6 +437,7 @@ print(density_plot(hr_2008_final, 2008, matching_variables))
 print(density_plot(hr_2011_final, 2011, matching_variables))
 print(density_plot(hr_2013_final, 2013, matching_variables))
 print(density_plot(hr_2016_final, 2016, matching_variables))
+print(density_plot(hr_2018_final, 2018, matching_variables))
 print(density_plot(hr_2021_final, 2021, matching_variables))
 
 # Combiner les plots
@@ -330,14 +448,30 @@ p2008 <- density_plot(hr_2008_final, 2008, matching_variables)
 p2011 <- density_plot(hr_2011_final, 2011, matching_variables)
 p2013 <- density_plot(hr_2013_final, 2013, matching_variables)
 p2016 <- density_plot(hr_2016_final, 2016, matching_variables)
+p2018 <- density_plot(hr_2018_final, 2018, matching_variables)
 p2021 <- density_plot(hr_2021_final, 2021, matching_variables)
 
 # Combiner en grille (2 lignes x 3 colonnes)
 combined <- (p1997 | p2008 | p2011) /
-            (p2013 | p2016 | p2021)
+            (p2013 | p2016 | p2018) /
+  (p2021)
 
 print(combined)
 
+
+# Save the plot
+purrr::walk(yrs, function(y){
+  
+  p_before <- density_plot(hr_list[[as.character(y)]], y, matching_variables)
+  
+  ggsave(
+    filename = paste0("data/derived/density_before_", y, ".png"),
+    plot = p_before,
+    width = 10,
+    height = 6,
+    dpi = 300
+  )
+})
 ```
 
 Ces graphiques présentent la distribution des covariables avant le matching entre les clusters situés à proximité des aires protégées (en violet) et ceux qui en sont éloignés (vert). Chaque panneau illustre les covariables utilisées dans le matching à savoir le taux de couvert forestier en 2000, la pente et l'altitude, la densité de population en 2000, la pente , l'accessibilité en 2000 (temps estimé de trajet en voiture des ménages jusqu'aux villes les plus proches).
@@ -347,52 +481,53 @@ Ces graphiques présentent la distribution des covariables avant le matching ent
 Le test après appariement sera un test visuel de la qualité du matching en comparant la distribution de chaque covariable à partir d'un plot. La méthode graphique offre une vue d'ensemble de la distribution des covariables. Le graphique facilite ainsi l'identification des déséquilibres à différents niveaux de la distribution. Lorsque les points Q-Q plot se situent près de la diagonale, le quantile des deux distributions sont similaires, signalant ainsi un bon équilibre. Si les points s'écartent de la diagonale, cela indique que la distribution de l'échantillon diffère de la distribution théorique.
 
 ```{r}
-# Balance test after matching: Quantile- quantile QQ Plot analysis
-check_balance_after <- function(data_matched, year, matching_variables, plot_dir = "plots") {
+# Load matched data
+matched_list <- setNames(
+  lapply(yrs, function(y) read_rds(glue::glue("data/derived/data_matched_{y}.rds"))),
+  yrs
+)
+
+density_plot_after <- function(data, year, matching_variables){
   
-  # Balance après appariement
-  bal_after <- cobalt::bal.tab(
-    x = data_matched[, matching_variables],
-    treat = data_matched$GROUP,
-    un = TRUE,
-    abs = TRUE,
-    estimand = "ATT"
-  )
-  
-  print(bal_after)
-  
-  # QQ Plot
-  year_dir <- file.path(plot_dir, glue("QQplots_{year}"))
-  dir.create(year_dir, recursive = TRUE, showWarnings = FALSE)
-  
-  matching_variables %>% walk(function(var){
-  if(!is.numeric(data_matched[[var]])){
-    return(NULL)
-  }
-    
-    p <- ggqqplot(
-      data_matched, x = var, color = "GROUP",
-      palette = c("#1f77b4", "#ff7f0e"),
-      title = glue("QQ Polt - {var} ({year})")
+  data %>%
+    filter(GROUP %in% c("Treatment", "Control")) %>%
+    mutate(GROUP = factor(GROUP, levels = c("Control", "Treatment"))) %>%
+    pivot_longer(cols = all_of(matching_variables),
+                 names_to = "variable", values_to = "value") %>%
+    ggplot(aes(x = value, fill = GROUP)) +
+    geom_density(alpha = 0.5, color = "black", linewidth = 0.7, adjust = 0.7) +
+    facet_wrap(~variable, scales = "free") + 
+    scale_fill_manual(values = c("Control" = "green", "Treatment" = "blue")) +
+    labs(
+      title = paste("Covariate distribution after matching (", year, ")", sep = ""),
+      x = "Covariate value",
+      y = "Density",
+      fill = "Group"
     ) + 
-      geom_abline(slope = 1, intercept = 0, linetype = "dashed") + 
-      theme_minimal() +
-      labs(x = "Quantiles théoriques", y = "Quantiles observés", color = "Groupe") + 
-      theme(plot.title = element_text(hjust = 0.5))
-    
-    
-    ggsave(
-      filename = file.path(year_dir, glue("QQplot_{var}_{year}.png")), plot = p, width = 7, height = 5
-    )
-  })
-  
-  return(list(balance = bal_after))
+    theme_minimal()
 }
 
-results_list <- map(yrs, function(y){
-  data_y <- readRDS(glue("data/derived/data_matched_{y}.rds"))
-  check_balance_after(data_y, y,matching_variables)
+print(density_plot_after(matched_list[["1997"]], 1997, matching_variables))
+print(density_plot_after(matched_list[["2008"]], 2008, matching_variables))
+print(density_plot_after(matched_list[["2021"]], 2021, matching_variables))
+
+
+# Save the file 
+purrr::walk(yrs, function(y){
+  
+  data_y <- readRDS(glue::glue("data/derived/data_matched_{y}.rds"))
+  
+  p_after <- density_plot_after(data_y, y, matching_variables)
+  
+  ggsave(
+    filename = paste0("data/derived/density_after_", y, ".png"),
+    plot = p_after,
+    width = 10,
+    height = 6,
+    dpi = 300
+  )
 })
+
 ```
 
 #### Balance test after matching: Histogram
@@ -444,35 +579,40 @@ plot_mirror_hist(2008,"treecover_area_2000")
 plot_mirror_hist(2011,"treecover_area_2000")
 plot_mirror_hist(2013,"treecover_area_2000")
 plot_mirror_hist(2016,"treecover_area_2000")
+plot_mirror_hist(2018,"treecover_area_2000")
 plot_mirror_hist(2021,"treecover_area_2000")
 plot_mirror_hist(1997,"slope_2000")
 plot_mirror_hist(2008,"slope_2000")
 plot_mirror_hist(2011,"slope_2000")
 plot_mirror_hist(2013,"slope_2000")
 plot_mirror_hist(2016,"slope_2000")
+plot_mirror_hist(2018,"slope_2000")
 plot_mirror_hist(2021,"slope_2000")
 plot_mirror_hist(1997,"elevation_2000")
 plot_mirror_hist(2008,"elevation_2000")
 plot_mirror_hist(2011,"elevation_2000")
 plot_mirror_hist(2013,"elevation_2000")
 plot_mirror_hist(2016,"elevation_2000")
+plot_mirror_hist(2018,"elevation_2000")
 plot_mirror_hist(2021,"elevation_2000")
 plot_mirror_hist(1997,"population_count_2000")
 plot_mirror_hist(2008,"population_count_2000")
 plot_mirror_hist(2011,"population_count_2000")
 plot_mirror_hist(2013,"population_count_2000")
 plot_mirror_hist(2016,"population_count_2000")
+plot_mirror_hist(2018,"population_count_2000")
 plot_mirror_hist(2021,"population_count_2000")
 plot_mirror_hist(1997,"traveltime_2000_2000")
 plot_mirror_hist(2008,"traveltime_2000_2000")
 plot_mirror_hist(2011,"traveltime_2000_2000")
 plot_mirror_hist(2013,"traveltime_2000_2000")
 plot_mirror_hist(2016,"traveltime_2000_2000")
+plot_mirror_hist(2018,"traveltime_2000_2000")
 plot_mirror_hist(2021,"traveltime_2000_2000")
 
 plots <- list()
 
-for (y in c(1997, 2008, 2011, 2013, 2016, 2021)) {
+for (y in c(1997, 2008, 2011, 2013, 2016, 2018, 2021)) {
   for (v in matching_variables) {
     plots[[paste0(v, "_", y)]] <- plot_mirror_hist(y, v)
   }
@@ -489,3 +629,186 @@ wrap_plots(plots[grep("^slope_2000", names(plots))], ncol = 3)
 ```
 
 L'histogramme compare les moyennes des variables de contrôle après le matching entre les groupes de traitement (en bleu) et de contrôle (en vert) pour chaque année.
+
+```{r}
+library(gt)
+
+# SMD
+yrs <- c(1997, 2008, 2011, 2013, 2016, 2018, 2021)
+
+bal_after <- lapply(yrs, function(y){
+  m_out <- readRDS(glue("data/derived/matching_result_{y}.rds"))
+  bt <- bal.tab(m_out, un = TRUE, abs = TRUE, m.threshold = 0.1)
+  saveRDS(bt, glue("data/derived/bal_tab_{y}.rds"))
+  bt
+})
+
+names(bal_after) <- yrs
+
+balance_after_table <- imap_dfr(bal_after, function(bt, year) {
+  
+  bt$Balance %>%
+    as.data.frame() %>%
+    rownames_to_column("Variable") %>%
+    transmute(
+      Year = as.integer(year),
+      Variable,
+      SMD = Diff.Adj,
+      Equilibre = if_else(abs(Diff.Adj) <= 0.1, "Balanced", "unbalanced")
+    )
+})
+
+print(balance_after_table)
+
+balance_long <- imap_dfr(bal_after, function(bt, year) {
+  
+  bt$Balance %>%
+    as.data.frame() %>%
+    rownames_to_column("Variable") %>%
+    transmute(
+      Year = as.integer(year),
+      Variable,
+      SMD_before = Diff.Un,
+      SMD_after  = Diff.Adj
+    )
+})
+
+# A inclure dans le manuscrit-----
+# 2008
+balance_long %>%
+  filter(Year == 2008) %>%
+  print()
+
+
+# Pour les annexes
+print(balance_long)
+
+
+# Pour tous les années confondues
+make_balance_table <- function(data, year, csv_path = NULL, folder = "data/derived") {
+  df_year <- data %>% filter(Year == year)
+  
+  tab <- df_year %>%
+    gt() %>%
+    tab_header(
+      title = "Covariates balance after matching",
+      subtitle = paste("Year", year)
+    ) %>%
+    cols_label(
+      Year = "Year",
+      Variable = "Variable",
+      SMD_before = "SMD before",
+      SMD_after  = "SMD after"
+    ) %>%
+    fmt_number(
+      columns = c(SMD_before, SMD_after),
+      decimals = 3
+    )
+  
+  if (!is.null(csv_path)) {
+    write.csv(df_year, csv_path, row.names = FALSE)
+  }
+  
+  return(tab)
+}
+
+# Générer les tableaux pour 1997, 2008 et 2021
+tab_1997 <- make_balance_table(balance_long, 1997, "balance_long_1997.csv")
+tab_2008 <- make_balance_table(balance_long, 2008, "balance_long_2008.csv")
+tab_2021 <- make_balance_table(balance_long, 2021, "balance_long_2021.csv")
+
+# Afficher les tableaux
+tab_1997
+tab_2008
+tab_2021
+
+
+# Tableau pour tous les années confondues
+balance_long %>%
+  gt() %>%
+  tab_header(
+    title = "Covariates balance after matching",
+    subtitle = "All year combined"
+  ) %>%
+  cols_label(
+    Year = "Year",
+    Variable = "Variable",
+    SMD_before = "SMD before",
+    SMD_after  = "SMD after"
+  )
+
+write.csv(balance_long,"data/derived/balance_long_all.csv", row.names = FALSE)
+
+```
+
+#### Check balance before and after matching
+
+```{r}
+# Sélection des années et format wide
+balance_wide <- balance_long %>%
+  filter(Year %in% c(2008, 2021)) %>%
+  pivot_wider(
+    names_from  = Year,
+    values_from = c(SMD_before, SMD_after),
+    names_glue  = "{Year}_{.value}"
+  ) %>%
+  arrange(Variable)
+
+# Renommage des variables (méthode robuste)
+var_labels <- c(
+  "treecover_area_2000"   = "Forest cover rates in 2000 (%)",
+  "elevation_2000"         = "Elevation (m)",
+  "slope_2000"             = "Slope (%)",
+  "population_count_2000"  = "Population density in 2000 (km²)",
+  "traveltime_2000_2000"   = "Accessibility in 2000 (min)"
+)
+
+balance_wide <- balance_wide %>%
+  mutate(
+    Variable = ifelse(Variable %in% names(var_labels),
+                      var_labels[Variable],
+                      Variable)
+  )
+
+# Tableau gt
+tab_smd <- balance_wide %>%
+  gt() %>%
+  
+  cols_label(
+    Variable = "Variable",
+    `2008_SMD_before` = "Before matching",
+    `2008_SMD_after`  = "After matching",
+    `2021_SMD_before` = "Before matching",
+    `2021_SMD_after`  = "After matching"
+  ) %>%
+  
+  tab_spanner(
+    label = "2008",
+    columns = c(`2008_SMD_before`, `2008_SMD_after`)
+  ) %>%
+  
+  tab_spanner(
+    label = "2021",
+    columns = c(`2021_SMD_before`, `2021_SMD_after`)
+  ) %>%
+  
+  fmt_number(
+    columns = c(`2008_SMD_before`, `2008_SMD_after`,
+                `2021_SMD_before`, `2021_SMD_after`),
+    decimals = 3
+  ) %>%
+  
+  tab_header(
+    title = "Covariates balance before and after matching"
+  ) %>%
+  
+  cols_align(
+    align = "center",
+    columns = -Variable
+  )
+
+tab_smd
+
+saveRDS(tab_smd, "paper/tables/tab_smd.rds")
+
+```

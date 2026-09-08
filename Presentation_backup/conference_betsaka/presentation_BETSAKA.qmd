@@ -1,0 +1,491 @@
+---
+title: "Impact des Aires Protégées sur les Conditions de Vie des Ménages à Madagascar"
+author: 
+  - name: "Iriana Razafimahenina"
+    affiliations: "IRD - CERED - UMI SOURCE"
+  - name: "Ingrid Dallmann"
+    affiliations: "Agence Française de Développement (AFD)"
+date: "2026-06-23"
+institute: |
+  Journées du Projet BETSAKA
+lang: fr
+format:
+  beamer:
+    fontsize: 16pt # Très lisible au fond de l'amphi et laisse de la place
+    aspectratio: 169
+    theme: Madrid
+    colortheme: default
+    navigation: empty
+    slide-level: 2
+bibliography: "references.bib"
+header-includes:
+  - |
+    \usepackage{graphicx}
+    \usepackage[table]{xcolor}
+    \usepackage{colortbl}
+    \usepackage{multirow}
+    \usepackage{xcolor}
+    \usepackage{booktabs}
+    \usepackage{array}
+    \usepackage{mdframed}
+    % ── Couleurs vertes ───────────────────────────────────────────────
+    \definecolor{vertfonce}{RGB}{46,125,50}
+    \definecolor{vertmoyen}{RGB}{76,153,0}
+    \definecolor{vertclair}{RGB}{200,230,201}
+    \definecolor{vertpale}{RGB}{232,245,233}
+    \definecolor{blancpur}{RGB}{255,255,255}
+    \definecolor{textefonce}{RGB}{33,33,33}
+    \definecolor{orangeaccent}{RGB}{227,114,34}
+    % ── Thème Beamer : layout Madrid en vert ─────────────────────────
+    \setbeamercolor{background canvas}{bg=blancpur}
+    \setbeamercolor{palette primary}{bg=vertfonce,fg=white}
+    \setbeamercolor{palette secondary}{bg=vertmoyen,fg=white}
+    \setbeamercolor{palette tertiary}{bg=vertclair,fg=textefonce}
+    \setbeamercolor{palette quaternary}{bg=vertfonce,fg=white}
+    \setbeamercolor{structure}{fg=vertfonce}
+    \setbeamercolor{section in toc}{fg=vertfonce}
+    \setbeamercolor{title}{fg=vertfonce,bg=blancpur}
+    \setbeamercolor{subtitle}{fg=orangeaccent}
+    \setbeamercolor{author}{fg=textefonce}
+    \setbeamercolor{date}{fg=orangeaccent}
+    \setbeamercolor{institute}{fg=textefonce}
+    \setbeamercolor{block title}{bg=vertfonce,fg=white}
+    \setbeamercolor{block body}{bg=vertpale,fg=textefonce}
+    \setbeamercolor{itemize item}{fg=vertfonce}
+    \setbeamercolor{itemize subitem}{fg=vertmoyen}
+    
+    % ── Polices équilibrées pour l'amphi ─────────────────────────────
+    \setbeamerfont{normal text}{size=\normalsize}
+    \setbeamerfont{title}{size=\Large,series=\bfseries}
+    \setbeamerfont{subtitle}{size=\normalsize}
+    
+    % Listes à puces proportionnées
+    \setbeamerfont{itemize/enumerate body}{size=\normalsize}
+    \setbeamerfont{itemize/enumerate subbody}{size=\small}
+    
+    % Blocs (Exemples, Définitions...)
+    \setbeamerfont{block title}{size=\normalsize,series=\bfseries}
+    \setbeamerfont{block body}{size=\normalsize}
+
+    % ── On laisse le headline vide pour ne pas interférer ────────────
+    \setbeamertemplate{headline}{}
+
+    % ── Redéfinition propre du Frametitle (Logo + Titre côte à côte) ──
+    \setbeamertemplate{frametitle}{
+      \nopagebreak
+      \begin{beamercolorbox}[wd=\paperwidth,ht=1.8cm,dp=0.2cm]{blancpur}
+        \vspace{0.2cm}
+        \hspace{0.4cm}
+        % Colonne de gauche : Le Logo betsaka
+        \begin{minipage}[c]{0.25\paperwidth}
+          \includegraphics[height=1.4cm]{images/betsaka_logo.png}
+        \end{minipage}%
+        % Colonne de droite : Le titre de la diapositive
+        \begin{minipage}[c]{0.70\paperwidth}
+          \raggedright
+          \fontsize{15}{17}\selectfont\bfseries\textcolor{vertfonce}{\insertframetitle}
+        \end{minipage}
+      \end{beamercolorbox}
+    }
+    
+    % ── Footline optimisée (Uniquement sur la première slide) ────────
+    \setbeamertemplate{footline}{
+      \ifnum\insertframenumber=1
+        \setbeamercolor{footline gauche}{bg=vertfonce,fg=white}
+        \setbeamercolor{footline centre}{bg=vertmoyen,fg=white}
+        \setbeamercolor{footline droite}{bg=vertfonce,fg=white}
+        \leavevmode%
+        \begin{beamercolorbox}[wd=.35\paperwidth,ht=0.5cm,dp=0.2cm,left,leftskip=0.3cm]{footline gauche}%
+          \vbox to 0.5cm{\vfil\fontsize{8}{10}\selectfont I. Razafimahenina, I. Dallmann\vfil}%
+        \end{beamercolorbox}%
+        \begin{beamercolorbox}[wd=.45\paperwidth,ht=0.5cm,dp=0.2cm,center]{footline centre}%
+          \vbox to 0.5cm{\vfil\fontsize{8}{10}\selectfont Impact des Aires Protégées -- Conditions de Vie\vfil}%
+        \end{beamercolorbox}%
+        \begin{beamercolorbox}[wd=.20\paperwidth,ht=0.5cm,dp=0.2cm,right,rightskip=0.3cm]{footline droite}%
+          \vbox to 0.5cm{\vfil\fontsize{8}{10}\selectfont 1 / \inserttotalframenumber\vfil}%
+        \end{beamercolorbox}%
+      \fi
+    }
+    
+    % ── Slide de transition de section ───────────────────────────────
+    \setbeamercolor{section page}{bg=blancpur,fg=vertfonce}
+    \setbeamertemplate{section page}{
+      \begin{center}
+        \vspace{1.8cm}
+        \begin{mdframed}[
+          linecolor=vertclair,
+          linewidth=1.2pt,
+          roundcorner=6pt,
+          backgroundcolor=white,
+          innertopmargin=15pt,
+          innerbottommargin=15pt
+        ]
+        \centering\textcolor{vertfonce}{\Large\insertsection}
+        \end{mdframed}
+      \end{center}
+    }
+    \AtBeginSection[]{\frame{\sectionpage}}
+    
+    % ── Logos de la page de titre (Taille amphi : 1cm) ───────────────
+    \titlegraphic{
+      \vspace{0.2cm}
+      \includegraphics[height=1.0cm]{images/betsaka_logo.png}\hspace{0.2cm}
+      \includegraphics[height=1.0cm]{images/KfW_logo.png}\hspace{0.2cm}
+      \includegraphics[height=1.0cm]{images/logo_AFD.png}\hspace{0.2cm}
+      \includegraphics[height=1.0cm]{images/logo_univ_tana.png}\hspace{0.2cm}
+      \includegraphics[height=1.0cm]{images/logo_univ_PS.png}\hspace{0.2cm}
+      \includegraphics[height=1.0cm]{images/logo_EAD2.png}\hspace{0.2cm}
+      \includegraphics[height=1.0cm]{images/logo_EDSHS.jpg}\hspace{0.2cm}
+      \includegraphics[height=1.0cm]{images/logo_cered.png}\hspace{0.2cm}
+      \includegraphics[height=1.0cm]{images/logo_source.jpg}
+    }
+editor_options:
+  chunk_output_type: console
+---
+
+
+# Introduction {background-color="#f8f9fa"}
+
+## Les aires protégées poursuivent des objectifs de conservation
+Une aire protégée est définie comme "un **espace géographique** clairement défini, reconnu, consacré et géré, par tout moyen efficace, juridique ou autre, afin **d'assurer à long terme la conservation de la nature** ainsi que les **services écosystémiques** et les **valeurs culturelles** qui lui sont associées. [@Day2008]
+
+**Trois objectifs principaux:**
+
+  - Conservation de la nature - forêts, biodiversité, espèces, écosystèmes
+  - Conservation des services écosystémiques - bois, eau douce, plantes médicinales, services de régulation et culturels  
+  - Conservation des valeurs culturelles - pratiques traditionnelles de gestion, sites sacrés
+
+=> Ces Objectifs de conservation sont-ils compatibles avec l'amélioration des conditions de vie des populations riveraines? 
+
+## Les effets sur les populations locales restent mal connus et contradictoires 
+
+ - **Opportunités économiques**
+ 
+    - Développement du tourisme local [@Naidoo2019], 
+    - Création d'emplois liées à la conservation [@baliettiLaborMarketImpacts2024]
+    - Mesures de compensation [@Poudyal2018]
+    - Amélioration des services écosystémiques [@Xu2023]
+      
+ - **Restriction et coûts** 
+Limitation de l'accès aux ressources naturelles - cueillette, chasse, pêche, plantes médicinales [@Kandel2022]
+      
+ - **Des résultats hétérogènes**
+Les effets varient selon les méthodes d'évaluation, le contexte institutionnel et la localisation géographique [@Kandel2022]. 
+      
+
+##  Notre question: **dans quelle mesure les AP affectent-elles le niveau de vie des ménages? **
+
+
+::: {.columns align=top}
+
+::: {.column width="48%"}
+\textcolor{vertfonce}{\textbf{Questions de recherche}}
+
+\small
+* **Q1 :** Est-ce que les AP dégradent les conditions de vie des populations locales ?
+* **Q2 :** Est-ce que les AP accroissent les inégalités au sein des populations locales ?
+* **Q3 :** Est-ce que les impacts des AP varient selon le type d'AP ?
+:::
+
+::: {.column width="4%"}
+
+:::
+
+::: {.column width="48%"}
+\textcolor{orangeaccent}{\textbf{Hypothèses}}
+
+\small
+* **H1 :** Les aires protégées réduisent le niveau de vie des ménages voisins en limitant l'accès aux ressources naturelles, sans compensations ni avantages suffisants. 
+* **H2 :** Les aires protégées exacerbent les inégalités économiques parmi les communautés voisines. 
+* **H3:** Les impacts ds aires protégées varient d'une aire protégée à l'autre en fonction de la gouvernance, de la participation communautaire et des approches de gestion 
+:::
+
+:::
+
+## Madagascar: un laboratoire idéal pour tester ces effets (1/2)
+
+**Les études empiriques existantes sont très localisées et agrégées au niveau communal** [@Mammides2020a]: 
+
+  - Analyse des coûts d'opportunités à Ranomafana (Sud-Est) [@Ferraro2002]: en moyenne, les ménages supportent 19 à 70$/an de coûts d'opportunité
+  
+  - Evaluation de l'efficacité des investissements en matière de conservation et de développement dans le corridor d'Ankeniheny-Zahamena (Nord-Est/centre-Est)[@Tabor2017]  
+  
+  - Impacts contrastés des aires protégées et cultures de rente sur le bien être (Nord-est) [@Llopis2023a]: Effets négatifs accrus sur les ménages dépendants de la forêt  
+
+## Madagascar: un laboratoire idéal pour tester ces effets (2/2)
+::: {.columns align=top}
+
+::: {.column width="48%"}
+\small
+
+**La superficie des AP et la population riveraine exposée ont presque triplé entre 2008 et 2021**
+
+- 2008 : 3,6% du territoire — 9% pop. à < 10 km d'une AP  
+- 2021 : 10,8% du territoire — 28% pop. à < 10 km d'une AP  
+
+- **Un contexte socio-économique fragile**
+
+- Pays le plus pauvre au sens de l’ODD 1-1 [@Conceicao2024]  
+- Forte dépendance aux ressources naturelles [@Llopis2023]  
+- Faible capacité de l’État [@Hanson2021]
+:::
+
+::: {.column width="5%"}
+
+:::
+
+::: {.column width="48%"}
+\small
+
+```{r}
+#| echo: false
+#| out-width: "90%"
+
+knitr::include_graphics("images/_DSC5560.jpg")
+```
+\tiny Source : © Falihery-Francisco / AFD
+:::
+
+:::
+
+# Contribution
+
+- Analyse couvrant **84 aires protégées terrestres créées entre 2008 et 2021**
+- Evaluation quantitative de la création des aires protégées sur les conditions de vie des ménages 
+
+\begin{table}[ht]
+\centering
+
+\begin{tabular}{lrr}
+\hline
+\textbf{Période de création} & \textbf{Nombre d'Aire protégée$^{a}$} & \textbf{Superficie (km$^{2}$)} \\
+\hline
+Avant 2008     & 60  & 47,159.76 \\
+A partir de 2008 & 84  & 38,983.40 \\
+\hline
+\textbf{Total}  & \textbf{144} & \textbf{86,143.16} \\
+\hline
+\end{tabular}
+
+\vspace{0.3cm}
+
+\begin{minipage}{0.9\textwidth}
+\footnotesize
+$^{a}$ Aire protégée définie selon les catégories IUCN (I--VI)
+
+\textbf{Source:} World Database on Protected Areas (WDPA), 2025 ou SAPM, 2023.
+\end{minipage}
+\end{table}
+
+# Cadre d'analyse méthodologique
+
+## Données et sources
+
+\begin{table}[ht]
+\centering
+\vbox{
+\resizebox{0.90\textwidth}{!}{ 
+\tiny % Force tout le texte du tableau à être très petit
+\begin{tabular}{>{\columncolor{vertclair}}p{2.2cm} p{3.4cm} p{4.6cm}}
+\toprule
+\rowcolor{vertfonce}
+\textcolor{white}{\textbf{Rôle dans l'analyse}} &
+\textcolor{white}{\textbf{Nom des variables}} &
+\textcolor{white}{\textbf{Source des données}} \\
+\midrule
+Ce que nous testons & Aire protégée & \textit{WDPA} (2025) \\
+\midrule
+& Indice niveau de vie & \textit{DHS/MIS/MICS} (1997--2021) \\
+\multirow{-2.2}{2.2cm}{Ce que nous mesurons} & Indice d'inégalité & \\
+\midrule
+& Couvert forestier & \textit{GFC} [@Hansen2013] \\
+& Densité pop. (2000) & \textit{WorldPop} [@WorldPop2018] \\
+& Accessibilité (2000) & \textit{JRC} [@Uchida2011] \\
+\multirow{-4}{2.2cm}{Critères de comparaison} & Altitude et pente & NASA-SRTM [@NASAJPL2020] \\
+\midrule
+& Âge et sexe chef ménage & \textit{DHS/MIS/MICS} (1997--2021) \\
+\multirow{-2.2}{2.2cm}{Autres éléments} & Indice sécheresse (SPEI) & \\
+\bottomrule
+\end{tabular}
+}
+}
+\end{table}
+
+\vspace{-0.25cm}
+\begin{center}
+\includegraphics[height=0.65cm]{images/logo_mapme.png}\hspace{0.15cm}
+\includegraphics[height=0.65cm]{images/logo_instat.png}\hspace{0.15cm}
+\includegraphics[height=0.65cm]{images/logo_usaid.png}\hspace{0.15cm}
+\includegraphics[height=0.65cm]{images/logo_protected_planet.png}
+\end{center}
+
+## Unité d'analyse
+:::: columns
+
+::: {.column width="50%"}
+
+  - **Traitement**: Mise en place des aires protégées
+
+  - **Groupe de traitement**: Ménages localisées dans les clusters à < 10 km des AP créées entre 2008 et 2021 dans les zones rurales 
+  - **Groupe de contrôle**: Ménages localisées dans les clusters à > 10 km des AP créées entre 2008 et 2021 dans les zones rurales 
+  - **Groupe à exclure**: Ménages localisés dans les clusters à < 10 km des AP créées avant 2008 et dans les zones urbaines 
+
+
+
+\vspace{0.3cm}
+
+
+:::
+
+::: {.column width="50%"}
+
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| out.width: "90%"
+#| fig.align: "center"
+
+knitr::include_graphics(
+  "C:/Users/irian/Documents/Analyse de données/PA-livelihood-impact-dhs/Presentation/conference_BETSAKA/images/map_2021_groups.png"
+)
+```
+
+:::
+
+::::
+
+
+## Méthodes d'estimation 
+
+- **Genetic matching**
+
+La méthode de genetic matching sert à comparer les caractéristiques observables et à accroître la similitude entre le groupe de traitement et le groupe de contrôle [@Diamond2013]. 
+
+- **Difference-in-difference (DID)**
+
+La méthode DID permet de comparer les évolutions observées des niveaux de vie des ménages locaux avant et après la mise en place des aires protégées. Elle repose sur l'hypothèse des tendances parallèles, qui postule que les zones traités et non traitées suivaient des trajectoires similaires avant l'intervention. 
+
+## Matching
+
+:::: columns
+
+::: {.column width="50%"}
+### Avant 2008
+
+![](images/density_before_2008.png){width=100%}
+:::
+
+::: {.column width="50%"}
+### Après 2008
+
+![](images/density_after_2008.png){width=100%}
+:::
+
+::::
+
+
+## Résultats de l'hypothèse 1
+
+:::: columns
+
+::: {.column width="50%"}
+
+**Hypothèse 1 : En moyenne, les aires protégées réduisent le niveau de vie des ménages ruraux**
+
+- Pas d'effet significatif de la création d'AP sur l'indice de richesse des ménages.
+- Pertes associées aux restrictions compensées par des gains d'ailleurs — emplois liés à la conservation, services écosystémiques, activités de subsistance.
+- Effets compensatoires peuvent neutraliser l'impact global à court et moyen terme.
+:::
+
+::: {.column width="50%"}
+![Impact des aires protégées sur le bien être: Event study avec un bins de 2 ans](images/result_H1.png){fig-align="center"}
+:::
+
+::::
+
+## Résultats de l'hypothèse 2
+
+:::: columns
+
+::: {.column width="50%"}
+**Hypothèse 2 : Les aires protégées exacerbent les inégalités économiques parmi les communautés voisines**
+
+- Pas d'effet significatif de la création d'AP sur les inégalités de richesse
+- Déterminants principaux des inégalités liées à des dynamiques sociodémographiques et climatiques:
+    - Les sécheresses appauvrissent davantage les ménages les plus vulnérables
+    - Les ménages dirigés par une femme ont une indice de richesse plus faible
+    - Les ménages dirigés par des personnes âgées tendent à être plus aisés
+
+:::
+
+::: {.column width="50%"}
+![Impact des aires protégées sur l'inégalité des indices de richesse des ménages: Event study avec un bins de 2 ans](images/result_H2.png){fig-align="center"}
+:::
+
+::::
+
+## Résultats de l'hypothèse 3
+
+:::: columns
+
+::: {.column width="50%"}
+**Hypothèse 3 : Les effets de la création des aires protégées varient selon le régime de gouvernance**
+
+- Pas d'effet significatif du type de gouvernance d'une AP — stricte ou à usage multiple sur le niveau de vie
+- Limite des catégories formelles: Catégories formelles de gouvernance ne suffisent pas à elles seules à expliquer la variation des résultats socio-économiques
+- Facteurs explicatifs réels: qualité de la mise en œuvre, contexte local, stratégies de conservation jouent probablement un rôle plus important.
+:::
+
+::: {.column width="50%"}
+![Hétérogénéité des effets sur le bien être](images/result_H3.png){fig-align="center"}
+:::
+
+::::
+
+
+## Test de robustesse
+
+- **Test du seuil de distance de 5 km et 15 km:** La proximité aux AP n'a pas d'effet significatif sur la richesse
+
+- **Analyse par pseudo panel:** Les résultats sont confirment la robustesse des conclusions par le fait que les conditions environnementales et spatiales influencent davantage le niveau de vie des ménages que les caractéristiques sociodémographiques 
+
+- **Analyse d'hétérogénéité:** Les effets ne sont pas robustes à la présence de biais non observés 
+
+- **Autres variables de résultat: taille/poids de l'enfant et mortalité infantile:** Pas d'effet significatif de l'estimation
+
+# Conclusion {background-color="#f8f9fa"}
+
+**Les AP ne dégradent pas le niveu de vie, mais les coûts s'accumulent dans le temps
+
+- **Pas d'effet moyen significatif sur le niveau de vie** - les pertes liées aux restrictions semblent compensées par des mécanismes d'adaptation et des opportunités locales 
+
+- **Pas d'effet significatif sur les inégalités** - les déterminants principaux restent les chocs climatiques et les caractéristiques socio-démographiques 
+
+- **Pas d'effet différencié selon le type de gouvernance** - les catégories formelles n'expliquent pas à elles seules les résultats socio-économiques 
+
+- **Mais, un signal négatif qui se renforce à long terme** - dix ans après la création des AP, un effet d'appauvrissement apparaît, à mesure que les marges d'adaptation s'épuisent
+
+
+
+## Prochaines étapes 
+- Caractériser les pratiques de gestion et de gouvernance des aires protégées 
+    
+- Analyse de l'influence de la gouvernance et qualité de gestion sur l'effet des aires protégées sur le bien-être des populations 
+
+
+## References
+
+::: {#refs}
+:::
+
+## Merci de votre attention {.c}
+
+![](images/KfW_logo.png){height=0.65cm} ![](images/logo_AFD.png){height=0.65cm} ![](images/logo_univ_tana.png){height=0.65cm} ![](images/logo_univ_PS.png){height=0.65cm} ![](images/logo_EAD2.png){height=0.65cm} ![](images/logo_univ_tana.png){height=0.65cm} ![](images/logo_cered.png){height=0.65cm} ![](images/logo_source.jpg){height=0.65cm}
+
+ 
+
+
+
+

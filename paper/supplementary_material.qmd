@@ -1,0 +1,437 @@
+---
+title: "Supplementary material"
+  
+editor: visual
+  
+bibliography: references.bib 
+  
+format: 
+   typst: 
+     toc: false
+     number-sections: true
+     fig-cap-location: top
+     bibliographystyle: "chicago-author-date"
+   docx: default
+---
+
+```{=typst}
+#align(center)[
+  #v(3cm)
+
+  #text(size: 16pt, weight: "bold")[
+    Socioeconomic Impacts of Terrestrial Protected Areas:  
+    Evidence from Large-Scale National Surveys in Madagascar
+  ]
+]
+
+#v(2cm)
+
+#align(left)[
+  #outline(
+    depth: 2,
+    indent: 1em,
+    fill: repeat("."),
+  )
+]
+
+#pagebreak()
+```
+# Pre-registration process
+
+The preparation of this analysis was guided by a pre-analysis plan, a roadmap detailling the data used, the methods employed, and the empirical strategies adopted to assess the impact of protected areas on the living standards of local households and on inequalities between them. The pbjective of this plan was to enhance the transparency of the study and ensure the rigor and validity of the analytical approaches. This pre-analysis plan was submitted on Open Science Framework (OSF) portal in November 2024 and updated in March 2025, with the title "Conservation and development: Socioeconomic Impact Evaluation of Terrestrial Protected Areas in Madagascar based on large national surveys".
+
+We then submitted our pre-analysis plan to the Journal of Development Economics (JDE). Although the article was rejected, the editorial board recommended five other journals that might be interested in our study, which helped us to better target the academic dissemination of our work. However, we chose to finalize the article directly before resubmitting it.
+
+We also expanded the initial outline by adding sections detailing deviations from the initial outline, as well as explanatory additions to account for new data incorporated and methodological adjustments made during the analysis. From the outset, we assessed the statistical power of the study to estimate the probability of detecting a significant effect. After estimation using the 2x2 DID estimation, we found the power to be relatively low. To remedy this, we incorporated MIS data, as anticipated in our pre-analysis plan. While adding MIS data theoretically improved statistical power, it also introduced more noise into the estimates. We then included MICS data to both improve statistical power and fill in gaps related to the irregular spacing of surveys over time.
+
+# Detailed descriptive statistics.
+
+The following descriptive statistics provide a general overview of the number of protected areas created before and from 2008, the socioeconomic conditions of households living near and far from protected areas, and the key variables used in the analysis.
+
+@tbl-gt-desc-AP shows that a total of 84 protected areas have been created, including 60 since 2008, highlighting the significant expansion of the protected area network in recent years. Among these, "Nosy Antsoha" is the protected area with the smallest surface area, while the "Complexe des AP Ambatomirahavavy Marivorahona" encompasses the largest total protected area. Focusing on the sites included in our treatment for our estimation, Ambatovaky stands out as the site with the largest individual area, while Tsarasaotra Park is the smallest in terms of surface area.
+
+```{r}
+#| label: tbl-gt-desc-AP
+#| tbl-cap: "Descriptive statistics for protected areas created before 2008 and from 2021"
+#| warning: false
+#| message: false
+#| echo: false
+
+library(tidyverse, warn.conflicts = FALSE)
+library(gt)
+
+library(tidyverse)
+library(gt)
+
+tbl_gt_desc_AP <- read_rds("tables/desc_AP_combined.rds")
+
+tbl_gt_desc_AP %>%
+  gt() %>%                           # <- Transformer le tibble en gt_tbl
+  fmt_number(
+    columns = where(is.numeric),     # Arrondir toutes les colonnes numériques
+    decimals = 2
+  ) %>%
+  tab_options(
+    table.width = pct(90),
+    column_labels.font.size = 11,
+    table.font.size = 10
+  )
+
+```
+
+*Source: Authors*
+
+@tbl-var-desc-stats highlight the great diversity of the areas studied, both environmentally and socio-spatially. Accessibility in 2000, elevation, slope, forest cover rates in 2000, and population density in 2000 vary significantly, and some areas appear to be particularly vulnerable to drought. These differences underscore the need to take spatial and environmental variability into account.
+
+```{r}
+#| label: tbl-var-desc-stats
+#| tbl-cap: "Descriptive statistics for the model variables"
+#| warning: false
+#| message: false
+#| echo: false
+
+library(tidyverse)
+library(gt)
+
+# Charger le tableau
+tbl_var_desc_stats <- read_rds("tables/gt_descr_stats.rds")
+
+# Si c'est une liste, prendre le tibble principal
+if (is.list(tbl_var_desc_stats)) {
+  tbl_var_desc_stats <- tbl_var_desc_stats[[1]]
+}
+
+# Convertir Year en entier pour éviter 2008.00
+tbl_var_desc_stats <- tbl_var_desc_stats %>%
+  mutate(Year = as.integer(Year))
+
+# Créer le tableau GT avec police réduite et nombres arrondis
+tbl_var_desc_stats %>%
+  gt() %>%
+  fmt_number(
+    columns = where(is.numeric) & !c("Year"),  # Arrondir toutes les colonnes numériques sauf Year
+    decimals = 2
+  ) %>%
+  tab_options(
+    table.width = pct(90),          # largeur du tableau
+    table.font.size = 9,            # réduire la taille de la police pour tout le tableau
+    heading.title.font.size = 10,   # titre si présent
+    heading.subtitle.font.size = 9
+  )
+
+
+
+```
+
+*Source: Authors*
+
+# Detailed of the data used
+
+We had already defined our data in our pre-analysis plan, but following updates to the data on protected areas and details observed during the analysis, it is important to clarify certain points.
+
+## Protected areas {#protectedareas}
+
+Locking back at the history of Protected areas in Madagascar, they were first created in 1927 under French colonial administration and, until the early 2000s, were mainly characterized by strict conservation (IUCN statues I, II, and IV). At the IUCN Parks Summit in Durban in 2003, the Malagasy government committed to tripling coverage, which led to the creation of new PAs with 28 provisional creation decrees published between April 2006 and December 2007 and a global decree bringing the number of new PA to 97 in 2008. Final ratification decrees were not issued until 2015, which formalized these creations of new PAs. These decrees did not designate a manager, leaving the management to the Ministry of the Environment. The general practice is to subsequently transfer the management, with most newly PA receiving designated managers in the following years. However, it was not until 2015 that a final decree ratified these creations. Some of these PA were the subject to early management transfer decrees, between 2011 and 2015. Uncertainty remains about the exact date of these early transfers, but since our study period spans a broader interval (2008-2021), it helps compensate for any inaccuracy in determining the exact start date of treatment, i.e., actual conservation. In this study, the treatment is defined as an area that is declared as protected by a decree and that is operationally managed.
+
+In our pre-analysis plan, we noticed that the data from the World Database on Protected Areas from [the protected planet portal](https://www.protectedplanet.net/en) was inaccurate for certain areas. The inaccuraties includes the classifications of IUCN status, incorrect creation dates, delineations that include buffer zones extending beyond the boundaries of PA. We therefore used the legal analysis carried out using CNLEGIS to identify early protections that are not registered in WDPA. Work to identify these cases was carried out by Bédécarrats and Seheno (Septembre 2024): <https://betsaka.github.io/conservation-dynamic-madagascar/>. This graph shows the evolution of protected areas since their creation to the present day (calculations by authors based on WDPA data).
+
+![](figures/evo_pa.png){#fig-evo-pa width="100%"}
+
+*Source: Authors*
+
+The graph shows the evolution of PA creation in Madagascar since the creation in 1927 (under the colonial administration) until 2025.
+
+Our study analyzes the impact of PA on household well-being over 13 years (2008-2021). Taking 2008 as the reference year, 71 protected areas were created, covering a total area of 75,252 km². @tbl-period-crea shows the distribution of terrestrial PAs (by number and area) according to the period in which they were created by final decree.
+
+@tbl-period-crea shows the distribution
+
+```{r}
+#| label: tbl-period-crea
+#| tbl-cap: "Classification of household clusters according their group affiliation "
+#| warning: false
+#| message: false
+#| echo: false
+
+library(tidyverse,  warn.conflicts = FALSE)
+
+tbl_period_crea <- readRDS("tables/tbl-period-crea.rds")
+tbl_period_crea
+```
+
+*Source: Authors*
+
+PA number refers to the number of protected areas created during each period. Area is expressed in square kilometers (km²). Calculations are based on data from the world Database on Protected Areas (WDPA).
+
+## Household socioeconomic conditions: DHS data
+
+The DHS surveys use a two-stage stratified sampling design, including a complete household census ine ach selected cluster. In 2021, 657 clusters were drawn proportional to their size, with 650 ultimately visited. In 2008, 600 clusters were selected and 569 surveyed, though nine had invalid GPS coordinates, yielding 585 valid clusters. In 1997, 270 clusters were selected, 269 surveyed, with one cluster having invalid GPS data.
+
+# PA governance classification
+
+This analysis examines heterogeneous impacts according to governance regimes. The analysis of heterogeneous effects aims to determine which categories of households benefit most - or least - from the creation of protected areas and the circumstances under which these effects occur.\
+We keep only terrestrial protected areas and discard marine or coastal protected areas.Although there is no clear consensus in the literature regarding the use of IUCN categories, Elleason et al. [-@elleason_strictly_2021] suggest the following classification, which we complement here with the naming used by the authors:
+
+-   Some studies group I and II in one class, and all others in another class:
+
+    -   Scharlemann et al. [-@scharlemann_securing_2010] classify cat. I and II as "protected sites with more restrictive land management regimes" and III to VI as "all other protected sites"
+
+    -   Jones et al. [-@Jones2018] designate I and II as "strict biodiversity conservation areas" and III to VI as "zones permitting certain human activities and sustainable resource extraction"
+
+    -   Anderson and Mammides [-@anderson_role_2020] designate only I and II as "areas in stricter categories".
+
+-   Other studies group I, II and III in one class, and IV, V and VI in another class:
+
+    -   Seiferling et al. [-@seiferling_measuring_2012] designate I to III as "areas into high-protection" and IV to VI as "low protection categories".
+
+    -   Françoso et al. [-@francoso_habitat_2015] refer to IV to VI as "sustainable use PAs" and the other as "other".
+
+-   Other studies group I to IV in one class and V and VI in another class:
+
+    -   Nelson and Chomitz [-@nelson_effectiveness_2011] refer to I to IV as "strict protection" and V and VI as "nonstrict or multi-use protection".
+
+    -   Porter-Bolland et al. [-@porter-bolland_community_2012] refer as I to IV as "protected areas" and V and VI as "community managed forests".
+
+Adding to this classification, we share Ledberger [-@leberger_global_2020] analysis that classifies the naturalness of IUCN category definition as follows: Ia = Ib \> II = III \> IV = VI \> V and they find out that "the global ranking of the effect of the IUCN categories on the forest loss per PA at the global scale, from the least to the most forest loss, was III \< Ia = Ib = II \< IV = V = VI" .
+
+Building on the results of Leberger et al.[-@leberger_global_2020] which suggest similar conservation outcomes for IUCN status I to III, we use a parsimonious governance-based classification in our empirical analysis. Although the literature highlights ongoing debates regarding the definition and management objectives of status Iv [@leroux_global_2010], we include it within the group of strictly protected areas. This choice reflects both empirical considerations and data constraints, while acknowledging that status IV differs conceptually from status V and VI, which are explicitly treated as multi-use protected areas. To this end, we examine the role of governance by distinguishing between strict protected areas (IUCN categories I-IV) and multi-use protected areas (IUCN categories V-VI).
+
+# Complementary results: Statistical Power and Standardized Precipitation Evapotranspiration Index (SPEI)
+
+## Statistical Power
+
+Statistical power estimates the probability of detecting an effect if it exists, generally set at 80%, with a significance threshold of 5%. The minimum detectable effect is the smallest identifiable difference between the treatment and control groups, measured here using Cohen's $d$ on the percentile of the rural household wealth index from the DHS survey. Before matching, we use the means and standard deviations of the treatment groups for both groups. The wealth index was segmented into percentiles rather than quintiles to preserve granularity and improve sensitivity. With these parameters, the study can detect a minimum change of 7.6 percentiles in the wealth index (@tbl-statistical-power).
+
+```{r}
+#| label: tbl-statistical-power
+#| tbl-cap: "Statistical power "
+#| warning: false
+#| message: false
+#| echo: false
+
+library(tidyverse,  warn.conflicts = FALSE)
+
+statistical_power <- readRDS("tables/stat_power.rds")
+statistical_power
+```
+
+*Source: Author’s calculation*
+
+The Intra-cluster Correlation Coefficient (ICC) is 0.4767, indicating a strong intra-cluster correlation. This means that much of the variability in the wealth index is attribuable to differences between survey areas (for example, households in the same village share similar characteristics). The adjusted standard edeviation is 27.97, indicating a lerge dispersion of wealth index scores around the mean. Given that the index ranges from 1 to 5, this standard deviation is relatively large. Cohen's $d$ od 0.2653 refers to an effect of moderate magnitude by conventional standards. This means that a significant differnece should be detectable between the treatment and control groups after the matching process. Finally, the MDE in outcome units is 7.4200 in the wealth index between groups. This corresponds to a significant detectable difference given the index's scale of 1 to 5. This means that the PA would need to have an effect of approximately 7.6 points in terms of asset percentile.
+
+## Standardized Precipitation Evapotranspiration Index Calculations
+
+*The Standardized Precipitation Evapotranspiration Index* (SPEI) [@VicenteSerrano2010] is calculated based on a long-term reference (1981-2010) to quantify excess or deficit of rainfall. We use the SPEI value for the two years prior to each survey, as well as the year of the survey. The SPEI is calculated using monthly precipitation, minimum and maximum temperature data for each cluster from Worldclim, based on a long-term reference period from 1981 to 2021. We calculate the latitude using the geometric coordinates of each cluster, which serves as the basis for estimating potential evapotranspiration (PET). This ensures that the PET estimate is specific to local geographical conditions. We then retrieve the monthly time series of climate variables for each cluster. Using the Hargreaves formula (modified Hargreaves method) as defined by Droogers and Allen [@Droogers2002], we estimate PET and the water balance. The latter is converted into a time series from which the SPEI index is estimated on 12-month scale.
+
+```{r}
+#| label: fig-spei
+#| fig-cap: "Annual SPEI (scale = 12) for a geographic cluster between 1981 and 2021"
+#| fig-width: 6
+#| fig-height: 3.5
+#| dpi: 300
+#| warning: false
+#| message: false
+#| echo: false
+
+library(tidyverse,  warn.conflicts = FALSE)
+
+spei_plot <- read_rds("figures/spei_plot.rds")
+print(spei_plot)
+```
+
+*Source: Authors*
+
+The black curve shows the annual trend in the avergae SPEI and highlights the variations in the climate of the study area from one year to the next. Between 1980 and 2000, most years had an SPEI value greated than 0, corresponding to normal or slightly wet conditions. According to the classification of McKee et al. ([-@McKee1993]), they were few episodes of significant drought. However, since 2004, SPEI values have been below zero, indicating an increase in the fresquency of drought episodes. In 2017, the SPEI reached a particularly low value of -2.4, which, according to the classification of Vicente-Serrano et al. ([-@VicenteSerrano2010]) indicates a very severe drought.
+
+# Detailed robustness checks
+
+## Buffer size sensitivity test
+
+We adopt a threshold of 10 km to define the treated group, in line with common practice in the literature. This test allows us to assess the consistency of the results according to radius. We find that, whether for a radius of 5 km or 15 km, the creation of protected areas did not lead to any significant change in household wealth percentiles.
+
+## Multiple hypothesis testing
+
+This section presents multiple tests on outcome varaibles and hypotheses. When testing many hypotheses, there is an automatic increase in the risk of incorrectly inferring significant effects, known as multiple testing problems. To mitigate this risk, Benjamini ([-@Benjamini1995]) proposes controlling the average proportion of false positives among the results declared significant. The False Discovery Rate (FDR) method is therefore applied to the secondary hypotheses H2 on inequalities between households (assessed using a z-score of the wealth index) and H3 on the importance of the mode of governance of protected areas. To do this, the p-values of the H2 and H3 tests are retrieved ans sorted in ascending order before applying the BH rule. If $pBH < 5$, the test is considered significant.
+
+@tbl-h2-fdr shows that before multiple corrections, the coefficients do not show a stable trend of improvement or deterioration in the wealth index. After controlling for the risk of false positives, only a marked negative effect on the wealth index remains statistically significant, suggesting a transient effect of impoverishment two years after the PAs. Households located within 10 km of PAs appear to have experienced a one-off economic shock (implementation shock or loss of access to resources or socioeconomic transition prior to adjustment) rather than a persistent trend.
+
+```{r}
+#| label: tbl-h2-fdr
+#| tbl-cap: "Multiple testing for hypothesis H2"
+#| warning: false
+#| message: false
+#| echo: false
+
+library(dplyr)
+library(gt)
+
+tbl_h2_fdr <- read_rds("tables/H2_H3_FDR_results.rds")
+
+tbl_h2_fdr_gt <- tbl_h2_fdr %>%
+  mutate(
+    estimate = round(estimate, 3),
+    p_value  = round(p_value, 3),
+    p_BH     = round(p_BH, 3)
+  ) %>%
+  gt() %>%
+  tab_header(
+    title = md("**Multiple testing results for H2**"),
+    subtitle = "Adjusted p-values with Benjamini-Hochberg FDR"
+  ) %>%
+  cols_label(
+    hypothesis = "Hypothesis",
+    term       = "Term",
+    estimate   = "Estimate",
+    p_value    = "p-value",
+    p_BH       = "p-value (BH)",
+    significant_5pct = "Significant at 5%"
+  ) %>%
+  fmt_missing(
+    columns = everything(),
+    missing_text = "-"
+  ) %>%
+  tab_style(
+    style = cell_text(weight = "bold", color = "red"),
+    locations = cells_body(
+      columns = vars(significant_5pct),
+      rows = significant_5pct == TRUE
+    )
+  )
+
+tbl_h2_fdr_gt
+
+```
+
+*Source: Authors*
+
+@tbl-h3-fdr shows that the effects of protected areas on living standards, depending on their status, are not statistically significant. Before the FDR correction, some relatively low p-values suggested potential effects for certain coefficients, but they did not take into account the risk of false positives associated with multiple testing. After applying the methods, the non-significance of the estimates is confirmed, indicating that the effects that appeared promising are not statistically robust.
+
+```{r}
+#| label: tbl-h3-fdr
+#| tbl-cap: "Multiple testing for hypothesis H3"
+#| warning: false
+#| message: false
+#| echo: false
+
+library(gt)
+library(dplyr)
+
+
+tbl_h3_fdr <- read_rds("tables/H2_H3_FDR_.rds")
+
+tbl_h3_fdr
+
+```
+
+*Source: Authors*
+
+## Pseudo panel approach
+
+The analysis may be biased by unobserved factors at the household level. Since the available data are repeated cross-sections, we use a pseudo panel approach [@Deaton1985], which groups individuals into cohorts that are stable over time. Each row of the pseudo panel corresponds to a cohort in a given year, with the means of the outcome variables and covariates. Fixed-effects models ars then estimated at the cohort level, weighted by cohort size, to correct for biases related to unobserved variables.
+
+The pseudo-panel analysis (tbl-pseudo-analysis) shows that the coefficients of the environmental variables show signs consistent with potential effects on the average wealth index of household cohorts. The results indicate that households located at high elevation and in densely populated areas have a higher wealth index. Forest cover is also positive. Slope and Accessibility, on the other hand, have a negative effect on the wealth index. However, socio-demographic variables (sex and age of head of household) have no significant effect, suggesting that spatial and environmental conditions play a more decisive role than the individual characteristics of households.
+
+```{r}
+#| label: tbl-pseudo-analysis
+#| tbl-cap: "Pseudo Panel Analysis"
+#| warning: false
+#| message: false
+#| echo: false
+
+library(dplyr)
+library(gt)
+
+tbl_pseudo_analysis <- read_rds("tables/pseudo_results.rds")
+tbl_pseudo_analysis
+```
+
+*Source: Authors*
+
+## Rosenbaum sensitivity analysis
+
+Genetic matching and DID estimation on a cross-section do not allow for the control of unobserved characteristics that may simultaneously influence protected areas and the richness index. To test the robustness of the results in the face of these potential biases, we perform a sensitivity analysis using the method described by Rosenbaum ([-@Rosenbaum2002]). This approach uses a parameter $Γ$, which quantifies the possible deviation from random treatment assignment [@Keele2010]. Different values of $Γ$ are evaluated to determine the extent to which unobserved bias could affect the conclusions:
+
+-   $Γ = 1$: No evidence that an unobserved factor influences assignment
+
+-   $Γ > 1$: Hidden bias is possible
+
+@tbl-rosenbaum-analysis shows that the estimated effects differ from year to year, but remain generally weak in the face of the hypothesis of unobserved bias. In 2008, 2011, 2016, and 2018, the tests suggest a significant effect when assuming no bias ($Γ = 1$). However, this effect quickly disappears as soon as a small unmeasured imbalance is introduced ($Γ > 1$). The Hodges-Lehmann intervals include zero and the p-value bounds exceed the 0.05 threshold, calling into question the significance. For the years 1997, 2013, and 2021, no significant effect is detected, and the sensitivity bounds show that even a very small bias is enough to render the conclusions uncertain.
+
+```{r}
+#| label: tbl-rosenbaum-analysis
+#| tbl-cap: "Rosenbaum Analysis"
+#| warning: false
+#| message: false
+#| echo: false
+
+library(dplyr)
+library(gt)
+
+tbl_rosenbaum_analysis <- read_rds("tables/sensitivity_gt.rds")
+tbl_rosenbaum_analysis 
+```
+
+## Heterogeneous effects
+
+This section presents the estimation of heterogeneous effects by introducing interactions between the treatment and the various differentiating variables in a double DID model. The aim is to explore the differentiated effects of protected areas on households according to socio-demographic and environmental characteristics such as:
+
+-   Sex and age of the head of household
+-   Environmental conditions (rainfall, drought)
+
+@tbl-heterogeneous-sex show a significant disparity in wealth according to the sex of head of household. Households headed by men have a significantly higher average level of wealth, while those headed by women have significantly lower wealth. The average effect of protected areas on wealth is not significant, and the interaction between treatment and sex of the head of household does not reveal any robust difference.
+
+```{r}
+#| label: tbl-heterogeneous-sex
+#| tbl-cap: "Heteregeneous effects by sex of head of households"
+#| warning: false
+#| message: false
+#| echo: false
+
+library(dplyr)
+library(gt)
+
+tbl_heterogeneous_sex <- read_rds("tables/did_sex_gt.rds")
+tbl_heterogeneous_sex
+```
+
+*Source: Authors*
+
+@tbl-heterogeneous-age shows that PAs have no significant impact on household wealth based on the age of the head of household or age group. No interaction between treatment and age of the head of household indicates a robust effect, confirming that age does not significantly influence the relationship between proximity to PAs and standard of living.
+
+```{r}
+#| label: tbl-heterogeneous-age
+#| tbl-cap: "Heteregeneous effects by sex of head of households"
+#| warning: false
+#| message: false
+#| echo: false
+
+library(dplyr)
+library(gt)
+
+tbl_heterogeneous_age <- read_rds("tables/did_age_gt.rds")
+tbl_heterogeneous_age
+```
+
+*Source: Authors*
+
+@tbl-heterogeneous-climate shows that PAs do not have a significant impact on rural wealth in general. However, there is slight heterogeneity depending on climate: households in rainy areas have a slightly higher wealth percentile, and the positive interaction in drought-prone areas suggests that proximity to protected areas could partially mitigate the negative effects of drought.
+
+```{r}
+#| label: tbl-heterogeneous-climate
+#| tbl-cap: "Heteregeneous effects by climate"
+#| warning: false
+#| message: false
+#| echo: false
+
+library(dplyr)
+library(gt)
+
+tbl_heterogeneous_climate <- read_rds("tables/did_rain_gt.rds")
+tbl_heterogeneous_climate
+```
+
+*Source: Authors*
+
+```{=typst}
+
+#pagebreak()
+```
