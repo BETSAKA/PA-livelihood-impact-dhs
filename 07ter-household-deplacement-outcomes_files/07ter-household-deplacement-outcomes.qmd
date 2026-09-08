@@ -1,0 +1,102 @@
+---
+output: typst
+editor_options: 
+  chunk_output_type: console
+---
+
+# Migration outcomes: household mobility
+
+## Motivation
+
+In the pre-analysis plan, we chose not to include migration among the control variables, as it is likely influenced both by the direct effects of protected areas and by broader changes in living standards in surrounding areas, making it a collider rather than a valid control. Instead, migration is treated as an outcome variable, since it is more plausibly a consequence of protected areas than an independent cause. This allows us to assess whether populations leave their territory because of protected areas, or whether migration is one of the mechanisms through which these areas affect living standard, without introducing bias into the analysis. In their paper, Jones et al. [-@Jones2018] state that human migration is often considered an important driver of land use change and a threat to protected area integrity. Understanding household mobility and behaviour at the forest frontier is important for guiding conservation and development policies.
+
+# Variable definition
+
+Among the three available data sources (DHS, MIS, MICS), the indicators that may help explain the movements of household members are as follows:
+
+| Indicateur | Source | Level | Indicator definition |
+|------------------|------------------|------------------|------------------|
+| V104 | DHS/MIS (women) | Individual | Number of years the respondent has lived in the village, town, or city where she was interviewed. Visitors to the community are coded 96 |
+| MV104 | DHS/MIS (men) | Individual | Number of years the respondent has lived in the village, town, or city where he was interviewed. Visitors to the community are coded 96 |
+| WB15 | MICS (women) | Individual | MICS equivalent of V104 |
+| MWB15 | MICS (men) | Individual | MICS equivalent of V104 |
+| HV102 | DHS/MIS | Household | De jure resident status (usual resident) |
+| HV103 | DHS/MIS | Household | De facto resident status (slept there the previous night) |
+| V135 / MV135 | DHS/MIS | Individual | Whether the respondent is a usual resident or just a visitor to the household |
+| V136 / MV136 | DHS/MIS | Household | Total number of household members (residents + visitors who slept there) |
+
+# Data availability summary
+
+We use the following indicators
+
+| Year | Source   | V104 | MV104 | MWB15 | WB15 |
+|------|----------|------|-------|-------|------|
+| 1997 | DHS-III  | ✓    | ✓     | ✗     | ✗    |
+| 2008 | DHS-V    | ✓    | ✓     | ✗     | ✗    |
+| 2011 | MIS      | ✓    | ✓     | ✗     | ✗    |
+| 2013 | MIS      | ✓    | ✓     | ✗     | ✗    |
+| 2016 | MIS      | ✓    | ✓     | ✗     | ✗    |
+| 2018 | MICS-6   | ✗    | ✗     | ✓     | ✓    |
+| 2021 | DHS-VIII | ✓    | ✓     | ✗     | ✗    |
+
+## Data loading and harmonization
+
+```{r}
+
+#| label: setup
+#| message: false
+#| warning: false
+
+
+library(tidyverse)
+library(haven)
+library(fixest)
+library(did2s)
+library(broom)
+library(ggplot2)
+library(gt)
+library(sf)
+library(modelsummary)
+
+
+options(scipen = 999)
+```
+
+
+## Load matched household data
+
+```{r}
+#| label: load-matched
+
+load_matched <- function(path, year, spei_years) {
+  read_rds(path) |>
+    st_drop_geometry() |>
+    mutate(DHSYEAR = year) |>
+    rename(
+      spei_wc_n_2 = !!sym(paste0("spei_wc_", spei_years[1])),
+      spei_wc_n_1 = !!sym(paste0("spei_wc_", spei_years[2])),
+      spei_wc_n   = !!sym(paste0("spei_wc_", spei_years[3]))
+    ) |>
+    mutate(
+      hv219 = zap_labels(hv219),
+      hv220 = as.numeric(zap_labels(hv220))
+    ) |>
+    filter(GROUP %in% c("Treatment", "Control")) |>
+    select(DHSYEAR, hv001, hv002, hv005, GROUP, WDPAID, STATUS_YR, IUCN_CAT,
+           treatment, weights, spei_wc_n_2, spei_wc_n_1, spei_wc_n, hv219, hv220)
+}
+
+matched_all <- bind_rows(
+  load_matched("data/derived/data_matched_1997.rds", 1997, c(1995, 1996, 1997)),
+  load_matched("data/derived/data_matched_2008.rds", 2008, c(2006, 2007, 2008)),
+  load_matched("data/derived/data_matched_2011.rds", 2011, c(2009, 2010, 2011)),
+  load_matched("data/derived/data_matched_2013.rds", 2013, c(2011, 2012, 2013)),
+  load_matched("data/derived/data_matched_2016.rds", 2016, c(2014, 2015, 2016)),
+  load_matched("data/derived/data_matched_2018.rds", 2018, c(2016, 2017, 2018)),
+  load_matched("data/derived/data_matched_2021.rds", 2021, c(2019, 2020, 2021))
+)
+```
+
+
+### Load migration's survey data
+

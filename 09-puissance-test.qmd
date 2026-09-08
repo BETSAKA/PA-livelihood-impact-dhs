@@ -1,3 +1,7 @@
+```{stan output.var=}
+
+```
+
 ---
 output: html_document
 editor_options: 
