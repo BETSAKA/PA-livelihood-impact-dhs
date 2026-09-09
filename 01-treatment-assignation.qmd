@@ -503,7 +503,7 @@ write.csv(dynamic_wdpa_metadata, "data/PA_creation/wdpa_data/dynamic_wdpa_metada
 
 Nous transformons les données dynamiques des AP en trois jeux de données distincts afin de disposer de limites spatiales fixes. Cette transformation est faite car la superficie et les frontières des AP peuvent évoluer au fil des années depuis leur création. Nous créons ainsi une couche avec la dernière limite disponible, correspondant à la portion du territoire commune à toutes les limites observées au cours du temps, ainsi que les noyaux dur de chaque aire. Ces jeux de données permettent de travailler avec des limites stables et de comparer les AP de manière cohérente dans les analyses temporelles. 
 
-```{r fig.cap="Figure 2: Protected Areas in Madagascar"}
+```{r fig.cap="Figure 3: Protected Areas in Madagascar"}
 
 ### Take last boundary
 dynamic_pa_last <- dynamic_wdpa_vect %>%
@@ -670,7 +670,7 @@ tm_polygons(
 
 ### View an interactive map of Madagascar protected areas
 
-```{r fig.cap="Figure 2: Protected Areas in Madagascar"}
+```{r fig.cap="Figure 4: Protected Areas in Madagascar"}
 
 # Convertir en sf (dynamic_pa_last est un SpatVector terra)
 pa_sf <- sf::st_as_sf(dynamic_pa_last) %>%
@@ -727,7 +727,7 @@ On travaille toujours avec les portions terrestres des AP.
 
 Pour analyser l'impact des AP selon leur période de création, on spécifie les AP créées avant 2008 et à partir de 2008. On applique ensuite un buffer zone de 10 km autour de chaque groupe d'AP. Chaque groupe a été reprojeté dans le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702) pour les calculs de distances. Nous créons ensuite une carte pour visualiser les AP et leurs zones d'influence.
 
-```{r fig.cap="Figure 4: Protected areas by period  of creation"}
+```{r fig.cap="Figure 5: Protected areas by period  of creation"}
 
 # Buffer de 10 km
 buffer_dist <- 10000 
@@ -1329,13 +1329,13 @@ gt_table
 
 ```
 
-Sur la période de 2008-2021, 57 aires protégées ont été créées.
+Sur la période de 2008-2021, 54 aires protégées ont été créées.
 
 ## Classification des clusters
 
 Les grappes d'enquête sont classées selon leur proximité aux AP créées avant 2008 et à partir de 2008. A l'aide de la fonction classify_clusters(), nous catégorisons chaque cluster en trois groupes: traitement, contrôle ou exclu, selon leur localisation par rapport aux AP et leur statut urbain ou rural. Cette classification est appliquée aux clusters de 1997, 2008, 2011, 2013, 2016, 2018 et 2021. Parmi les clusters considérés comme "traités", on identifie l'année de création de l'AP, son type et le numéro WDPAID ou l'identifiant unique de l'AP en question. Les résultats obtenus sont fusionnés. Nous créons ensuite une carte par année d'étude pour visualiser la localisation des AP et la répartition spatiale des clusters selon leur groupe.
 
-```{r fig.cap="Figure 5: DHS survey clusters relative to existing protected areas"}
+```{r fig.cap="Figure 6: DHS survey clusters relative to existing protected areas"}
 
 
 classify_clusters_with_pa <- function(cluster_gps,
