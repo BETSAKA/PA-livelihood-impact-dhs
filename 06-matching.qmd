@@ -12,7 +12,7 @@ En effet, si les deux groupes sont très différents avant le traitement, il est
 
 ## Méthodes
 
-Nous réalisons le matching à l'aide de la méthode genetic matching, en utilisant la fonction GenMatch() du package R MatchIt. Cette méthode combine les variables de matching en une seule mesure unique de distance "Mahalanobis distance matching". Cette distance mesurera la différence entre les unités des groupes appariés pour quantifier la similitude entre les deux groupes d'observations, tout en tenant compte des corrélations entre les covariables et de leurs covariances [@diamond2013].
+Nous réalisons le matching à l'aide de la méthode genetic matching, en utilisant la fonction GenMatch() du package R MatchIt. Cette méthode combine les variables de matching en une seule mesure unique de distance "Mahalanobis distance matching". Cette distance mesurera la différence entre les unités des groupes appariés pour quantifier la similitude entre les deux groupes d'observations, tout en tenant compte des corrélations entre les covariables et de leurs covariances [@Diamond2013].
 
 Dans un premier temps, nous appliquons la fonction GenMatch() pour identifier la combinaison optimale de poids attribués à chaque covariable, dans le but de maximiser l'équilibre entre le groupe de traitement et de contrôle. Nous obtenons une matrice de poids mais aucune paire n'est encore formée. Dans un second temps, nous utilisons la fonction matchIt(), en intégrant la pondération trouvée auparavant, afin de constituer les paires entre les unités traitées et non traitées.
 
@@ -372,7 +372,7 @@ check_balance_before <- function(df, year, matching_variables) {
     dplyr::select(Variable, SMD = all_of(smd_col)) %>%
     mutate(
       Year = year,
-      Equilibre = if_else(abs(SMD) <= 0.1, "Équilibré", "Déséquilibré")
+      Equilibre = if_else(abs(SMD) <= 0.1, "Balanced", "Unbalanced")
     ) %>%
     relocate(Year)
 
