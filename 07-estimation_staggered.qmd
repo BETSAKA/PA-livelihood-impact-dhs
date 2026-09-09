@@ -612,7 +612,16 @@ L’étude des effets hétérogènes vise à déterminer quelles catégories de 
 ```{r}
 yvar <- "wealth_centile_rural_weighted"
 
-dat2 <- dat %>%
+iucn_sets <- list(
+  strict = c("Ia","Ib","II","III","IV"),
+  multi  = c("V","VI")
+)
+
+is_strict <- function(x) x %in% iucn_sets$strict
+is_multi  <- function(x) x %in% iucn_sets$multi
+
+
+dat3 <- dat %>%
   mutate(
     treat_strict = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("Ia","Ib",
                                                                      "II","III",
@@ -624,7 +633,7 @@ dat2 <- dat %>%
 # Placebo -----------------------------------------------------------------
 
 
-pre <- dat2 %>%
+pre <- dat3 %>%
   filter(DHSYEAR %in% c(1997, 2008)) %>%
   mutate(post = as.integer(DHSYEAR == 2008))
 
@@ -646,7 +655,7 @@ m_pre_multi <- feols(f_pre_multi, data = pre, weights = ~ w_all, cluster = ~ hv0
 
 # Main estimation ---------------------------
 
-main <- dat2 %>%
+main <- dat3 %>%
   filter(DHSYEAR %in% c(2008, 2021)) %>%
   mutate(post = as.integer(DHSYEAR == 2021))
 
