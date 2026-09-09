@@ -168,21 +168,21 @@ wealth_summary <- function(data, var, label){
       variable = label)
 }
   
-years <- c(1997, 2008, 2011, 2013, 2016, 2021)
+years <- c(1997, 2008, 2011, 2013, 2016, 2018, 2021)
 
 desc_all <- map_dfr(years, function(year){
   
   hh <- make_desc_wealth(year)
   
   bind_rows(
-    wealth_summary(hh, wealth_centile_rural_simple, "Wealth index (centile)")
+    wealth_summary(hh, wealth_centile_rural_simple, "Wealth index (percentile)")
   ) %>%
     mutate(DHSYEAR = year)
 })
 
 kable(
   desc_all,
-  caption = "Statistiques descriptives du wealth index rural par groupe et par année",
+  caption = "Descriptive Statistics for the Rural wealth index rural by Group and by Year",
   digits = 2
 )
 
@@ -198,12 +198,12 @@ ggplot(wealth_plot_data,
   geom_boxplot(outlier.alpha = 0.3) +
   facet_wrap(~ DHSYEAR) +
   labs(
-    title = "Distribution du wealth index rural (centile)",
-    x = "Groupe",
-    y = "wealth index (centile)"
+    title = "Rural wealth index Distribution (percentile)",
+    x = "Group",
+    y = "wealth index (percentile)"
   ) +
   theme_minimal() +
-  theme(legend.position = "none")
+  theme(legend.position = "bottom")
 
 # Box plot - z-score wealth index en centile
 ggplot(wealth_plot_data, 
@@ -212,11 +212,11 @@ ggplot(wealth_plot_data,
   facet_wrap(~ DHSYEAR) +
   labs(
     title = " Distribution du zscore du wealth index",
-    x = "Groupe",
+    x = "Group",
     y = "Z-score du wealth index"
   ) +
   theme_minimal() +
-  theme(legend.position = "none")
+  theme(legend.position = "bottom")
 ```
 
 Pour chaque année, nous présentons les distributions du wealth index en centile et son z-score, qui diffèrent selon le groupe: traitement, contrôle et exclu.
@@ -240,6 +240,8 @@ hr_2011_final <- readRDS("data/derived/hr_2011_final.rds")
 hr_2013_final <- readRDS("data/derived/hr_2013_final.rds")
 
 hr_2016_final <- readRDS("data/derived/hr_2016_final.rds")
+
+hr_2018_final <- readRDS("data/derived/hr_2018_final.rds")
   
 hr_2021_final <- readRDS("data/derived/hr_2021_final.rds")
 
@@ -291,21 +293,30 @@ kable(
 Nous créons une fonction pour automatiser la création d'un résumé statistique pour chaque année.
 
 ```{r}
+
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(knitr)
+library(kableExtra)
+library(flextable)
+library(officer)
+
 # Load data 
-years <- c(1997, 2008, 2011, 2013, 2016, 2021)
+years <- c(1997, 2008, 2011, 2013, 2016, 2018, 2021)
 
 summary_matched <- function(year) {
   file_path <- paste0("data/derived/data_matched_", year, ".rds")
-  df <- readRDS(file_path) %>% 
-    mutate(across(where(is.numeric), as.numeric))
-
-  df %>% 
+  
+  readRDS(file_path) %>%
+    mutate(across(where(is.numeric), as.numeric)) %>%
+    select(any_of(c(vars_ut, "hv219", "hv220"))) %>%
     pivot_longer(
-      where(is.numeric),
+      everything(),
       names_to = "Variable",
       values_to = "value"
-    ) %>% 
-    group_by(Variable) %>% 
+    ) %>%
+    group_by(Variable) %>%
     summarise(
       n      = sum(!is.na(value)),
       mean   = mean(value, na.rm = TRUE),
@@ -314,20 +325,72 @@ summary_matched <- function(year) {
       median = median(value, na.rm = TRUE),
       max    = max(value, na.rm = TRUE),
       .groups = "drop"
-    ) %>% 
+    ) %>%
     mutate(Year = year, .before = 1)
 }
 
-descr_stats_match <- map_dfr(years, summary_matched) %>% 
-  arrange(Variable, Year) %>% 
+descr_stats_match <- map_dfr(years, summary_matched) %>%
   mutate(across(where(is.numeric), ~round(.x, 2)))
 
-kable(
-  descr_stats_match,
-  caption = "Statistiques descriptives des variables dans les échantillons appariés",
-  digits = 2
+# --- Dictionnaire de labels lisibles ---
+var_labels <- c(
+  treecover_area_2000    = "Forest cover rate in 2000 (%)",
+  slope_2000             = "Slope in 2000",
+  elevation_2000         = "Elevation in 2000 (m)",
+  population_count_2000  = "Population density in 2000",
+  traveltime_2000_2000   = "Accessibility in 2000",
+  hv219                  = "Sex of household head (hv219)",
+  hv220                  = "Age of household head (hv220)",
+  spei_wc_1995           = "SPEI 1995",
+  spei_wc_1996           = "SPEI 1996",
+  spei_wc_1997           = "SPEI 1997",
+  spei_wc_2006           = "SPEI 2006",
+  spei_wc_2007           = "SPEI 2007",
+  spei_wc_2008           = "SPEI 2008",
+  spei_wc_2019           = "SPEI 2019",
+  spei_wc_2020           = "SPEI 2020",
+  spei_wc_2021           = "SPEI 2021"
 )
-                             
+
+# --- Tableau 1 : variables géographiques / environnementales ---
+geo_vars <- c("treecover_area_2000", "slope_2000", "elevation_2000",
+              "population_count_2000", "traveltime_2000_2000")
+
+table_geo <- descr_stats_match %>%
+  filter(Variable %in% geo_vars) %>%
+  mutate(Variable = recode(Variable, !!!var_labels)) %>%
+  arrange(Year, Variable)
+
+kable(
+  table_geo,
+  caption = "Descriptive statistics: Geographic and Environmental Variables",
+  digits = 2
+) %>%
+  kable_styling(full_width = FALSE) %>%
+  collapse_rows(columns = 1, valign = "top")
+
+# --- Tableau 2 : variables démographiques et climatiques ---
+demo_climate_vars <- c("hv219", "hv220",
+                        "spei_wc_1995", "spei_wc_1996", "spei_wc_1997",
+                        "spei_wc_2006", "spei_wc_2007", "spei_wc_2008",
+                        "spei_wc_2019", "spei_wc_2020", "spei_wc_2021")
+
+table_demo_climate <- descr_stats_match %>%
+  filter(Variable %in% demo_climate_vars) %>%
+  mutate(Variable = recode(Variable, !!!var_labels)) %>%
+  arrange(Year, Variable)
+
+kable(
+  table_demo_climate,
+  caption = "Descriptive statistics: gender/age of the head of household and the SPEI index",
+  digits = 2
+) %>%
+  kable_styling(full_width = FALSE) %>%
+  collapse_rows(columns = 1, valign = "top")
+
+# Enregistrer
+write_csv(table_geo, "output/table_geo.csv")
+write_csv(table_demo_climate, "output/table_demo_climate.csv")
 ```
 
 ## Statistiques descriptives (partie estimation)
