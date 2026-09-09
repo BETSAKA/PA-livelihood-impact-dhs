@@ -48,8 +48,8 @@ var_labels <- c(
   "spei_wc_n_2"= "SPEI (t-2)",
   "spei_wc_n_1"= "SPEI (t-1)",
   "spei_wc_n"  = "SPEI (t)",
-  "hv219Femme"      = "Sex (ref.Male)",
-  "hv220"      = "Age",
+  "hv219Femme"      = "Female household head",
+  "hv220"      = "Age of household head",
   "(Intercept)"= "Constant"
   )
 
@@ -176,12 +176,12 @@ h1_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate)) +
   geom_point(size = 3) +
   labs(x = NULL, y = "Effect on wealth index centile",
        title = "Impact on well-being: 2x2 DiD impact on local population (< 10km)")
+
+h1_2x2_plot
        
 write_rds(h1_2x2_plot, "paper/figures/h1_2x2_plot.rds")
 
 
-h1_2x2_table <- modelsummary(
-  list(
 h1_2x2_table <- modelsummary(
   list(
     "DID 2x2 placebo (1997-2008)" = h1_m_pre_2x2,
@@ -209,8 +209,16 @@ modelsummary(
   ),
   title = "Impact on well-being: 2x2 DiD",
   notes = "Standard errors clustered at the survey cluster level.",
-  output = "Presentation/conference_betsaka/tables/h1_2x2_table.tex"
+  output = "paper/tables/h1_2x2_table.tex"
 )
+```
+
+
+
+```{r}
+# Construction de dat2
+dat2 <- dat %>%
+  mutate(
     treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
     rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
     rel_year_clipped = case_when(
@@ -232,7 +240,8 @@ modelsummary(
       TRUE                    ~  5
     ),
     GROUP2 = case_when(GROUP == "Treatment" ~ "Treat.",
-                      GROUP == "Control"   ~ "Ctrl.")
+                      GROUP == "Control"   ~ "Ctrl."
+    )
   ) 
 
 ## Label for binned years
@@ -372,6 +381,8 @@ did2s_static <- did2s(
 
 
 h1_staggered_static_tb <- modelsummary(list("did2s (static)" = did2s_static))
+h1_staggered_static_tb
+
 write_rds(h1_staggered_static_tb, "paper/tables/h1_staggered_static_tb.rds")
 
 ```
@@ -504,6 +515,8 @@ h2_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate)) +
   labs(x = NULL, y = "Effect on z-score of wealth index centile",
        title = "Impact on inequalities: 2x2 DiD impact on local population (< 10km)")
 
+h2_2x2_plot
+
 write_rds(h2_2x2_plot, "paper/figures/h2_2x2_plot.rds")
 ```
 
@@ -599,75 +612,46 @@ L’étude des effets hétérogènes vise à déterminer quelles catégories de 
 ```{r}
 yvar <- "wealth_centile_rural_weighted"
 
-iucn_sets <- list(
-  strict = c("Ia","Ib","II","III","IV"),
-  multi  = c("V","VI")
-)
-
-is_strict <- function(x) x %in% iucn_sets$strict
-is_multi  <- function(x) x %in% iucn_sets$multi
-
-# DID 2x2-----------------------------------------------------
-dat3 <- dat %>%
+dat2 <- dat %>%
   mutate(
-    treat_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
-    treat_multi  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))
+    treat_strict = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("Ia","Ib",
+                                                                     "II","III",
+                                                                     "IV")),
+    treat_multi  = as.integer(GROUP == "Treatment" & IUCN_CAT %in% c("V","VI"))
   )
 
-# Placebo ---------------------------------------------------
 
-# Strict
+# Placebo -----------------------------------------------------------------
 
-pre_strict <- dat3 %>%
-  filter(
-    DHSYEAR %in% c(1997, 2008),
-    treat_strict == 1 | (GROUP == "Control")
-  ) %>%
+
+pre <- dat2 %>%
+  filter(DHSYEAR %in% c(1997, 2008)) %>%
   mutate(post = as.integer(DHSYEAR == 2008))
 
-
+# Strict
 f_pre_strict <- as.formula(paste(
   yvar, "~ treat_strict + post + treat_strict:post +",
   "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
 ))
 
-m_pre_strict <- feols(f_pre_strict, data = pre_strict, weights = ~ w_all, cluster = ~ hv001)
+m_pre_strict <- feols(f_pre_strict, data = pre, weights = ~ w_all, cluster = ~ hv001)
 
 # Multi
-pre_multi <- dat3 %>%
-  filter(
-    DHSYEAR %in% c(1997, 2008),
-    treat_multi == 1 | (GROUP == "Control")
-  ) %>%
-  mutate(post = as.integer(DHSYEAR == 2008))
-
-
 f_pre_multi <- as.formula(paste(
   yvar, "~ treat_multi + post + treat_multi:post +",
   "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
 ))
 
-m_pre_multi <- feols(f_pre_multi, data = pre_multi, weights = ~ w_all, cluster = ~ hv001)
+m_pre_multi <- feols(f_pre_multi, data = pre, weights = ~ w_all, cluster = ~ hv001)
 
 # Main estimation ---------------------------
 
-main_strict <- dat3 %>%
-  filter(
-    DHSYEAR %in% c(2008, 2021),
-    treat_strict == 1 | (GROUP == "Control")
-  ) %>%
+main <- dat2 %>%
+  filter(DHSYEAR %in% c(2008, 2021)) %>%
   mutate(post = as.integer(DHSYEAR == 2021))
 
-m_main_strict <- feols(f_pre_strict, data = main_strict, weights = ~ w_all, cluster = ~ hv001)
-
-main_multi <- dat3 %>%
-  filter(
-    DHSYEAR %in% c(2008, 2021),
-    treat_multi == 1 | (GROUP == "Control")
-  ) %>%
-  mutate(post = as.integer(DHSYEAR == 2021))
-
-m_main_multi  <- feols(f_pre_multi, data = main_multi, weights = ~ w_all, cluster = ~ hv001)
+m_main_strict <- feols(f_pre_strict, data = main, weights = ~ w_all, cluster = ~ hv001)
+m_main_multi  <- feols(f_pre_multi, data = main, weights = ~ w_all, cluster = ~ hv001)
 
 
 did_row <- function(model, year_post, term){
@@ -696,8 +680,9 @@ h3_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate, colour = type)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_point(size = 3, position = pd) +
   geom_errorbar(aes(ymin = lo, ymax = hi), width = .2, position = pd) +
-  labs(x = NULL, y = "Effet DID (centile de richesse)",
-       title = "DID 2×2 par type d’AP (strict vs usage multiple)")
+  labs(x = NULL, y = "DID Effect (Wealth Percentile)",
+       title = "DID 2×2 by AP Type (strict vs multi-use)")
+
 
 write_rds(h3_2x2_plot, "paper/figures/h3_2x2_plot.rds")
 
