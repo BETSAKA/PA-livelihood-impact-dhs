@@ -243,15 +243,15 @@ out <- map_dfr(years, function(y) {
   }
 
   tibble(
-    Year                         = y,
-    Survey                       = survey_map[y_chr],
-    Total_number_of_households   = Raw_HH_all,
-    Rural_sub_sample             = Raw_HH_rural,
-    Excluded_group    = Excluded_group,
-    Treatment_Control = Treatment_Control,
-    After_NA_drop     = After_NA_drop,
-    Treated           = Treated,
-    Matched_rows      = Matched_rows
+    `Year`                              = y,
+    `Survey`                            = survey_map[y_chr],
+    `Total Number of Households`        = Raw_HH_all,
+    `Rural Sub-sample`                  = Raw_HH_rural,
+    `Excluded Households`               = Excluded_group,
+    `Treatment vs Control Group`        = Treatment_Control,
+    `Households After Removing Missing Values` = After_NA_drop,
+    `Treated Households`                = Treated,
+    `Matched Observations`              = Matched_rows
   )
 })
 
