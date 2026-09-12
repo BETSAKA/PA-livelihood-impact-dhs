@@ -202,6 +202,18 @@ if (!file.exists("data/derived/spatial_covars_staggered.rds")) {
   })
   toc() # 20 391,84 sec elapsed
   
+ # if (!file.exists("data/derived/step1_tmax.rds")) {
+ # tic()
+ # with_progress({
+ #  buffer_all <- buffer_all %>%
+   #   calc_indicators(calc_temperature_max_wc(engine = "extract", stats = "mean"))
+  #})
+  #toc()
+  #write_rds(buffer_all, "data/derived/step1_tmax.rds")
+#} else {
+#  buffer_all <- read_rds("data/derived/step1_tmax.rds")
+#} # 16451.43 sec elapsed 
+  
   # Minimum temperatures
   tic()
   with_progress({
@@ -211,6 +223,19 @@ if (!file.exists("data/derived/spatial_covars_staggered.rds")) {
       )
   })
   toc() # 28 357,5 sec elapsed 
+  
+ # if (!file.exists("data/derived/step2_tmin.rds")) {
+ # tic()
+ # with_progress({
+ #   buffer_all <- buffer_all %>%
+ #     calc_indicators(calc_temperature_min_wc(engine = "extract", stats = "mean"))
+ # })
+ # toc()
+ # write_rds(buffer_all, "data/derived/step2_tmin.rds")
+#} else {
+#  buffer_all <- read_rds("data/derived/step2_tmin.rds")
+#} # 17 177,79 sec elapsed
+
   
   
   # Precipitations
@@ -224,6 +249,19 @@ if (!file.exists("data/derived/spatial_covars_staggered.rds")) {
   toc() # 19636.08 sec elapsed 
   
   
+ # if (!file.exists("data/derived/step3_precip.rds")) {
+ # tic()
+ # with_progress({
+  #  buffer_all <- buffer_all %>%
+   #   calc_indicators(calc_precipitation_wc(engine = "extract", stats = "mean"))
+  #})
+ # toc()
+ # write_rds(buffer_all, "data/derived/step3_precip.rds")
+#} else {
+#  buffer_all <- read_rds("data/derived/step3_precip.rds")
+#} # 18397.88 sec elapsed 
+  
+  
   # Forest cover rate in 2000
   tic()
   with_progress({
@@ -233,6 +271,20 @@ if (!file.exists("data/derived/spatial_covars_staggered.rds")) {
       )
   })
   toc()   # 2602.96 sec elapsed
+  
+  
+ # if (!file.exists("data/derived/step4_treecover.rds")) {
+ # tic()
+ # with_progress({
+ #   buffer_all <- buffer_all %>%
+ #     calc_indicators(calc_treecover_area(years = 2000, min_size = 1, min_cover = 10))
+ # })
+  #toc()
+ # write_rds(buffer_all, "data/derived/step4_treecover.rds")
+#} else {
+ # buffer_all <- read_rds("data/derived/step4_treecover.rds")
+#} # 1848 sec elapsed
+  
   
   # slope 
   tic()
@@ -244,6 +296,19 @@ if (!file.exists("data/derived/spatial_covars_staggered.rds")) {
   })
   toc() # 2398.6 sec elapsed    
   
+  
+ # if (!file.exists("data/derived/step5_slope.rds")) {
+ # tic()
+ # with_progress({
+ #   buffer_all <- buffer_all %>%
+ #     calc_indicators(calc_slope(engine = "extract", stats = "mean"))
+ # })
+ # toc()
+ # write_rds(buffer_all, "data/derived/step5_slope.rds")
+#} else {
+#  buffer_all <- read_rds("data/derived/step5_slope.rds")
+#} # 1316.38 sec elapsed 
+  
   # Elevation
   tic()
   with_progress({
@@ -254,6 +319,18 @@ if (!file.exists("data/derived/spatial_covars_staggered.rds")) {
   })
   toc() # 4396,93 sec elapsed  
   
+#  if (!file.exists("data/derived/step6_elevation.rds")) {
+#  tic()
+#  with_progress({
+#    buffer_all <- buffer_all %>%
+#      calc_indicators(calc_elevation(engine = "extract", stats = "mean"))
+ # })
+ # toc()
+#  write_rds(buffer_all, "data/derived/step6_elevation.rds")
+#} else {
+#  buffer_all <- read_rds("data/derived/step6_elevation.rds")
+#} # 1122.25 sec elapsed 
+  
   # Population density
   tic()
   with_progress({
@@ -262,7 +339,21 @@ if (!file.exists("data/derived/spatial_covars_staggered.rds")) {
         calc_population_count(engine = "extract", stats = "mean")
       )
   })
-  toc() # 5233,48 sec elapsed
+  toc() # 5233,48 sec elapsed | # 224.2 sec elapsed 
+  
+  
+ # if (!file.exists("data/derived/step7_population.rds")) {
+ # tic()
+#  with_progress({
+#    buffer_all <- buffer_all %>%
+#      calc_indicators(calc_population_count(engine = "extract", stats = "mean"))
+#  })
+#  toc()
+#  write_rds(buffer_all, "data/derived/step7_population.rds")
+#} else {
+#  buffer_all <- read_rds("data/derived/step7_population.rds")
+#} 
+  
   
   # Accessibility
   tic()
@@ -274,11 +365,23 @@ if (!file.exists("data/derived/spatial_covars_staggered.rds")) {
   })
   toc() # 87.63 sec | 2594.06 sec elapsed   
   
+  
+#  if (!file.exists("data/derived/step8_accessibility.rds")) {
+#  tic()
+#  with_progress({
+#    buffer_all <- buffer_all %>%
+#      calc_indicators(calc_traveltime_2000(engine = "extract", stats = "mean"))
+#  })
+ # toc()
+#  write_rds(buffer_all, "data/derived/step8_accessibility.rds")
+#} else {
+#  buffer_all <- read_rds("data/derived/step8_accessibility.rds")
+#} # 464.14 sec elapsed 
+  
   # Enregistrement des données 
   write_rds(buffer_all, "data/derived/spatial_covars_staggered.rds")
   cat("Données enregistrées dans spatial_covars_staggered.rds")
 }
-
 ```
 
 Nous obtenons un dataframe contenant le couvert forestier en 2000, la pente et l'altitude, la densité de population, l'accessibilité, la température maximale et minimale, ainsi que la précipitation.
