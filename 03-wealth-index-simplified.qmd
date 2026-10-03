@@ -116,7 +116,7 @@ add_zscore_from_centile <- function(df, centile_col, cluster_col, zscore_col = "
   df %>%
     left_join(stats, by = cluster_col) %>%
     mutate(!!zscore_col := ifelse(!is.na(s) & s > 0,
-                                  abs(.data[[centile_col]] - m) / s, NA_real_)) %>%
+                                  (.data[[centile_col]] - m) / s, NA_real_)) %>%
     select(-m, -s)
 }
 
@@ -145,7 +145,7 @@ write_rds(hh11_rur, "data/derived/hh_2011_rural_simpler.rds")
 
 ## MICS 2018: Rural Wealth Centiles
 
-We extend our analysis by incorporating the 2018 MICS survey for Madagascar, which includes a national wealth score (`wscore`) and a rural-specific wealth score (`wscorer`). We first assess the concordance of centile classifications based on these two scores among rural households. Then, we compute unweighted and weighted rural centiles based on the national score to ensure consistency with the DHS-based measures.
+We extend our analysis by incorporating the 2018 MICS survey for Madagascar, which includes a national wealth score (`wscore`) and a rural-specific wealth score (`wscorer`). We compute unweighted and weighted rural centiles based on the national score to ensure consistency with the DHS-based measures (which quantile and cut the same score, `hv271`).
 
 ```{r}
 # Load MICS 2018 household data
@@ -160,7 +160,9 @@ hh18_rur <- hh18 %>%
     hhweight)
 
 des <- svydesign(ids = ~PSU, weights = ~hhweight, data = hh18_rur)
-qs <- svyquantile(~wscorer, des, quantiles = seq(0.01, 1, 0.01),
+# Weighted centile thresholds: computed on wscore (the national score actually
+# cut below), consistent with the DHS-side rural_centiles() which quantiles hv271
+qs <- svyquantile(~wscore, des, quantiles = seq(0.01, 1, 0.01),
                     ci = FALSE, na.rm = TRUE)
 thr <- as.numeric(qs[[1]]) + seq_along(qs[[1]]) * 1e-10
 

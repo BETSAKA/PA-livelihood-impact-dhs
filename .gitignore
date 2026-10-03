@@ -20,7 +20,8 @@ derived/*
 test*
 /.quarto/
 
-
-
-
 **/*.quarto_ipynb
+documentation/*
+
+Todo
+.gitignore
