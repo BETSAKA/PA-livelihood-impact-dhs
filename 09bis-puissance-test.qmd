@@ -1,0 +1,325 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Puissance statistique corrigée
+
+Ce document recalcule la puissance statistique de l'étude en s'alignant strictement sur les choix d'analyse effectués dans `06-matching.qmd` et `07-estimation_staggered.qmd` :
+
+- **Échantillon** : ménages ruraux appariés (fichiers `data_matched_{year}.rds` produits par le genetic matching), groupes Treatment et Control uniquement.
+- **Résultat principal** : `wealth_centile_rural_weighted` (indice de richesse pondéré, comme dans l'estimation H1), avec `zscore_wealth` en sensibilité.
+- **Poids** : poids d'enquête × poids de matching (`w_all`), comme dans l'estimation.
+- **Clustering** : ICC estimée au niveau du cluster (`hv001`), conformément au clustering des erreurs standards.
+- **Design** : MDE pour (i) le 2×2 DiD (2008–2021) et (ii) le design échelonné sur toutes les vagues ; plus une MDE **empirique** calculée directement à partir de l'erreur standard du coefficient `treat_post` du modèle réel.
+
+## Chargement des données (identique à 07)
+
+```{r}
+library(tidyverse)
+library(haven)
+library(lme4)
+library(pwr)
+library(fixest)
+library(did2s)
+library(gt)
+
+yrs <- c(1997, 2008, 2011, 2013, 2016, 2018, 2021)
+
+load_year <- function(year) {
+  d <- read_rds(glue::glue("data/derived/data_matched_{year}.rds"))
+  old <- paste0("spei_wc_", c(year - 2, year - 1, year))
+  new <- c("spei_wc_n_2", "spei_wc_n_1", "spei_wc_n")
+  idx <- match(old, names(d))
+  if (all(!is.na(idx))) names(d)[idx] <- new
+  d %>%
+    mutate(hv219 = zap_labels(hv219),
+           hv220 = zap_labels(hv220))
+}
+
+dat <- bind_rows(lapply(yrs, load_year)) %>%
+  filter(GROUP %in% c("Treatment", "Control")) %>%
+  mutate(
+    treat    = as.integer(GROUP == "Treatment"),
+    w_svy    = hv005 / 1e6,
+    w_all    = w_svy * weights,
+    cluster_uid = interaction(DHSYEAR, hv001, drop = TRUE)
+  )
+
+yvar <- "wealth_centile_rural_weighted"
+```
+
+## Vérification de la variable de résultat
+
+Le document original rapportait un écart-type de ~29,9 en affirmant que l'indice varie de 1 à 5. On vérifie ici la distribution réelle.
+
+```{r}
+dat %>%
+  group_by(DHSYEAR) %>%
+  summarise(n      = n(),
+            mean   = weighted.mean(.data[[yvar]], w_all, na.rm = TRUE),
+            sd     = sqrt(Hmisc::wtd.var(.data[[yvar]], w_all, na.rm = TRUE)),
+            min    = min(.data[[yvar]], na.rm = TRUE),
+            max    = max(.data[[yvar]], na.rm = TRUE)) %>%
+  gt() %>% fmt_number(decimals = 2)
+```
+
+## ICC pondérée au niveau du cluster
+
+L'ICC est estimée sur l'échantillon apparié complet (toutes vagues), avec les poids d'analyse, via un modèle vide à effets aléatoires cluster.
+
+```{r}
+icc_fit <- lmer(
+  as.formula(paste(yvar, "~ (1 | hv001)")),
+  data = dat,
+  weights = dat$w_all,
+  REML = TRUE
+)
+
+vc <- as.data.frame(VarCorr(icc_fit))
+var_between <- vc$vcov[vc$grp == "hv001"]
+var_within  <- vc$vcov[vc$grp == "Residual"]
+icc_value   <- var_between / (var_between + var_within)
+
+icc_table <- tibble(
+  Métrique = c("Variance inter-clusters", "Variance intra-cluster",
+               "ICC (pondérée)"),
+  Valeur = c(var_between, var_within, icc_value)
+)
+icc_table %>% gt() %>% fmt_number(decimals = 4)
+```
+
+## Effectifs réels de l'analyse appariée
+
+Contrairement au document original, le groupe contrôle n'est plus supposé identique au groupe traité : on utilise les effectifs réels des ménages et des clusters appariés.
+
+```{r}
+sample_sizes <- function(df, label) {
+  df %>%
+    group_by(treat) %>%
+    summarise(n_hh    = n(),
+              n_clust = n_distinct(hv001),
+              avg_hh_per_clust = n_hh / n_clust,
+              .groups = "drop") %>%
+    mutate(Sample = label, .before = 1)
+}
+
+bind_rows(
+  sample_sizes(filter(dat, DHSYEAR %in% c(2008, 2021)), "2x2 DiD (2008-2021)"),
+  sample_sizes(dat, "Échelonné (toutes vagues)")
+) %>%
+  mutate(treat = if_else(treat == 1, "Traités", "Contrôles")) %>%
+  relocate(Sample, Group = treat) %>%
+  gt() %>% fmt_number(decimals = 1)
+```
+
+## MDE analytique pour le 2×2 DiD (2008–2021)
+
+Pour un DiD, la MDE sur le coefficient `treat_post` est approximée par la formule de taille d'effet pour deux groupes indépendants, où l'ICC réduit la taille effective de l'échantillon (design effect $DE = 1 + (m-1)\rho$, avec $m$ la taille moyenne des grappes). La variance commune est estimée sur les ménages post-traitement de l'échantillon apparié, avec pondération.
+
+```{r}
+# Échantillon post-traitement du 2x2
+post2 <- dat %>% filter(DHSYEAR %in% c(2008, 2021))
+
+pooled_sd <- sqrt(
+  Hmisc::wtd.var(post2[[yvar]], post2$w_all, na.rm = TRUE)
+)
+
+alpha <- 0.05
+power <- 0.8
+
+mde_2x2 <- function(df) {
+  g <- df %>% group_by(treat) %>%
+    summarise(n_hh = n(), n_clust = n_distinct(hv001), .groups = "drop")
+  de <- 1 + (g$n_hh / g$n_clust - 1) * icc_value
+  n_eff <- g$n_hh / de
+  res <- pwr.t2n.test(n1 = n_eff[2], n2 = n_eff[1],
+                      sig.level = alpha, power = power)
+  tibble(
+    Sample        = "2x2 DiD (2008-2021)",
+    n_eff_treated = n_eff[2],
+    n_eff_control = n_eff[1],
+    design_effect_treated = de[2],
+    cohens_d      = res$d,
+    mde_units     = res$d * pooled_sd
+  )
+}
+
+res_2x2 <- mde_2x2(post2)
+```
+
+## MDE analytique pour le design échelonné
+
+Le design échelonné exploite toutes les vagues. On applique la même logique sur l'échantillon apparié complet (les vagues pré-traitement renforcent la puissance en servant de périodes de comparaison). Il s'agit d'une borne prudente : un DiD échelonné est généralement plus puissant qu'une comparaison simple.
+
+```{r}
+res_stag <- dat %>%
+  mde_2x2() %>%
+  mutate(Sample = "Échelonné (toutes vagues)")
+
+bind_rows(res_2x2, res_stag) %>%
+  gt() %>%
+  fmt_number(columns = everything(), decimals = 3) %>%
+  cols_label(cohens_d = "d de Cohen (MDE)",
+             mde_units = "MDE en unités de l'indice")
+```
+
+## MDE empirique à partir du modèle réel
+
+La MDE la plus fidèle à l'analyse est dérivée directement de l'erreur standard du coefficient `treat_post` du 2×2 DiD estimé dans `07-estimation_staggered.qmd` (mêmes données, poids et clustering) : $MDE = (t_{1-\alpha/2} + t_{power}) \times SE$.
+
+```{r}
+main2 <- post2 %>%
+  mutate(post = as.integer(DHSYEAR == 2021),
+         treat_post = treat * post)
+
+f_main <- reformulate(
+  c("treat", "post", "treat_post",
+    "spei_wc_n_2", "spei_wc_n_1", "spei_wc_n", "hv219", "hv220"),
+  response = yvar
+)
+
+m_main <- feols(f_main, data = main2, weights = ~ w_all, cluster = ~ cluster_uid)
+
+se <- broom::tidy(summary(m_main)) %>%
+  filter(term == "treat_post") %>% pull(std.error)
+
+t_crit  <- qt(1 - alpha/2, df = df.residual(m_main))
+t_pow   <- qt(power, df = df.residual(m_main))
+mde_emp <- (t_crit + t_pow) * se
+
+emp_table <- tibble(
+  Métrique = c("SE(treat_post) observée", "MDE empirique (unités de l'indice)",
+               "MDE empirique (d de Cohen)"),
+  Valeur = c(se, mde_emp, mde_emp / pooled_sd)
+)
+emp_table %>% gt() %>% fmt_number(decimals = 4)
+```
+
+## MDE empirique du design échelonné (did2s)
+
+Réplication exacte du modèle statique échelonné de `07-estimation_staggered.qmd` (`did2s`, méthode de Gardner, `treat_on`, clustering sur `cluster_uid`, poids `w_all`). La MDE est dérivée de l'erreur standard du coefficient de traitement.
+
+```{r}
+# Recréation de dat2 comme dans 07
+dat2 <- dat %>%
+  mutate(
+    treatment_phase = STATUS_YR,
+    treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
+    rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
+    rel_year_clipped = case_when(
+      is.infinite(rel_year) ~ NA_real_,
+      TRUE ~ pmax(pmin(rel_year, 10), -10)
+    ),
+    rel_year_2yr = case_when(
+      is.na(rel_year_clipped) ~ NA_integer_,
+      rel_year_clipped <= -9  ~ -5L,
+      rel_year_clipped <= -7  ~ -4L,
+      rel_year_clipped <= -5  ~ -3L,
+      rel_year_clipped <= -3  ~ -2L,
+      rel_year_clipped <= -1  ~ -1L,
+      rel_year_clipped <=  1  ~  0L,
+      rel_year_clipped <=  3  ~  1L,
+      rel_year_clipped <=  5  ~  2L,
+      rel_year_clipped <=  7  ~  3L,
+      rel_year_clipped <=  9  ~  4L,
+      TRUE                    ~  5L
+    ),
+    rel_year_2yr2 = factor(
+      if_else(is.na(rel_year_2yr), "never", as.character(rel_year_2yr)),
+      levels = c("-5","-4","-3","-2","-1","0","1","2","3","4","5","never")
+    )
+  )
+
+did2s_static <- did2s(
+  data         = dat2,
+  yname        = yvar,
+  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  second_stage = ~ i(treat_on, ref = FALSE),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+tidy_stag <- broom::tidy(summary(did2s_static))
+se_stag <- tidy_stag %>% filter(term == "treat_on::1") %>% pull(std.error)
+
+# degrés de liberté : did2s ajuste par le nombre de clusters traités si besoin
+df_stag <- tryCatch(df.residual(did2s_static), error = function(e) Inf)
+t_crit_stag <- qt(1 - alpha/2, df = df_stag)
+t_pow_stag  <- qt(power, df = df_stag)
+mde_emp_stag <- (t_crit_stag + t_pow_stag) * se_stag
+
+stag_table <- tibble(
+  Métrique = c("SE(treat_on::1) observée", "MDE empirique échelonné (unités de l'indice)",
+               "MDE empirique échelonné (d de Cohen)"),
+  Valeur = c(se_stag, mde_emp_stag, mde_emp_stag / pooled_sd)
+)
+stag_table %>% gt() %>% fmt_number(decimals = 4)
+```
+
+## Sensibilité : zscore_wealth
+
+```{r}
+sd_z <- sqrt(Hmisc::wtd.var(dat$zscore_wealth, dat$w_all, na.rm = TRUE))
+# Même d de Cohen, unités différentes
+tibble(
+  Métrique = c("Écart-type pondéré (zscore_wealth)",
+               "MDE 2x2 (z-score)", "MDE empirique (z-score)"),
+  Valeur = c(sd_z, res_2x2$cohens_d * sd_z,
+             (mde_emp / pooled_sd) * sd_z)
+) %>% gt() %>% fmt_number(decimals = 4)
+```
+
+## Décomposition de l'écart-type du coefficient DiD
+
+Pour comprendre l'écart entre la MDE analytique (design effect) et la MDE empirique, on décompose la SE en partant de la comparaison de moyennes la plus simple jusqu'à la spécification complète de `07-estimation_staggered.qmd` [@abadie2017].
+
+```{r}
+post21 <- dat %>% filter(DHSYEAR == 2021)
+
+# (a) moyenne post seulement, non pondérée, SE individuelle
+se_a <- sqrt(var(post21$wealth_centile_rural_weighted[post21$treat == 1], na.rm = TRUE) /
+               sum(post21$treat == 1) +
+             var(post21$wealth_centile_rural_weighted[post21$treat == 0], na.rm = TRUE) /
+               sum(post21$treat == 0))
+
+# (b) idem, SE cluster sur hv001
+m_b <- feols(wealth_centile_rural_weighted ~ treat, data = post21, cluster = ~ hv001)
+se_b <- se(m_b)["treat"]
+
+# (c) pondérée + cluster
+m_c <- feols(wealth_centile_rural_weighted ~ treat, data = post21,
+             weights = ~ w_all, cluster = ~ hv001)
+se_c <- se(m_c)["treat"]
+
+# (d) spécification complète du 2x2 (déjà estimée : m_main)
+se_d <- se(m_main)["treat_post"]
+
+tibble(
+  Étape = c("(a) post seulement, non pondéré, SE individuelle",
+            "(b) post seulement, non pondéré, SE cluster (hv001)",
+            "(c) post seulement, pondéré + cluster",
+            "(d) spécification complète 2x2 DiD (07)"),
+  SE = c(se_a, se_b, se_c, se_d)
+) %>%
+  gt() %>% fmt_number(decimals = 3)
+```
+
+## Synthèse et interprétation
+
+- L'ICC pondérée estimée sur l'échantillon apparié (0,357) quantifie le degré de clustering réellement présent dans l'échantillon d'analyse (à comparer à la valeur 0,536 du document original, calculée sur des ménages non appariés, sans poids, et à 0,634 dans le calcul initial de `documentation/initial_power_analysis`).
+- Les MDE sont exprimées en **unités de l'indice de richesse** utilisé dans l'estimation (`wealth_centile_rural_weighted`) et non sur une variable substitut.
+- La **MDE empirique** (dérivée de la SE des modèles réels) constitue la meilleure estimation de la capacité de l'étude à détecter un effet : elle intègre automatiquement les poids, le matching, les contrôles (SPEI, sexe et âge du chef de ménage), le clustering et la structure DiD.
+- Selon les conventions de Cohen, un d de 0,13 correspond à un **petit** effet (et non modéré).
+- Le traitement (proximité à moins de 10 km d'une AP) étant attribué **au niveau du cluster**, la raison « experimental design » de @abadie2017 s'applique : le clustering des erreurs standards sur `hv001`/`cluster_uid` dans 07 est correct.
+- La décomposition de la SE montre que l'écart entre MDE analytique et empirique ne provient **pas** d'une erreur conceptuelle sur l'attribution individuelle vs grappe : le design effect $1+(m-1)\rho$ est précisément la formule standard des essais randomisés au niveau du cluster, et il rend bien compte du passage de (a) à (b). L'écart restant (×1,6 environ) provient des tailles de grappes inégales et des **poids** (qui rapprochent le nombre d'unités effectives du nombre brut de grappes, ~120 par bras, plutôt que de $K/\rho$), de la **structure DiD** (le coefficient `treat_post` est une interaction dont la variance n'est pas une simple comparaison de deux groupes en post) et des **contrôles**. Les erreurs standards cluster de type Liang–Zeger tendent en outre à être conservatrices avec un nombre limité de grappes traitées (~107) [@abadie2017].
+- Au total, l'étude peut détecter des effets d'environ **16 points de centile** (d ≈ 0,59) avec le 2×2 et d'environ **9 points de centile** (d ≈ 0,34) avec le design échelonné, à 80 % de puissance. Si le plan d'analyse préalable postule des effets plus faibles (typiquement quelques points de centile pour l'impact des AP), cela doit être explicitement reconnu comme une limite de puissance.
+
+## Limites
+
+- La MDE analytique par design effect reste une approximation pour un DiD échelonné (la vraie puissance dépend du calendrier d'adoption et de la corrélation entre le timing et les covariables) ; la borne échelonnée doit être lue comme indicative.
+- L'ICC pondérée via `lmer(weights=)` traite les poids comme des poids de fréquence (réplication) ; c'est acceptable pour une estimation de variance, mais l'ICC exacte dépendrait de la méthode d'estimation pondérée retenue.
+- Le calcul suppose une répartition de l'effet homogène dans le temps post-traitement.
+- La MDE empirique est conditionnelle à la spécification estimée (contrôles, poids, structure de clustering) ; toute modification de la spécification de 07 modifierait la MDE.

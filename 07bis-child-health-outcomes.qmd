@@ -65,10 +65,10 @@ Weight-for-age z-scores measure a child's weight relative to the WHO 2006 refere
 
 ### Under-5 mortality
 
-A binary indicator equal to 1 if a child born in the 5 years preceding the survey died before the interview, 0 otherwise. Since the DHS/MICS children's recode (KR/bh) contains only births in the reference period (last 5 years), all deaths recorded (b5 = 0 in DHS, BH5 = 2 in MICS) are by construction under-5 deaths.
+A binary indicator equal to 1 if a child died before age 5, 0 otherwise. The DHS KR file and the MICS birth history (bh.sav) both contain the **complete birth history** of every interviewed woman aged 15–49, not just births in the last 5 years. We use all available births to maximise statistical power. Deaths before age 5 are identified using `b7` (age at death in months) for DHS and `BH9U`/`BH9N` for MICS.
 
 - DHS: `b5` (child is alive: 1 = yes, 0 = no). `b7` = age at death in completed months (available in full DHS rounds, NA in MIS surveys).
-- MICS: `BH5` (child alive: 1 = yes, 2 = no). Birth history file restricted to births in 2013–2018 for comparability with DHS 5-year window.
+- MICS: `BH5` (child alive: 1 = yes, 2 = no). Full birth history from `bh.sav`.
 
 ## Data loading and harmonization
 
@@ -217,10 +217,9 @@ mics_ch <- read_sav("data/raw/mics/2018/SPSS datasets/ch.sav",
     age_death_months = NA_real_
   )
 
-# Mortality from bh.sav (birth history, restricted to last 5 years: 2013–2018)
+# Mortality from bh.sav (full birth history)
 mics_bh <- read_sav("data/raw/mics/2018/SPSS datasets/bh.sav",
                     col_select = c(HH1, HH2, BH5, BH9U, BH9N, BH4Y, BH3)) |>
-  filter(BH4Y >= 2013 & BH4Y <= 2018) |>
   transmute(
     v001 = as.integer(HH1),
     v002 = as.integer(HH2),

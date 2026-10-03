@@ -183,7 +183,7 @@ hh18_rur <- hh18_rur %>%
 hh18_rur <- hh18_rur %>%
   select(
     hv001 = PSU, # cluster
-    hv002 = HH1, # household number
+    hv002 = HH2, # household number
     hv005 = hhweight, # household weight
     hv025 = HH6, # urban/rural indicator
     hv271 = wscore, # wealth score

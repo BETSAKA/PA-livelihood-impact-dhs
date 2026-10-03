@@ -948,12 +948,12 @@ hr_2021_final_5km <- read_dta("data/raw/dhs/DHS_2021/MDHR81DT/MDHR81FL.DTA") %>%
   spei_years = 2019:2021)
 
 hr_2018_final_5km <- read_spss("data/raw/mics/2018/SPSS datasets/hh.sav") %>%
-  select(hv001 = HH1,# cluter number, 
-         hv002 = HH2,# household number, 
+  select(hv001 = HH1,# cluter number,
+         hv002 = HH2,# household number,
          hv219 = HHSEX,# sex of hhh: 1: Masculin, 2: féminin
-         hv220 = HHAGE) %>% # age of hhh: 
+         hv220 = HHAGE) %>% # age of hhh:
   build_year(year = 2018,
-             hh_rural_path = "data/derived/hh_2021_rural_simpler.rds",
+             hh_rural_path = "data/derived/hh_2018_rural_simpler.rds",
              spei_years = 2016:2018)
 
 # Consolidation
