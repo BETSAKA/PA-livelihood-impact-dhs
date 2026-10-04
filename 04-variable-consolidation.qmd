@@ -32,6 +32,18 @@ all_class <- read.csv("data/derived/cluster_treatment_classification_staggered.c
 vars_to_nest <- c("treecover_area", "slope", "elevation",
                   "population_count", "traveltime_2000", "spei_wc")
 
+# Indicateurs de millésime fixe : leur valeur est celle d'une année de référence
+# (données 2000), indépendante de la vague DHS.
+# mapme.biodiversity >= 0.8.0 renvoie `datetime` en POSIXct ; le rendu en
+# timezone locale décale l'instant minuit au jour précédent
+# (2000-01-01 -> "1999-12-31 23:00 EET"), donc year(datetime) lit 1999 au lieu
+# de 2000. Correctif : on ne surcharge l'année QUE lorsque ce décalage exact
+# est observé (POSIXct + année = millésime - 1). Si mapme revient à des dates
+# de type Date ou corrige le décalage, la condition est fausse et
+# year(datetime) est utilisé tel quel.
+vintage_override <- c(treecover_area = 2000, slope = 2000, elevation = 2000,
+                      population_count = 2000, traveltime_2000 = 2000)
+
 build_year <- function(hr_object,
                        year,
                        hh_rural_path,
@@ -65,7 +77,17 @@ build_year <- function(hr_object,
                  names_to = "indicator", values_to = "data") %>%
     unnest(data) %>%
     filter(indicator != "spei_wc" | year(datetime) %in% spei_years) %>%
-    mutate(year_indicator = paste0(indicator, "_", year(datetime))) %>%
+    mutate(
+      dt_year = year(datetime),
+      dt_year = if_else(
+        !is.na(datetime) & indicator %in% names(vintage_override) &
+          inherits(datetime, "POSIXct") &
+          dt_year == vintage_override[indicator] - 1,
+        unname(vintage_override[indicator]),
+        dt_year
+      ),
+      year_indicator = paste0(indicator, "_", dt_year)
+    ) %>%
     select(hv001, hv002, year_indicator, value)
   
   df_wide <- df_long %>%
@@ -157,6 +179,47 @@ write_rds(hr_consolidated, "data/derived/hr_consolidated_1997_2008_2011_2013_201
 cat("Données enregistrées\n")
 ```
 
+Avant l'étape de matching, on vérifie que toutes les variables requises (identifiants, classification, résultats, covariables de matching et de contrôle, avec les noms attendus et les millésimes corrigés) existent pour chaque vague.
+
+```{r}
+#| label: assert-required-vars
+# Assertion : toutes les variables de matching et de contrôle existent, avec
+# les noms attendus, pour chaque vague (revue v2).
+matching_variables <- c(
+  "treecover_area_2000","slope_2000","elevation_2000",
+  "population_count_2000","traveltime_2000_2000"
+)
+
+wave_files <- c(
+  "1997" = "data/derived/hr_1997_final.rds",
+  "2008" = "data/derived/hr_2008_final.rds",
+  "2011" = "data/derived/hr_2011_final.rds",
+  "2013" = "data/derived/hr_2013_final.rds",
+  "2016" = "data/derived/hr_2016_final.rds",
+  "2018" = "data/derived/hr_2018_final.rds",
+  "2021" = "data/derived/hr_2021_final.rds"
+)
+
+required_report <- imap_dfr(wave_files, function(path, yr) {
+  y <- as.integer(yr)
+  hr <- readRDS(path)
+  required <- c("hv001", "hv002", "hv005", "hv219", "hv220", "GROUP", "WDPAID",
+                "STATUS_YR", "IUCN_CAT", "treatment_date", "treated_now",
+                "wealth_centile_rural_weighted", "zscore_wealth",
+                matching_variables,
+                paste0("spei_wc_", (y - 2):y))
+  missing <- setdiff(required, names(hr))
+  tibble(DHSYEAR = y, n_missing = length(missing),
+         missing_vars = if (length(missing)) paste(missing, collapse = ";") else "")
+})
+
+stopifnot(
+  "04 : variables de matching/contrôle manquantes pour au moins une vague" =
+    all(required_report$n_missing == 0)
+)
+required_report
+```
+
 
 Nombre des observations analysées 
 
@@ -226,13 +289,15 @@ out <- map_dfr(years, function(y) {
     }
   }
 
-  # matching_result: matchit object — X matrix rows = inputs to matching (after NA drop)
+  # matching_result: matchit object (revue v2 : liste m_out + meta) —
+  # X matrix rows = inputs to matching (after NA drop)
   if (file.exists(matchres_file)) {
     mr <- readRDS(matchres_file)
-    if (is.list(mr) && "X" %in% names(mr)) {
-      After_NA_drop <- nrow(mr$X)
-      if (is.na(Treated) && "treat" %in% names(mr)) {
-        Treated <- sum(mr$treat == 1L)
+    mobj <- if (is.list(mr) && !is.null(mr$m_out)) mr$m_out else mr
+    if (is.list(mobj) && "X" %in% names(mobj)) {
+      After_NA_drop <- nrow(mobj$X)
+      if (is.na(Treated) && "treat" %in% names(mobj)) {
+        Treated <- sum(mobj$treat == 1L)
       }
     }
   }
