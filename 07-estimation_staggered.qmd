@@ -763,32 +763,47 @@ h3_2x2_plot
 ### Estimation statique par type d’aire protégée
 
 ```{r}
-# Strict only
+# Strict only. NB : avec les effets fixes de cohorte, on ne peut pas restreindre
+# l'échantillon aux seuls témoins (la cohorte des traités stricts, 2013/2015/2020,
+# doit être observée non traitée pour identifier son effet fixe). On exclut donc
+# uniquement les observations déjà traitées par une AP multi-usage (qui
+# contamineraient le groupe de comparaison), en conservant les témoins et les
+# ménages des cohortes strictes pas encore traités.
 d_strict <- dat2_stag %>%
-  mutate(treat_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT))) %>%
-  filter(treat_on == 1 | GROUP == "Control")
+  mutate(
+    strict_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT) &
+                             is.finite(treatment_phase) & DHSYEAR >= treatment_phase),
+    multi_on  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT) &
+                             is.finite(treatment_phase) & DHSYEAR >= treatment_phase)
+  ) %>%
+  filter(multi_on == 0)
 
 did2s_static_strict <- did2s(
   data         = d_strict,
   yname        = yvar,
   first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
-  second_stage = ~ i(treat_on, ref = FALSE),
-  treatment    = "treat_on",
+  second_stage = ~ i(strict_on, ref = FALSE),
+  treatment    = "strict_on",
   cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
-# Multi only
+# Multi only (logique symétrique)
 d_multi <- dat2_stag %>%
-  mutate(treat_on = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))) %>%
-  filter(treat_on == 1 | GROUP == "Control")
+  mutate(
+    strict_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT) &
+                             is.finite(treatment_phase) & DHSYEAR >= treatment_phase),
+    multi_on  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT) &
+                             is.finite(treatment_phase) & DHSYEAR >= treatment_phase)
+  ) %>%
+  filter(strict_on == 0)
 
 did2s_static_multi <- did2s(
   data         = d_multi,
   yname        = yvar,
   first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
-  second_stage = ~ i(treat_on, ref = FALSE),
-  treatment    = "treat_on",
+  second_stage = ~ i(multi_on, ref = FALSE),
+  treatment    = "multi_on",
   cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
@@ -826,32 +841,43 @@ did2s_es_2yr_both <- did2s(
   weights      = "w_all"
 )
 
-# Strict only 
+# Strict only (cf. remarque ci-dessus : on exclut les multi déjà traités,
+# pas les cohortes strictes pas encore traitées)
 d_strict_es <- dat2_stag |>
-  mutate(treat_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT))) %>%
-  filter(treat_on == 1 | GROUP == "Control")
+  mutate(
+    strict_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT) &
+                             is.finite(treatment_phase) & DHSYEAR >= treatment_phase),
+    multi_on  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT) &
+                             is.finite(treatment_phase) & DHSYEAR >= treatment_phase)
+  ) |>
+  filter(multi_on == 0)
 
 did2s_es_2yr_strict <- did2s(
   data         = d_strict_es,
   yname        = yvar,
   first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
-  treatment    = "treat_on",
+  treatment    = "strict_on",
   cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
-# Multi only 
+# Multi only (logique symétrique)
 d_multi_es <- dat2_stag |>
-  mutate(treat_on = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
-  filter(treat_on == 1 | GROUP == "Control")
+  mutate(
+    strict_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT) &
+                             is.finite(treatment_phase) & DHSYEAR >= treatment_phase),
+    multi_on  = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT) &
+                             is.finite(treatment_phase) & DHSYEAR >= treatment_phase)
+  ) |>
+  filter(strict_on == 0)
 
 did2s_es_2yr_multi <- did2s(
   data         = d_multi_es,
   yname        = yvar,
   first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
-  treatment    = "treat_on",
+  treatment    = "multi_on",
   cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
