@@ -1451,14 +1451,10 @@ We test whether effects differ between strict PAs (IUCN I–IV) and multi-use PA
 ```{r}
 #| label: migrant-iucn-2x2
 
-# Définir les fonctions
-is_strict <- function(iucn_cat) {
-  iucn_cat %in% c("Ia", "Ib", "II")  # Strictes
-}
-
-is_multi <- function(iucn_cat) {
-  iucn_cat %in% c("IV", "V", "VI")   # Multi-usages
-}
+# Classification stricte (IUCN I-IV) vs multi-usage (IUCN V-VI) : définition
+# partagée via utils/iucn_sets.R — harmonisée avec 01, 07, 07bis et 08
+# (l'ancienne définition locale classait IV en multi-usage)
+source("utils/iucn_sets.R")
 
 
 dat_migrant_iucn <- dat_migrant |>

@@ -4000,13 +4000,9 @@ H3-heterogeneity: Impacts vary across PA depending on governance, community part
 library(stringr)
 yvar <- "wealth_centile_rural_weighted"
 
-iucn_sets <- list(
-  strict = c("Ia","Ib","II","III","IV"),
-  multi  = c("V","VI")
-)
-
-is_strict <- function(x) x %in% iucn_sets$strict
-is_multi  <- function(x) x %in% iucn_sets$multi
+# Classification stricte (IUCN I-IV) vs multi-usage (IUCN V-VI) : définition
+# partagée via utils/iucn_sets.R
+source("utils/iucn_sets.R")
 
 # DID 2x2-----------------------------------------------------
 dat3 <- dat %>%

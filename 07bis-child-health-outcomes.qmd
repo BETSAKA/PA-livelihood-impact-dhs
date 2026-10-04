@@ -691,8 +691,9 @@ We test whether effects differ between strict PAs (IUCN I–IV) and multi-use PA
 ```{r}
 #| label: heterogeneity-setup
 
-is_strict <- function(x) x %in% c("Ia", "Ib", "II", "III", "IV")
-is_multi  <- function(x) x %in% c("V", "VI")
+# Classification stricte (IUCN I-IV) vs multi-usage (IUCN V-VI) : définition
+# partagée via utils/iucn_sets.R
+source("utils/iucn_sets.R")
 ```
 
 ### HAZ by PA type — 2×2 DiD
