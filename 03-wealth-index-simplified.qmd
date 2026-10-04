@@ -196,6 +196,87 @@ hh18_rur <- hh18_rur %>%
 write_rds(hh18_rur, "data/derived/hh_2018_rural_simpler.rds")
 ```
 
+## Supplementary dispersion diagnostics (review v2)
+
+The preregistered H2 outcome remains the **signed** within-cluster z score computed above — `(wealth_centile_rural_weighted - cluster_mean) / cluster_sd`, no `abs()`, no substitution. Because clusters contain only about 20 to 30 households, a small-sample Gini would be unstable; as supplementary descriptive diagnostics only (not preregistered outcomes), we add two cluster-level dispersion measures of the unnormalized rural wealth centile: `wealth_sd_cluster` and `wealth_iqr_cluster`.
+
+```{r}
+#| label: supplementary-dispersion
+wave_files <- c(
+  "1997" = "data/derived/hh_1997_rural_simpler.rds",
+  "2008" = "data/derived/hh_2008_rural_simpler.rds",
+  "2011" = "data/derived/hh_2011_rural_simpler.rds",
+  "2013" = "data/derived/hh_2013_rural_simpler.rds",
+  "2016" = "data/derived/hh_2016_rural_simpler.rds",
+  "2018" = "data/derived/hh_2018_rural_simpler.rds",
+  "2021" = "data/derived/hh_2021_rural_simpler.rds"
+)
+
+wealth_dispersion_clusters <- imap_dfr(wave_files, function(path, yr) {
+  read_rds(path) |>
+    group_by(hv001) |>
+    summarise(
+      DHSYEAR = as.integer(yr),
+      n_hh_cluster = n(),
+      wealth_sd_cluster  = sd(wealth_centile_rural_weighted, na.rm = TRUE),
+      wealth_iqr_cluster = IQR(wealth_centile_rural_weighted, na.rm = TRUE),
+      .groups = "drop"
+    )
+})
+
+dir.create("output/review_v2", showWarnings = FALSE)
+write_csv(wealth_dispersion_clusters,
+          "output/review_v2/wealth_dispersion_clusters.csv")
+write_rds(wealth_dispersion_clusters,
+          "data/derived/wealth_dispersion_clusters.rds")
+
+# Diagnostic : distribution des effectifs de ménages par cluster et des
+# mesures de dispersion
+wealth_dispersion_clusters |>
+  group_by(DHSYEAR) |>
+  summarise(
+    n_clusters = n(),
+    hh_min = min(n_hh_cluster), hh_median = median(n_hh_cluster),
+    hh_max = max(n_hh_cluster),
+    sd_median = median(wealth_sd_cluster, na.rm = TRUE),
+    sd_p90 = quantile(wealth_sd_cluster, 0.9, na.rm = TRUE),
+    iqr_median = median(wealth_iqr_cluster, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+By construction, the signed z score has an (unweighted) mean of exactly zero within each cluster with more than one household. We verify this empirically, and report whether survey or matching weights make its weighted mean nonzero — a reporting fact, not a new estimand.
+
+```{r}
+#| label: zscore-zeromean-check
+zcheck <- imap_dfr(wave_files, function(path, yr) {
+  d <- read_rds(path)
+  per_cluster <- d |>
+    group_by(hv001) |>
+    summarise(
+      mean_z_unweighted = mean(zscore_wealth, na.rm = TRUE),
+      mean_z_weighted = {
+        ok <- !is.na(zscore_wealth)
+        if (sum(ok) > 0 && sum(hv005[ok]) > 0) {
+          weighted.mean(zscore_wealth[ok], hv005[ok])
+        } else NA_real_
+      },
+      .groups = "drop"
+    )
+  ok <- !is.na(d$zscore_wealth)
+  tibble(
+    DHSYEAR = as.integer(yr),
+    max_abs_mean_unweighted = max(abs(per_cluster$mean_z_unweighted), na.rm = TRUE),
+    mean_z_weighted_overall = weighted.mean(d$zscore_wealth[ok], d$hv005[ok]),
+    share_clusters_weight_mean_gt_0p1 =
+      mean(abs(per_cluster$mean_z_weighted) > 0.1, na.rm = TRUE)
+  )
+})
+zcheck
+```
+
+The unweighted within-cluster mean of the signed z score is zero up to floating-point error in every wave (`max_abs_mean_unweighted` ≈ 0). The survey-weighted mean can depart from zero because weights differ across households within a cluster; this is reported as a property of the weighted estimand, not treated as a different outcome.
+
 ## Conclusion
 
 The rural wealth centiles are now computed consistently across survey types and years, using the national wealth index as a starting point, with (`wealth_centile_rural_weighted`) and without (`wealth_centile_rural_simple`) survey wheighing.
