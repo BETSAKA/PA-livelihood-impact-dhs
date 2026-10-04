@@ -45,13 +45,31 @@ var_labels <- c(
   "treat_post" = "Treatment × Post",
   "treat"      = "Treatment",
   "post"       = "Post",
-  "spei_wc_n_2"= "SPEI (t-2)",
   "spei_wc_n_1"= "SPEI (t-1)",
-  "spei_wc_n"  = "SPEI (t)",
+  "treecover_area_2000"     = "Tree cover 2000",
+  "slope_2000"              = "Slope 2000",
+  "elevation_2000"          = "Elevation 2000",
+  "population_count_2000"   = "Population 2000",
+  "traveltime_2000_2000"    = "Travel time 2000",
   "hv219Femme"      = "Female household head",
   "hv220"      = "Age of household head",
   "(Intercept)"= "Constant"
   )
+
+# Date de référence des vagues (même définition que 01-treatment-assignation :
+# 1er juin, un seul point de définition)
+survey_reference_date <- function(year) {
+  as.Date(sprintf("%d-06-01", year))
+}
+
+# Contrôles du PAP : SPEI de l'année précédant l'enquête (t-1 uniquement),
+# sexe et âge du chef de ménage, et les covariables de matching (millésimes 2000).
+controls_pap <- c(
+  "spei_wc_n_1", "hv219", "hv220",
+  "treecover_area_2000", "slope_2000", "elevation_2000",
+  "population_count_2000", "traveltime_2000_2000"
+)
+fs_controls <- paste(controls_pap, collapse = " + ")
 
 # Chargement des données
 d97 <- read_rds("data/derived/data_matched_1997.rds") %>%
@@ -109,13 +127,23 @@ dat <- bind_rows(d97, d08, d11, d13, d16, d18, d21) %>%
   mutate(
     hv219   = factor(hv219, levels = c(1,2), labels = c("Homme","Femme")), # sexe (cat.)
     hv220   = as.numeric(hv220),                                           # âge
-    treat   = as.integer(GROUP == "Treatment"),
+    treat   = as.integer(GROUP == "Treatment"),  # appartenance au groupe de traitement éventuel (PAP), pas treated_now
+    treatment_date = as.Date(treatment_date),
+    survey_ref_date = survey_reference_date(DHSYEAR),
     w_svy   = hv005 / 1e6,
     w_all   = w_svy * weights, # poids d'enquête × poids de matching (si 'weights' existe)
     id      = row_number(),
-    treatment_phase = STATUS_YR,
+    treatment_phase = treatment_year,
     cluster_uid = interaction(DHSYEAR, hv001, drop = TRUE)
     )
+
+# Assertion : la classification comporte bien les dates de traitement attendues
+stopifnot(
+  "07 : date de traitement manquante pour des observations Treatment" =
+    all(!is.na(dat$treatment_date[dat$treat == 1])),
+  "07 : date de traitement présente pour des observations Control" =
+    all(is.na(dat$treatment_date[dat$treat == 0]))
+)
 
 # Outcome h
 yvar <- "wealth_centile_rural_weighted"
@@ -129,8 +157,7 @@ pre <- dat %>%
          treat_post = treat * post)
 
 f_pre <- as.formula(paste(
-  yvar, "~ treat + post + treat_post +",
-  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+  yvar, "~ treat + post + treat_post +", fs_controls
 ))
 
 h1_m_pre_2x2 <- feols(f_pre, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
@@ -142,6 +169,34 @@ main <- dat %>%
          treat_post = treat * post)
 
 f_main <- f_pre  # même formule
+
+# Contrôle de cohérence des bornes temporelles avant le DiD principal :
+# les Traités de 2021 doivent être effectivement traités à la date de
+# référence de 2021 ; les éventuels Traités déjà traités en 2008 sont
+# signalés explicitement (AP concernées).
+endpoint_check <- dat %>%
+  st_drop_geometry() %>%
+  filter(GROUP == "Treatment") %>%
+  group_by(DHSYEAR) %>%
+  summarise(
+    n_treatment   = n(),
+    n_already     = sum(treated_now == 1),
+    n_not_yet     = sum(treated_now == 0),
+    share_not_yet = mean(treated_now == 0),
+    untreated_pas = paste(sort(unique(WDPAID[treated_now == 0])),
+                          collapse = ";"),
+    .groups = "drop"
+  )
+print(endpoint_check)
+
+stopifnot(
+  "07 : des observations Treatment de 2008 sont déjà traitées à la baseline" =
+    all(endpoint_check$n_already[endpoint_check$DHSYEAR == 2008] == 0)
+)
+if (any(endpoint_check$share_not_yet[endpoint_check$DHSYEAR == 2021] > 0.05)) {
+  stop("07 : part non négligeable de Traités 2021 non encore traités à la ",
+       "date de référence — décision substantielle requise (voir untreated_pas).")
+}
 
 h1_m_main_2x2 <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
 
@@ -219,7 +274,9 @@ modelsummary(
 # Construction de dat2
 dat2 <- dat %>%
   mutate(
-    treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
+    treat_on = as.integer(
+      GROUP == "Treatment" & survey_ref_date >= treatment_date
+    ),
     rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
     rel_year_clipped = case_when(
       is.infinite(rel_year) ~ NA_real_,
@@ -364,6 +421,28 @@ Pour l'instant, on n'arrive pas à appliquer l'approche de @borusyak2024 avec de
 
 Nota bene : Afin de stabiliser les estimations de l’event-study, nous avons appliqué un binning des années relatives au traitement, regroupant toutes les observations au-delà de ±5 années dans des catégories communes. Ce choix est motivé par l’espacement irrégulier des enquêtes disponibles, qui implique que certaines valeurs de temps relatif sont représentées par très peu d’observations et produisent des coefficients instables. Comme le soulignent Borusyak, Jaravel et Spiess (2024, p. 22) : “*In practice, it is common to bin distant leads and lags into a single category, both to improve statistical precision and to avoid presenting very noisy and uninformative coefficients.*” Cette approche permet ainsi de réduire le bruit aux extrêmes et de se concentrer sur l’interprétation des dynamiques principales autour du traitement.s
 
+**Cohortes.** La correction de la classification (appartenance au groupe de traitement éventuel, et non exposition courante) rétablit les cohortes 2008 comme pré-traitement : la cohorte 2008 n'est plus écartée automatiquement. Le tableau de support ci-dessous documente, pour chaque cohorte de traitement (`treatment_year`), le nombre de vagues et de ménages observés avant et après le traitement. NB : il s'agit de coupes répétées, pas d'un panel — les « cohortes » sont définies par la géographie de traitement, pas par des unités suivies dans le temps ; les effets fixes de cohorte ne sont pas équivalents à des effets fixes d'unités.
+
+```{r}
+#| label: cohort-support
+#| tab-cap: "Support des cohortes de traitement"
+cohort_support <- dat2 |>
+  st_drop_geometry() |>
+  filter(GROUP == "Treatment") |>
+  group_by(cohort = treatment_year) |>
+  summarise(
+    n_waves_before = n_distinct(DHSYEAR[treated_now == 0]),
+    n_waves_after  = n_distinct(DHSYEAR[treated_now == 1]),
+    n_hh_before    = sum(treated_now == 0),
+    n_hh_after     = sum(treated_now == 1),
+    .groups = "drop"
+  )
+
+dir.create("output/review_v2", showWarnings = FALSE)
+write_csv(cohort_support, "output/review_v2/cohort_support.csv")
+cohort_support
+```
+
 ## Estimation statique
 
 ```{r}
@@ -371,7 +450,7 @@ Nota bene : Afin de stabiliser les estimations de l’event-study, nous avons ap
 did2s_static <- did2s(
   data        = dat2,
   yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR,
   second_stage= ~ i(treat_on, ref = FALSE),
   treatment   = "treat_on",
   cluster_var = "cluster_uid",
@@ -406,10 +485,10 @@ dat2 <- dat2 |>
 did2s_es_2yr <- did2s(
   data        = dat2,
   yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR,
   second_stage= ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment   = "treat_on",
-  cluster_var = "hv001",
+  cluster_var = "cluster_uid",
   weights     = "w_all"
 )
 
@@ -468,7 +547,7 @@ pre <- dat %>%
 
 f_pre <- as.formula(paste(
   yvar, "~ treat + post + treat_post +",
-  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+  "spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000"
 ))
 
 m_pre <- feols(f_pre, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
@@ -527,7 +606,7 @@ write_rds(h2_2x2_plot, "paper/figures/h2_2x2_plot.rds")
 did2s_static_h2 <- did2s(
   data        = dat2,
   yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR,
   second_stage= ~ i(treat_on, ref = FALSE),
   treatment   = "treat_on",
   cluster_var = "cluster_uid",
@@ -560,10 +639,10 @@ dat2 <- dat2 |>
 did2s_es_2yr <- did2s(
   data        = dat2,
   yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR,
   second_stage= ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment   = "treat_on",
-  cluster_var = "hv001",
+  cluster_var = "cluster_uid",
   weights     = "w_all"
 )
 
@@ -636,18 +715,18 @@ pre <- dat3 %>%
 # Strict
 f_pre_strict <- as.formula(paste(
   yvar, "~ treat_strict + post + treat_strict:post +",
-  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+  "spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000"
 ))
 
-m_pre_strict <- feols(f_pre_strict, data = pre, weights = ~ w_all, cluster = ~ hv001)
+m_pre_strict <- feols(f_pre_strict, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
 
 # Multi
 f_pre_multi <- as.formula(paste(
   yvar, "~ treat_multi + post + treat_multi:post +",
-  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+  "spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000"
 ))
 
-m_pre_multi <- feols(f_pre_multi, data = pre, weights = ~ w_all, cluster = ~ hv001)
+m_pre_multi <- feols(f_pre_multi, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
 
 # Main estimation ---------------------------
 
@@ -655,8 +734,8 @@ main <- dat3 %>%
   filter(DHSYEAR %in% c(2008, 2021)) %>%
   mutate(post = as.integer(DHSYEAR == 2021))
 
-m_main_strict <- feols(f_pre_strict, data = main, weights = ~ w_all, cluster = ~ hv001)
-m_main_multi  <- feols(f_pre_multi, data = main, weights = ~ w_all, cluster = ~ hv001)
+m_main_strict <- feols(f_pre_strict, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
+m_main_multi  <- feols(f_pre_multi, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
 
 
 did_row <- function(model, year_post, term){
@@ -705,7 +784,7 @@ d_strict <- dat2 %>%
 did2s_static_strict <- did2s(
   data         = d_strict,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -720,7 +799,7 @@ d_multi <- dat2 %>%
 did2s_static_multi <- did2s(
   data         = d_multi,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -753,10 +832,10 @@ dat2 <- dat2 |>
 did2s_es_2yr_both <- did2s(
   data         = dat2,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
   treatment    = "treat_on",
-  cluster_var  = "hv001",
+  cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
@@ -768,10 +847,10 @@ d_strict_es <- dat2 |>
 did2s_es_2yr_strict <- did2s(
   data         = d_strict_es,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
   treatment    = "treat_on",
-  cluster_var  = "hv001",
+  cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
@@ -783,10 +862,10 @@ d_multi_es <- dat2 |>
 did2s_es_2yr_multi <- did2s(
   data         = d_multi_es,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
   treatment    = "treat_on",
-  cluster_var  = "hv001",
+  cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
