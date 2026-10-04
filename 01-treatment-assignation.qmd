@@ -748,7 +748,7 @@ map_ap <- tm_shape(contour_mada) +
   tm_add_legend(
     type  = "polygons",
     fill  = c("green", "darkgreen"),
-    labels = c("From 2008", "Before 2008"),
+    labels = c("From 2008 to 2021", "Before 2008"),
     title = "Protected Areas"
   ) +
   tm_add_legend(
