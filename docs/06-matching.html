@@ -443,62 +443,70 @@ div.csl-indent {
 <span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a>      <span class="at">distance  =</span> <span class="st">"mahalanobis"</span>,</span>
 <span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>      <span class="at">estimand  =</span> <span class="st">"ATT"</span>,</span>
 <span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>      <span class="at">replace   =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>      <span class="at">caliper   =</span> .<span class="dv">25</span>,</span>
-<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>      <span class="at">pop.size         =</span> <span class="dv">1000</span>,</span>
-<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>      <span class="at">max.generations  =</span> <span class="dv">100</span>,</span>
-<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>      <span class="at">wait.generations =</span> <span class="dv">4</span></span>
-<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>     </span>
-<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>    <span class="fu">saveRDS</span>(m_out, match_path)</span>
-<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>  matched <span class="ot">&lt;-</span> <span class="fu">match.data</span>(m_out, <span class="at">data =</span> sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(dat_m)) <span class="sc">%&gt;%</span></span>
-<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(weights <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>      <span class="co"># NB : avec distance = "mahalanobis", MatchIt 4.x exige des calipers nommés</span></span>
+<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a>      <span class="co"># sur les covariables ; un caliper scalaire .25 sur les 5 covariables</span></span>
+<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a>      <span class="co"># simultanément n'apparie aucune observation → caliper retiré</span></span>
+<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a>      <span class="co"># (cf. documentation/issues-tracker/fixed/U6-ch06-matching.md).</span></span>
+<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a>      <span class="at">pop.size         =</span> <span class="dv">1000</span>,</span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a>      <span class="at">max.generations  =</span> <span class="dv">100</span>,</span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>      <span class="at">wait.generations =</span> <span class="dv">4</span></span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>    <span class="fu">saveRDS</span>(m_out, match_path)</span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>  <span class="fu">saveRDS</span>(matched, matched_out_path)</span>
-<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">glue</span>(<span class="st">"&gt;&gt; N appariés = {nrow(matched)} (écrit: {matched_out_path})</span><span class="sc">\n</span><span class="st">"</span>))</span>
-<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>    Année <span class="ot">=</span> year,</span>
-<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Total des observations'</span> <span class="ot">=</span> n_total,</span>
-<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Après filtre/NA'</span> <span class="ot">=</span> n_filt,</span>
-<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a>    Traités <span class="ot">=</span> n_treat,</span>
-<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a>    Contrôles <span class="ot">=</span> n_ctrl,</span>
-<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>    <span class="st">'N appariés'</span> <span class="ot">=</span> <span class="fu">nrow</span>(matched)</span>
-<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>need_overwrite <span class="ot">&lt;-</span> <span class="cf">function</span>(year) {</span>
-<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>  gen_path   <span class="ot">&lt;-</span> <span class="fu">glue</span>(<span class="st">"data/derived/gen_match_model_{year}.rds"</span>)</span>
-<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>  match_path <span class="ot">&lt;-</span> <span class="fu">glue</span>(<span class="st">"data/derived/matching_result_{year}.rds"</span>)</span>
-<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">gen =</span> <span class="sc">!</span><span class="fu">file.exists</span>(gen_path), <span class="at">match =</span> <span class="sc">!</span><span class="fu">file.exists</span>(match_path))</span>
-<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Exécution avec progression ---</span></span>
-<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a>yrs <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1997</span>, <span class="dv">2008</span>, <span class="dv">2011</span>, <span class="dv">2013</span>, <span class="dv">2016</span>, <span class="dv">2018</span>, <span class="dv">2021</span>)</span>
-<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>res_list <span class="ot">&lt;-</span> <span class="fu">vector</span>(<span class="st">"list"</span>, <span class="fu">length</span>(yrs))</span>
-<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(res_list) <span class="ot">&lt;-</span> yrs</span>
-<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a><span class="fu">with_progress</span>({</span>
-<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="fu">progressor</span>(<span class="at">along =</span> yrs)</span>
-<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(yrs)) {</span>
-<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a>  yr <span class="ot">&lt;-</span> yrs[i]</span>
-<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>  ow <span class="ot">&lt;-</span> <span class="fu">need_overwrite</span>(yr) </span>
-<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">glue</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">&gt;&gt; overwrite {yr}: gen={ow$gen}, match={ow$match}</span><span class="sc">\n</span><span class="st">"</span>))</span>
-<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Start %s"</span>, yr))</span>
-<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a>  t_all <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
-<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>  res_list[[i]] <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
-<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a>    <span class="fu">run_matching_year</span>(yr, <span class="at">overwrite =</span> ow),</span>
-<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) { <span class="fu">warning</span>(<span class="fu">glue</span>(<span class="st">"Year {yr} ERROR: {e$message}"</span>)); <span class="cn">NULL</span> }</span>
-<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Done %s (%.1f min)"</span>,</span>
-<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a>            yr, <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(<span class="fu">Sys.time</span>(), t_all, <span class="at">units=</span><span class="st">"mins"</span>))))</span>
-<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a>  matched <span class="ot">&lt;-</span> <span class="fu">match.data</span>(m_out, <span class="at">data =</span> sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(dat_m)) <span class="sc">%&gt;%</span></span>
+<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">filter</span>(weights <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Garde-fou : aucune observation issue d'une AP « Proposed » (STATUS_YR 2026)</span></span>
+<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ne doit subsister après appariement (cf. F6 / U1). Un cache matchit périmé</span></span>
+<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a>  <span class="co"># réinjecterait sinon l'ancienne classification sans erreur.</span></span>
+<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">any</span>(matched<span class="sc">$</span>STATUS_YR <span class="sc">==</span> <span class="dv">2026</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a>  <span class="fu">saveRDS</span>(matched, matched_out_path)</span>
+<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">glue</span>(<span class="st">"&gt;&gt; N appariés = {nrow(matched)} (écrit: {matched_out_path})</span><span class="sc">\n</span><span class="st">"</span>))</span>
+<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a>    Année <span class="ot">=</span> year,</span>
+<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Total des observations'</span> <span class="ot">=</span> n_total,</span>
+<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a>    <span class="st">'Après filtre/NA'</span> <span class="ot">=</span> n_filt,</span>
+<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a>    Traités <span class="ot">=</span> n_treat,</span>
+<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a>    Contrôles <span class="ot">=</span> n_ctrl,</span>
+<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a>    <span class="st">'N appariés'</span> <span class="ot">=</span> <span class="fu">nrow</span>(matched)</span>
+<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a>need_overwrite <span class="ot">&lt;-</span> <span class="cf">function</span>(year) {</span>
+<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>  gen_path   <span class="ot">&lt;-</span> <span class="fu">glue</span>(<span class="st">"data/derived/gen_match_model_{year}.rds"</span>)</span>
+<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a>  match_path <span class="ot">&lt;-</span> <span class="fu">glue</span>(<span class="st">"data/derived/matching_result_{year}.rds"</span>)</span>
+<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">gen =</span> <span class="sc">!</span><span class="fu">file.exists</span>(gen_path), <span class="at">match =</span> <span class="sc">!</span><span class="fu">file.exists</span>(match_path))</span>
+<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Exécution avec progression ---</span></span>
+<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a>yrs <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1997</span>, <span class="dv">2008</span>, <span class="dv">2011</span>, <span class="dv">2013</span>, <span class="dv">2016</span>, <span class="dv">2018</span>, <span class="dv">2021</span>)</span>
+<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a>res_list <span class="ot">&lt;-</span> <span class="fu">vector</span>(<span class="st">"list"</span>, <span class="fu">length</span>(yrs))</span>
+<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(res_list) <span class="ot">&lt;-</span> yrs</span>
+<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a><span class="fu">with_progress</span>({</span>
+<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="fu">progressor</span>(<span class="at">along =</span> yrs)</span>
+<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(yrs)) {</span>
+<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a>  yr <span class="ot">&lt;-</span> yrs[i]</span>
+<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a>  ow <span class="ot">&lt;-</span> <span class="fu">need_overwrite</span>(yr) </span>
+<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">glue</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">&gt;&gt; overwrite {yr}: gen={ow$gen}, match={ow$match}</span><span class="sc">\n</span><span class="st">"</span>))</span>
+<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Start %s"</span>, yr))</span>
+<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a>  t_all <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a>  res_list[[i]] <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
+<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a>    <span class="fu">run_matching_year</span>(yr, <span class="at">overwrite =</span> ow),</span>
+<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) { <span class="fu">warning</span>(<span class="fu">glue</span>(<span class="st">"Year {yr} ERROR: {e$message}"</span>)); <span class="cn">NULL</span> }</span>
+<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Done %s (%.1f min)"</span>,</span>
+<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a>            yr, <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(<span class="fu">Sys.time</span>(), t_all, <span class="at">units=</span><span class="st">"mins"</span>))))</span>
+<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>&gt;&gt; overwrite 1997: gen=FALSE, match=FALSEStart 1997
@@ -506,32 +514,32 @@ div.csl-indent {
 &gt;&gt; N total=5124, après filtre/NA=4034; Traités=82, Contrôles=3952&gt;&gt; Toutes les covars présentes ?  TRUE 
 &gt;&gt; GenMatch: cache trouvé -&gt; lecture
 &gt;&gt; GenMatch temps = 0 min (cache=TRUE)&gt;&gt; matchit: cache trouvé → lecture
-&gt;&gt; N appariés = 862 (écrit: data/derived/data_matched_1997.rds)Done 1997 (0.0 min)&gt;&gt; overwrite 2008: gen=FALSE, match=FALSEStart 2008
+&gt;&gt; N appariés = 164 (écrit: data/derived/data_matched_1997.rds)Done 1997 (0.0 min)&gt;&gt; overwrite 2008: gen=FALSE, match=TRUEStart 2008
 === Matching 2008 ===
 &gt;&gt; N total=13364, après filtre/NA=10852; Traités=303, Contrôles=10549&gt;&gt; Toutes les covars présentes ?  TRUE 
 &gt;&gt; GenMatch: cache trouvé -&gt; lecture
-&gt;&gt; GenMatch temps = 0 min (cache=TRUE)&gt;&gt; matchit: cache trouvé → lecture
-&gt;&gt; N appariés = 2854 (écrit: data/derived/data_matched_2008.rds)Done 2008 (0.0 min)&gt;&gt; overwrite 2011: gen=FALSE, match=FALSEStart 2011
+&gt;&gt; GenMatch temps = 0 min (cache=TRUE)&gt;&gt; matchit: calcul en cours...
+&gt;&gt; N appariés = 606 (écrit: data/derived/data_matched_2008.rds)Done 2008 (16.3 min)&gt;&gt; overwrite 2011: gen=FALSE, match=TRUEStart 2011
 === Matching 2011 ===
 &gt;&gt; N total=6025, après filtre/NA=5058; Traités=441, Contrôles=4617&gt;&gt; Toutes les covars présentes ?  TRUE 
 &gt;&gt; GenMatch: cache trouvé -&gt; lecture
-&gt;&gt; GenMatch temps = 0 min (cache=TRUE)&gt;&gt; matchit: cache trouvé → lecture
-&gt;&gt; N appariés = 938 (écrit: data/derived/data_matched_2011.rds)Done 2011 (0.0 min)&gt;&gt; overwrite 2013: gen=FALSE, match=FALSEStart 2013
+&gt;&gt; GenMatch temps = 0 min (cache=TRUE)&gt;&gt; matchit: calcul en cours...
+&gt;&gt; N appariés = 882 (écrit: data/derived/data_matched_2011.rds)Done 2011 (9.1 min)&gt;&gt; overwrite 2013: gen=FALSE, match=TRUEStart 2013
 === Matching 2013 ===
 &gt;&gt; N total=6375, après filtre/NA=5179; Traités=724, Contrôles=4455&gt;&gt; Toutes les covars présentes ?  TRUE 
 &gt;&gt; GenMatch: cache trouvé -&gt; lecture
-&gt;&gt; GenMatch temps = 0 min (cache=TRUE)&gt;&gt; matchit: cache trouvé → lecture
-&gt;&gt; N appariés = 1700 (écrit: data/derived/data_matched_2013.rds)Done 2013 (0.0 min)&gt;&gt; overwrite 2016: gen=FALSE, match=FALSEStart 2016
+&gt;&gt; GenMatch temps = 0 min (cache=TRUE)&gt;&gt; matchit: calcul en cours...
+&gt;&gt; N appariés = 1448 (écrit: data/derived/data_matched_2013.rds)Done 2013 (11.0 min)&gt;&gt; overwrite 2016: gen=FALSE, match=FALSEStart 2016
 === Matching 2016 ===
 &gt;&gt; N total=9295, après filtre/NA=7807; Traités=605, Contrôles=7202&gt;&gt; Toutes les covars présentes ?  TRUE 
 &gt;&gt; GenMatch: cache trouvé -&gt; lecture
 &gt;&gt; GenMatch temps = 0 min (cache=TRUE)&gt;&gt; matchit: cache trouvé → lecture
-&gt;&gt; N appariés = 1580 (écrit: data/derived/data_matched_2016.rds)Done 2016 (0.0 min)&gt;&gt; overwrite 2018: gen=FALSE, match=FALSEStart 2018
+&gt;&gt; N appariés = 1580 (écrit: data/derived/data_matched_2016.rds)Done 2016 (0.0 min)&gt;&gt; overwrite 2018: gen=FALSE, match=TRUEStart 2018
 === Matching 2018 ===
 &gt;&gt; N total=14421, après filtre/NA=11925; Traités=1090, Contrôles=10835&gt;&gt; Toutes les covars présentes ?  TRUE 
 &gt;&gt; GenMatch: cache trouvé -&gt; lecture
-&gt;&gt; GenMatch temps = 0 min (cache=TRUE)&gt;&gt; matchit: cache trouvé → lecture
-&gt;&gt; N appariés = 1826 (écrit: data/derived/data_matched_2018.rds)Done 2018 (0.0 min)&gt;&gt; overwrite 2021: gen=FALSE, match=FALSEStart 2021
+&gt;&gt; GenMatch temps = 0 min (cache=TRUE)&gt;&gt; matchit: calcul en cours...
+&gt;&gt; N appariés = 2180 (écrit: data/derived/data_matched_2018.rds)Done 2018 (40.7 min)&gt;&gt; overwrite 2021: gen=FALSE, match=FALSEStart 2021
 === Matching 2021 ===
 &gt;&gt; N total=15364, après filtre/NA=12338; Traités=1485, Contrôles=10853&gt;&gt; Toutes les covars présentes ?  TRUE 
 &gt;&gt; GenMatch: cache trouvé -&gt; lecture
@@ -572,12 +580,12 @@ div.csl-indent {
 <pre><code># A tibble: 7 × 6
    Year Total_observations after_filtre_NA Traited Controls N_matched
   &lt;dbl&gt;              &lt;int&gt;           &lt;int&gt;   &lt;int&gt;    &lt;int&gt;     &lt;int&gt;
-1  1997               5124            4034      82     3952       862
-2  2008              13364           10852     303    10549      2854
-3  2011               6025            5058     441     4617       938
-4  2013               6375            5179     724     4455      1700
+1  1997               5124            4034      82     3952       164
+2  2008              13364           10852     303    10549       606
+3  2011               6025            5058     441     4617       882
+4  2013               6375            5179     724     4455      1448
 5  2016               9295            7807     605     7202      1580
-6  2018              14421           11925    1090    10835      1826
+6  2018              14421           11925    1090    10835      2180
 7  2021              15364           12338    1485    10853      3684</code></pre>
 </div>
 </div>
@@ -1551,42 +1559,42 @@ div.csl-indent {
 <span id="cb59-28"><a href="#cb59-28" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(balance_after_table)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>   Year              Variable          SMD  Equilibre
-1  1997   treecover_area_2000 1.495112e-01 unbalanced
-2  1997            slope_2000 3.091338e-02   Balanced
-3  1997        elevation_2000 9.405755e-03   Balanced
-4  1997 population_count_2000 7.590282e-02   Balanced
-5  1997  traveltime_2000_2000 7.616779e-02   Balanced
-6  2008   treecover_area_2000 6.502563e-03   Balanced
-7  2008            slope_2000 3.770268e-03   Balanced
-8  2008        elevation_2000 6.290080e-02   Balanced
-9  2008 population_count_2000 1.050431e-01 unbalanced
-10 2008  traveltime_2000_2000 1.981754e-02   Balanced
-11 2011   treecover_area_2000 2.614209e-05   Balanced
-12 2011            slope_2000 2.234162e-02   Balanced
-13 2011        elevation_2000 3.535442e-02   Balanced
-14 2011 population_count_2000 2.883811e-02   Balanced
-15 2011  traveltime_2000_2000 3.271742e-02   Balanced
-16 2013   treecover_area_2000 1.354161e-02   Balanced
-17 2013            slope_2000 4.476645e-02   Balanced
-18 2013        elevation_2000 2.860741e-02   Balanced
-19 2013 population_count_2000 2.267795e-01 unbalanced
-20 2013  traveltime_2000_2000 8.666463e-03   Balanced
-21 2016   treecover_area_2000 2.894280e-02   Balanced
-22 2016            slope_2000 1.358826e-02   Balanced
-23 2016        elevation_2000 6.282687e-02   Balanced
-24 2016 population_count_2000 2.451403e-01 unbalanced
-25 2016  traveltime_2000_2000 1.123476e-02   Balanced
-26 2018   treecover_area_2000 1.049199e-01 unbalanced
-27 2018            slope_2000 4.906736e-02   Balanced
-28 2018        elevation_2000 4.093110e-02   Balanced
-29 2018 population_count_2000 6.842032e-02   Balanced
-30 2018  traveltime_2000_2000 3.307478e-02   Balanced
-31 2021   treecover_area_2000 1.649501e-02   Balanced
-32 2021            slope_2000 7.835862e-03   Balanced
-33 2021        elevation_2000 3.086066e-02   Balanced
-34 2021 population_count_2000 5.258639e-02   Balanced
-35 2021  traveltime_2000_2000 5.372486e-02   Balanced</code></pre>
+<pre><code>   Year              Variable         SMD  Equilibre
+1  1997   treecover_area_2000 0.153772810 unbalanced
+2  1997            slope_2000 0.250311770 unbalanced
+3  1997        elevation_2000 0.071614519   Balanced
+4  1997 population_count_2000 0.425681026 unbalanced
+5  1997  traveltime_2000_2000 0.039172238   Balanced
+6  2008   treecover_area_2000 0.097833762   Balanced
+7  2008            slope_2000 0.217702989 unbalanced
+8  2008        elevation_2000 0.022924801   Balanced
+9  2008 population_count_2000 0.105577042 unbalanced
+10 2008  traveltime_2000_2000 0.029980617   Balanced
+11 2011   treecover_area_2000 0.061645542   Balanced
+12 2011            slope_2000 0.015597842   Balanced
+13 2011        elevation_2000 0.025967649   Balanced
+14 2011 population_count_2000 0.003108285   Balanced
+15 2011  traveltime_2000_2000 0.029352733   Balanced
+16 2013   treecover_area_2000 0.001896824   Balanced
+17 2013            slope_2000 0.067031593   Balanced
+18 2013        elevation_2000 0.015076252   Balanced
+19 2013 population_count_2000 0.253643547 unbalanced
+20 2013  traveltime_2000_2000 0.051116228   Balanced
+21 2016   treecover_area_2000 0.028942796   Balanced
+22 2016            slope_2000 0.013588259   Balanced
+23 2016        elevation_2000 0.062826875   Balanced
+24 2016 population_count_2000 0.245140277 unbalanced
+25 2016  traveltime_2000_2000 0.011234759   Balanced
+26 2018   treecover_area_2000 0.002312352   Balanced
+27 2018            slope_2000 0.025485104   Balanced
+28 2018        elevation_2000 0.096879783   Balanced
+29 2018 population_count_2000 0.029311141   Balanced
+30 2018  traveltime_2000_2000 0.018026240   Balanced
+31 2021   treecover_area_2000 0.016495013   Balanced
+32 2021            slope_2000 0.007835862   Balanced
+33 2021        elevation_2000 0.030860655   Balanced
+34 2021 population_count_2000 0.052586389   Balanced
+35 2021  traveltime_2000_2000 0.053724860   Balanced</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -1610,12 +1618,12 @@ div.csl-indent {
 <span id="cb61-18"><a href="#cb61-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>  Year              Variable SMD_before   SMD_after
-1 2008   treecover_area_2000 0.38897810 0.006502563
-2 2008            slope_2000 0.09757067 0.003770268
-3 2008        elevation_2000 0.54465211 0.062900804
-4 2008 population_count_2000 2.10362890 0.105043052
-5 2008  traveltime_2000_2000 0.31938205 0.019817537</code></pre>
+<pre><code>  Year              Variable SMD_before  SMD_after
+1 2008   treecover_area_2000  1.8649007 0.09783376
+2 2008            slope_2000  0.9440247 0.21770299
+3 2008        elevation_2000  0.4327031 0.02292480
+4 2008 population_count_2000  1.2624821 0.10557704
+5 2008  traveltime_2000_2000  0.9231407 0.02998062</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -1623,42 +1631,42 @@ div.csl-indent {
 <span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(balance_long)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>   Year              Variable SMD_before    SMD_after
-1  1997   treecover_area_2000 0.09720017 1.495112e-01
-2  1997            slope_2000 0.02123179 3.091338e-02
-3  1997        elevation_2000 0.35048928 9.405755e-03
-4  1997 population_count_2000 2.54206915 7.590282e-02
-5  1997  traveltime_2000_2000 0.08364898 7.616779e-02
-6  2008   treecover_area_2000 0.38897810 6.502563e-03
-7  2008            slope_2000 0.09757067 3.770268e-03
-8  2008        elevation_2000 0.54465211 6.290080e-02
-9  2008 population_count_2000 2.10362890 1.050431e-01
-10 2008  traveltime_2000_2000 0.31938205 1.981754e-02
-11 2011   treecover_area_2000 0.27465148 2.614209e-05
-12 2011            slope_2000 0.67039826 2.234162e-02
-13 2011        elevation_2000 0.93128476 3.535442e-02
-14 2011 population_count_2000 4.91605044 2.883811e-02
-15 2011  traveltime_2000_2000 0.46278223 3.271742e-02
-16 2013   treecover_area_2000 0.22509767 1.354161e-02
-17 2013            slope_2000 0.39657394 4.476645e-02
-18 2013        elevation_2000 0.88858208 2.860741e-02
-19 2013 population_count_2000 7.90285590 2.267795e-01
-20 2013  traveltime_2000_2000 0.23631910 8.666463e-03
-21 2016   treecover_area_2000 0.35969363 2.894280e-02
-22 2016            slope_2000 0.44450172 1.358826e-02
-23 2016        elevation_2000 0.93698636 6.282687e-02
-24 2016 population_count_2000 5.56136203 2.451403e-01
-25 2016  traveltime_2000_2000 0.30142151 1.123476e-02
-26 2018   treecover_area_2000 0.11454557 1.049199e-01
-27 2018            slope_2000 0.14745559 4.906736e-02
-28 2018        elevation_2000 0.04694072 4.093110e-02
-29 2018 population_count_2000 0.02026683 6.842032e-02
-30 2018  traveltime_2000_2000 0.22865107 3.307478e-02
-31 2021   treecover_area_2000 0.55967395 1.649501e-02
-32 2021            slope_2000 0.05782262 7.835862e-03
-33 2021        elevation_2000 0.36346745 3.086066e-02
-34 2021 population_count_2000 3.48020431 5.258639e-02
-35 2021  traveltime_2000_2000 0.39352621 5.372486e-02</code></pre>
+<pre><code>   Year              Variable SMD_before   SMD_after
+1  1997   treecover_area_2000 0.05634325 0.153772810
+2  1997            slope_2000 2.17876102 0.250311770
+3  1997        elevation_2000 1.72513333 0.071614519
+4  1997 population_count_2000 0.78944976 0.425681026
+5  1997  traveltime_2000_2000 1.22352592 0.039172238
+6  2008   treecover_area_2000 1.86490068 0.097833762
+7  2008            slope_2000 0.94402468 0.217702989
+8  2008        elevation_2000 0.43270309 0.022924801
+9  2008 population_count_2000 1.26248207 0.105577042
+10 2008  traveltime_2000_2000 0.92314071 0.029980617
+11 2011   treecover_area_2000 0.28143859 0.061645542
+12 2011            slope_2000 0.62187729 0.015597842
+13 2011        elevation_2000 0.88031537 0.025967649
+14 2011 population_count_2000 4.77905067 0.003108285
+15 2011  traveltime_2000_2000 0.58597546 0.029352733
+16 2013   treecover_area_2000 0.18286844 0.001896824
+17 2013            slope_2000 0.33968693 0.067031593
+18 2013        elevation_2000 0.69625319 0.015076252
+19 2013 population_count_2000 7.30311594 0.253643547
+20 2013  traveltime_2000_2000 0.18003001 0.051116228
+21 2016   treecover_area_2000 0.35969363 0.028942796
+22 2016            slope_2000 0.44450172 0.013588259
+23 2016        elevation_2000 0.93698636 0.062826875
+24 2016 population_count_2000 5.56136203 0.245140277
+25 2016  traveltime_2000_2000 0.30142151 0.011234759
+26 2018   treecover_area_2000 0.69775088 0.002312352
+27 2018            slope_2000 0.13480734 0.025485104
+28 2018        elevation_2000 0.19579422 0.096879783
+29 2018 population_count_2000 0.81926399 0.029311141
+30 2018  traveltime_2000_2000 0.20223856 0.018026240
+31 2021   treecover_area_2000 0.55967395 0.016495013
+32 2021            slope_2000 0.05782262 0.007835862
+33 2021        elevation_2000 0.36346745 0.030860655
+34 2021 population_count_2000 3.48020431 0.052586389
+35 2021  traveltime_2000_2000 0.39352621 0.053724860</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -1699,23 +1707,23 @@ div.csl-indent {
 <span id="cb65-35"><a href="#cb65-35" aria-hidden="true" tabindex="-1"></a>tab_1997</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="bcrcgjlqcu" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#bcrcgjlqcu table {
+<div id="yrvdheosev" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#yrvdheosev table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#bcrcgjlqcu thead, #bcrcgjlqcu tbody, #bcrcgjlqcu tfoot, #bcrcgjlqcu tr, #bcrcgjlqcu td, #bcrcgjlqcu th {
+#yrvdheosev thead, #yrvdheosev tbody, #yrvdheosev tfoot, #yrvdheosev tr, #yrvdheosev td, #yrvdheosev th {
   border-style: none;
 }
 
-#bcrcgjlqcu p {
+#yrvdheosev p {
   margin: 0;
   padding: 0;
 }
 
-#bcrcgjlqcu .gt_table {
+#yrvdheosev .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -1741,12 +1749,12 @@ div.csl-indent {
   border-left-color: #D3D3D3;
 }
 
-#bcrcgjlqcu .gt_caption {
+#yrvdheosev .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#bcrcgjlqcu .gt_title {
+#yrvdheosev .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1758,7 +1766,7 @@ div.csl-indent {
   border-bottom-width: 0;
 }
 
-#bcrcgjlqcu .gt_subtitle {
+#yrvdheosev .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1770,7 +1778,7 @@ div.csl-indent {
   border-top-width: 0;
 }
 
-#bcrcgjlqcu .gt_heading {
+#yrvdheosev .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1782,13 +1790,13 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#bcrcgjlqcu .gt_bottom_border {
+#yrvdheosev .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#bcrcgjlqcu .gt_col_headings {
+#yrvdheosev .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1803,7 +1811,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#bcrcgjlqcu .gt_col_heading {
+#yrvdheosev .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1823,7 +1831,7 @@ div.csl-indent {
   overflow-x: hidden;
 }
 
-#bcrcgjlqcu .gt_column_spanner_outer {
+#yrvdheosev .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1835,15 +1843,15 @@ div.csl-indent {
   padding-right: 4px;
 }
 
-#bcrcgjlqcu .gt_column_spanner_outer:first-child {
+#yrvdheosev .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#bcrcgjlqcu .gt_column_spanner_outer:last-child {
+#yrvdheosev .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#bcrcgjlqcu .gt_column_spanner {
+#yrvdheosev .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1855,11 +1863,11 @@ div.csl-indent {
   width: 100%;
 }
 
-#bcrcgjlqcu .gt_spanner_row {
+#yrvdheosev .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#bcrcgjlqcu .gt_group_heading {
+#yrvdheosev .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1885,7 +1893,7 @@ div.csl-indent {
   text-align: left;
 }
 
-#bcrcgjlqcu .gt_empty_group_heading {
+#yrvdheosev .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1900,15 +1908,15 @@ div.csl-indent {
   vertical-align: middle;
 }
 
-#bcrcgjlqcu .gt_from_md > :first-child {
+#yrvdheosev .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#bcrcgjlqcu .gt_from_md > :last-child {
+#yrvdheosev .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#bcrcgjlqcu .gt_row {
+#yrvdheosev .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1927,7 +1935,7 @@ div.csl-indent {
   overflow-x: hidden;
 }
 
-#bcrcgjlqcu .gt_stub {
+#yrvdheosev .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1940,7 +1948,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#bcrcgjlqcu .gt_stub_row_group {
+#yrvdheosev .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1954,15 +1962,15 @@ div.csl-indent {
   vertical-align: top;
 }
 
-#bcrcgjlqcu .gt_row_group_first td {
+#yrvdheosev .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#bcrcgjlqcu .gt_row_group_first th {
+#yrvdheosev .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#bcrcgjlqcu .gt_summary_row {
+#yrvdheosev .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1972,16 +1980,16 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#bcrcgjlqcu .gt_first_summary_row {
+#yrvdheosev .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#bcrcgjlqcu .gt_first_summary_row.thick {
+#yrvdheosev .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#bcrcgjlqcu .gt_last_summary_row {
+#yrvdheosev .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1991,7 +1999,7 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#bcrcgjlqcu .gt_grand_summary_row {
+#yrvdheosev .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2001,7 +2009,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#bcrcgjlqcu .gt_first_grand_summary_row {
+#yrvdheosev .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2011,7 +2019,7 @@ div.csl-indent {
   border-top-color: #D3D3D3;
 }
 
-#bcrcgjlqcu .gt_last_grand_summary_row_top {
+#yrvdheosev .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2021,11 +2029,11 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#bcrcgjlqcu .gt_striped {
+#yrvdheosev .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#bcrcgjlqcu .gt_table_body {
+#yrvdheosev .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2034,7 +2042,7 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#bcrcgjlqcu .gt_footnotes {
+#yrvdheosev .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2048,7 +2056,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#bcrcgjlqcu .gt_footnote {
+#yrvdheosev .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -2057,7 +2065,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#bcrcgjlqcu .gt_sourcenotes {
+#yrvdheosev .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2071,7 +2079,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#bcrcgjlqcu .gt_sourcenote {
+#yrvdheosev .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -2079,72 +2087,72 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#bcrcgjlqcu .gt_left {
+#yrvdheosev .gt_left {
   text-align: left;
 }
 
-#bcrcgjlqcu .gt_center {
+#yrvdheosev .gt_center {
   text-align: center;
 }
 
-#bcrcgjlqcu .gt_right {
+#yrvdheosev .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#bcrcgjlqcu .gt_font_normal {
+#yrvdheosev .gt_font_normal {
   font-weight: normal;
 }
 
-#bcrcgjlqcu .gt_font_bold {
+#yrvdheosev .gt_font_bold {
   font-weight: bold;
 }
 
-#bcrcgjlqcu .gt_font_italic {
+#yrvdheosev .gt_font_italic {
   font-style: italic;
 }
 
-#bcrcgjlqcu .gt_super {
+#yrvdheosev .gt_super {
   font-size: 65%;
 }
 
-#bcrcgjlqcu .gt_footnote_marks {
+#yrvdheosev .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#bcrcgjlqcu .gt_asterisk {
+#yrvdheosev .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#bcrcgjlqcu .gt_indent_1 {
+#yrvdheosev .gt_indent_1 {
   text-indent: 5px;
 }
 
-#bcrcgjlqcu .gt_indent_2 {
+#yrvdheosev .gt_indent_2 {
   text-indent: 10px;
 }
 
-#bcrcgjlqcu .gt_indent_3 {
+#yrvdheosev .gt_indent_3 {
   text-indent: 15px;
 }
 
-#bcrcgjlqcu .gt_indent_4 {
+#yrvdheosev .gt_indent_4 {
   text-indent: 20px;
 }
 
-#bcrcgjlqcu .gt_indent_5 {
+#yrvdheosev .gt_indent_5 {
   text-indent: 25px;
 }
 
-#bcrcgjlqcu .katex-display {
+#yrvdheosev .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#bcrcgjlqcu div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#yrvdheosev div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -2168,32 +2176,32 @@ div.csl-indent {
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">1997</td>
 <td class="gt_row gt_left" headers="Variable">treecover_area_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.097</td>
-<td class="gt_row gt_right" headers="SMD_after">0.150</td>
+<td class="gt_row gt_right" headers="SMD_before">0.056</td>
+<td class="gt_row gt_right" headers="SMD_after">0.154</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">1997</td>
 <td class="gt_row gt_left" headers="Variable">slope_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.021</td>
-<td class="gt_row gt_right" headers="SMD_after">0.031</td>
+<td class="gt_row gt_right" headers="SMD_before">2.179</td>
+<td class="gt_row gt_right" headers="SMD_after">0.250</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">1997</td>
 <td class="gt_row gt_left" headers="Variable">elevation_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.350</td>
-<td class="gt_row gt_right" headers="SMD_after">0.009</td>
+<td class="gt_row gt_right" headers="SMD_before">1.725</td>
+<td class="gt_row gt_right" headers="SMD_after">0.072</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">1997</td>
 <td class="gt_row gt_left" headers="Variable">population_count_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">2.542</td>
-<td class="gt_row gt_right" headers="SMD_after">0.076</td>
+<td class="gt_row gt_right" headers="SMD_before">0.789</td>
+<td class="gt_row gt_right" headers="SMD_after">0.426</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">1997</td>
 <td class="gt_row gt_left" headers="Variable">traveltime_2000_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.084</td>
-<td class="gt_row gt_right" headers="SMD_after">0.076</td>
+<td class="gt_row gt_right" headers="SMD_before">1.224</td>
+<td class="gt_row gt_right" headers="SMD_after">0.039</td>
 </tr>
 </tbody>
 </table>
@@ -2205,23 +2213,23 @@ div.csl-indent {
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>tab_2008</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="gsfkxzbjxk" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#gsfkxzbjxk table {
+<div id="zfvapcnnxr" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#zfvapcnnxr table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#gsfkxzbjxk thead, #gsfkxzbjxk tbody, #gsfkxzbjxk tfoot, #gsfkxzbjxk tr, #gsfkxzbjxk td, #gsfkxzbjxk th {
+#zfvapcnnxr thead, #zfvapcnnxr tbody, #zfvapcnnxr tfoot, #zfvapcnnxr tr, #zfvapcnnxr td, #zfvapcnnxr th {
   border-style: none;
 }
 
-#gsfkxzbjxk p {
+#zfvapcnnxr p {
   margin: 0;
   padding: 0;
 }
 
-#gsfkxzbjxk .gt_table {
+#zfvapcnnxr .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -2247,12 +2255,12 @@ div.csl-indent {
   border-left-color: #D3D3D3;
 }
 
-#gsfkxzbjxk .gt_caption {
+#zfvapcnnxr .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#gsfkxzbjxk .gt_title {
+#zfvapcnnxr .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -2264,7 +2272,7 @@ div.csl-indent {
   border-bottom-width: 0;
 }
 
-#gsfkxzbjxk .gt_subtitle {
+#zfvapcnnxr .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -2276,7 +2284,7 @@ div.csl-indent {
   border-top-width: 0;
 }
 
-#gsfkxzbjxk .gt_heading {
+#zfvapcnnxr .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -2288,13 +2296,13 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#gsfkxzbjxk .gt_bottom_border {
+#zfvapcnnxr .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#gsfkxzbjxk .gt_col_headings {
+#zfvapcnnxr .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2309,7 +2317,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#gsfkxzbjxk .gt_col_heading {
+#zfvapcnnxr .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2329,7 +2337,7 @@ div.csl-indent {
   overflow-x: hidden;
 }
 
-#gsfkxzbjxk .gt_column_spanner_outer {
+#zfvapcnnxr .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2341,15 +2349,15 @@ div.csl-indent {
   padding-right: 4px;
 }
 
-#gsfkxzbjxk .gt_column_spanner_outer:first-child {
+#zfvapcnnxr .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#gsfkxzbjxk .gt_column_spanner_outer:last-child {
+#zfvapcnnxr .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#gsfkxzbjxk .gt_column_spanner {
+#zfvapcnnxr .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -2361,11 +2369,11 @@ div.csl-indent {
   width: 100%;
 }
 
-#gsfkxzbjxk .gt_spanner_row {
+#zfvapcnnxr .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#gsfkxzbjxk .gt_group_heading {
+#zfvapcnnxr .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2391,7 +2399,7 @@ div.csl-indent {
   text-align: left;
 }
 
-#gsfkxzbjxk .gt_empty_group_heading {
+#zfvapcnnxr .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2406,15 +2414,15 @@ div.csl-indent {
   vertical-align: middle;
 }
 
-#gsfkxzbjxk .gt_from_md > :first-child {
+#zfvapcnnxr .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#gsfkxzbjxk .gt_from_md > :last-child {
+#zfvapcnnxr .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#gsfkxzbjxk .gt_row {
+#zfvapcnnxr .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2433,7 +2441,7 @@ div.csl-indent {
   overflow-x: hidden;
 }
 
-#gsfkxzbjxk .gt_stub {
+#zfvapcnnxr .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2446,7 +2454,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#gsfkxzbjxk .gt_stub_row_group {
+#zfvapcnnxr .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2460,15 +2468,15 @@ div.csl-indent {
   vertical-align: top;
 }
 
-#gsfkxzbjxk .gt_row_group_first td {
+#zfvapcnnxr .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#gsfkxzbjxk .gt_row_group_first th {
+#zfvapcnnxr .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#gsfkxzbjxk .gt_summary_row {
+#zfvapcnnxr .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2478,16 +2486,16 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#gsfkxzbjxk .gt_first_summary_row {
+#zfvapcnnxr .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#gsfkxzbjxk .gt_first_summary_row.thick {
+#zfvapcnnxr .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#gsfkxzbjxk .gt_last_summary_row {
+#zfvapcnnxr .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2497,7 +2505,7 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#gsfkxzbjxk .gt_grand_summary_row {
+#zfvapcnnxr .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2507,7 +2515,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#gsfkxzbjxk .gt_first_grand_summary_row {
+#zfvapcnnxr .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2517,7 +2525,7 @@ div.csl-indent {
   border-top-color: #D3D3D3;
 }
 
-#gsfkxzbjxk .gt_last_grand_summary_row_top {
+#zfvapcnnxr .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2527,11 +2535,11 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#gsfkxzbjxk .gt_striped {
+#zfvapcnnxr .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#gsfkxzbjxk .gt_table_body {
+#zfvapcnnxr .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2540,7 +2548,7 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#gsfkxzbjxk .gt_footnotes {
+#zfvapcnnxr .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2554,7 +2562,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#gsfkxzbjxk .gt_footnote {
+#zfvapcnnxr .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -2563,7 +2571,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#gsfkxzbjxk .gt_sourcenotes {
+#zfvapcnnxr .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2577,7 +2585,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#gsfkxzbjxk .gt_sourcenote {
+#zfvapcnnxr .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -2585,72 +2593,72 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#gsfkxzbjxk .gt_left {
+#zfvapcnnxr .gt_left {
   text-align: left;
 }
 
-#gsfkxzbjxk .gt_center {
+#zfvapcnnxr .gt_center {
   text-align: center;
 }
 
-#gsfkxzbjxk .gt_right {
+#zfvapcnnxr .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#gsfkxzbjxk .gt_font_normal {
+#zfvapcnnxr .gt_font_normal {
   font-weight: normal;
 }
 
-#gsfkxzbjxk .gt_font_bold {
+#zfvapcnnxr .gt_font_bold {
   font-weight: bold;
 }
 
-#gsfkxzbjxk .gt_font_italic {
+#zfvapcnnxr .gt_font_italic {
   font-style: italic;
 }
 
-#gsfkxzbjxk .gt_super {
+#zfvapcnnxr .gt_super {
   font-size: 65%;
 }
 
-#gsfkxzbjxk .gt_footnote_marks {
+#zfvapcnnxr .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#gsfkxzbjxk .gt_asterisk {
+#zfvapcnnxr .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#gsfkxzbjxk .gt_indent_1 {
+#zfvapcnnxr .gt_indent_1 {
   text-indent: 5px;
 }
 
-#gsfkxzbjxk .gt_indent_2 {
+#zfvapcnnxr .gt_indent_2 {
   text-indent: 10px;
 }
 
-#gsfkxzbjxk .gt_indent_3 {
+#zfvapcnnxr .gt_indent_3 {
   text-indent: 15px;
 }
 
-#gsfkxzbjxk .gt_indent_4 {
+#zfvapcnnxr .gt_indent_4 {
   text-indent: 20px;
 }
 
-#gsfkxzbjxk .gt_indent_5 {
+#zfvapcnnxr .gt_indent_5 {
   text-indent: 25px;
 }
 
-#gsfkxzbjxk .katex-display {
+#zfvapcnnxr .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#gsfkxzbjxk div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#zfvapcnnxr div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -2674,32 +2682,32 @@ div.csl-indent {
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2008</td>
 <td class="gt_row gt_left" headers="Variable">treecover_area_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.389</td>
-<td class="gt_row gt_right" headers="SMD_after">0.007</td>
+<td class="gt_row gt_right" headers="SMD_before">1.865</td>
+<td class="gt_row gt_right" headers="SMD_after">0.098</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2008</td>
 <td class="gt_row gt_left" headers="Variable">slope_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.098</td>
-<td class="gt_row gt_right" headers="SMD_after">0.004</td>
+<td class="gt_row gt_right" headers="SMD_before">0.944</td>
+<td class="gt_row gt_right" headers="SMD_after">0.218</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2008</td>
 <td class="gt_row gt_left" headers="Variable">elevation_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.545</td>
-<td class="gt_row gt_right" headers="SMD_after">0.063</td>
+<td class="gt_row gt_right" headers="SMD_before">0.433</td>
+<td class="gt_row gt_right" headers="SMD_after">0.023</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2008</td>
 <td class="gt_row gt_left" headers="Variable">population_count_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">2.104</td>
-<td class="gt_row gt_right" headers="SMD_after">0.105</td>
+<td class="gt_row gt_right" headers="SMD_before">1.262</td>
+<td class="gt_row gt_right" headers="SMD_after">0.106</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2008</td>
 <td class="gt_row gt_left" headers="Variable">traveltime_2000_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.319</td>
-<td class="gt_row gt_right" headers="SMD_after">0.020</td>
+<td class="gt_row gt_right" headers="SMD_before">0.923</td>
+<td class="gt_row gt_right" headers="SMD_after">0.030</td>
 </tr>
 </tbody>
 </table>
@@ -2711,23 +2719,23 @@ div.csl-indent {
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>tab_2021</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="pcnexrjfcb" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#pcnexrjfcb table {
+<div id="vihtlcjjsx" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#vihtlcjjsx table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#pcnexrjfcb thead, #pcnexrjfcb tbody, #pcnexrjfcb tfoot, #pcnexrjfcb tr, #pcnexrjfcb td, #pcnexrjfcb th {
+#vihtlcjjsx thead, #vihtlcjjsx tbody, #vihtlcjjsx tfoot, #vihtlcjjsx tr, #vihtlcjjsx td, #vihtlcjjsx th {
   border-style: none;
 }
 
-#pcnexrjfcb p {
+#vihtlcjjsx p {
   margin: 0;
   padding: 0;
 }
 
-#pcnexrjfcb .gt_table {
+#vihtlcjjsx .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -2753,12 +2761,12 @@ div.csl-indent {
   border-left-color: #D3D3D3;
 }
 
-#pcnexrjfcb .gt_caption {
+#vihtlcjjsx .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#pcnexrjfcb .gt_title {
+#vihtlcjjsx .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -2770,7 +2778,7 @@ div.csl-indent {
   border-bottom-width: 0;
 }
 
-#pcnexrjfcb .gt_subtitle {
+#vihtlcjjsx .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -2782,7 +2790,7 @@ div.csl-indent {
   border-top-width: 0;
 }
 
-#pcnexrjfcb .gt_heading {
+#vihtlcjjsx .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -2794,13 +2802,13 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#pcnexrjfcb .gt_bottom_border {
+#vihtlcjjsx .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#pcnexrjfcb .gt_col_headings {
+#vihtlcjjsx .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2815,7 +2823,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#pcnexrjfcb .gt_col_heading {
+#vihtlcjjsx .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2835,7 +2843,7 @@ div.csl-indent {
   overflow-x: hidden;
 }
 
-#pcnexrjfcb .gt_column_spanner_outer {
+#vihtlcjjsx .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2847,15 +2855,15 @@ div.csl-indent {
   padding-right: 4px;
 }
 
-#pcnexrjfcb .gt_column_spanner_outer:first-child {
+#vihtlcjjsx .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#pcnexrjfcb .gt_column_spanner_outer:last-child {
+#vihtlcjjsx .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#pcnexrjfcb .gt_column_spanner {
+#vihtlcjjsx .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -2867,11 +2875,11 @@ div.csl-indent {
   width: 100%;
 }
 
-#pcnexrjfcb .gt_spanner_row {
+#vihtlcjjsx .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#pcnexrjfcb .gt_group_heading {
+#vihtlcjjsx .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2897,7 +2905,7 @@ div.csl-indent {
   text-align: left;
 }
 
-#pcnexrjfcb .gt_empty_group_heading {
+#vihtlcjjsx .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2912,15 +2920,15 @@ div.csl-indent {
   vertical-align: middle;
 }
 
-#pcnexrjfcb .gt_from_md > :first-child {
+#vihtlcjjsx .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#pcnexrjfcb .gt_from_md > :last-child {
+#vihtlcjjsx .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#pcnexrjfcb .gt_row {
+#vihtlcjjsx .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2939,7 +2947,7 @@ div.csl-indent {
   overflow-x: hidden;
 }
 
-#pcnexrjfcb .gt_stub {
+#vihtlcjjsx .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2952,7 +2960,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#pcnexrjfcb .gt_stub_row_group {
+#vihtlcjjsx .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2966,15 +2974,15 @@ div.csl-indent {
   vertical-align: top;
 }
 
-#pcnexrjfcb .gt_row_group_first td {
+#vihtlcjjsx .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#pcnexrjfcb .gt_row_group_first th {
+#vihtlcjjsx .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#pcnexrjfcb .gt_summary_row {
+#vihtlcjjsx .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2984,16 +2992,16 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#pcnexrjfcb .gt_first_summary_row {
+#vihtlcjjsx .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#pcnexrjfcb .gt_first_summary_row.thick {
+#vihtlcjjsx .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#pcnexrjfcb .gt_last_summary_row {
+#vihtlcjjsx .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3003,7 +3011,7 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#pcnexrjfcb .gt_grand_summary_row {
+#vihtlcjjsx .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -3013,7 +3021,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#pcnexrjfcb .gt_first_grand_summary_row {
+#vihtlcjjsx .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3023,7 +3031,7 @@ div.csl-indent {
   border-top-color: #D3D3D3;
 }
 
-#pcnexrjfcb .gt_last_grand_summary_row_top {
+#vihtlcjjsx .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3033,11 +3041,11 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#pcnexrjfcb .gt_striped {
+#vihtlcjjsx .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#pcnexrjfcb .gt_table_body {
+#vihtlcjjsx .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -3046,7 +3054,7 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#pcnexrjfcb .gt_footnotes {
+#vihtlcjjsx .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -3060,7 +3068,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#pcnexrjfcb .gt_footnote {
+#vihtlcjjsx .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -3069,7 +3077,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#pcnexrjfcb .gt_sourcenotes {
+#vihtlcjjsx .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -3083,7 +3091,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#pcnexrjfcb .gt_sourcenote {
+#vihtlcjjsx .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -3091,72 +3099,72 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#pcnexrjfcb .gt_left {
+#vihtlcjjsx .gt_left {
   text-align: left;
 }
 
-#pcnexrjfcb .gt_center {
+#vihtlcjjsx .gt_center {
   text-align: center;
 }
 
-#pcnexrjfcb .gt_right {
+#vihtlcjjsx .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#pcnexrjfcb .gt_font_normal {
+#vihtlcjjsx .gt_font_normal {
   font-weight: normal;
 }
 
-#pcnexrjfcb .gt_font_bold {
+#vihtlcjjsx .gt_font_bold {
   font-weight: bold;
 }
 
-#pcnexrjfcb .gt_font_italic {
+#vihtlcjjsx .gt_font_italic {
   font-style: italic;
 }
 
-#pcnexrjfcb .gt_super {
+#vihtlcjjsx .gt_super {
   font-size: 65%;
 }
 
-#pcnexrjfcb .gt_footnote_marks {
+#vihtlcjjsx .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#pcnexrjfcb .gt_asterisk {
+#vihtlcjjsx .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#pcnexrjfcb .gt_indent_1 {
+#vihtlcjjsx .gt_indent_1 {
   text-indent: 5px;
 }
 
-#pcnexrjfcb .gt_indent_2 {
+#vihtlcjjsx .gt_indent_2 {
   text-indent: 10px;
 }
 
-#pcnexrjfcb .gt_indent_3 {
+#vihtlcjjsx .gt_indent_3 {
   text-indent: 15px;
 }
 
-#pcnexrjfcb .gt_indent_4 {
+#vihtlcjjsx .gt_indent_4 {
   text-indent: 20px;
 }
 
-#pcnexrjfcb .gt_indent_5 {
+#vihtlcjjsx .gt_indent_5 {
   text-indent: 25px;
 }
 
-#pcnexrjfcb .katex-display {
+#vihtlcjjsx .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#pcnexrjfcb div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#vihtlcjjsx div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -3229,23 +3237,23 @@ div.csl-indent {
 <span id="cb68-13"><a href="#cb68-13" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="nxwviuhimm" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#nxwviuhimm table {
+<div id="esmrvlfkre" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#esmrvlfkre table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#nxwviuhimm thead, #nxwviuhimm tbody, #nxwviuhimm tfoot, #nxwviuhimm tr, #nxwviuhimm td, #nxwviuhimm th {
+#esmrvlfkre thead, #esmrvlfkre tbody, #esmrvlfkre tfoot, #esmrvlfkre tr, #esmrvlfkre td, #esmrvlfkre th {
   border-style: none;
 }
 
-#nxwviuhimm p {
+#esmrvlfkre p {
   margin: 0;
   padding: 0;
 }
 
-#nxwviuhimm .gt_table {
+#esmrvlfkre .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -3271,12 +3279,12 @@ div.csl-indent {
   border-left-color: #D3D3D3;
 }
 
-#nxwviuhimm .gt_caption {
+#esmrvlfkre .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#nxwviuhimm .gt_title {
+#esmrvlfkre .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -3288,7 +3296,7 @@ div.csl-indent {
   border-bottom-width: 0;
 }
 
-#nxwviuhimm .gt_subtitle {
+#esmrvlfkre .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -3300,7 +3308,7 @@ div.csl-indent {
   border-top-width: 0;
 }
 
-#nxwviuhimm .gt_heading {
+#esmrvlfkre .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -3312,13 +3320,13 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#nxwviuhimm .gt_bottom_border {
+#esmrvlfkre .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#nxwviuhimm .gt_col_headings {
+#esmrvlfkre .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -3333,7 +3341,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#nxwviuhimm .gt_col_heading {
+#esmrvlfkre .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -3353,7 +3361,7 @@ div.csl-indent {
   overflow-x: hidden;
 }
 
-#nxwviuhimm .gt_column_spanner_outer {
+#esmrvlfkre .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -3365,15 +3373,15 @@ div.csl-indent {
   padding-right: 4px;
 }
 
-#nxwviuhimm .gt_column_spanner_outer:first-child {
+#esmrvlfkre .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#nxwviuhimm .gt_column_spanner_outer:last-child {
+#esmrvlfkre .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#nxwviuhimm .gt_column_spanner {
+#esmrvlfkre .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -3385,11 +3393,11 @@ div.csl-indent {
   width: 100%;
 }
 
-#nxwviuhimm .gt_spanner_row {
+#esmrvlfkre .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#nxwviuhimm .gt_group_heading {
+#esmrvlfkre .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3415,7 +3423,7 @@ div.csl-indent {
   text-align: left;
 }
 
-#nxwviuhimm .gt_empty_group_heading {
+#esmrvlfkre .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -3430,15 +3438,15 @@ div.csl-indent {
   vertical-align: middle;
 }
 
-#nxwviuhimm .gt_from_md > :first-child {
+#esmrvlfkre .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#nxwviuhimm .gt_from_md > :last-child {
+#esmrvlfkre .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#nxwviuhimm .gt_row {
+#esmrvlfkre .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3457,7 +3465,7 @@ div.csl-indent {
   overflow-x: hidden;
 }
 
-#nxwviuhimm .gt_stub {
+#esmrvlfkre .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -3470,7 +3478,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#nxwviuhimm .gt_stub_row_group {
+#esmrvlfkre .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -3484,15 +3492,15 @@ div.csl-indent {
   vertical-align: top;
 }
 
-#nxwviuhimm .gt_row_group_first td {
+#esmrvlfkre .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#nxwviuhimm .gt_row_group_first th {
+#esmrvlfkre .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#nxwviuhimm .gt_summary_row {
+#esmrvlfkre .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -3502,16 +3510,16 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#nxwviuhimm .gt_first_summary_row {
+#esmrvlfkre .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#nxwviuhimm .gt_first_summary_row.thick {
+#esmrvlfkre .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#nxwviuhimm .gt_last_summary_row {
+#esmrvlfkre .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3521,7 +3529,7 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#nxwviuhimm .gt_grand_summary_row {
+#esmrvlfkre .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -3531,7 +3539,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#nxwviuhimm .gt_first_grand_summary_row {
+#esmrvlfkre .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3541,7 +3549,7 @@ div.csl-indent {
   border-top-color: #D3D3D3;
 }
 
-#nxwviuhimm .gt_last_grand_summary_row_top {
+#esmrvlfkre .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3551,11 +3559,11 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#nxwviuhimm .gt_striped {
+#esmrvlfkre .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#nxwviuhimm .gt_table_body {
+#esmrvlfkre .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -3564,7 +3572,7 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#nxwviuhimm .gt_footnotes {
+#esmrvlfkre .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -3578,7 +3586,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#nxwviuhimm .gt_footnote {
+#esmrvlfkre .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -3587,7 +3595,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#nxwviuhimm .gt_sourcenotes {
+#esmrvlfkre .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -3601,7 +3609,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#nxwviuhimm .gt_sourcenote {
+#esmrvlfkre .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -3609,72 +3617,72 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#nxwviuhimm .gt_left {
+#esmrvlfkre .gt_left {
   text-align: left;
 }
 
-#nxwviuhimm .gt_center {
+#esmrvlfkre .gt_center {
   text-align: center;
 }
 
-#nxwviuhimm .gt_right {
+#esmrvlfkre .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#nxwviuhimm .gt_font_normal {
+#esmrvlfkre .gt_font_normal {
   font-weight: normal;
 }
 
-#nxwviuhimm .gt_font_bold {
+#esmrvlfkre .gt_font_bold {
   font-weight: bold;
 }
 
-#nxwviuhimm .gt_font_italic {
+#esmrvlfkre .gt_font_italic {
   font-style: italic;
 }
 
-#nxwviuhimm .gt_super {
+#esmrvlfkre .gt_super {
   font-size: 65%;
 }
 
-#nxwviuhimm .gt_footnote_marks {
+#esmrvlfkre .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#nxwviuhimm .gt_asterisk {
+#esmrvlfkre .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#nxwviuhimm .gt_indent_1 {
+#esmrvlfkre .gt_indent_1 {
   text-indent: 5px;
 }
 
-#nxwviuhimm .gt_indent_2 {
+#esmrvlfkre .gt_indent_2 {
   text-indent: 10px;
 }
 
-#nxwviuhimm .gt_indent_3 {
+#esmrvlfkre .gt_indent_3 {
   text-indent: 15px;
 }
 
-#nxwviuhimm .gt_indent_4 {
+#esmrvlfkre .gt_indent_4 {
   text-indent: 20px;
 }
 
-#nxwviuhimm .gt_indent_5 {
+#esmrvlfkre .gt_indent_5 {
   text-indent: 25px;
 }
 
-#nxwviuhimm .katex-display {
+#esmrvlfkre .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#nxwviuhimm div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#esmrvlfkre div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -3698,212 +3706,212 @@ div.csl-indent {
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">1997</td>
 <td class="gt_row gt_left" headers="Variable">treecover_area_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.09720017</td>
-<td class="gt_row gt_right" headers="SMD_after">1.495112e-01</td>
+<td class="gt_row gt_right" headers="SMD_before">0.05634325</td>
+<td class="gt_row gt_right" headers="SMD_after">0.153772810</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">1997</td>
 <td class="gt_row gt_left" headers="Variable">slope_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.02123179</td>
-<td class="gt_row gt_right" headers="SMD_after">3.091338e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">2.17876102</td>
+<td class="gt_row gt_right" headers="SMD_after">0.250311770</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">1997</td>
 <td class="gt_row gt_left" headers="Variable">elevation_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.35048928</td>
-<td class="gt_row gt_right" headers="SMD_after">9.405755e-03</td>
+<td class="gt_row gt_right" headers="SMD_before">1.72513333</td>
+<td class="gt_row gt_right" headers="SMD_after">0.071614519</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">1997</td>
 <td class="gt_row gt_left" headers="Variable">population_count_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">2.54206915</td>
-<td class="gt_row gt_right" headers="SMD_after">7.590282e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.78944976</td>
+<td class="gt_row gt_right" headers="SMD_after">0.425681026</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">1997</td>
 <td class="gt_row gt_left" headers="Variable">traveltime_2000_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.08364898</td>
-<td class="gt_row gt_right" headers="SMD_after">7.616779e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">1.22352592</td>
+<td class="gt_row gt_right" headers="SMD_after">0.039172238</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2008</td>
 <td class="gt_row gt_left" headers="Variable">treecover_area_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.38897810</td>
-<td class="gt_row gt_right" headers="SMD_after">6.502563e-03</td>
+<td class="gt_row gt_right" headers="SMD_before">1.86490068</td>
+<td class="gt_row gt_right" headers="SMD_after">0.097833762</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2008</td>
 <td class="gt_row gt_left" headers="Variable">slope_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.09757067</td>
-<td class="gt_row gt_right" headers="SMD_after">3.770268e-03</td>
+<td class="gt_row gt_right" headers="SMD_before">0.94402468</td>
+<td class="gt_row gt_right" headers="SMD_after">0.217702989</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2008</td>
 <td class="gt_row gt_left" headers="Variable">elevation_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.54465211</td>
-<td class="gt_row gt_right" headers="SMD_after">6.290080e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.43270309</td>
+<td class="gt_row gt_right" headers="SMD_after">0.022924801</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2008</td>
 <td class="gt_row gt_left" headers="Variable">population_count_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">2.10362890</td>
-<td class="gt_row gt_right" headers="SMD_after">1.050431e-01</td>
+<td class="gt_row gt_right" headers="SMD_before">1.26248207</td>
+<td class="gt_row gt_right" headers="SMD_after">0.105577042</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2008</td>
 <td class="gt_row gt_left" headers="Variable">traveltime_2000_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.31938205</td>
-<td class="gt_row gt_right" headers="SMD_after">1.981754e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.92314071</td>
+<td class="gt_row gt_right" headers="SMD_after">0.029980617</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2011</td>
 <td class="gt_row gt_left" headers="Variable">treecover_area_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.27465148</td>
-<td class="gt_row gt_right" headers="SMD_after">2.614209e-05</td>
+<td class="gt_row gt_right" headers="SMD_before">0.28143859</td>
+<td class="gt_row gt_right" headers="SMD_after">0.061645542</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2011</td>
 <td class="gt_row gt_left" headers="Variable">slope_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.67039826</td>
-<td class="gt_row gt_right" headers="SMD_after">2.234162e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.62187729</td>
+<td class="gt_row gt_right" headers="SMD_after">0.015597842</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2011</td>
 <td class="gt_row gt_left" headers="Variable">elevation_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.93128476</td>
-<td class="gt_row gt_right" headers="SMD_after">3.535442e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.88031537</td>
+<td class="gt_row gt_right" headers="SMD_after">0.025967649</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2011</td>
 <td class="gt_row gt_left" headers="Variable">population_count_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">4.91605044</td>
-<td class="gt_row gt_right" headers="SMD_after">2.883811e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">4.77905067</td>
+<td class="gt_row gt_right" headers="SMD_after">0.003108285</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2011</td>
 <td class="gt_row gt_left" headers="Variable">traveltime_2000_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.46278223</td>
-<td class="gt_row gt_right" headers="SMD_after">3.271742e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.58597546</td>
+<td class="gt_row gt_right" headers="SMD_after">0.029352733</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2013</td>
 <td class="gt_row gt_left" headers="Variable">treecover_area_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.22509767</td>
-<td class="gt_row gt_right" headers="SMD_after">1.354161e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.18286844</td>
+<td class="gt_row gt_right" headers="SMD_after">0.001896824</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2013</td>
 <td class="gt_row gt_left" headers="Variable">slope_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.39657394</td>
-<td class="gt_row gt_right" headers="SMD_after">4.476645e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.33968693</td>
+<td class="gt_row gt_right" headers="SMD_after">0.067031593</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2013</td>
 <td class="gt_row gt_left" headers="Variable">elevation_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.88858208</td>
-<td class="gt_row gt_right" headers="SMD_after">2.860741e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.69625319</td>
+<td class="gt_row gt_right" headers="SMD_after">0.015076252</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2013</td>
 <td class="gt_row gt_left" headers="Variable">population_count_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">7.90285590</td>
-<td class="gt_row gt_right" headers="SMD_after">2.267795e-01</td>
+<td class="gt_row gt_right" headers="SMD_before">7.30311594</td>
+<td class="gt_row gt_right" headers="SMD_after">0.253643547</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2013</td>
 <td class="gt_row gt_left" headers="Variable">traveltime_2000_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.23631910</td>
-<td class="gt_row gt_right" headers="SMD_after">8.666463e-03</td>
+<td class="gt_row gt_right" headers="SMD_before">0.18003001</td>
+<td class="gt_row gt_right" headers="SMD_after">0.051116228</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2016</td>
 <td class="gt_row gt_left" headers="Variable">treecover_area_2000</td>
 <td class="gt_row gt_right" headers="SMD_before">0.35969363</td>
-<td class="gt_row gt_right" headers="SMD_after">2.894280e-02</td>
+<td class="gt_row gt_right" headers="SMD_after">0.028942796</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2016</td>
 <td class="gt_row gt_left" headers="Variable">slope_2000</td>
 <td class="gt_row gt_right" headers="SMD_before">0.44450172</td>
-<td class="gt_row gt_right" headers="SMD_after">1.358826e-02</td>
+<td class="gt_row gt_right" headers="SMD_after">0.013588259</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2016</td>
 <td class="gt_row gt_left" headers="Variable">elevation_2000</td>
 <td class="gt_row gt_right" headers="SMD_before">0.93698636</td>
-<td class="gt_row gt_right" headers="SMD_after">6.282687e-02</td>
+<td class="gt_row gt_right" headers="SMD_after">0.062826875</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2016</td>
 <td class="gt_row gt_left" headers="Variable">population_count_2000</td>
 <td class="gt_row gt_right" headers="SMD_before">5.56136203</td>
-<td class="gt_row gt_right" headers="SMD_after">2.451403e-01</td>
+<td class="gt_row gt_right" headers="SMD_after">0.245140277</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2016</td>
 <td class="gt_row gt_left" headers="Variable">traveltime_2000_2000</td>
 <td class="gt_row gt_right" headers="SMD_before">0.30142151</td>
-<td class="gt_row gt_right" headers="SMD_after">1.123476e-02</td>
+<td class="gt_row gt_right" headers="SMD_after">0.011234759</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2018</td>
 <td class="gt_row gt_left" headers="Variable">treecover_area_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.11454557</td>
-<td class="gt_row gt_right" headers="SMD_after">1.049199e-01</td>
+<td class="gt_row gt_right" headers="SMD_before">0.69775088</td>
+<td class="gt_row gt_right" headers="SMD_after">0.002312352</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2018</td>
 <td class="gt_row gt_left" headers="Variable">slope_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.14745559</td>
-<td class="gt_row gt_right" headers="SMD_after">4.906736e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.13480734</td>
+<td class="gt_row gt_right" headers="SMD_after">0.025485104</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2018</td>
 <td class="gt_row gt_left" headers="Variable">elevation_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.04694072</td>
-<td class="gt_row gt_right" headers="SMD_after">4.093110e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.19579422</td>
+<td class="gt_row gt_right" headers="SMD_after">0.096879783</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2018</td>
 <td class="gt_row gt_left" headers="Variable">population_count_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.02026683</td>
-<td class="gt_row gt_right" headers="SMD_after">6.842032e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.81926399</td>
+<td class="gt_row gt_right" headers="SMD_after">0.029311141</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2018</td>
 <td class="gt_row gt_left" headers="Variable">traveltime_2000_2000</td>
-<td class="gt_row gt_right" headers="SMD_before">0.22865107</td>
-<td class="gt_row gt_right" headers="SMD_after">3.307478e-02</td>
+<td class="gt_row gt_right" headers="SMD_before">0.20223856</td>
+<td class="gt_row gt_right" headers="SMD_after">0.018026240</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2021</td>
 <td class="gt_row gt_left" headers="Variable">treecover_area_2000</td>
 <td class="gt_row gt_right" headers="SMD_before">0.55967395</td>
-<td class="gt_row gt_right" headers="SMD_after">1.649501e-02</td>
+<td class="gt_row gt_right" headers="SMD_after">0.016495013</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2021</td>
 <td class="gt_row gt_left" headers="Variable">slope_2000</td>
 <td class="gt_row gt_right" headers="SMD_before">0.05782262</td>
-<td class="gt_row gt_right" headers="SMD_after">7.835862e-03</td>
+<td class="gt_row gt_right" headers="SMD_after">0.007835862</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2021</td>
 <td class="gt_row gt_left" headers="Variable">elevation_2000</td>
 <td class="gt_row gt_right" headers="SMD_before">0.36346745</td>
-<td class="gt_row gt_right" headers="SMD_after">3.086066e-02</td>
+<td class="gt_row gt_right" headers="SMD_after">0.030860655</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_right" headers="Year">2021</td>
 <td class="gt_row gt_left" headers="Variable">population_count_2000</td>
 <td class="gt_row gt_right" headers="SMD_before">3.48020431</td>
-<td class="gt_row gt_right" headers="SMD_after">5.258639e-02</td>
+<td class="gt_row gt_right" headers="SMD_after">0.052586389</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_right" headers="Year">2021</td>
 <td class="gt_row gt_left" headers="Variable">traveltime_2000_2000</td>
 <td class="gt_row gt_right" headers="SMD_before">0.39352621</td>
-<td class="gt_row gt_right" headers="SMD_after">5.372486e-02</td>
+<td class="gt_row gt_right" headers="SMD_after">0.053724860</td>
 </tr>
 </tbody>
 </table>
@@ -3987,23 +3995,23 @@ div.csl-indent {
 <span id="cb70-64"><a href="#cb70-64" aria-hidden="true" tabindex="-1"></a>tab_smd</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="xeglbkqhif" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#xeglbkqhif table {
+<div id="pwetvbphzu" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#pwetvbphzu table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#xeglbkqhif thead, #xeglbkqhif tbody, #xeglbkqhif tfoot, #xeglbkqhif tr, #xeglbkqhif td, #xeglbkqhif th {
+#pwetvbphzu thead, #pwetvbphzu tbody, #pwetvbphzu tfoot, #pwetvbphzu tr, #pwetvbphzu td, #pwetvbphzu th {
   border-style: none;
 }
 
-#xeglbkqhif p {
+#pwetvbphzu p {
   margin: 0;
   padding: 0;
 }
 
-#xeglbkqhif .gt_table {
+#pwetvbphzu .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -4029,12 +4037,12 @@ div.csl-indent {
   border-left-color: #D3D3D3;
 }
 
-#xeglbkqhif .gt_caption {
+#pwetvbphzu .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#xeglbkqhif .gt_title {
+#pwetvbphzu .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -4046,7 +4054,7 @@ div.csl-indent {
   border-bottom-width: 0;
 }
 
-#xeglbkqhif .gt_subtitle {
+#pwetvbphzu .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -4058,7 +4066,7 @@ div.csl-indent {
   border-top-width: 0;
 }
 
-#xeglbkqhif .gt_heading {
+#pwetvbphzu .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -4070,13 +4078,13 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#xeglbkqhif .gt_bottom_border {
+#pwetvbphzu .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#xeglbkqhif .gt_col_headings {
+#pwetvbphzu .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -4091,7 +4099,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#xeglbkqhif .gt_col_heading {
+#pwetvbphzu .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -4111,7 +4119,7 @@ div.csl-indent {
   overflow-x: hidden;
 }
 
-#xeglbkqhif .gt_column_spanner_outer {
+#pwetvbphzu .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -4123,15 +4131,15 @@ div.csl-indent {
   padding-right: 4px;
 }
 
-#xeglbkqhif .gt_column_spanner_outer:first-child {
+#pwetvbphzu .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#xeglbkqhif .gt_column_spanner_outer:last-child {
+#pwetvbphzu .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#xeglbkqhif .gt_column_spanner {
+#pwetvbphzu .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -4143,11 +4151,11 @@ div.csl-indent {
   width: 100%;
 }
 
-#xeglbkqhif .gt_spanner_row {
+#pwetvbphzu .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#xeglbkqhif .gt_group_heading {
+#pwetvbphzu .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -4173,7 +4181,7 @@ div.csl-indent {
   text-align: left;
 }
 
-#xeglbkqhif .gt_empty_group_heading {
+#pwetvbphzu .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -4188,15 +4196,15 @@ div.csl-indent {
   vertical-align: middle;
 }
 
-#xeglbkqhif .gt_from_md > :first-child {
+#pwetvbphzu .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#xeglbkqhif .gt_from_md > :last-child {
+#pwetvbphzu .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#xeglbkqhif .gt_row {
+#pwetvbphzu .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -4215,7 +4223,7 @@ div.csl-indent {
   overflow-x: hidden;
 }
 
-#xeglbkqhif .gt_stub {
+#pwetvbphzu .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -4228,7 +4236,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#xeglbkqhif .gt_stub_row_group {
+#pwetvbphzu .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -4242,15 +4250,15 @@ div.csl-indent {
   vertical-align: top;
 }
 
-#xeglbkqhif .gt_row_group_first td {
+#pwetvbphzu .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#xeglbkqhif .gt_row_group_first th {
+#pwetvbphzu .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#xeglbkqhif .gt_summary_row {
+#pwetvbphzu .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -4260,16 +4268,16 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#xeglbkqhif .gt_first_summary_row {
+#pwetvbphzu .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#xeglbkqhif .gt_first_summary_row.thick {
+#pwetvbphzu .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#xeglbkqhif .gt_last_summary_row {
+#pwetvbphzu .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -4279,7 +4287,7 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#xeglbkqhif .gt_grand_summary_row {
+#pwetvbphzu .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -4289,7 +4297,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#xeglbkqhif .gt_first_grand_summary_row {
+#pwetvbphzu .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -4299,7 +4307,7 @@ div.csl-indent {
   border-top-color: #D3D3D3;
 }
 
-#xeglbkqhif .gt_last_grand_summary_row_top {
+#pwetvbphzu .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -4309,11 +4317,11 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#xeglbkqhif .gt_striped {
+#pwetvbphzu .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#xeglbkqhif .gt_table_body {
+#pwetvbphzu .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -4322,7 +4330,7 @@ div.csl-indent {
   border-bottom-color: #D3D3D3;
 }
 
-#xeglbkqhif .gt_footnotes {
+#pwetvbphzu .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -4336,7 +4344,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#xeglbkqhif .gt_footnote {
+#pwetvbphzu .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -4345,7 +4353,7 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#xeglbkqhif .gt_sourcenotes {
+#pwetvbphzu .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -4359,7 +4367,7 @@ div.csl-indent {
   border-right-color: #D3D3D3;
 }
 
-#xeglbkqhif .gt_sourcenote {
+#pwetvbphzu .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -4367,72 +4375,72 @@ div.csl-indent {
   padding-right: 5px;
 }
 
-#xeglbkqhif .gt_left {
+#pwetvbphzu .gt_left {
   text-align: left;
 }
 
-#xeglbkqhif .gt_center {
+#pwetvbphzu .gt_center {
   text-align: center;
 }
 
-#xeglbkqhif .gt_right {
+#pwetvbphzu .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#xeglbkqhif .gt_font_normal {
+#pwetvbphzu .gt_font_normal {
   font-weight: normal;
 }
 
-#xeglbkqhif .gt_font_bold {
+#pwetvbphzu .gt_font_bold {
   font-weight: bold;
 }
 
-#xeglbkqhif .gt_font_italic {
+#pwetvbphzu .gt_font_italic {
   font-style: italic;
 }
 
-#xeglbkqhif .gt_super {
+#pwetvbphzu .gt_super {
   font-size: 65%;
 }
 
-#xeglbkqhif .gt_footnote_marks {
+#pwetvbphzu .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#xeglbkqhif .gt_asterisk {
+#pwetvbphzu .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#xeglbkqhif .gt_indent_1 {
+#pwetvbphzu .gt_indent_1 {
   text-indent: 5px;
 }
 
-#xeglbkqhif .gt_indent_2 {
+#pwetvbphzu .gt_indent_2 {
   text-indent: 10px;
 }
 
-#xeglbkqhif .gt_indent_3 {
+#pwetvbphzu .gt_indent_3 {
   text-indent: 15px;
 }
 
-#xeglbkqhif .gt_indent_4 {
+#pwetvbphzu .gt_indent_4 {
   text-indent: 20px;
 }
 
-#xeglbkqhif .gt_indent_5 {
+#pwetvbphzu .gt_indent_5 {
   text-indent: 25px;
 }
 
-#xeglbkqhif .katex-display {
+#pwetvbphzu .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#xeglbkqhif div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#pwetvbphzu div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -4468,36 +4476,36 @@ div.csl-indent {
 <tbody class="gt_table_body">
 <tr class="odd">
 <td class="gt_row gt_left" headers="Variable">Elevation (m)</td>
-<td class="gt_row gt_center" headers="2008_SMD_before">0.545</td>
-<td class="gt_row gt_center" headers="2008_SMD_after">0.063</td>
+<td class="gt_row gt_center" headers="2008_SMD_before">0.433</td>
+<td class="gt_row gt_center" headers="2008_SMD_after">0.023</td>
 <td class="gt_row gt_center" headers="2021_SMD_before">0.363</td>
 <td class="gt_row gt_center" headers="2021_SMD_after">0.031</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="Variable">Population density in 2000 (km²)</td>
-<td class="gt_row gt_center" headers="2008_SMD_before">2.104</td>
-<td class="gt_row gt_center" headers="2008_SMD_after">0.105</td>
+<td class="gt_row gt_center" headers="2008_SMD_before">1.262</td>
+<td class="gt_row gt_center" headers="2008_SMD_after">0.106</td>
 <td class="gt_row gt_center" headers="2021_SMD_before">3.480</td>
 <td class="gt_row gt_center" headers="2021_SMD_after">0.053</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="Variable">Slope (%)</td>
-<td class="gt_row gt_center" headers="2008_SMD_before">0.098</td>
-<td class="gt_row gt_center" headers="2008_SMD_after">0.004</td>
+<td class="gt_row gt_center" headers="2008_SMD_before">0.944</td>
+<td class="gt_row gt_center" headers="2008_SMD_after">0.218</td>
 <td class="gt_row gt_center" headers="2021_SMD_before">0.058</td>
 <td class="gt_row gt_center" headers="2021_SMD_after">0.008</td>
 </tr>
 <tr class="even">
 <td class="gt_row gt_left" headers="Variable">Accessibility in 2000 (min)</td>
-<td class="gt_row gt_center" headers="2008_SMD_before">0.319</td>
-<td class="gt_row gt_center" headers="2008_SMD_after">0.020</td>
+<td class="gt_row gt_center" headers="2008_SMD_before">0.923</td>
+<td class="gt_row gt_center" headers="2008_SMD_after">0.030</td>
 <td class="gt_row gt_center" headers="2021_SMD_before">0.394</td>
 <td class="gt_row gt_center" headers="2021_SMD_after">0.054</td>
 </tr>
 <tr class="odd">
 <td class="gt_row gt_left" headers="Variable">Forest cover rates in 2000 (%)</td>
-<td class="gt_row gt_center" headers="2008_SMD_before">0.389</td>
-<td class="gt_row gt_center" headers="2008_SMD_after">0.007</td>
+<td class="gt_row gt_center" headers="2008_SMD_before">1.865</td>
+<td class="gt_row gt_center" headers="2008_SMD_after">0.098</td>
 <td class="gt_row gt_center" headers="2021_SMD_before">0.560</td>
 <td class="gt_row gt_center" headers="2021_SMD_after">0.016</td>
 </tr>
