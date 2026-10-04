@@ -12,9 +12,9 @@ En effet, si les deux groupes sont très différents avant le traitement, il est
 
 ## Méthodes
 
-Nous réalisons le matching à l'aide de la méthode genetic matching, en utilisant la fonction GenMatch() du package R MatchIt. Cette méthode combine les variables de matching en une seule mesure unique de distance "Mahalanobis distance matching". Cette distance mesurera la différence entre les unités des groupes appariés pour quantifier la similitude entre les deux groupes d'observations, tout en tenant compte des corrélations entre les covariables et de leurs covariances [@Diamond2013].
+Nous réalisons le matching à l'aide de la méthode genetic matching du package R MatchIt, en appelant directement `matchit(method = "genetic", distance = "mahalanobis", ...)`. Cette méthode combine les variables de matching en une seule mesure unique de distance "Mahalanobis distance matching". Cette distance mesurera la différence entre les unités des groupes appariés pour quantifier la similitude entre les deux groupes d'observations, tout en tenant compte des corrélations entre les covariables et de leurs covariances [@Diamond2013]. L'algorithme génétique (via `Matching::GenMatch`, appelé en interne par `matchit()`) sélectionne les facteurs d'échelle attribués à chaque covariable afin de maximiser l'équilibre entre le groupe de traitement et le groupe de contrôle, puis les paires sont formées en une seule étape.
 
-Dans un premier temps, nous appliquons la fonction GenMatch() pour identifier la combinaison optimale de poids attribués à chaque covariable, dans le but de maximiser l'équilibre entre le groupe de traitement et de contrôle. Nous obtenons une matrice de poids mais aucune paire n'est encore formée. Dans un second temps, nous utilisons la fonction matchIt(), en intégrant la pondération trouvée auparavant, afin de constituer les paires entre les unités traitées et non traitées.
+**TODO (caliper) :** le caliper préenregistré de 0.25 écart-type sera réexaminé dans une revue séparée ; il n'est **pas** appliqué dans la présente exécution et les résultats ne doivent pas être présentés comme appariés avec caliper.
 
 ## Exécution du matching pour toutes les années
 
@@ -59,113 +59,176 @@ prep_matching <- function(df_final) {
 # supprimer toute ancienne version pour éviter le masquage
 if (exists("run_matching_year")) rm(run_matching_year)
 
-run_matching_year <- function(year, overwrite = list(gen=FALSE, match=FALSE)) {
+# Revue v2 : graine de base fixe, graine spécifique par vague (reproductibilité)
+MATCHING_BASE_SEED <- 20261004L
+
+# Revue v2 : relance complète de toutes les vagues, indépendamment des caches
+# existants (les anciens caches, sans métadonnées de spécification, sont de
+# toute façon invalidés par l'échec de validation du hash).
+FORCE_REMATCH <- TRUE
+
+# Arguments du matching (source unique du hash de spécification)
+matching_arguments <- list(
+  method = "genetic",
+  distance = "mahalanobis",
+  estimand = "ATT",
+  replace = FALSE,
+  ratio = 1L,
+  pop.size = 1000,
+  max.generations = 100,
+  wait.generations = 4
+)
+
+# Hash de spécification : tout changement d'assignation du traitement, des
+# covariables, des arguments du matching ou de la graine invalide le cache.
+matching_spec_hash <- function(year, dat_m, X_match, seed) {
+  digest::digest(list(
+    spec_version = "review_v2",
+    year = year,
+    treatment = dat_m$treatment,
+    row_ids = paste(dat_m$DHSYEAR, dat_m$DHSCLUST, dat_m$hv002, sep = "-"),
+    matching_variables = matching_variables,
+    X = X_match,
+    matching_arguments = matching_arguments,
+    seed = seed
+  ), algo = "sha256")
+}
+
+# SMD absolu par covariable (définition standard, écarts-types bruts)
+smd_by_var <- function(df, vars) {
+  X <- as.matrix(df[vars])
+  tr <- df$treatment == 1
+  m_t <- colMeans(X[tr, , drop = FALSE])
+  m_c <- colMeans(X[!tr, , drop = FALSE])
+  v_t <- apply(X[tr, , drop = FALSE], 2, var)
+  v_c <- apply(X[!tr, , drop = FALSE], 2, var)
+  abs((m_t - m_c) / sqrt((v_t + v_c) / 2))
+}
+
+run_matching_year <- function(year, force = FORCE_REMATCH) {
   cat("\n=== Matching", year, "===\n")
   fin_path <- glue("data/derived/hr_{year}_final.rds")
   if (!file.exists(fin_path)) stop("Fichier introuvable: ", fin_path)
-  
+
   dat   <- readRDS(fin_path)
   dat_m <- prep_matching(dat)
-  
-  
+
   n_total <- nrow(dat)
   n_filt <- nrow(dat_m)
   n_treat <- sum(dat_m$treatment == 1, na.rm = TRUE)
   n_ctrl <- sum(dat_m$treatment == 0, na.rm = TRUE)
-  
-  
+
   cat(glue(">> N total={n_total}, après filtre/NA={n_filt}; ",
            "Traités={n_treat}, ",
            "Contrôles={n_ctrl}\n"))
-  
+
   have_all_vars <- all(matching_variables %in% names(dat_m))
   cat(">> Toutes les covars présentes ? ", have_all_vars, "\n")
   if (n_filt < 5 || !have_all_vars) {
     warning(glue("Année {year}: données insuffisantes ou variables manquantes — on saute."))
     return(NULL)
   }
-  
+
+  # Garde-fou : GROUP valide partout, et aucune observation Treatment issue
+  # d'une AP "Proposed" (aucune reclassification issue d'un RDS périmé)
+  prop_ids <- readr::read_csv(
+    "data/PA_creation/wdpa_data/dynamic_wdpa_metadata.csv",
+    show_col_types = FALSE) |>
+    dplyr::filter(STATUS == "Proposed") |>
+    dplyr::pull(WDPAID)
+  stopifnot(
+    "GROUP invalide dans les données de matching" =
+      all(dat$GROUP %in% c("Treatment", "Control", "Excluded")),
+    "treated_now incohérent" =
+      all(dat_m$treated_now[dat_m$treatment == 1L] %in% c(0L, 1L)),
+    "Treatment rattaché à une AP Proposed" =
+      !any(dat_m$WDPAID[dat_m$treatment == 1L] %in% prop_ids)
+  )
+
   X_match <- dat_m %>%
     sf::st_drop_geometry() %>%
     dplyr::select(all_of(matching_variables)) %>%
     as.data.frame()
-  
-  gen_path         <- glue("data/derived/gen_match_model_{year}.rds")
+
+  seed <- MATCHING_BASE_SEED + as.integer(year)
+  spec_hash <- matching_spec_hash(year, dat_m, X_match, seed)
+
   match_path       <- glue("data/derived/matching_result_{year}.rds")
   matched_out_path <- glue("data/derived/data_matched_{year}.rds")
-  
-  # --- GenMatch ---
-  used_cache_gen <- FALSE
+
+  # --- matchit(method = "genetic") en une seule étape ---
+  used_cache <- FALSE
   t0 <- Sys.time()
-  if (file.exists(gen_path) && !isTRUE(overwrite$gen)) {
-    cat(">> GenMatch: cache trouvé -> lecture\n")
-    gen_model <- readRDS(gen_path)
-    used_cache_gen <- TRUE
-  } else {
-    cat(">> GenMatch: calcul en cours...\n")
-    gen_model <- GenMatch(
-      Tr = dat_m$treatment,
-      X  = X_match,
-      BalanceMatrix = X_match,
-      estimand = "ATT",
-      M = 1,
-      weights = NULL,
-      pop.size = 1000,
-      max.generations = 100,
-      wait.generations = 4,
-      caliper = .25,
-      print.level = 1,
-      cluster = rep("localhost", 4)
-    )
-    saveRDS(gen_model, gen_path)
+  if (!force && file.exists(match_path)) {
+    cached <- tryCatch(readRDS(match_path), error = function(e) NULL)
+    if (!is.null(cached) && !is.null(cached$meta) &&
+        identical(cached$meta$spec_hash, spec_hash)) {
+      cat(">> matchit: cache valide (hash identique) -> lecture\n")
+      m_out <- cached$m_out
+      used_cache <- TRUE
+    } else {
+      cat(">> matchit: cache absent ou périmé (hash différent) -> recalcul\n")
+    }
   }
-  t_gen <- as.numeric(difftime(Sys.time(), t0, units="mins"))
-  cat(glue(">> GenMatch temps = {round(t_gen,1)} min (cache={used_cache_gen})\n"))
-  
-  # --- matchit() ---
-  used_cache_match <- FALSE
-  t1 <- Sys.time()
-  if (file.exists(match_path) && !isTRUE(overwrite$match)) {
-    cat(">> matchit: cache trouvé → lecture\n")
-    m_out <- readRDS(match_path)
-    used_cache_match <- TRUE
-  } else {
-    cat(">> matchit: calcul en cours...\n")
+  if (!used_cache) {
+    cat(glue(">> matchit: calcul en cours (seed = {seed}, hash = {substr(spec_hash, 1, 12)})...\n"))
+    set.seed(seed)
     fml <- as.formula(paste("treatment ~", paste(matching_variables, collapse=" + ")))
-   
-    
-     m_out <- matchit(
+
+    # TODO(caliper) : le caliper préenregistré de 0.25 SD sera réexaminé dans
+    # une revue séparée ; il n'est PAS appliqué ici.
+    m_out <- matchit(
       formula   = fml,
       data      = dat_m,
       method    = "genetic",
       distance  = "mahalanobis",
-      gen.match = gen_model
+      estimand  = "ATT",
+      replace   = FALSE,
+      ratio     = 1,
+      pop.size  = 1000,
+      max.generations = 100,
+      wait.generations = 4
     )
-     
-    saveRDS(m_out, match_path)
+
+    saveRDS(list(
+      m_out = m_out,
+      meta = list(
+        spec_version = "review_v2",
+        spec_hash = spec_hash,
+        seed = seed,
+        year = year,
+        matching_variables = matching_variables,
+        matching_arguments = matching_arguments,
+        n_eligible = n_filt,
+        n_treated = n_treat,
+        n_control = n_ctrl
+      )
+    ), match_path)
   }
-  
+  t_match <- as.numeric(difftime(Sys.time(), t0, units="mins"))
+  cat(glue(">> matchit temps = {round(t_match,1)} min (cache={used_cache})\n"))
+
   matched <- match.data(m_out, data = sf::st_drop_geometry(dat_m)) %>%
     dplyr::filter(weights > 0)
-  
+
   saveRDS(matched, matched_out_path)
   cat(glue(">> N appariés = {nrow(matched)} (écrit: {matched_out_path})\n"))
-  
-  
+
   tibble(
     Année = year,
     'Total des observations' = n_total,
     'Après filtre/NA' = n_filt,
     Traités = n_treat,
     Contrôles = n_ctrl,
-    'N appariés' = nrow(matched)
+    'N appariés' = nrow(matched),
+    'Traités appariés' = sum(matched$treatment == 1L),
+    'Contrôles appariés' = sum(matched$treatment == 0L),
+    'Part écartés' = 1 - nrow(matched) / n_filt,
+    'SMD max avant' = max(smd_by_var(dat_m, matching_variables)),
+    'SMD max après' = max(smd_by_var(matched, matching_variables)),
+    seed = seed,
+    hash = substr(spec_hash, 1, 12)
   )
-}
-
-need_overwrite <- function(year) {
-  gen_path   <- glue("data/derived/gen_match_model_{year}.rds")
-  match_path <- glue("data/derived/matching_result_{year}.rds")
-  list(gen = !file.exists(gen_path), match = !file.exists(match_path))
 }
 
 # --- Exécution avec progression ---
@@ -180,27 +243,29 @@ with_progress({
 
 for (i in seq_along(yrs)) {
   yr <- yrs[i]
-  ow <- need_overwrite(yr) 
-  cat(glue("\n>> overwrite {yr}: gen={ow$gen}, match={ow$match}\n"))
   cat(sprintf("Start %s", yr))
   t_all <- Sys.time()
   res_list[[i]] <- tryCatch(
-    run_matching_year(yr, overwrite = ow),
+    run_matching_year(yr),
     error = function(e) { warning(glue("Year {yr} ERROR: {e$message}")); NULL }
   )
   cat(sprintf("Done %s (%.1f min)",
             yr, as.numeric(difftime(Sys.time(), t_all, units="mins"))))
+  p()
 }
 })
 
 result_list <- purrr::compact(res_list) |> bind_rows()
 saveRDS(result_list, "data/derived/matching_summary_all_years.rds")
 
-bal_tabs <- purrr::imap(res_list, ~ {if (!is.null(.x)) {
-  tryCatch(cobalt::bal.tab(.x$m), error = function(e) NULL) } else {
-    NULL
-  }
-})
+# Balance tables cobalt à partir des objets matchit sauvegardés
+bal_tabs <- setNames(lapply(yrs, function(y) {
+  p <- glue("data/derived/matching_result_{y}.rds")
+  if (file.exists(p)) {
+    obj <- tryCatch(readRDS(p)$m_out, error = function(e) NULL)
+    if (!is.null(obj)) tryCatch(cobalt::bal.tab(obj), error = function(e) NULL)
+  } else NULL
+}), yrs)
 
 result_list <- result_list %>%
   rename(
@@ -209,7 +274,14 @@ result_list <- result_list %>%
     after_filtre_NA = `Après filtre/NA`,
     Traited = Traités,
     Controls = Contrôles,
-    N_matched = `N appariés`
+    N_matched = `N appariés`,
+    Matched_treated = `Traités appariés`,
+    Matched_controls = `Contrôles appariés`,
+    Share_discarded = `Part écartés`,
+    Max_SMD_before = `SMD max avant`,
+    Max_SMD_after = `SMD max après`,
+    Seed = seed,
+    Cache_hash = hash
   )
 
 saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years.rds")
@@ -288,13 +360,15 @@ out <- map_dfr(years, function(y) {
     }
   }
 
-  # matching_result: matchit object — X matrix rows = inputs to matching (after NA drop)
+  # matching_result: matchit object (revue v2 : liste m_out + meta) —
+  # X matrix rows = inputs to matching (after NA drop)
   if (file.exists(matchres_file)) {
     mr <- readRDS(matchres_file)
-    if (is.list(mr) && "X" %in% names(mr)) {
-      After_NA_drop <- nrow(mr$X)
-      if (is.na(Treated) && "treat" %in% names(mr)) {
-        Treated <- sum(mr$treat == 1L)
+    mobj <- if (is.list(mr) && !is.null(mr$m_out)) mr$m_out else mr
+    if (is.list(mobj) && "X" %in% names(mobj)) {
+      After_NA_drop <- nrow(mobj$X)
+      if (is.na(Treated) && "treat" %in% names(mobj)) {
+        Treated <- sum(mobj$treat == 1L)
       }
     }
   }
