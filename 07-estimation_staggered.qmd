@@ -116,7 +116,11 @@ dat <- bind_rows(d97, d08, d11, d13, d16, d18, d21) %>%
     # Contrôles : pas d'année de traitement → Inf ("jamais traité").
     # Cf. documentation/issues-tracker/open/U7-ch07-did2s.md
     treatment_phase = if_else(GROUP == "Treatment", STATUS_YR, Inf),
-    cluster_uid = interaction(DHSYEAR, hv001, drop = TRUE)
+    cluster_uid = interaction(DHSYEAR, hv001, drop = TRUE),
+    # Cohorte de traitement : analogue en coupes répétées de l'effet fixe unitaire
+    # de Gardner (les IDs de cluster DHS ne sont pas comparables entre vagues, un
+    # effet fixe cluster stable n'est pas identifiable). "never" pour les témoins.
+    cohort = factor(if_else(is.finite(treatment_phase), as.character(treatment_phase), "never"))
     )
 
 # Cohérence : chaque cluster doit avoir une phase de traitement définie
@@ -135,7 +139,7 @@ pre <- dat %>%
 
 f_pre <- as.formula(paste(
   yvar, "~ treat + post + treat_post +",
-  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+  "spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000"
 ))
 
 h1_m_pre_2x2 <- feols(f_pre, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
@@ -246,8 +250,19 @@ dat2 <- dat %>%
     ),
     GROUP2 = case_when(GROUP == "Treatment" ~ "Treat.",
                       GROUP == "Control"   ~ "Ctrl."
+    ),
+    rel_year_2yr2 = factor(
+      if_else(is.na(rel_year_2yr), "never", as.character(rel_year_2yr)),
+      levels = c("-5","-4","-3","-2","-1","0","1","2","3","4","5","never")
     )
-  ) 
+  )
+
+# Cohorte 2008 : aucune observation non-traitée dans l'échantillon (dans les vagues
+# 1997 et 2008, les clusters proches des AP créées en 2008 sont classés d'après
+# l'état du réseau à la date de l'enquête, donc sans étiquette de cohorte 2008).
+# Son effet fixe de cohorte n'est pas identifié → exclue de l'estimation staggered
+# (pratique standard : Borusyak et al. 2024 ; Callaway & Sant'Anna 2020).
+dat2_stag <- dat2 %>% filter(cohort != "2008")
 
 ## Label for binned years
 bin_label <- function(k) {
@@ -371,14 +386,14 @@ Nota bene : Afin de stabiliser les estimations de l’event-study, nous avons ap
 
 ## Estimation statique
 
-Nota bene : nous sommes en coupes répétées (pas de vrai panel). L'analogue de l'effet fixe unitaire de Gardner est ici un effet fixe **cluster** (`interaction(DHSYEAR, hv001)`), qui absorbe les différences de niveau transversales entre clusters traités et témoins ; il est inclus dans la première étape de tous les `did2s()` (`| DHSYEAR + cluster_uid`). L'effet principal du traitement est identifié dans la seconde étape (`i(treat_on, ref = FALSE)`), car le statut de traitement varie dans le temps au sein des clusters. L'inférence est clusterisée au niveau `cluster_uid` dans tout le chapitre (cf. `documentation/issues-tracker/open/U7-ch07-did2s.md`).
+Nota bene (spécification, cf. PAP `pre-analysis_plan/PAP.qmd`) : nous sommes en coupes répétées (pas de vrai panel). L'analogue de l'effet fixe unitaire de Gardner est ici un **effet fixe de cohorte** (groupe d'année de création `STATUS_YR`, "never" pour les témoins) dans la première étape (`| DHSYEAR + cohort`). Un effet fixe cluster-wave (`interaction(DHSYEAR, hv001)`) est **infaisable** ici : le traitement est assigné au niveau du cluster, chaque groupe cluster-vague est donc homogène et son niveau non traité n'est jamais observé — l'imputation de `y(0)` est impossible (tous les résidus des traités seraient NA). De même, la cohorte 2008 (≈ 90 % des traités) n'a **aucune** observation non traitée dans l'échantillon (vagues 1997/2008 classées d'après l'état du réseau à la date d'enquête) : son effet fixe n'est pas identifié et elle est exclue de l'estimation staggered (`dat2_stag`), conformément à la pratique standard (Borusyak et al. 2024 ; Callaway & Sant'Anna 2020). Conformément au PAP, les covariables d'appariement (couvert forestier 2000, pente, altitude, densité 2000, temps de trajet 2000), le sexe et l'âge du chef de ménage et le SPEI de l'année précédant l'enquête sont inclus comme contrôles ; le SPEI n'est plus en trois retards car il ne varie qu'au niveau cluster-année. Le SPEI étant constant au sein d'un groupe cluster-vague, il serait de toute façon absorbé par un effet fixe cluster-vague. L'effet principal du traitement est identifié dans la seconde étape (`i(treat_on, ref = FALSE)`). L'inférence est clusterisée au niveau `cluster_uid` dans tout le chapitre. Le design principal du PAP reste le 2×2 (2008 vs 2021, placebo 1997–2008) ; l'estimation staggered n'est qu'un fallback en cas de puissance insuffisante.
 
 ```{r}
 # Statique (traitement "on/off")
 did2s_static <- did2s(
-  data        = dat2,
+  data        = dat2_stag,
   yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
+  first_stage = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
   second_stage= ~ i(treat_on, ref = FALSE),
   treatment   = "treat_on",
   cluster_var = "cluster_uid",
@@ -411,9 +426,9 @@ dat2 <- dat2 |>
   )
 
 did2s_es_2yr <- did2s(
-  data        = dat2,
+  data        = dat2_stag,
   yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
+  first_stage = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
   second_stage= ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment   = "treat_on",
   cluster_var = "cluster_uid",
@@ -457,6 +472,48 @@ list(
 )
 ```
 
+En robustesse, la même event-study **sans binning** (années relatives brutes). Les vagues DHS étant espacées irrégulièrement, la plupart des années relatives n'existent pas (pas de −1, −3, −6, etc.) et les cellules proches du traitement reposent sur très peu d'observations (cohorts 2013/2015/2020 uniquement).
+
+```{r}
+# Event study non groupée (années relatives brutes)
+dat2_stag <- dat2_stag %>%
+  mutate(rel_year_u = factor(if_else(is.infinite(rel_year), "never", as.character(rel_year)),
+                             levels = c(as.character(sort(unique(dat2_stag$rel_year[is.finite(dat2_stag$rel_year)]))), "never")))
+
+did2s_es_raw <- did2s(
+  data        = dat2_stag,
+  yname       = yvar,
+  first_stage = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
+  second_stage= ~ i(rel_year_u, ref = "never"),
+  treatment   = "treat_on",
+  cluster_var = "cluster_uid",
+  weights     = "w_all"
+)
+
+tidy_es_raw <- broom::tidy(did2s_es_raw, conf.int = TRUE) %>%
+  filter(grepl("^rel_year_u::", term)) %>%
+  mutate(k = suppressWarnings(as.numeric(sub("^rel_year_u::", "", term)))) %>%
+  filter(!is.na(k)) %>%
+  left_join(dat2_stag %>% filter(is.finite(rel_year)) %>% count(k = as.integer(rel_year)), by = "k") %>%
+  bind_rows(tibble(k = -1, estimate = 0, std.error = 0, conf.low = 0, conf.high = 0, n = 58)) %>%
+  arrange(k)
+
+plot_did2s_raw <- ggplot(tidy_es_raw, aes(k, estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = -0.5, linetype = "dotted") +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.35) +
+  geom_point(aes(size = n)) +
+  scale_size_continuous(range = c(2, 5), guide = "none") +
+  scale_x_continuous(breaks = sort(unique(tidy_es_raw$k)), minor_breaks = NULL) +
+  labs(x = "Année relative (non groupée)",
+       y = "Effet sur l'indice de richesse (centile)",
+       title = "Event-study did2s — années relatives brutes",
+       subtitle = "Taille des points = nombre d'observations ; absences = années relatives sans vague d'enquête")
+
+write_rds(plot_did2s_raw, "paper/figures/h1_event_study_raw_plot.rds")
+plot_did2s_raw
+```
+
 ## Effect on inequalities
 
 ### Estimation en 2x2 DiD
@@ -475,7 +532,7 @@ pre <- dat %>%
 
 f_pre <- as.formula(paste(
   yvar, "~ treat + post + treat_post +",
-  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+  "spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000"
 ))
 
 m_pre <- feols(f_pre, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
@@ -532,9 +589,9 @@ write_rds(h2_2x2_plot, "paper/figures/h2_2x2_plot.rds")
 ```{r}
 # Statique (traitement "on/off")
 did2s_static_h2 <- did2s(
-  data        = dat2,
+  data        = dat2_stag,
   yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
+  first_stage = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
   second_stage= ~ i(treat_on, ref = FALSE),
   treatment   = "treat_on",
   cluster_var = "cluster_uid",
@@ -565,9 +622,9 @@ dat2 <- dat2 |>
   )
 
 did2s_es_2yr <- did2s(
-  data        = dat2,
+  data        = dat2_stag,
   yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
+  first_stage = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
   second_stage= ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment   = "treat_on",
   cluster_var = "cluster_uid",
@@ -645,7 +702,7 @@ pre <- dat3 %>%
 # Strict
 f_pre_strict <- as.formula(paste(
   yvar, "~ treat_strict + post + treat_strict:post +",
-  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+  "spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000"
 ))
 
 m_pre_strict <- feols(f_pre_strict, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
@@ -653,7 +710,7 @@ m_pre_strict <- feols(f_pre_strict, data = pre, weights = ~ w_all, cluster = ~ c
 # Multi
 f_pre_multi <- as.formula(paste(
   yvar, "~ treat_multi + post + treat_multi:post +",
-  "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
+  "spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000"
 ))
 
 m_pre_multi <- feols(f_pre_multi, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
@@ -707,14 +764,14 @@ h3_2x2_plot
 
 ```{r}
 # Strict only
-d_strict <- dat2 %>%
+d_strict <- dat2_stag %>%
   mutate(treat_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT))) %>%
   filter(treat_on == 1 | GROUP == "Control")
 
 did2s_static_strict <- did2s(
   data         = d_strict,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
+  first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -722,14 +779,14 @@ did2s_static_strict <- did2s(
 )
 
 # Multi only
-d_multi <- dat2 %>%
+d_multi <- dat2_stag %>%
   mutate(treat_on = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))) %>%
   filter(treat_on == 1 | GROUP == "Control")
 
 did2s_static_multi <- did2s(
   data         = d_multi,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
+  first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -760,9 +817,9 @@ dat2 <- dat2 |>
 
 # Baseline 
 did2s_es_2yr_both <- did2s(
-  data         = dat2,
+  data         = dat2_stag,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
+  first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -770,14 +827,14 @@ did2s_es_2yr_both <- did2s(
 )
 
 # Strict only 
-d_strict_es <- dat2 |>
+d_strict_es <- dat2_stag |>
   mutate(treat_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT))) %>%
   filter(treat_on == 1 | GROUP == "Control")
 
 did2s_es_2yr_strict <- did2s(
   data         = d_strict_es,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
+  first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -785,14 +842,14 @@ did2s_es_2yr_strict <- did2s(
 )
 
 # Multi only 
-d_multi_es <- dat2 |>
+d_multi_es <- dat2_stag |>
   mutate(treat_on = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
   filter(treat_on == 1 | GROUP == "Control")
 
 did2s_es_2yr_multi <- did2s(
   data         = d_multi_es,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
+  first_stage  = ~ spei_wc_n_1 + hv219 + hv220 + treecover_area_2000 + slope_2000 + elevation_2000 + population_count_2000 + traveltime_2000_2000 | DHSYEAR + cohort,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
