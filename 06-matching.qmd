@@ -144,7 +144,10 @@ run_matching_year <- function(year, overwrite = list(gen=FALSE, match=FALSE)) {
       distance  = "mahalanobis",
       estimand  = "ATT",
       replace   = FALSE,
-      caliper   = .25,
+      # NB : avec distance = "mahalanobis", MatchIt 4.x exige des calipers nommés
+      # sur les covariables ; un caliper scalaire .25 sur les 5 covariables
+      # simultanément n'apparie aucune observation → caliper retiré
+      # (cf. documentation/issues-tracker/fixed/U6-ch06-matching.md).
       pop.size         = 1000,
       max.generations  = 100,
       wait.generations = 4
@@ -155,7 +158,12 @@ run_matching_year <- function(year, overwrite = list(gen=FALSE, match=FALSE)) {
   
   matched <- match.data(m_out, data = sf::st_drop_geometry(dat_m)) %>%
     dplyr::filter(weights > 0)
-  
+
+  # Garde-fou : aucune observation issue d'une AP « Proposed » (STATUS_YR 2026)
+  # ne doit subsister après appariement (cf. F6 / U1). Un cache matchit périmé
+  # réinjecterait sinon l'ancienne classification sans erreur.
+  stopifnot(!any(matched$STATUS_YR == 2026, na.rm = TRUE))
+
   saveRDS(matched, matched_out_path)
   cat(glue(">> N appariés = {nrow(matched)} (écrit: {matched_out_path})\n"))
   
