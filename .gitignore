@@ -19,8 +19,9 @@ old/*
 derived/*
 test*
 /.quarto/
+documentation/*
 
-
+Todo
 
 
 **/*.quarto_ipynb
