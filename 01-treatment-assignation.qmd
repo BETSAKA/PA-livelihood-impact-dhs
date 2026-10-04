@@ -192,15 +192,34 @@ pa_states_analysis <- st_as_sf(dynamic_wdpa_vect) |>
 pa_states_fixed <- pa_states_analysis |>
   group_by(WDPAID) |> slice_tail(n = 1) |> ungroup()
 
-# Réseau d'AP valide au 1er juin de `year` (ou limites fixes si fixed = TRUE).
-# La date de référence coupe l'année en deux : les enquêtes DHS/MICS s'étalent
-# sur plusieurs mois, le 1er juin approche mieux la date moyenne d'interview
-# que le 31 décembre, qui post-date la collecte de presque toute l'année.
-pa_network <- function(year, fixed = FALSE) {
-  if (fixed) return(pa_states_fixed)
-  d <- as.Date(sprintf("%d-06-01", year))
-  pa_states_analysis |> filter(valid_from <= d, is.na(valid_to) | d < valid_to)
+# Fonction générique (destinée à conservation-dynamic-madagascar) : réseau d'AP
+# en vigueur à une date de référence de `year`. La date de référence coupe
+# l'année en deux : les enquêtes DHS/MICS s'étalent sur plusieurs mois, le
+# 1er juin approche mieux la date moyenne d'interview que le 31 décembre,
+# qui post-date la collecte de presque toute l'année.
+#' Get the PA network in force at a reference date
+#'
+#' Filters consolidated PA states to those valid at the reference date of a
+#' given year: states whose validity started on or before the cut-off date and
+#' have not ended by then (open-ended states are always kept). The cut-off
+#' date is expressed as "DD/MM" (day/month) and defaults to "01/06"
+#' (June 1st), which better approximates the average DHS/MICS interview date
+#' than December 31st.
+#'
+#' @param states Consolidated PA states (output from consolidate_pa_states)
+#' @param year Reference year
+#' @param cutoff_date Cut-off date within the year, as "DD/MM" (default "01/06")
+#' @return sf object with the states valid at the reference date
+get_pa_network <- function(states, year, cutoff_date = "01/06") {
+  md <- as.integer(strsplit(cutoff_date, "/")[[1]])
+  ref_date <- as.Date(sprintf("%d-%02d-%02d", year, md[2], md[1]))
+
+  states |>
+    filter(valid_from <= ref_date, is.na(valid_to) | ref_date < valid_to)
 }
+
+# État du réseau d'AP au 1er juin de chaque vague (limites fixes pour le
+# test de sensibilité : passer pa_states_fixed à get_pa_network()).
 
 # AP créées après `year` (mais au plus tard à la dernière vague) :
 # limite en vigueur à leur création
@@ -221,7 +240,7 @@ pa_states_future <- function(year, fixed = FALSE) {
 source("utils/iucn_sets.R")
 
 dynamic_wdpa_vect_yearly <- purrr::map(survey_years, function(y) {
-  pa_network(y) |>
+  get_pa_network(pa_states_analysis, y) |>
     mutate(pa_type = case_when(
       IUCN_CAT %in% iucn_sets$strict ~ "Strict (IUCN I-IV)",
       IUCN_CAT %in% iucn_sets$multi  ~ "Multi-use (IUCN V-VI)",
@@ -540,7 +559,7 @@ Les AP encore au statut "Proposed" (jamais officialisées pendant la période d'
 ```{r fig.cap="Figure 6: DHS survey clusters relative to existing protected areas"}
 
 # Helpers réutilisables définis plus haut : pa_states_analysis, pa_states_fixed,
-# pa_network(), pa_states_future(), buffer_10km() — état du réseau d'AP à une
+# get_pa_network(), pa_states_future(), buffer_10km() — état du réseau d'AP à une
 # date donnée.
 
 pa_buffered <- function(pa, buffer_dist = 10000) {
@@ -558,7 +577,10 @@ classify_clusters_with_pa <- function(cluster_gps, year, fixed = FALSE,
   # du réseau d'AP de 2008, afin que la sélection des clusters soit identique
   # à celle de 2008 (mêmes unités, toutes pré-traitement en 1997).
   year_net <- max(year, 2008)
-  net <- pa_network(year_net, fixed)
+  net <- get_pa_network(
+    if (fixed) pa_states_fixed else pa_states_analysis,
+    year_net
+  )
   pa_before_y <- net |> filter(STATUS_YR < 2008)
   pa_after_y  <- net |> filter(STATUS_YR >= 2008, STATUS_YR <= year_net)
   pa_future_y <- pa_states_future(year_net, fixed)
@@ -616,7 +638,7 @@ test_results <- purrr::map_dfr(survey_years, function(y) {
   d_y <- gps_all_class |> filter(DHSYEAR == y)
   # même année de réseau que dans classify_clusters_with_pa (placebo 1997)
   y_net <- max(y, 2008)
-  net <- pa_network(y_net)
+  net <- get_pa_network(pa_states_analysis, y_net)
   buf_after  <- buffer_10km(net |> filter(STATUS_YR >= 2008, STATUS_YR <= y_net))
   buf_before <- buffer_10km(net |> filter(STATUS_YR < 2008))
   buf_future <- buffer_10km(pa_states_future(y_net))
@@ -726,7 +748,7 @@ map_ap <- tm_shape(contour_mada) +
   tm_add_legend(
     type  = "polygons",
     fill  = c("green", "darkgreen"),
-    labels = c("Starting in 2008", "Before 2008"),
+    labels = c("From 2008", "Before 2008"),
     title = "Protected Areas"
   ) +
   tm_add_legend(

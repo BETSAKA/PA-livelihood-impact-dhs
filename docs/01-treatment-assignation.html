@@ -517,71 +517,90 @@ Geodetic CRS:  WGS 84</code></pre>
 <span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>pa_states_fixed <span class="ot">&lt;-</span> pa_states_analysis <span class="sc">|&gt;</span></span>
 <span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(WDPAID) <span class="sc">|&gt;</span> <span class="fu">slice_tail</span>(<span class="at">n =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span> <span class="fu">ungroup</span>()</span>
 <span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Réseau d'AP valide au 1er juin de `year` (ou limites fixes si fixed = TRUE).</span></span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a><span class="co"># La date de référence coupe l'année en deux : les enquêtes DHS/MICS s'étalent</span></span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="co"># sur plusieurs mois, le 1er juin approche mieux la date moyenne d'interview</span></span>
-<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a><span class="co"># que le 31 décembre, qui post-date la collecte de presque toute l'année.</span></span>
-<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>pa_network <span class="ot">&lt;-</span> <span class="cf">function</span>(year, <span class="at">fixed =</span> <span class="cn">FALSE</span>) {</span>
-<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (fixed) <span class="fu">return</span>(pa_states_fixed)</span>
-<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="fu">sprintf</span>(<span class="st">"%d-06-01"</span>, year))</span>
-<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>  pa_states_analysis <span class="sc">|&gt;</span> <span class="fu">filter</span>(valid_from <span class="sc">&lt;=</span> d, <span class="fu">is.na</span>(valid_to) <span class="sc">|</span> d <span class="sc">&lt;</span> valid_to)</span>
-<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a><span class="co"># AP créées après `year` (mais au plus tard à la dernière vague) :</span></span>
-<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a><span class="co"># limite en vigueur à leur création</span></span>
-<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>pa_states_future <span class="ot">&lt;-</span> <span class="cf">function</span>(year, <span class="at">fixed =</span> <span class="cn">FALSE</span>) {</span>
-<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>  pool <span class="ot">&lt;-</span> <span class="cf">if</span> (fixed) pa_states_fixed <span class="cf">else</span> pa_states_analysis</span>
-<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>  pool <span class="sc">|&gt;</span></span>
-<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(STATUS_YR <span class="sc">&gt;</span> year, STATUS_YR <span class="sc">&lt;=</span> last_wave) <span class="sc">|&gt;</span></span>
-<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(WDPAID) <span class="sc">|&gt;</span></span>
-<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_min</span>(valid_from, <span class="at">n =</span> <span class="dv">1</span>, <span class="at">with_ties =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span>
-<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Application aux vagues d'enquête : une couche du réseau par date, avec</span></span>
-<span id="cb7-50"><a href="#cb7-50" aria-hidden="true" tabindex="-1"></a><span class="co"># la géométrie en vigueur au 1er juin de chaque année (y compris 1997,</span></span>
-<span id="cb7-51"><a href="#cb7-51" aria-hidden="true" tabindex="-1"></a><span class="co"># qui reprend désormais son propre état et non plus celui de 2008).</span></span>
-<span id="cb7-52"><a href="#cb7-52" aria-hidden="true" tabindex="-1"></a><span class="co"># Classification stricte (IUCN I-IV) vs multi-usage (IUCN V-VI) : définition</span></span>
-<span id="cb7-53"><a href="#cb7-53" aria-hidden="true" tabindex="-1"></a><span class="co"># partagée avec 07-estimation_staggered.qmd (cf. utils/iucn_sets.R)</span></span>
-<span id="cb7-54"><a href="#cb7-54" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"utils/iucn_sets.R"</span>)</span>
-<span id="cb7-55"><a href="#cb7-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-56"><a href="#cb7-56" aria-hidden="true" tabindex="-1"></a>dynamic_wdpa_vect_yearly <span class="ot">&lt;-</span> purrr<span class="sc">::</span><span class="fu">map</span>(survey_years, <span class="cf">function</span>(y) {</span>
-<span id="cb7-57"><a href="#cb7-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pa_network</span>(y) <span class="sc">|&gt;</span></span>
-<span id="cb7-58"><a href="#cb7-58" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">pa_type =</span> <span class="fu">case_when</span>(</span>
-<span id="cb7-59"><a href="#cb7-59" aria-hidden="true" tabindex="-1"></a>      IUCN_CAT <span class="sc">%in%</span> iucn_sets<span class="sc">$</span>strict <span class="sc">~</span> <span class="st">"Strict (IUCN I-IV)"</span>,</span>
-<span id="cb7-60"><a href="#cb7-60" aria-hidden="true" tabindex="-1"></a>      IUCN_CAT <span class="sc">%in%</span> iucn_sets<span class="sc">$</span>multi  <span class="sc">~</span> <span class="st">"Multi-use (IUCN V-VI)"</span>,</span>
-<span id="cb7-61"><a href="#cb7-61" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"Autre"</span></span>
-<span id="cb7-62"><a href="#cb7-62" aria-hidden="true" tabindex="-1"></a>    )) <span class="sc">|&gt;</span></span>
-<span id="cb7-63"><a href="#cb7-63" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">survey_year =</span> y)</span>
-<span id="cb7-64"><a href="#cb7-64" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">|&gt;</span></span>
-<span id="cb7-65"><a href="#cb7-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>() <span class="sc">|&gt;</span></span>
-<span id="cb7-66"><a href="#cb7-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">survey_year =</span> <span class="fu">factor</span>(survey_year, <span class="at">levels =</span> survey_years))</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Fonction générique (destinée à conservation-dynamic-madagascar) : réseau d'AP</span></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a><span class="co"># en vigueur à une date de référence de `year`. La date de référence coupe</span></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="co"># l'année en deux : les enquêtes DHS/MICS s'étalent sur plusieurs mois, le</span></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a><span class="co"># 1er juin approche mieux la date moyenne d'interview que le 31 décembre,</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a><span class="co"># qui post-date la collecte de presque toute l'année.</span></span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a><span class="co">#' Get the PA network in force at a reference date</span></span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a><span class="co">#' Filters consolidated PA states to those valid at the reference date of a</span></span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a><span class="co">#' given year: states whose validity started on or before the cut-off date and</span></span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a><span class="co">#' have not ended by then (open-ended states are always kept). The cut-off</span></span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a><span class="co">#' date is expressed as "DD/MM" (day/month) and defaults to "01/06"</span></span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a><span class="co">#' (June 1st), which better approximates the average DHS/MICS interview date</span></span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a><span class="co">#' than December 31st.</span></span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a><span class="co">#'</span></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param states Consolidated PA states (output from consolidate_pa_states)</span></span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param year Reference year</span></span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param cutoff_date Cut-off date within the year, as "DD/MM" (default "01/06")</span></span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a><span class="co">#' @return sf object with the states valid at the reference date</span></span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>get_pa_network <span class="ot">&lt;-</span> <span class="cf">function</span>(states, year, <span class="at">cutoff_date =</span> <span class="st">"01/06"</span>) {</span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a>  md <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">strsplit</span>(cutoff_date, <span class="st">"/"</span>)[[<span class="dv">1</span>]])</span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a>  ref_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="fu">sprintf</span>(<span class="st">"%d-%02d-%02d"</span>, year, md[<span class="dv">2</span>], md[<span class="dv">1</span>]))</span>
+<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-50"><a href="#cb7-50" aria-hidden="true" tabindex="-1"></a>  states <span class="sc">|&gt;</span></span>
+<span id="cb7-51"><a href="#cb7-51" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(valid_from <span class="sc">&lt;=</span> ref_date, <span class="fu">is.na</span>(valid_to) <span class="sc">|</span> ref_date <span class="sc">&lt;</span> valid_to)</span>
+<span id="cb7-52"><a href="#cb7-52" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-53"><a href="#cb7-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-54"><a href="#cb7-54" aria-hidden="true" tabindex="-1"></a><span class="co"># État du réseau d'AP au 1er juin de chaque vague (limites fixes pour le</span></span>
+<span id="cb7-55"><a href="#cb7-55" aria-hidden="true" tabindex="-1"></a><span class="co"># test de sensibilité : passer pa_states_fixed à get_pa_network()).</span></span>
+<span id="cb7-56"><a href="#cb7-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-57"><a href="#cb7-57" aria-hidden="true" tabindex="-1"></a><span class="co"># AP créées après `year` (mais au plus tard à la dernière vague) :</span></span>
+<span id="cb7-58"><a href="#cb7-58" aria-hidden="true" tabindex="-1"></a><span class="co"># limite en vigueur à leur création</span></span>
+<span id="cb7-59"><a href="#cb7-59" aria-hidden="true" tabindex="-1"></a>pa_states_future <span class="ot">&lt;-</span> <span class="cf">function</span>(year, <span class="at">fixed =</span> <span class="cn">FALSE</span>) {</span>
+<span id="cb7-60"><a href="#cb7-60" aria-hidden="true" tabindex="-1"></a>  pool <span class="ot">&lt;-</span> <span class="cf">if</span> (fixed) pa_states_fixed <span class="cf">else</span> pa_states_analysis</span>
+<span id="cb7-61"><a href="#cb7-61" aria-hidden="true" tabindex="-1"></a>  pool <span class="sc">|&gt;</span></span>
+<span id="cb7-62"><a href="#cb7-62" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(STATUS_YR <span class="sc">&gt;</span> year, STATUS_YR <span class="sc">&lt;=</span> last_wave) <span class="sc">|&gt;</span></span>
+<span id="cb7-63"><a href="#cb7-63" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(WDPAID) <span class="sc">|&gt;</span></span>
+<span id="cb7-64"><a href="#cb7-64" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_min</span>(valid_from, <span class="at">n =</span> <span class="dv">1</span>, <span class="at">with_ties =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-65"><a href="#cb7-65" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span>
+<span id="cb7-66"><a href="#cb7-66" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb7-67"><a href="#cb7-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-68"><a href="#cb7-68" aria-hidden="true" tabindex="-1"></a><span class="co"># Contour national (adm0) en arrière-plan</span></span>
-<span id="cb7-69"><a href="#cb7-69" aria-hidden="true" tabindex="-1"></a>contour_mada0 <span class="ot">&lt;-</span> contour_mada</span>
-<span id="cb7-70"><a href="#cb7-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-71"><a href="#cb7-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Vérification : les couches annuelles ne sont pas identiques (évolutions</span></span>
-<span id="cb7-72"><a href="#cb7-72" aria-hidden="true" tabindex="-1"></a><span class="co"># de limites et entrées/sorties entre vagues successives)</span></span>
-<span id="cb7-73"><a href="#cb7-73" aria-hidden="true" tabindex="-1"></a>purrr<span class="sc">::</span><span class="fu">map_dfr</span>(<span class="fu">seq_along</span>(survey_years)[<span class="sc">-</span><span class="dv">1</span>], <span class="cf">function</span>(i) {</span>
-<span id="cb7-74"><a href="#cb7-74" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">&lt;-</span> dynamic_wdpa_vect_yearly <span class="sc">|&gt;</span></span>
-<span id="cb7-75"><a href="#cb7-75" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(survey_year <span class="sc">==</span> survey_years[i <span class="sc">-</span> <span class="dv">1</span>]) <span class="sc">|&gt;</span></span>
-<span id="cb7-76"><a href="#cb7-76" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">area_km2 =</span> <span class="fu">as.numeric</span>(<span class="fu">st_area</span>(geometry)) <span class="sc">/</span> <span class="fl">1e6</span>) <span class="sc">|&gt;</span></span>
-<span id="cb7-77"><a href="#cb7-77" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
-<span id="cb7-78"><a href="#cb7-78" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(WDPAID, <span class="at">area_a =</span> area_km2)</span>
-<span id="cb7-79"><a href="#cb7-79" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> dynamic_wdpa_vect_yearly <span class="sc">|&gt;</span></span>
-<span id="cb7-80"><a href="#cb7-80" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(survey_year <span class="sc">==</span> survey_years[i]) <span class="sc">|&gt;</span></span>
-<span id="cb7-81"><a href="#cb7-81" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">area_km2 =</span> <span class="fu">as.numeric</span>(<span class="fu">st_area</span>(geometry)) <span class="sc">/</span> <span class="fl">1e6</span>) <span class="sc">|&gt;</span></span>
-<span id="cb7-82"><a href="#cb7-82" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
-<span id="cb7-83"><a href="#cb7-83" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(WDPAID, <span class="at">area_b =</span> area_km2)</span>
-<span id="cb7-84"><a href="#cb7-84" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> <span class="fu">merge</span>(a, b, <span class="at">by =</span> <span class="st">"WDPAID"</span>, <span class="at">all =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb7-85"><a href="#cb7-85" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
-<span id="cb7-86"><a href="#cb7-86" aria-hidden="true" tabindex="-1"></a>    <span class="at">vague   =</span> survey_years[i],</span>
-<span id="cb7-87"><a href="#cb7-87" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_AP    =</span> <span class="fu">nrow</span>(b),</span>
-<span id="cb7-88"><a href="#cb7-88" aria-hidden="true" tabindex="-1"></a>    <span class="at">nouvelles =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(m<span class="sc">$</span>area_a) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(m<span class="sc">$</span>area_b)),</span>
-<span id="cb7-89"><a href="#cb7-89" aria-hidden="true" tabindex="-1"></a>    <span class="at">sorties   =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(m<span class="sc">$</span>area_a) <span class="sc">&amp;</span> <span class="fu">is.na</span>(m<span class="sc">$</span>area_b)),</span>
-<span id="cb7-90"><a href="#cb7-90" aria-hidden="true" tabindex="-1"></a>    <span class="at">limites_modifiees =</span> <span class="fu">sum</span>(<span class="fu">abs</span>(m<span class="sc">$</span>area_b <span class="sc">-</span> m<span class="sc">$</span>area_a) <span class="sc">&gt;</span> <span class="fl">0.01</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb7-91"><a href="#cb7-91" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb7-92"><a href="#cb7-92" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-68"><a href="#cb7-68" aria-hidden="true" tabindex="-1"></a><span class="co"># Application aux vagues d'enquête : une couche du réseau par date, avec</span></span>
+<span id="cb7-69"><a href="#cb7-69" aria-hidden="true" tabindex="-1"></a><span class="co"># la géométrie en vigueur au 1er juin de chaque année (y compris 1997,</span></span>
+<span id="cb7-70"><a href="#cb7-70" aria-hidden="true" tabindex="-1"></a><span class="co"># qui reprend désormais son propre état et non plus celui de 2008).</span></span>
+<span id="cb7-71"><a href="#cb7-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Classification stricte (IUCN I-IV) vs multi-usage (IUCN V-VI) : définition</span></span>
+<span id="cb7-72"><a href="#cb7-72" aria-hidden="true" tabindex="-1"></a><span class="co"># partagée avec 07-estimation_staggered.qmd (cf. utils/iucn_sets.R)</span></span>
+<span id="cb7-73"><a href="#cb7-73" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"utils/iucn_sets.R"</span>)</span>
+<span id="cb7-74"><a href="#cb7-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-75"><a href="#cb7-75" aria-hidden="true" tabindex="-1"></a>dynamic_wdpa_vect_yearly <span class="ot">&lt;-</span> purrr<span class="sc">::</span><span class="fu">map</span>(survey_years, <span class="cf">function</span>(y) {</span>
+<span id="cb7-76"><a href="#cb7-76" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_pa_network</span>(pa_states_analysis, y) <span class="sc">|&gt;</span></span>
+<span id="cb7-77"><a href="#cb7-77" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">pa_type =</span> <span class="fu">case_when</span>(</span>
+<span id="cb7-78"><a href="#cb7-78" aria-hidden="true" tabindex="-1"></a>      IUCN_CAT <span class="sc">%in%</span> iucn_sets<span class="sc">$</span>strict <span class="sc">~</span> <span class="st">"Strict (IUCN I-IV)"</span>,</span>
+<span id="cb7-79"><a href="#cb7-79" aria-hidden="true" tabindex="-1"></a>      IUCN_CAT <span class="sc">%in%</span> iucn_sets<span class="sc">$</span>multi  <span class="sc">~</span> <span class="st">"Multi-use (IUCN V-VI)"</span>,</span>
+<span id="cb7-80"><a href="#cb7-80" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"Autre"</span></span>
+<span id="cb7-81"><a href="#cb7-81" aria-hidden="true" tabindex="-1"></a>    )) <span class="sc">|&gt;</span></span>
+<span id="cb7-82"><a href="#cb7-82" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">survey_year =</span> y)</span>
+<span id="cb7-83"><a href="#cb7-83" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">|&gt;</span></span>
+<span id="cb7-84"><a href="#cb7-84" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>() <span class="sc">|&gt;</span></span>
+<span id="cb7-85"><a href="#cb7-85" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">survey_year =</span> <span class="fu">factor</span>(survey_year, <span class="at">levels =</span> survey_years))</span>
+<span id="cb7-86"><a href="#cb7-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-87"><a href="#cb7-87" aria-hidden="true" tabindex="-1"></a><span class="co"># Contour national (adm0) en arrière-plan</span></span>
+<span id="cb7-88"><a href="#cb7-88" aria-hidden="true" tabindex="-1"></a>contour_mada0 <span class="ot">&lt;-</span> contour_mada</span>
+<span id="cb7-89"><a href="#cb7-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-90"><a href="#cb7-90" aria-hidden="true" tabindex="-1"></a><span class="co"># Vérification : les couches annuelles ne sont pas identiques (évolutions</span></span>
+<span id="cb7-91"><a href="#cb7-91" aria-hidden="true" tabindex="-1"></a><span class="co"># de limites et entrées/sorties entre vagues successives)</span></span>
+<span id="cb7-92"><a href="#cb7-92" aria-hidden="true" tabindex="-1"></a>purrr<span class="sc">::</span><span class="fu">map_dfr</span>(<span class="fu">seq_along</span>(survey_years)[<span class="sc">-</span><span class="dv">1</span>], <span class="cf">function</span>(i) {</span>
+<span id="cb7-93"><a href="#cb7-93" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">&lt;-</span> dynamic_wdpa_vect_yearly <span class="sc">|&gt;</span></span>
+<span id="cb7-94"><a href="#cb7-94" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(survey_year <span class="sc">==</span> survey_years[i <span class="sc">-</span> <span class="dv">1</span>]) <span class="sc">|&gt;</span></span>
+<span id="cb7-95"><a href="#cb7-95" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">area_km2 =</span> <span class="fu">as.numeric</span>(<span class="fu">st_area</span>(geometry)) <span class="sc">/</span> <span class="fl">1e6</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-96"><a href="#cb7-96" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb7-97"><a href="#cb7-97" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(WDPAID, <span class="at">area_a =</span> area_km2)</span>
+<span id="cb7-98"><a href="#cb7-98" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> dynamic_wdpa_vect_yearly <span class="sc">|&gt;</span></span>
+<span id="cb7-99"><a href="#cb7-99" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(survey_year <span class="sc">==</span> survey_years[i]) <span class="sc">|&gt;</span></span>
+<span id="cb7-100"><a href="#cb7-100" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">area_km2 =</span> <span class="fu">as.numeric</span>(<span class="fu">st_area</span>(geometry)) <span class="sc">/</span> <span class="fl">1e6</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-101"><a href="#cb7-101" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb7-102"><a href="#cb7-102" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(WDPAID, <span class="at">area_b =</span> area_km2)</span>
+<span id="cb7-103"><a href="#cb7-103" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> <span class="fu">merge</span>(a, b, <span class="at">by =</span> <span class="st">"WDPAID"</span>, <span class="at">all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-104"><a href="#cb7-104" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb7-105"><a href="#cb7-105" aria-hidden="true" tabindex="-1"></a>    <span class="at">vague   =</span> survey_years[i],</span>
+<span id="cb7-106"><a href="#cb7-106" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_AP    =</span> <span class="fu">nrow</span>(b),</span>
+<span id="cb7-107"><a href="#cb7-107" aria-hidden="true" tabindex="-1"></a>    <span class="at">nouvelles =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(m<span class="sc">$</span>area_a) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(m<span class="sc">$</span>area_b)),</span>
+<span id="cb7-108"><a href="#cb7-108" aria-hidden="true" tabindex="-1"></a>    <span class="at">sorties   =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(m<span class="sc">$</span>area_a) <span class="sc">&amp;</span> <span class="fu">is.na</span>(m<span class="sc">$</span>area_b)),</span>
+<span id="cb7-109"><a href="#cb7-109" aria-hidden="true" tabindex="-1"></a>    <span class="at">limites_modifiees =</span> <span class="fu">sum</span>(<span class="fu">abs</span>(m<span class="sc">$</span>area_b <span class="sc">-</span> m<span class="sc">$</span>area_a) <span class="sc">&gt;</span> <span class="fl">0.01</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-110"><a href="#cb7-110" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb7-111"><a href="#cb7-111" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 5
@@ -674,23 +693,23 @@ Table&nbsp;2.1
 </figcaption>
 <div aria-describedby="tbl-pa-states-survey-years-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
-<div id="fjmveillle" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#fjmveillle table {
+<div id="obwpgpxnvp" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#obwpgpxnvp table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#fjmveillle thead, #fjmveillle tbody, #fjmveillle tfoot, #fjmveillle tr, #fjmveillle td, #fjmveillle th {
+#obwpgpxnvp thead, #obwpgpxnvp tbody, #obwpgpxnvp tfoot, #obwpgpxnvp tr, #obwpgpxnvp td, #obwpgpxnvp th {
   border-style: none;
 }
 
-#fjmveillle p {
+#obwpgpxnvp p {
   margin: 0;
   padding: 0;
 }
 
-#fjmveillle .gt_table {
+#obwpgpxnvp .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -716,12 +735,12 @@ Table&nbsp;2.1
   border-left-color: #D3D3D3;
 }
 
-#fjmveillle .gt_caption {
+#obwpgpxnvp .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#fjmveillle .gt_title {
+#obwpgpxnvp .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -733,7 +752,7 @@ Table&nbsp;2.1
   border-bottom-width: 0;
 }
 
-#fjmveillle .gt_subtitle {
+#obwpgpxnvp .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -745,7 +764,7 @@ Table&nbsp;2.1
   border-top-width: 0;
 }
 
-#fjmveillle .gt_heading {
+#obwpgpxnvp .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -757,13 +776,13 @@ Table&nbsp;2.1
   border-right-color: #D3D3D3;
 }
 
-#fjmveillle .gt_bottom_border {
+#obwpgpxnvp .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#fjmveillle .gt_col_headings {
+#obwpgpxnvp .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -778,7 +797,7 @@ Table&nbsp;2.1
   border-right-color: #D3D3D3;
 }
 
-#fjmveillle .gt_col_heading {
+#obwpgpxnvp .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -798,7 +817,7 @@ Table&nbsp;2.1
   overflow-x: hidden;
 }
 
-#fjmveillle .gt_column_spanner_outer {
+#obwpgpxnvp .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -810,15 +829,15 @@ Table&nbsp;2.1
   padding-right: 4px;
 }
 
-#fjmveillle .gt_column_spanner_outer:first-child {
+#obwpgpxnvp .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#fjmveillle .gt_column_spanner_outer:last-child {
+#obwpgpxnvp .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#fjmveillle .gt_column_spanner {
+#obwpgpxnvp .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -830,11 +849,11 @@ Table&nbsp;2.1
   width: 100%;
 }
 
-#fjmveillle .gt_spanner_row {
+#obwpgpxnvp .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#fjmveillle .gt_group_heading {
+#obwpgpxnvp .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -860,7 +879,7 @@ Table&nbsp;2.1
   text-align: left;
 }
 
-#fjmveillle .gt_empty_group_heading {
+#obwpgpxnvp .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -875,15 +894,15 @@ Table&nbsp;2.1
   vertical-align: middle;
 }
 
-#fjmveillle .gt_from_md > :first-child {
+#obwpgpxnvp .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#fjmveillle .gt_from_md > :last-child {
+#obwpgpxnvp .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#fjmveillle .gt_row {
+#obwpgpxnvp .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -902,7 +921,7 @@ Table&nbsp;2.1
   overflow-x: hidden;
 }
 
-#fjmveillle .gt_stub {
+#obwpgpxnvp .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -915,7 +934,7 @@ Table&nbsp;2.1
   padding-right: 5px;
 }
 
-#fjmveillle .gt_stub_row_group {
+#obwpgpxnvp .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -929,15 +948,15 @@ Table&nbsp;2.1
   vertical-align: top;
 }
 
-#fjmveillle .gt_row_group_first td {
+#obwpgpxnvp .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#fjmveillle .gt_row_group_first th {
+#obwpgpxnvp .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#fjmveillle .gt_summary_row {
+#obwpgpxnvp .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -947,16 +966,16 @@ Table&nbsp;2.1
   padding-right: 5px;
 }
 
-#fjmveillle .gt_first_summary_row {
+#obwpgpxnvp .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#fjmveillle .gt_first_summary_row.thick {
+#obwpgpxnvp .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#fjmveillle .gt_last_summary_row {
+#obwpgpxnvp .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -966,7 +985,7 @@ Table&nbsp;2.1
   border-bottom-color: #D3D3D3;
 }
 
-#fjmveillle .gt_grand_summary_row {
+#obwpgpxnvp .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -976,7 +995,7 @@ Table&nbsp;2.1
   padding-right: 5px;
 }
 
-#fjmveillle .gt_first_grand_summary_row {
+#obwpgpxnvp .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -986,7 +1005,7 @@ Table&nbsp;2.1
   border-top-color: #D3D3D3;
 }
 
-#fjmveillle .gt_last_grand_summary_row_top {
+#obwpgpxnvp .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -996,11 +1015,11 @@ Table&nbsp;2.1
   border-bottom-color: #D3D3D3;
 }
 
-#fjmveillle .gt_striped {
+#obwpgpxnvp .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#fjmveillle .gt_table_body {
+#obwpgpxnvp .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1009,7 +1028,7 @@ Table&nbsp;2.1
   border-bottom-color: #D3D3D3;
 }
 
-#fjmveillle .gt_footnotes {
+#obwpgpxnvp .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1023,7 +1042,7 @@ Table&nbsp;2.1
   border-right-color: #D3D3D3;
 }
 
-#fjmveillle .gt_footnote {
+#obwpgpxnvp .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1032,7 +1051,7 @@ Table&nbsp;2.1
   padding-right: 5px;
 }
 
-#fjmveillle .gt_sourcenotes {
+#obwpgpxnvp .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1046,7 +1065,7 @@ Table&nbsp;2.1
   border-right-color: #D3D3D3;
 }
 
-#fjmveillle .gt_sourcenote {
+#obwpgpxnvp .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1054,72 +1073,72 @@ Table&nbsp;2.1
   padding-right: 5px;
 }
 
-#fjmveillle .gt_left {
+#obwpgpxnvp .gt_left {
   text-align: left;
 }
 
-#fjmveillle .gt_center {
+#obwpgpxnvp .gt_center {
   text-align: center;
 }
 
-#fjmveillle .gt_right {
+#obwpgpxnvp .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#fjmveillle .gt_font_normal {
+#obwpgpxnvp .gt_font_normal {
   font-weight: normal;
 }
 
-#fjmveillle .gt_font_bold {
+#obwpgpxnvp .gt_font_bold {
   font-weight: bold;
 }
 
-#fjmveillle .gt_font_italic {
+#obwpgpxnvp .gt_font_italic {
   font-style: italic;
 }
 
-#fjmveillle .gt_super {
+#obwpgpxnvp .gt_super {
   font-size: 65%;
 }
 
-#fjmveillle .gt_footnote_marks {
+#obwpgpxnvp .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#fjmveillle .gt_asterisk {
+#obwpgpxnvp .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#fjmveillle .gt_indent_1 {
+#obwpgpxnvp .gt_indent_1 {
   text-indent: 5px;
 }
 
-#fjmveillle .gt_indent_2 {
+#obwpgpxnvp .gt_indent_2 {
   text-indent: 10px;
 }
 
-#fjmveillle .gt_indent_3 {
+#obwpgpxnvp .gt_indent_3 {
   text-indent: 15px;
 }
 
-#fjmveillle .gt_indent_4 {
+#obwpgpxnvp .gt_indent_4 {
   text-indent: 20px;
 }
 
-#fjmveillle .gt_indent_5 {
+#obwpgpxnvp .gt_indent_5 {
   text-indent: 25px;
 }
 
-#fjmveillle .katex-display {
+#obwpgpxnvp .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#fjmveillle div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#obwpgpxnvp div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1460,23 +1479,23 @@ Table&nbsp;2.2
 </figcaption>
 <div aria-describedby="tbl-period-crea-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="cell-output-display">
-<div id="rfpdxmevlk" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#rfpdxmevlk table {
+<div id="dbhdlemeid" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#dbhdlemeid table {
   font-family: 'Times New Roman';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#rfpdxmevlk thead, #rfpdxmevlk tbody, #rfpdxmevlk tfoot, #rfpdxmevlk tr, #rfpdxmevlk td, #rfpdxmevlk th {
+#dbhdlemeid thead, #dbhdlemeid tbody, #dbhdlemeid tfoot, #dbhdlemeid tr, #dbhdlemeid td, #dbhdlemeid th {
   border-style: none;
 }
 
-#rfpdxmevlk p {
+#dbhdlemeid p {
   margin: 0;
   padding: 0;
 }
 
-#rfpdxmevlk .gt_table {
+#dbhdlemeid .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -1502,12 +1521,12 @@ Table&nbsp;2.2
   border-left-color: #D3D3D3;
 }
 
-#rfpdxmevlk .gt_caption {
+#dbhdlemeid .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#rfpdxmevlk .gt_title {
+#dbhdlemeid .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1519,7 +1538,7 @@ Table&nbsp;2.2
   border-bottom-width: 0;
 }
 
-#rfpdxmevlk .gt_subtitle {
+#dbhdlemeid .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1531,7 +1550,7 @@ Table&nbsp;2.2
   border-top-width: 0;
 }
 
-#rfpdxmevlk .gt_heading {
+#dbhdlemeid .gt_heading {
   background-color: #FFFFFF;
   text-align: left;
   border-bottom-color: #FFFFFF;
@@ -1543,13 +1562,13 @@ Table&nbsp;2.2
   border-right-color: #D3D3D3;
 }
 
-#rfpdxmevlk .gt_bottom_border {
+#dbhdlemeid .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #006400;
 }
 
-#rfpdxmevlk .gt_col_headings {
+#dbhdlemeid .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #006400;
@@ -1564,7 +1583,7 @@ Table&nbsp;2.2
   border-right-color: #D3D3D3;
 }
 
-#rfpdxmevlk .gt_col_heading {
+#dbhdlemeid .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1584,7 +1603,7 @@ Table&nbsp;2.2
   overflow-x: hidden;
 }
 
-#rfpdxmevlk .gt_column_spanner_outer {
+#dbhdlemeid .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1596,15 +1615,15 @@ Table&nbsp;2.2
   padding-right: 4px;
 }
 
-#rfpdxmevlk .gt_column_spanner_outer:first-child {
+#dbhdlemeid .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#rfpdxmevlk .gt_column_spanner_outer:last-child {
+#dbhdlemeid .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#rfpdxmevlk .gt_column_spanner {
+#dbhdlemeid .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #006400;
@@ -1616,11 +1635,11 @@ Table&nbsp;2.2
   width: 100%;
 }
 
-#rfpdxmevlk .gt_spanner_row {
+#dbhdlemeid .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#rfpdxmevlk .gt_group_heading {
+#dbhdlemeid .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1646,7 +1665,7 @@ Table&nbsp;2.2
   text-align: left;
 }
 
-#rfpdxmevlk .gt_empty_group_heading {
+#dbhdlemeid .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1661,15 +1680,15 @@ Table&nbsp;2.2
   vertical-align: middle;
 }
 
-#rfpdxmevlk .gt_from_md > :first-child {
+#dbhdlemeid .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#rfpdxmevlk .gt_from_md > :last-child {
+#dbhdlemeid .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#rfpdxmevlk .gt_row {
+#dbhdlemeid .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1688,7 +1707,7 @@ Table&nbsp;2.2
   overflow-x: hidden;
 }
 
-#rfpdxmevlk .gt_stub {
+#dbhdlemeid .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1701,7 +1720,7 @@ Table&nbsp;2.2
   padding-right: 5px;
 }
 
-#rfpdxmevlk .gt_stub_row_group {
+#dbhdlemeid .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1715,15 +1734,15 @@ Table&nbsp;2.2
   vertical-align: top;
 }
 
-#rfpdxmevlk .gt_row_group_first td {
+#dbhdlemeid .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#rfpdxmevlk .gt_row_group_first th {
+#dbhdlemeid .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#rfpdxmevlk .gt_summary_row {
+#dbhdlemeid .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1733,16 +1752,16 @@ Table&nbsp;2.2
   padding-right: 5px;
 }
 
-#rfpdxmevlk .gt_first_summary_row {
+#dbhdlemeid .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#rfpdxmevlk .gt_first_summary_row.thick {
+#dbhdlemeid .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#rfpdxmevlk .gt_last_summary_row {
+#dbhdlemeid .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1752,7 +1771,7 @@ Table&nbsp;2.2
   border-bottom-color: #D3D3D3;
 }
 
-#rfpdxmevlk .gt_grand_summary_row {
+#dbhdlemeid .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1762,7 +1781,7 @@ Table&nbsp;2.2
   padding-right: 5px;
 }
 
-#rfpdxmevlk .gt_first_grand_summary_row {
+#dbhdlemeid .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1772,7 +1791,7 @@ Table&nbsp;2.2
   border-top-color: #D3D3D3;
 }
 
-#rfpdxmevlk .gt_last_grand_summary_row_top {
+#dbhdlemeid .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1782,11 +1801,11 @@ Table&nbsp;2.2
   border-bottom-color: #D3D3D3;
 }
 
-#rfpdxmevlk .gt_striped {
+#dbhdlemeid .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#rfpdxmevlk .gt_table_body {
+#dbhdlemeid .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1795,7 +1814,7 @@ Table&nbsp;2.2
   border-bottom-color: #006400;
 }
 
-#rfpdxmevlk .gt_footnotes {
+#dbhdlemeid .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1809,7 +1828,7 @@ Table&nbsp;2.2
   border-right-color: #D3D3D3;
 }
 
-#rfpdxmevlk .gt_footnote {
+#dbhdlemeid .gt_footnote {
   margin: 0px;
   font-size: 10px;
   padding-top: 4px;
@@ -1818,7 +1837,7 @@ Table&nbsp;2.2
   padding-right: 5px;
 }
 
-#rfpdxmevlk .gt_sourcenotes {
+#dbhdlemeid .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1832,7 +1851,7 @@ Table&nbsp;2.2
   border-right-color: #D3D3D3;
 }
 
-#rfpdxmevlk .gt_sourcenote {
+#dbhdlemeid .gt_sourcenote {
   font-size: 10px;
   padding-top: 6px;
   padding-bottom: 6px;
@@ -1840,72 +1859,72 @@ Table&nbsp;2.2
   padding-right: 5px;
 }
 
-#rfpdxmevlk .gt_left {
+#dbhdlemeid .gt_left {
   text-align: left;
 }
 
-#rfpdxmevlk .gt_center {
+#dbhdlemeid .gt_center {
   text-align: center;
 }
 
-#rfpdxmevlk .gt_right {
+#dbhdlemeid .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#rfpdxmevlk .gt_font_normal {
+#dbhdlemeid .gt_font_normal {
   font-weight: normal;
 }
 
-#rfpdxmevlk .gt_font_bold {
+#dbhdlemeid .gt_font_bold {
   font-weight: bold;
 }
 
-#rfpdxmevlk .gt_font_italic {
+#dbhdlemeid .gt_font_italic {
   font-style: italic;
 }
 
-#rfpdxmevlk .gt_super {
+#dbhdlemeid .gt_super {
   font-size: 65%;
 }
 
-#rfpdxmevlk .gt_footnote_marks {
+#dbhdlemeid .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#rfpdxmevlk .gt_asterisk {
+#dbhdlemeid .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#rfpdxmevlk .gt_indent_1 {
+#dbhdlemeid .gt_indent_1 {
   text-indent: 5px;
 }
 
-#rfpdxmevlk .gt_indent_2 {
+#dbhdlemeid .gt_indent_2 {
   text-indent: 10px;
 }
 
-#rfpdxmevlk .gt_indent_3 {
+#dbhdlemeid .gt_indent_3 {
   text-indent: 15px;
 }
 
-#rfpdxmevlk .gt_indent_4 {
+#dbhdlemeid .gt_indent_4 {
   text-indent: 20px;
 }
 
-#rfpdxmevlk .gt_indent_5 {
+#dbhdlemeid .gt_indent_5 {
   text-indent: 25px;
 }
 
-#rfpdxmevlk .katex-display {
+#dbhdlemeid .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#rfpdxmevlk div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#dbhdlemeid div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1971,7 +1990,7 @@ Table&nbsp;2.2
 <details class="code-fold">
 <summary>Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Helpers réutilisables définis plus haut : pa_states_analysis, pa_states_fixed,</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># pa_network(), pa_states_future(), buffer_10km() — état du réseau d'AP à une</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># get_pa_network(), pa_states_future(), buffer_10km() — état du réseau d'AP à une</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># date donnée.</span></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>pa_buffered <span class="ot">&lt;-</span> <span class="cf">function</span>(pa, <span class="at">buffer_dist =</span> <span class="dv">10000</span>) {</span>
@@ -1989,50 +2008,53 @@ Table&nbsp;2.2
 <span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># du réseau d'AP de 2008, afin que la sélection des clusters soit identique</span></span>
 <span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># à celle de 2008 (mêmes unités, toutes pré-traitement en 1997).</span></span>
 <span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  year_net <span class="ot">&lt;-</span> <span class="fu">max</span>(year, <span class="dv">2008</span>)</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  net <span class="ot">&lt;-</span> <span class="fu">pa_network</span>(year_net, fixed)</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>  pa_before_y <span class="ot">&lt;-</span> net <span class="sc">|&gt;</span> <span class="fu">filter</span>(STATUS_YR <span class="sc">&lt;</span> <span class="dv">2008</span>)</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  pa_after_y  <span class="ot">&lt;-</span> net <span class="sc">|&gt;</span> <span class="fu">filter</span>(STATUS_YR <span class="sc">&gt;=</span> <span class="dv">2008</span>, STATUS_YR <span class="sc">&lt;=</span> year_net)</span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  pa_future_y <span class="ot">&lt;-</span> <span class="fu">pa_states_future</span>(year_net, fixed)</span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  buffer_before <span class="ot">&lt;-</span> <span class="fu">buffer_10km</span>(pa_before_y, buffer_dist)</span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>  buffer_after  <span class="ot">&lt;-</span> <span class="fu">buffer_10km</span>(pa_after_y, buffer_dist)</span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>  buffer_future <span class="ot">&lt;-</span> <span class="fu">buffer_10km</span>(pa_future_y, buffer_dist)</span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  in_before <span class="ot">&lt;-</span> <span class="fu">st_within</span>(cluster_gps, buffer_before, <span class="at">sparse =</span> <span class="cn">FALSE</span>)[, <span class="dv">1</span>]</span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  in_after  <span class="ot">&lt;-</span> <span class="fu">st_within</span>(cluster_gps, buffer_after,  <span class="at">sparse =</span> <span class="cn">FALSE</span>)[, <span class="dv">1</span>]</span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  in_future <span class="ot">&lt;-</span> <span class="fu">st_within</span>(cluster_gps, buffer_future, <span class="at">sparse =</span> <span class="cn">FALSE</span>)[, <span class="dv">1</span>]</span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">&lt;-</span> cluster_gps <span class="sc">|&gt;</span></span>
-<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">groupe =</span> <span class="fu">case_when</span>(</span>
-<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>      (in_after <span class="sc">|</span> in_future) <span class="sc">&amp;</span> <span class="sc">!</span>in_before <span class="sc">&amp;</span> URBAN_RURA <span class="sc">==</span> <span class="st">"R"</span> <span class="sc">~</span> <span class="st">"Treatment"</span>,</span>
-<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>      in_before <span class="sc">|</span> URBAN_RURA <span class="sc">==</span> <span class="st">"U"</span> <span class="sc">~</span> <span class="st">"Excluded"</span>,</span>
-<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"Control"</span></span>
-<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>    ))</span>
-<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>  <span class="co"># enrich treated with the oldest+nearest PA (existing at wave date first)</span></span>
-<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>  treated_pts <span class="ot">&lt;-</span> base <span class="sc">|&gt;</span> <span class="fu">filter</span>(groupe <span class="sc">==</span> <span class="st">"Treatment"</span>)</span>
-<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(treated_pts) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(base)</span>
-<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>  cand_pa <span class="ot">&lt;-</span> <span class="fu">pa_buffered</span>(<span class="fu">bind_rows</span>(pa_after_y, pa_future_y), buffer_dist)</span>
-<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>  cand <span class="ot">&lt;-</span> <span class="fu">st_join</span>(treated_pts, cand_pa, <span class="at">join =</span> st_within, <span class="at">left =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">dist_km =</span> <span class="fu">as.numeric</span>(<span class="fu">st_distance</span>(geometry, pa_geom, <span class="at">by_element =</span> <span class="cn">TRUE</span>)) <span class="sc">/</span> <span class="dv">1000</span>)</span>
-<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>  best <span class="ot">&lt;-</span> cand <span class="sc">|&gt;</span></span>
-<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(DHSCLUST) <span class="sc">|&gt;</span></span>
-<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_min</span>(STATUS_YR, <span class="at">with_ties =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_min</span>(dist_km, <span class="at">with_ties =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
-<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
-<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
-<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(DHSYEAR, DHSCLUST, WDPAID, STATUS_YR, IUCN_CAT, dist_km)</span>
-<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>  base <span class="sc">|&gt;</span> <span class="fu">left_join</span>(best, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"DHSYEAR"</span>, <span class="st">"DHSCLUST"</span>))</span>
-<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  net <span class="ot">&lt;-</span> <span class="fu">get_pa_network</span>(</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (fixed) pa_states_fixed <span class="cf">else</span> pa_states_analysis,</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    year_net</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>  pa_before_y <span class="ot">&lt;-</span> net <span class="sc">|&gt;</span> <span class="fu">filter</span>(STATUS_YR <span class="sc">&lt;</span> <span class="dv">2008</span>)</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  pa_after_y  <span class="ot">&lt;-</span> net <span class="sc">|&gt;</span> <span class="fu">filter</span>(STATUS_YR <span class="sc">&gt;=</span> <span class="dv">2008</span>, STATUS_YR <span class="sc">&lt;=</span> year_net)</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>  pa_future_y <span class="ot">&lt;-</span> <span class="fu">pa_states_future</span>(year_net, fixed)</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  buffer_before <span class="ot">&lt;-</span> <span class="fu">buffer_10km</span>(pa_before_y, buffer_dist)</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  buffer_after  <span class="ot">&lt;-</span> <span class="fu">buffer_10km</span>(pa_after_y, buffer_dist)</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  buffer_future <span class="ot">&lt;-</span> <span class="fu">buffer_10km</span>(pa_future_y, buffer_dist)</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>  in_before <span class="ot">&lt;-</span> <span class="fu">st_within</span>(cluster_gps, buffer_before, <span class="at">sparse =</span> <span class="cn">FALSE</span>)[, <span class="dv">1</span>]</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  in_after  <span class="ot">&lt;-</span> <span class="fu">st_within</span>(cluster_gps, buffer_after,  <span class="at">sparse =</span> <span class="cn">FALSE</span>)[, <span class="dv">1</span>]</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>  in_future <span class="ot">&lt;-</span> <span class="fu">st_within</span>(cluster_gps, buffer_future, <span class="at">sparse =</span> <span class="cn">FALSE</span>)[, <span class="dv">1</span>]</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">&lt;-</span> cluster_gps <span class="sc">|&gt;</span></span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">groupe =</span> <span class="fu">case_when</span>(</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>      (in_after <span class="sc">|</span> in_future) <span class="sc">&amp;</span> <span class="sc">!</span>in_before <span class="sc">&amp;</span> URBAN_RURA <span class="sc">==</span> <span class="st">"R"</span> <span class="sc">~</span> <span class="st">"Treatment"</span>,</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>      in_before <span class="sc">|</span> URBAN_RURA <span class="sc">==</span> <span class="st">"U"</span> <span class="sc">~</span> <span class="st">"Excluded"</span>,</span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"Control"</span></span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>    ))</span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>  <span class="co"># enrich treated with the oldest+nearest PA (existing at wave date first)</span></span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>  treated_pts <span class="ot">&lt;-</span> base <span class="sc">|&gt;</span> <span class="fu">filter</span>(groupe <span class="sc">==</span> <span class="st">"Treatment"</span>)</span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(treated_pts) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(base)</span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>  cand_pa <span class="ot">&lt;-</span> <span class="fu">pa_buffered</span>(<span class="fu">bind_rows</span>(pa_after_y, pa_future_y), buffer_dist)</span>
+<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>  cand <span class="ot">&lt;-</span> <span class="fu">st_join</span>(treated_pts, cand_pa, <span class="at">join =</span> st_within, <span class="at">left =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">dist_km =</span> <span class="fu">as.numeric</span>(<span class="fu">st_distance</span>(geometry, pa_geom, <span class="at">by_element =</span> <span class="cn">TRUE</span>)) <span class="sc">/</span> <span class="dv">1000</span>)</span>
+<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>  best <span class="ot">&lt;-</span> cand <span class="sc">|&gt;</span></span>
+<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(DHSCLUST) <span class="sc">|&gt;</span></span>
+<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_min</span>(STATUS_YR, <span class="at">with_ties =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice_min</span>(dist_km, <span class="at">with_ties =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>    <span class="fu">st_drop_geometry</span>() <span class="sc">|&gt;</span></span>
+<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(DHSYEAR, DHSCLUST, WDPAID, STATUS_YR, IUCN_CAT, dist_km)</span>
 <span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>gps_all_class <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
-<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a>  purrr<span class="sc">::</span><span class="fu">map</span>(survey_years, <span class="cf">function</span>(y) {</span>
-<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a>    <span class="fu">classify_clusters_with_pa</span>(<span class="fu">get</span>(<span class="fu">paste0</span>(<span class="st">"gps_"</span>, y)), y)</span>
-<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>  base <span class="sc">|&gt;</span> <span class="fu">left_join</span>(best, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"DHSYEAR"</span>, <span class="st">"DHSCLUST"</span>))</span>
+<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>gps_all_class <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>  purrr<span class="sc">::</span><span class="fu">map</span>(survey_years, <span class="cf">function</span>(y) {</span>
+<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>    <span class="fu">classify_clusters_with_pa</span>(<span class="fu">get</span>(<span class="fu">paste0</span>(<span class="st">"gps_"</span>, y)), y)</span>
+<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <section id="tests-la-sélection-des-clusters-reflète-t-elle-létat-du-réseau-dap-à-chaque-date-denquête" class="level3" data-number="2.5.1">
@@ -2049,7 +2071,7 @@ Table&nbsp;2.2
 <span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  d_y <span class="ot">&lt;-</span> gps_all_class <span class="sc">|&gt;</span> <span class="fu">filter</span>(DHSYEAR <span class="sc">==</span> y)</span>
 <span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># même année de réseau que dans classify_clusters_with_pa (placebo 1997)</span></span>
 <span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  y_net <span class="ot">&lt;-</span> <span class="fu">max</span>(y, <span class="dv">2008</span>)</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  net <span class="ot">&lt;-</span> <span class="fu">pa_network</span>(y_net)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  net <span class="ot">&lt;-</span> <span class="fu">get_pa_network</span>(pa_states_analysis, y_net)</span>
 <span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  buf_after  <span class="ot">&lt;-</span> <span class="fu">buffer_10km</span>(net <span class="sc">|&gt;</span> <span class="fu">filter</span>(STATUS_YR <span class="sc">&gt;=</span> <span class="dv">2008</span>, STATUS_YR <span class="sc">&lt;=</span> y_net))</span>
 <span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  buf_before <span class="ot">&lt;-</span> <span class="fu">buffer_10km</span>(net <span class="sc">|&gt;</span> <span class="fu">filter</span>(STATUS_YR <span class="sc">&lt;</span> <span class="dv">2008</span>))</span>
 <span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  buf_future <span class="ot">&lt;-</span> <span class="fu">buffer_10km</span>(<span class="fu">pa_states_future</span>(y_net))</span>
@@ -2134,13 +2156,13 @@ Table&nbsp;2.2
 <pre><code># A tibble: 7 × 3
   DHSYEAR changed_FALSE changed_TRUE
     &lt;dbl&gt;         &lt;int&gt;        &lt;int&gt;
-1    1997           258           10
-2    2008           555           30
-3    2011           265            1
-4    2013           271            3
-5    2016           357            1
-6    2018           770            4
-7    2021           646            4</code></pre>
+1    1997           244           24
+2    2008           533           52
+3    2011           232           34
+4    2013           229           45
+5    2016           352            6
+6    2018           774            0
+7    2021           650            0</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -2187,7 +2209,7 @@ Table&nbsp;2.2
 <span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_add_legend</span>(</span>
 <span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">type  =</span> <span class="st">"polygons"</span>,</span>
 <span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill  =</span> <span class="fu">c</span>(<span class="st">"green"</span>, <span class="st">"darkgreen"</span>),</span>
-<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Starting in 2008"</span>, <span class="st">"Before 2008"</span>),</span>
+<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"From 2008"</span>, <span class="st">"Before 2008"</span>),</span>
 <span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Protected Areas"</span></span>
 <span id="cb18-44"><a href="#cb18-44" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb18-45"><a href="#cb18-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tm_add_legend</span>(</span>
@@ -2290,23 +2312,23 @@ Table&nbsp;2.2
 <span id="cb20-61"><a href="#cb20-61" aria-hidden="true" tabindex="-1"></a>gt_table_clusters</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="xerqbpvbou" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#xerqbpvbou table {
+<div id="xrwwluhkrq" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#xrwwluhkrq table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#xerqbpvbou thead, #xerqbpvbou tbody, #xerqbpvbou tfoot, #xerqbpvbou tr, #xerqbpvbou td, #xerqbpvbou th {
+#xrwwluhkrq thead, #xrwwluhkrq tbody, #xrwwluhkrq tfoot, #xrwwluhkrq tr, #xrwwluhkrq td, #xrwwluhkrq th {
   border-style: none;
 }
 
-#xerqbpvbou p {
+#xrwwluhkrq p {
   margin: 0;
   padding: 0;
 }
 
-#xerqbpvbou .gt_table {
+#xrwwluhkrq .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -2332,12 +2354,12 @@ Table&nbsp;2.2
   border-left-color: #D3D3D3;
 }
 
-#xerqbpvbou .gt_caption {
+#xrwwluhkrq .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#xerqbpvbou .gt_title {
+#xrwwluhkrq .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -2349,7 +2371,7 @@ Table&nbsp;2.2
   border-bottom-width: 0;
 }
 
-#xerqbpvbou .gt_subtitle {
+#xrwwluhkrq .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -2361,7 +2383,7 @@ Table&nbsp;2.2
   border-top-width: 0;
 }
 
-#xerqbpvbou .gt_heading {
+#xrwwluhkrq .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -2373,13 +2395,13 @@ Table&nbsp;2.2
   border-right-color: #D3D3D3;
 }
 
-#xerqbpvbou .gt_bottom_border {
+#xrwwluhkrq .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#xerqbpvbou .gt_col_headings {
+#xrwwluhkrq .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2394,7 +2416,7 @@ Table&nbsp;2.2
   border-right-color: #D3D3D3;
 }
 
-#xerqbpvbou .gt_col_heading {
+#xrwwluhkrq .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2414,7 +2436,7 @@ Table&nbsp;2.2
   overflow-x: hidden;
 }
 
-#xerqbpvbou .gt_column_spanner_outer {
+#xrwwluhkrq .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2426,15 +2448,15 @@ Table&nbsp;2.2
   padding-right: 4px;
 }
 
-#xerqbpvbou .gt_column_spanner_outer:first-child {
+#xrwwluhkrq .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#xerqbpvbou .gt_column_spanner_outer:last-child {
+#xrwwluhkrq .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#xerqbpvbou .gt_column_spanner {
+#xrwwluhkrq .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -2446,11 +2468,11 @@ Table&nbsp;2.2
   width: 100%;
 }
 
-#xerqbpvbou .gt_spanner_row {
+#xrwwluhkrq .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#xerqbpvbou .gt_group_heading {
+#xrwwluhkrq .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2476,7 +2498,7 @@ Table&nbsp;2.2
   text-align: left;
 }
 
-#xerqbpvbou .gt_empty_group_heading {
+#xrwwluhkrq .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -2491,15 +2513,15 @@ Table&nbsp;2.2
   vertical-align: middle;
 }
 
-#xerqbpvbou .gt_from_md > :first-child {
+#xrwwluhkrq .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#xerqbpvbou .gt_from_md > :last-child {
+#xrwwluhkrq .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#xerqbpvbou .gt_row {
+#xrwwluhkrq .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2518,7 +2540,7 @@ Table&nbsp;2.2
   overflow-x: hidden;
 }
 
-#xerqbpvbou .gt_stub {
+#xrwwluhkrq .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2531,7 +2553,7 @@ Table&nbsp;2.2
   padding-right: 5px;
 }
 
-#xerqbpvbou .gt_stub_row_group {
+#xrwwluhkrq .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -2545,15 +2567,15 @@ Table&nbsp;2.2
   vertical-align: top;
 }
 
-#xerqbpvbou .gt_row_group_first td {
+#xrwwluhkrq .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#xerqbpvbou .gt_row_group_first th {
+#xrwwluhkrq .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#xerqbpvbou .gt_summary_row {
+#xrwwluhkrq .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2563,16 +2585,16 @@ Table&nbsp;2.2
   padding-right: 5px;
 }
 
-#xerqbpvbou .gt_first_summary_row {
+#xrwwluhkrq .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#xerqbpvbou .gt_first_summary_row.thick {
+#xrwwluhkrq .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#xerqbpvbou .gt_last_summary_row {
+#xrwwluhkrq .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2582,7 +2604,7 @@ Table&nbsp;2.2
   border-bottom-color: #D3D3D3;
 }
 
-#xerqbpvbou .gt_grand_summary_row {
+#xrwwluhkrq .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -2592,7 +2614,7 @@ Table&nbsp;2.2
   padding-right: 5px;
 }
 
-#xerqbpvbou .gt_first_grand_summary_row {
+#xrwwluhkrq .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2602,7 +2624,7 @@ Table&nbsp;2.2
   border-top-color: #D3D3D3;
 }
 
-#xerqbpvbou .gt_last_grand_summary_row_top {
+#xrwwluhkrq .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -2612,11 +2634,11 @@ Table&nbsp;2.2
   border-bottom-color: #D3D3D3;
 }
 
-#xerqbpvbou .gt_striped {
+#xrwwluhkrq .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#xerqbpvbou .gt_table_body {
+#xrwwluhkrq .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -2625,7 +2647,7 @@ Table&nbsp;2.2
   border-bottom-color: #D3D3D3;
 }
 
-#xerqbpvbou .gt_footnotes {
+#xrwwluhkrq .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2639,7 +2661,7 @@ Table&nbsp;2.2
   border-right-color: #D3D3D3;
 }
 
-#xerqbpvbou .gt_footnote {
+#xrwwluhkrq .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -2648,7 +2670,7 @@ Table&nbsp;2.2
   padding-right: 5px;
 }
 
-#xerqbpvbou .gt_sourcenotes {
+#xrwwluhkrq .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -2662,7 +2684,7 @@ Table&nbsp;2.2
   border-right-color: #D3D3D3;
 }
 
-#xerqbpvbou .gt_sourcenote {
+#xrwwluhkrq .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -2670,72 +2692,72 @@ Table&nbsp;2.2
   padding-right: 5px;
 }
 
-#xerqbpvbou .gt_left {
+#xrwwluhkrq .gt_left {
   text-align: left;
 }
 
-#xerqbpvbou .gt_center {
+#xrwwluhkrq .gt_center {
   text-align: center;
 }
 
-#xerqbpvbou .gt_right {
+#xrwwluhkrq .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#xerqbpvbou .gt_font_normal {
+#xrwwluhkrq .gt_font_normal {
   font-weight: normal;
 }
 
-#xerqbpvbou .gt_font_bold {
+#xrwwluhkrq .gt_font_bold {
   font-weight: bold;
 }
 
-#xerqbpvbou .gt_font_italic {
+#xrwwluhkrq .gt_font_italic {
   font-style: italic;
 }
 
-#xerqbpvbou .gt_super {
+#xrwwluhkrq .gt_super {
   font-size: 65%;
 }
 
-#xerqbpvbou .gt_footnote_marks {
+#xrwwluhkrq .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#xerqbpvbou .gt_asterisk {
+#xrwwluhkrq .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#xerqbpvbou .gt_indent_1 {
+#xrwwluhkrq .gt_indent_1 {
   text-indent: 5px;
 }
 
-#xerqbpvbou .gt_indent_2 {
+#xrwwluhkrq .gt_indent_2 {
   text-indent: 10px;
 }
 
-#xerqbpvbou .gt_indent_3 {
+#xrwwluhkrq .gt_indent_3 {
   text-indent: 15px;
 }
 
-#xerqbpvbou .gt_indent_4 {
+#xrwwluhkrq .gt_indent_4 {
   text-indent: 20px;
 }
 
-#xerqbpvbou .gt_indent_5 {
+#xrwwluhkrq .gt_indent_5 {
   text-indent: 25px;
 }
 
-#xerqbpvbou .katex-display {
+#xrwwluhkrq .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#xerqbpvbou div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#xrwwluhkrq div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -2948,23 +2970,23 @@ Treatment
 <span id="cb21-107"><a href="#cb21-107" aria-hidden="true" tabindex="-1"></a>gt_table_menages_all   </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
-<div id="ztkdxoubwf" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#ztkdxoubwf table {
+<div id="llarufvkcu" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#llarufvkcu table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#ztkdxoubwf thead, #ztkdxoubwf tbody, #ztkdxoubwf tfoot, #ztkdxoubwf tr, #ztkdxoubwf td, #ztkdxoubwf th {
+#llarufvkcu thead, #llarufvkcu tbody, #llarufvkcu tfoot, #llarufvkcu tr, #llarufvkcu td, #llarufvkcu th {
   border-style: none;
 }
 
-#ztkdxoubwf p {
+#llarufvkcu p {
   margin: 0;
   padding: 0;
 }
 
-#ztkdxoubwf .gt_table {
+#llarufvkcu .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -2990,12 +3012,12 @@ Treatment
   border-left-color: #D3D3D3;
 }
 
-#ztkdxoubwf .gt_caption {
+#llarufvkcu .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#ztkdxoubwf .gt_title {
+#llarufvkcu .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -3007,7 +3029,7 @@ Treatment
   border-bottom-width: 0;
 }
 
-#ztkdxoubwf .gt_subtitle {
+#llarufvkcu .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -3019,7 +3041,7 @@ Treatment
   border-top-width: 0;
 }
 
-#ztkdxoubwf .gt_heading {
+#llarufvkcu .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -3031,13 +3053,13 @@ Treatment
   border-right-color: #D3D3D3;
 }
 
-#ztkdxoubwf .gt_bottom_border {
+#llarufvkcu .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#ztkdxoubwf .gt_col_headings {
+#llarufvkcu .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -3052,7 +3074,7 @@ Treatment
   border-right-color: #D3D3D3;
 }
 
-#ztkdxoubwf .gt_col_heading {
+#llarufvkcu .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -3072,7 +3094,7 @@ Treatment
   overflow-x: hidden;
 }
 
-#ztkdxoubwf .gt_column_spanner_outer {
+#llarufvkcu .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -3084,15 +3106,15 @@ Treatment
   padding-right: 4px;
 }
 
-#ztkdxoubwf .gt_column_spanner_outer:first-child {
+#llarufvkcu .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#ztkdxoubwf .gt_column_spanner_outer:last-child {
+#llarufvkcu .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#ztkdxoubwf .gt_column_spanner {
+#llarufvkcu .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -3104,11 +3126,11 @@ Treatment
   width: 100%;
 }
 
-#ztkdxoubwf .gt_spanner_row {
+#llarufvkcu .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#ztkdxoubwf .gt_group_heading {
+#llarufvkcu .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3134,7 +3156,7 @@ Treatment
   text-align: left;
 }
 
-#ztkdxoubwf .gt_empty_group_heading {
+#llarufvkcu .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -3149,15 +3171,15 @@ Treatment
   vertical-align: middle;
 }
 
-#ztkdxoubwf .gt_from_md > :first-child {
+#llarufvkcu .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#ztkdxoubwf .gt_from_md > :last-child {
+#llarufvkcu .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#ztkdxoubwf .gt_row {
+#llarufvkcu .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3176,7 +3198,7 @@ Treatment
   overflow-x: hidden;
 }
 
-#ztkdxoubwf .gt_stub {
+#llarufvkcu .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -3189,7 +3211,7 @@ Treatment
   padding-right: 5px;
 }
 
-#ztkdxoubwf .gt_stub_row_group {
+#llarufvkcu .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -3203,15 +3225,15 @@ Treatment
   vertical-align: top;
 }
 
-#ztkdxoubwf .gt_row_group_first td {
+#llarufvkcu .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#ztkdxoubwf .gt_row_group_first th {
+#llarufvkcu .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#ztkdxoubwf .gt_summary_row {
+#llarufvkcu .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -3221,16 +3243,16 @@ Treatment
   padding-right: 5px;
 }
 
-#ztkdxoubwf .gt_first_summary_row {
+#llarufvkcu .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#ztkdxoubwf .gt_first_summary_row.thick {
+#llarufvkcu .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#ztkdxoubwf .gt_last_summary_row {
+#llarufvkcu .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3240,7 +3262,7 @@ Treatment
   border-bottom-color: #D3D3D3;
 }
 
-#ztkdxoubwf .gt_grand_summary_row {
+#llarufvkcu .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -3250,7 +3272,7 @@ Treatment
   padding-right: 5px;
 }
 
-#ztkdxoubwf .gt_first_grand_summary_row {
+#llarufvkcu .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3260,7 +3282,7 @@ Treatment
   border-top-color: #D3D3D3;
 }
 
-#ztkdxoubwf .gt_last_grand_summary_row_top {
+#llarufvkcu .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -3270,11 +3292,11 @@ Treatment
   border-bottom-color: #D3D3D3;
 }
 
-#ztkdxoubwf .gt_striped {
+#llarufvkcu .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#ztkdxoubwf .gt_table_body {
+#llarufvkcu .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -3283,7 +3305,7 @@ Treatment
   border-bottom-color: #D3D3D3;
 }
 
-#ztkdxoubwf .gt_footnotes {
+#llarufvkcu .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -3297,7 +3319,7 @@ Treatment
   border-right-color: #D3D3D3;
 }
 
-#ztkdxoubwf .gt_footnote {
+#llarufvkcu .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -3306,7 +3328,7 @@ Treatment
   padding-right: 5px;
 }
 
-#ztkdxoubwf .gt_sourcenotes {
+#llarufvkcu .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -3320,7 +3342,7 @@ Treatment
   border-right-color: #D3D3D3;
 }
 
-#ztkdxoubwf .gt_sourcenote {
+#llarufvkcu .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -3328,72 +3350,72 @@ Treatment
   padding-right: 5px;
 }
 
-#ztkdxoubwf .gt_left {
+#llarufvkcu .gt_left {
   text-align: left;
 }
 
-#ztkdxoubwf .gt_center {
+#llarufvkcu .gt_center {
   text-align: center;
 }
 
-#ztkdxoubwf .gt_right {
+#llarufvkcu .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#ztkdxoubwf .gt_font_normal {
+#llarufvkcu .gt_font_normal {
   font-weight: normal;
 }
 
-#ztkdxoubwf .gt_font_bold {
+#llarufvkcu .gt_font_bold {
   font-weight: bold;
 }
 
-#ztkdxoubwf .gt_font_italic {
+#llarufvkcu .gt_font_italic {
   font-style: italic;
 }
 
-#ztkdxoubwf .gt_super {
+#llarufvkcu .gt_super {
   font-size: 65%;
 }
 
-#ztkdxoubwf .gt_footnote_marks {
+#llarufvkcu .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#ztkdxoubwf .gt_asterisk {
+#llarufvkcu .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#ztkdxoubwf .gt_indent_1 {
+#llarufvkcu .gt_indent_1 {
   text-indent: 5px;
 }
 
-#ztkdxoubwf .gt_indent_2 {
+#llarufvkcu .gt_indent_2 {
   text-indent: 10px;
 }
 
-#ztkdxoubwf .gt_indent_3 {
+#llarufvkcu .gt_indent_3 {
   text-indent: 15px;
 }
 
-#ztkdxoubwf .gt_indent_4 {
+#llarufvkcu .gt_indent_4 {
   text-indent: 20px;
 }
 
-#ztkdxoubwf .gt_indent_5 {
+#llarufvkcu .gt_indent_5 {
   text-indent: 25px;
 }
 
-#ztkdxoubwf .katex-display {
+#llarufvkcu .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#ztkdxoubwf div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#llarufvkcu div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
