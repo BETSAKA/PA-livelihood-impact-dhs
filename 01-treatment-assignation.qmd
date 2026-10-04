@@ -233,7 +233,9 @@ pa_first <- pa_states_analysis |>
   slice_min(valid_from, n = 1, with_ties = FALSE) |>
   ungroup() |>
   st_drop_geometry() |>
-  select(WDPAID, NAME, STATUS, STATUS_YR, treatment_date = valid_from)
+  select(WDPAID, STATUS, STATUS_YR, treatment_date = valid_from) |>
+  left_join(dynamic_wdpa_metadata |> select(WDPAID, NAME), by = "WDPAID") |>
+  select(WDPAID, NAME, STATUS, STATUS_YR, treatment_date)
 
 # Univers de traitement : AP terrestres hors "Proposed" créées pendant la
 # période d'étude (2008 à la dernière vague). Définition substantielle
@@ -264,7 +266,8 @@ pa_effective_states <- function(ids, ref_date, fixed = FALSE) {
     filter(valid_from <= pmax(ref_date, treatment_date)) |>
     group_by(WDPAID) |>
     slice_max(valid_from, n = 1, with_ties = FALSE) |>
-    ungroup()
+    ungroup() |>
+    select(-treatment_date)
 }
 
 # Couches d'AP d'une vague : pré-baseline (Excluded) et univers de traitement
@@ -699,8 +702,8 @@ l08 <- pa_layers(2008)
 t9_universe_same <- (
   setequal(l97$univ$WDPAID, l08$univ$WDPAID) &&
   setequal(l97$pre$WDPAID,  l08$pre$WDPAID)  &&
-  abs(sum(st_area(l97$univ)) - sum(st_area(l08$univ))) < 1 &&
-  abs(sum(st_area(l97$pre))  - sum(st_area(l08$pre)))  < 1
+  abs(sum(as.numeric(st_area(l97$univ))) - sum(as.numeric(st_area(l08$univ)))) < 1 &&
+  abs(sum(as.numeric(st_area(l97$pre)))  - sum(as.numeric(st_area(l08$pre))))  < 1
 )
 
 test_results <- purrr::map_dfr(survey_years, function(y) {
@@ -1105,7 +1108,7 @@ Les informations essentielles sur la classification des grappes d'enquête sont 
 # treated_now = AP en vigueur à la date de référence de la vague.
 all_class <- gps_all_class %>%
   st_drop_geometry() %>%
-  select(DHSYEAR, DHSCLUST, DHSREGNA, GROUP, WDPAID, STATUS_YR,
+  select(DHSYEAR, DHSCLUST, DHSREGNA, GROUP, WDPAID,
          treatment_year = STATUS_YR, IUCN_CAT, dist_km,
          treatment_date, treated_now)
 

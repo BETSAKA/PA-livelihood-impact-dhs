@@ -204,7 +204,7 @@ required_report <- imap_dfr(wave_files, function(path, yr) {
   y <- as.integer(yr)
   hr <- readRDS(path)
   required <- c("hv001", "hv002", "hv005", "hv219", "hv220", "GROUP", "WDPAID",
-                "STATUS_YR", "IUCN_CAT", "treatment_date", "treated_now",
+                "treatment_year", "IUCN_CAT", "treatment_date", "treated_now",
                 "wealth_centile_rural_weighted", "zscore_wealth",
                 matching_variables,
                 paste0("spei_wc_", (y - 2):y))

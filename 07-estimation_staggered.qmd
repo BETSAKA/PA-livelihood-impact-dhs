@@ -233,7 +233,11 @@ h1_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate)) +
        title = "Impact on well-being: 2x2 DiD impact on local population (< 10km)")
 
 h1_2x2_plot
-       
+
+# Revue v2 : sortie compacte des estimations 2x2 pour la table comparative
+dir.create("output/review_v2", showWarnings = FALSE)
+write_csv(did_df, "output/review_v2/did_2x2_h1.csv")
+
 write_rds(h1_2x2_plot, "paper/figures/h1_2x2_plot.rds")
 
 
@@ -595,6 +599,9 @@ h2_2x2_plot <- ggplot(did_df, aes(x = period, y = estimate)) +
        title = "Impact on inequalities: 2x2 DiD impact on local population (< 10km)")
 
 h2_2x2_plot
+
+# Revue v2 : sortie compacte des estimations 2x2 (H2) pour la table comparative
+write_csv(did_df, "output/review_v2/did_2x2_h2.csv")
 
 write_rds(h2_2x2_plot, "paper/figures/h2_2x2_plot.rds")
 ```

@@ -86,7 +86,7 @@ matching_spec_hash <- function(year, dat_m, X_match, seed) {
     spec_version = "review_v2",
     year = year,
     treatment = dat_m$treatment,
-    row_ids = paste(dat_m$DHSYEAR, dat_m$DHSCLUST, dat_m$hv002, sep = "-"),
+    row_ids = paste(dat_m$DHSYEAR, dat_m$hv001, dat_m$hv002, sep = "-"),
     matching_variables = matching_variables,
     X = X_match,
     matching_arguments = matching_arguments,
