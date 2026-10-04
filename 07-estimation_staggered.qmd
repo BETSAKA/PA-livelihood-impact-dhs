@@ -113,9 +113,14 @@ dat <- bind_rows(d97, d08, d11, d13, d16, d18, d21) %>%
     w_svy   = hv005 / 1e6,
     w_all   = w_svy * weights, # poids d'enquête × poids de matching (si 'weights' existe)
     id      = row_number(),
-    treatment_phase = STATUS_YR,
+    # Contrôles : pas d'année de traitement → Inf ("jamais traité").
+    # Cf. documentation/issues-tracker/open/U7-ch07-did2s.md
+    treatment_phase = if_else(GROUP == "Treatment", STATUS_YR, Inf),
     cluster_uid = interaction(DHSYEAR, hv001, drop = TRUE)
     )
+
+# Cohérence : chaque cluster doit avoir une phase de traitement définie
+stopifnot(!any(is.na(dat$treatment_phase)))
 
 # Outcome h
 yvar <- "wealth_centile_rural_weighted"
@@ -220,7 +225,7 @@ modelsummary(
 dat2 <- dat %>%
   mutate(
     treat_on = as.integer(treatment_phase > 0 & DHSYEAR >= treatment_phase),
-    rel_year = if_else(treatment_phase > 0, DHSYEAR - treatment_phase, Inf),
+    rel_year = if_else(is.finite(treatment_phase), DHSYEAR - treatment_phase, Inf),
     rel_year_clipped = case_when(
       is.infinite(rel_year) ~ NA_real_,
       TRUE ~ pmax(pmin(rel_year, 10), -10)
@@ -366,12 +371,14 @@ Nota bene : Afin de stabiliser les estimations de l’event-study, nous avons ap
 
 ## Estimation statique
 
+Nota bene : nous sommes en coupes répétées (pas de vrai panel). L'analogue de l'effet fixe unitaire de Gardner est ici un effet fixe **cluster** (`interaction(DHSYEAR, hv001)`), qui absorbe les différences de niveau transversales entre clusters traités et témoins ; il est inclus dans la première étape de tous les `did2s()` (`| DHSYEAR + cluster_uid`). L'effet principal du traitement est identifié dans la seconde étape (`i(treat_on, ref = FALSE)`), car le statut de traitement varie dans le temps au sein des clusters. L'inférence est clusterisée au niveau `cluster_uid` dans tout le chapitre (cf. `documentation/issues-tracker/open/U7-ch07-did2s.md`).
+
 ```{r}
 # Statique (traitement "on/off")
 did2s_static <- did2s(
   data        = dat2,
   yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
   second_stage= ~ i(treat_on, ref = FALSE),
   treatment   = "treat_on",
   cluster_var = "cluster_uid",
@@ -406,10 +413,10 @@ dat2 <- dat2 |>
 did2s_es_2yr <- did2s(
   data        = dat2,
   yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
   second_stage= ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment   = "treat_on",
-  cluster_var = "hv001",
+  cluster_var = "cluster_uid",
   weights     = "w_all"
 )
 
@@ -527,7 +534,7 @@ write_rds(h2_2x2_plot, "paper/figures/h2_2x2_plot.rds")
 did2s_static_h2 <- did2s(
   data        = dat2,
   yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
   second_stage= ~ i(treat_on, ref = FALSE),
   treatment   = "treat_on",
   cluster_var = "cluster_uid",
@@ -560,10 +567,10 @@ dat2 <- dat2 |>
 did2s_es_2yr <- did2s(
   data        = dat2,
   yname       = yvar,
-  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
   second_stage= ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment   = "treat_on",
-  cluster_var = "hv001",
+  cluster_var = "cluster_uid",
   weights     = "w_all"
 )
 
@@ -607,6 +614,8 @@ list(
 
 L’étude des effets hétérogènes vise à déterminer quelles catégories de ménages bénéficient davantage – ou moins – de la création des aires protégées, et sous quelles conditions. Pour cela, nous analysons l'influence de la gouvernance en distinguant les aires protégées dites « strictes » (statuts IUCN I-IV) et les aires « multi-usages » (statuts IUCN V-VI).
 
+Nota bene : les comparaisons strict / multi-usage réutilisent l'ensemble de contrôle apparié commun (pas de ré-appariement par type). Ce choix est délibéré : un cluster peut être proche à la fois d'une aire stricte et d'une aire multi-usage, ce qui rend le type IUCN ambigu pour les témoins ; il suppose que l'appariement commun est équilibré pour les deux types (à vérifier via les diagnostics de balance du chapitre 06).
+
 ### 2x2 DiD par type d’aire protégée
 
 ```{r}
@@ -639,7 +648,7 @@ f_pre_strict <- as.formula(paste(
   "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
 ))
 
-m_pre_strict <- feols(f_pre_strict, data = pre, weights = ~ w_all, cluster = ~ hv001)
+m_pre_strict <- feols(f_pre_strict, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
 
 # Multi
 f_pre_multi <- as.formula(paste(
@@ -647,7 +656,7 @@ f_pre_multi <- as.formula(paste(
   "spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220"
 ))
 
-m_pre_multi <- feols(f_pre_multi, data = pre, weights = ~ w_all, cluster = ~ hv001)
+m_pre_multi <- feols(f_pre_multi, data = pre, weights = ~ w_all, cluster = ~ cluster_uid)
 
 # Main estimation ---------------------------
 
@@ -655,8 +664,8 @@ main <- dat3 %>%
   filter(DHSYEAR %in% c(2008, 2021)) %>%
   mutate(post = as.integer(DHSYEAR == 2021))
 
-m_main_strict <- feols(f_pre_strict, data = main, weights = ~ w_all, cluster = ~ hv001)
-m_main_multi  <- feols(f_pre_multi, data = main, weights = ~ w_all, cluster = ~ hv001)
+m_main_strict <- feols(f_pre_strict, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
+m_main_multi  <- feols(f_pre_multi, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
 
 
 did_row <- function(model, year_post, term){
@@ -705,7 +714,7 @@ d_strict <- dat2 %>%
 did2s_static_strict <- did2s(
   data         = d_strict,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -720,7 +729,7 @@ d_multi <- dat2 %>%
 did2s_static_multi <- did2s(
   data         = d_multi,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -753,10 +762,10 @@ dat2 <- dat2 |>
 did2s_es_2yr_both <- did2s(
   data         = dat2,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
   treatment    = "treat_on",
-  cluster_var  = "hv001",
+  cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
@@ -768,10 +777,10 @@ d_strict_es <- dat2 |>
 did2s_es_2yr_strict <- did2s(
   data         = d_strict_es,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
   treatment    = "treat_on",
-  cluster_var  = "hv001",
+  cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
@@ -783,10 +792,10 @@ d_multi_es <- dat2 |>
 did2s_es_2yr_multi <- did2s(
   data         = d_multi_es,
   yname        = yvar,
-  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR + cluster_uid,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1","never")),
   treatment    = "treat_on",
-  cluster_var  = "hv001",
+  cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
