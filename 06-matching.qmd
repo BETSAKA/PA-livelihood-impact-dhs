@@ -14,7 +14,7 @@ En effet, si les deux groupes sont très différents avant le traitement, il est
 
 Nous réalisons le matching à l'aide de la méthode genetic matching, en utilisant la fonction GenMatch() du package R MatchIt. Cette méthode combine les variables de matching en une seule mesure unique de distance "Mahalanobis distance matching". Cette distance mesurera la différence entre les unités des groupes appariés pour quantifier la similitude entre les deux groupes d'observations, tout en tenant compte des corrélations entre les covariables et de leurs covariances [@Diamond2013].
 
-Dans un premier temps, nous appliquons la fonction GenMatch() pour identifier la combinaison optimale de poids attribués à chaque covariable, dans le but de maximiser l'équilibre entre le groupe de traitement et de contrôle. Nous obtenons une matrice de poids mais aucune paire n'est encore formée. Dans un second temps, nous utilisons la fonction matchIt(), en intégrant la pondération trouvée auparavant, afin de constituer les paires entre les unités traitées et non traitées.
+Dans un premier temps, nous appliquons la fonction GenMatch() pour identifier la combinaison optimale de poids attribués à chaque covariable, dans le but de maximiser l'équilibre entre le groupe de traitement et de contrôle (caliper de 0.25 écart-type, pop.size 1000, 100 générations). Les paires sont ensuite formées par matchIt() avec method = "genetic", qui fait tourner GenMatch en interne avec exactement ces mêmes réglages et le même caliper, afin de constituer les paires entre les unités traitées et non traitées (sans remplacement).
 
 ## Exécution du matching pour toutes les années
 
@@ -134,12 +134,20 @@ run_matching_year <- function(year, overwrite = list(gen=FALSE, match=FALSE)) {
     fml <- as.formula(paste("treatment ~", paste(matching_variables, collapse=" + ")))
    
     
+     # MatchIt 4.x has no gen.match argument - a standalone GenMatch object is
+     # silently ignored. Instead pass the GenMatch calibration settings through
+     # to matchit's internal GenMatch, plus the caliper.
      m_out <- matchit(
       formula   = fml,
       data      = dat_m,
       method    = "genetic",
       distance  = "mahalanobis",
-      gen.match = gen_model
+      estimand  = "ATT",
+      replace   = FALSE,
+      caliper   = .25,
+      pop.size         = 1000,
+      max.generations  = 100,
+      wait.generations = 4
     )
      
     saveRDS(m_out, match_path)
@@ -196,11 +204,16 @@ for (i in seq_along(yrs)) {
 result_list <- purrr::compact(res_list) |> bind_rows()
 saveRDS(result_list, "data/derived/matching_summary_all_years.rds")
 
-bal_tabs <- purrr::imap(res_list, ~ {if (!is.null(.x)) {
-  tryCatch(cobalt::bal.tab(.x$m), error = function(e) NULL) } else {
-    NULL
-  }
+# bal.tab on the actual matchit objects (res_list only holds summary tibbles)
+bal_tabs <- lapply(yrs, function(y) {
+  match_path <- glue("data/derived/matching_result_{y}.rds")
+  if (!file.exists(match_path)) return(NULL)
+  tryCatch(
+    cobalt::bal.tab(readRDS(match_path), un = TRUE, abs = TRUE),
+    error = function(e) NULL
+  )
 })
+names(bal_tabs) <- yrs
 
 result_list <- result_list %>%
   rename(
@@ -218,6 +231,8 @@ print(result_list)
 ```
 
 Nous obtenons un tableau qui présente, pour chaque année d'analyse, le nombre total d'observations initialement disponibles, le nombre d'observations conservées après exclusion des observations ne relevant ni du groupe Treatment ni du groupe Control, ainsi que celles présentant des valeurs manquantes sur les variables utilisées pour le matching. Le tableau indique également les effectifs des groupes traités et contrôles avant et après le matching.
+
+**Let op / Note on counts:** the matching runs **without replacement** (`replace = FALSE`), so every control unit is used at most once — "N appariés" counts *unique individuals* (treated plus their matched controls), not matching rows. No control is counted twice.
 
 
 ## Number of observations by survey round 
@@ -250,7 +265,7 @@ dhs_hr_paths <- dhs_hr_paths[!grepl("SPSS|wealth", dhs_hr_paths, ignore.case = T
 dhs_all_map <- map_int(dhs_hr_paths, function(f) {
   tryCatch(nrow(read_dta(f, col_select = 1L)), error = function(e) NA_integer_)
 }) |>
-  set_names(str_extract(dhs_hr_paths, "DHS_(\\d{4})", group = 1))
+  set_names(str_match(dhs_hr_paths, "DHS_(\\d{4})")[, 1])
 
 # MICS 2018: household questionnaire file
 mics_all <- tryCatch(
@@ -299,7 +314,8 @@ out <- map_dfr(years, function(y) {
     }
   }
 
-  # Matched rows: actual row count from matched dataset (not 2 × Treated)
+  # Matched rows: actual row count from matched dataset (not 2 × Treated).
+  # Matching is without replacement, so this equals unique matched individuals.
   if (file.exists(matched_file)) {
     Matched_rows <- nrow(readRDS(matched_file))
   }
