@@ -150,6 +150,26 @@ dynamic_wdpa_vect <- vect("data/PA_creation/dynamic_wdpa.gpkg") |>
     ),
     WDPAID = as.integer(WDPAID)
   ) |>
+  # Correctif de données : Mandrozo (555547961) et le Complexe Tsimembo
+  # Manambolomaty (166880) ont reçu leur décret de création définitif
+  # (Paysage Harmonieux Protégé, cat. V) le 21 avril 2015 (décrets
+  # n°2015-714 et n°2015-715). La base dynamique omet ces décrets : après
+  # expiration de la protection temporaire le même jour, elle ne conserve
+  # pour ces deux AP que leur désignation Ramsar — qui n'est pas une
+  # reconnaissance nationale (COAP) — de sorte que le filtre ci-dessous les
+  # ferait disparaître du réseau à partir de 2015 et classerait « Control »
+  # des ménages pourtant exposés (9 grappes-vagues en 2016, 2018 et 2021).
+  # On conserve donc leur état post-2015 en le requalifiant en PHP. Si la
+  # base amont est corrigée (états « Paysage Harmonieux Protégé » ajoutés
+  # au registre d'amendements), la condition devient fausse et le correctif
+  # reste un no-op.
+  mutate(
+    DESIG = if_else(
+      WDPAID %in% c(555547961L, 166880L) &
+        DESIG == "Ramsar Site, Wetland of International Importance",
+      "Paysage Harmonieux Protégé", DESIG
+    )
+  ) |>
   filter(DESIG != "Ramsar Site, Wetland of International Importance") |>
   filter(STATUS != "Inscribed") |>
   select(WDPAID, NAME, DESIG, MANG_AUTH, IUCN_CAT, STATUS, STATUS_YR_DYN,
