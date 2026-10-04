@@ -32,6 +32,18 @@ all_class <- read.csv("data/derived/cluster_treatment_classification_staggered.c
 vars_to_nest <- c("treecover_area", "slope", "elevation",
                   "population_count", "traveltime_2000", "spei_wc")
 
+# Indicateurs de millésime fixe : leur valeur est celle d'une année de référence
+# (données 2000), indépendante de la vague DHS.
+# mapme.biodiversity >= 0.8.0 renvoie `datetime` en POSIXct ; le rendu en
+# timezone locale décale l'instant minuit au jour précédent
+# (2000-01-01 -> "1999-12-31 23:00 EET"), donc year(datetime) lit 1999 au lieu
+# de 2000. Correctif : on ne surcharge l'année QUE lorsque ce décalage exact
+# est observé (POSIXct + année = millésime - 1). Si mapme revient à des dates
+# de type Date ou corrige le décalage, la condition est fausse et
+# year(datetime) est utilisé tel quel.
+vintage_override <- c(treecover_area = 2000, slope = 2000, elevation = 2000,
+                      population_count = 2000, traveltime_2000 = 2000)
+
 build_year <- function(hr_object,
                        year,
                        hh_rural_path,
@@ -65,7 +77,17 @@ build_year <- function(hr_object,
                  names_to = "indicator", values_to = "data") %>%
     unnest(data) %>%
     filter(indicator != "spei_wc" | year(datetime) %in% spei_years) %>%
-    mutate(year_indicator = paste0(indicator, "_", year(datetime))) %>%
+    mutate(
+      dt_year = year(datetime),
+      dt_year = if_else(
+        !is.na(datetime) & indicator %in% names(vintage_override) &
+          inherits(datetime, "POSIXct") &
+          dt_year == vintage_override[indicator] - 1,
+        unname(vintage_override[indicator]),
+        dt_year
+      ),
+      year_indicator = paste0(indicator, "_", dt_year)
+    ) %>%
     select(hv001, hv002, year_indicator, value)
   
   df_wide <- df_long %>%
