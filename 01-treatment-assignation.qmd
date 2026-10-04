@@ -8,9 +8,9 @@ editor_options:
 
 Les clusters d'enquêtes DHS (1997, 2008 et 2021), MIS (2011, 2013, 2016) et MICS (2018) sont classés par rapport à leur distance aux aires protégées (AP) et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
 
--   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters à moins de 10 km des AP créées à partir de 2008 dans les zones rurales
+-   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters ruraux à moins de 10 km d'une AP de l'univers de traitement (créée à partir de 2008 pendant la période d'étude) — appartenance au groupe, y compris avant l'entrée en vigueur de l'AP
 
--   [Groupe de contrôle]{.underline}: Ménages localisées dans les clusters à plus de 10 km des AP créées à partir de 2008 dans les zones rurales
+-   [Groupe de contrôle]{.underline}: Ménages localisées dans les clusters ruraux à plus de 10 km des AP de l'univers de traitement
 
 -   [Groupe à exclure]{.underline}: Ménages localisées dans les clusters à moins de 10 km des AP créées avant 2008 et dans la zone urbaine
 
@@ -218,18 +218,80 @@ get_pa_network <- function(states, year, cutoff_date = "01/06") {
     filter(valid_from <= ref_date, is.na(valid_to) | ref_date < valid_to)
 }
 
-# État du réseau d'AP au 1er juin de chaque vague (limites fixes pour le
-# test de sensibilité : passer pa_states_fixed à get_pa_network()).
+# Date de référence des vagues : un seul point de définition, réutilisé
+# partout (classification, tests, estimation). Le 1er juin coupe l'année en
+# deux et approche la date moyenne d'interview DHS/MICS.
+survey_reference_date <- function(year) {
+  as.Date(sprintf("%d-06-01", year))
+}
 
-# AP créées après `year` (mais au plus tard à la dernière vague) :
-# limite en vigueur à leur création
-pa_states_future <- function(year, fixed = FALSE) {
-  pool <- if (fixed) pa_states_fixed else pa_states_analysis
-  pool |>
-    filter(STATUS_YR > year, STATUS_YR <= last_wave) |>
+# Premier état connu de chaque AP : année de création (STATUS_YR, réinitialisé
+# à chaque changement de statut, on retient l'état initial) et date de début
+# de traitement (= premier `valid_from`, corrigé le cas échéant, cf. 555697871).
+pa_first <- pa_states_analysis |>
+  group_by(WDPAID) |>
+  slice_min(valid_from, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  st_drop_geometry() |>
+  select(WDPAID, NAME, STATUS, STATUS_YR, treatment_date = valid_from)
+
+# Univers de traitement : AP terrestres hors "Proposed" créées pendant la
+# période d'étude (2008 à la dernière vague). Définition substantielle
+# inchangée (PAP) ; seule la temporalité fine (date vs année) évolue.
+pa_universe_ids <- pa_first |>
+  filter(STATUS_YR >= 2008, STATUS_YR <= last_wave) |>
+  pull(WDPAID)
+
+# AP antérieures à 2008 : exposition pré-baseline => Excluded (PAP)
+pa_pre_ids <- pa_first |> filter(STATUS_YR < 2008) |> pull(WDPAID)
+
+# Limites effectives d'un ensemble d'AP à une date de référence :
+# - AP future à cette date (treatment_date > ref) : limite en vigueur à
+#   l'entrée en traitement (premier état) ;
+# - AP déjà entrée en traitement : limite en vigueur à la date de référence ;
+#   si aucun état ne couvre cette date (AP dissoute temporairement ou
+#   définitivement), on retient le dernier état antérieur — repli documenté,
+#   la définition du traitement du PAP reposant sur la création, non sur la
+#   dissolution.
+pa_effective_states <- function(ids, ref_date, fixed = FALSE) {
+  if (fixed) {
+    # Test de sensibilité : dernier état de limite connu, appliqué tel quel.
+    return(pa_states_fixed |> filter(WDPAID %in% ids))
+  }
+  pa_states_analysis |>
+    filter(WDPAID %in% ids) |>
+    left_join(pa_first |> select(WDPAID, treatment_date), by = "WDPAID") |>
+    filter(valid_from <= pmax(ref_date, treatment_date)) |>
     group_by(WDPAID) |>
-    slice_min(valid_from, n = 1, with_ties = FALSE) |>
+    slice_max(valid_from, n = 1, with_ties = FALSE) |>
     ungroup()
+}
+
+# Couches d'AP d'une vague : pré-baseline (Excluded) et univers de traitement
+# (GROUP = Treatment), avec la distinction actif / futur à la date de référence.
+# Exception placebo : la vague 1997 utilise l'univers et les limites de 2008,
+# de sorte que sa sélection de clusters est identique à celle de 2008.
+pa_layers <- function(year, fixed = FALSE) {
+  ref_year <- max(year, 2008)
+  ref_date <- survey_reference_date(ref_year)
+  if (fixed) {
+    pre  <- pa_states_fixed |> filter(WDPAID %in% pa_pre_ids)
+    univ <- pa_states_fixed |> filter(WDPAID %in% pa_universe_ids)
+  } else {
+    net  <- get_pa_network(pa_states_analysis, ref_year)
+    pre  <- net |> filter(WDPAID %in% pa_pre_ids)
+    univ <- pa_effective_states(pa_universe_ids, ref_date)
+  }
+  univ <- univ |>
+    left_join(pa_first |> select(WDPAID, treatment_date), by = "WDPAID") |>
+    select(WDPAID, STATUS, STATUS_YR, IUCN_CAT, valid_from, valid_to,
+           treatment_date, geometry)
+  list(
+    pre = pre,
+    univ = univ,
+    univ_active = univ |> filter(treatment_date <= ref_date),
+    univ_future = univ |> filter(treatment_date >  ref_date)
+  )
 }
 
 # Application aux vagues d'enquête : une couche du réseau par date, avec
@@ -342,7 +404,7 @@ tab_pa |>
 
 On travaille toujours avec les portions terrestres des AP.
 
-Pour analyser l'impact des AP selon leur période de création, on spécifie, pour chaque vague d'enquête, les AP en vigueur à sa date (issues de `dynamic_wdpa_vect_yearly`) créées avant 2008 et à partir de 2008, d'après leur année de création (`STATUS_YR`). On applique ensuite un buffer zone de 10 km autour de chaque groupe d'AP. Chaque groupe a été reprojeté dans le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702) pour les calculs de distances. Nous créons ensuite une carte pour visualiser les AP et leurs zones d'influence, en prenant la vague 2008 comme exemple ; les buffers sont ensuite construits pour toutes les vagues. Exception : pour l'enquête 1997, utilisée comme test de placebo, on applique l'état du réseau d'AP de 2008 (et donc les buffers de 2008).
+Pour analyser l'impact des AP selon leur période de création, on spécifie, pour chaque vague d'enquête, les AP antérieures à 2008 (en vigueur à la date de référence de la vague) et l'univers de traitement (AP créées à partir de 2008, limites effectives définies plus haut : limite de création pour les AP futures, limite en vigueur pour les AP actives). On applique ensuite un buffer zone de 10 km autour de chaque groupe d'AP. Chaque groupe a été reprojeté dans le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702) pour les calculs de distances. Nous créons ensuite une carte pour visualiser les AP et leurs zones d'influence, en prenant la vague 2008 comme exemple. Exception : pour l'enquête 1997, utilisée comme test de placebo, on applique l'état du réseau d'AP de 2008 (et donc les buffers de 2008).
 
 ```{r fig.cap="Figure 5: Protected areas by period  of creation"}
 
@@ -364,36 +426,22 @@ buffer_10km <- function(pa, buffer_dist = 10000) {
     st_transform(standard_crs)
 }
 
-# Buffers annuels : pour chaque vague d'enquête, on part de l'état du réseau
-# d'AP en vigueur à sa date (dynamic_wdpa_vect_yearly) et on sépare les AP
-# selon leur année de création (STATUS_YR) : avant 2008 vs à partir de 2008.
-yearly_pa_buffers <- purrr::map(survey_years, function(y) {
-  net <- dynamic_wdpa_vect_yearly |> filter(survey_year == y)
-  list(
-    before_2008 = buffer_10km(net |> filter(STATUS_YR < 2008)),
-    from_2008   = buffer_10km(net |> filter(STATUS_YR >= 2008))
-  )
-}) |> set_names(as.character(survey_years))
-
-# Exception 1997 : cette vague sert de test de placebo, on lui applique l'état
-# du réseau d'AP de 2008 (et donc les buffers calculés pour 2008).
-yearly_pa_buffers[["1997"]] <- yearly_pa_buffers[["2008"]]
-
 # Exemple 2008 : couches et buffers utilisés pour les cartes ci-dessous.
-# À la date de l'enquête 2008, aucune AP créée à partir de 2008 n'est encore
-# en vigueur (wdpa_from_2008 vide) : on la remplace par une géométrie vide
-# pour que tmap puisse tracer la couche.
+# À la date de référence de l'enquête 2008 (1er juin), aucune AP de l'univers
+# de traitement n'est encore en vigueur (créations oct.-déc. 2008) : la couche
+# "from_2008" montre leurs limites de création, qui délimitent la géographie
+# de traitement futur.
 pad_empty <- function(x) {
   if (nrow(x) == 0) {
     st_as_sf(st_sfc(st_polygon(), crs = st_crs(x)))
   } else x
 }
-wdpa_2008 <- dynamic_wdpa_vect_yearly |> filter(survey_year == 2008)
-wdpa_before_2008 <- wdpa_2008 |> filter(STATUS_YR < 2008) |> pad_empty()
-wdpa_from_2008   <- wdpa_2008 |> filter(STATUS_YR >= 2008) |> pad_empty()
+lay_2008 <- pa_layers(2008)
+wdpa_before_2008 <- lay_2008$pre |> pad_empty()
+wdpa_from_2008   <- lay_2008$univ_future |> pad_empty()
 
-buffer_10km_before_2008 <- yearly_pa_buffers[["2008"]]$before_2008
-buffer_10km_from_2008   <- yearly_pa_buffers[["2008"]]$from_2008
+buffer_10km_before_2008 <- buffer_10km(lay_2008$pre)
+buffer_10km_from_2008   <- buffer_10km(lay_2008$univ)
 
 # Visualisation des cartes 
 tmap_mode("plot")
@@ -550,21 +598,30 @@ Le tableau ci-dessus récapitule, sur l'ensemble de la période d'étude (1997�
 
 ## Classification des clusters
 
-Les grappes d'enquête sont classées selon leur proximité aux AP créées avant 2008 et à partir de 2008. A l'aide de la fonction classify_clusters(), nous catégorisons chaque cluster en trois groupes: traitement, contrôle ou exclu, selon leur localisation par rapport aux AP et leur statut urbain ou rural. Cette classification est appliquée aux clusters de 1997, 2008, 2011, 2013, 2016, 2018 et 2021. Parmi les clusters considérés comme "traités", on identifie l'année de création de l'AP, son type et le numéro WDPAID ou l'identifiant unique de l'AP en question. Les résultats obtenus sont fusionnés. Nous créons ensuite une carte par année d'étude pour visualiser la localisation des AP et la répartition spatiale des clusters selon leur groupe.
+Les grappes d'enquête sont classées selon leur proximité aux AP créées avant 2008 et à partir de 2008. A l'aide de la fonction `classify_clusters_with_pa()`, nous catégorisons chaque cluster en trois groupes : traitement, contrôle ou exclu, selon leur localisation par rapport aux AP et leur statut urbain ou rural. Cette classification est appliquée aux clusters de 1997, 2008, 2011, 2013, 2016, 2018 et 2021. Parmi les clusters considérés comme "traités", on identifie la date de début de traitement de l'AP, son année de création, son type et le numéro WDPAID ou l'identifiant unique de l'AP en question. Les résultats obtenus sont fusionnés. Nous créons ensuite une carte par année d'étude pour visualiser la localisation des AP et la répartition spatiale des clusters selon leur groupe.
 
-Les limites des AP ayant évolué au cours du temps (le fichier `dynamic_wdpa.gpkg` documente chaque état des limites avec ses périodes de validité `valid_from`/`valid_to`), la classification est désormais faite **par vague d'enquête** : pour chaque année à partir de 2008, on utilise l'état du réseau d'AP valide à la date de l'enquête (1er juin de l'année d'enquête — la collecte s'étalant sur plusieurs mois, cette date coupe l'année en deux et approche la date moyenne d'interview), et non les limites actuelles. La vague 1997 fait exception : elle sert de **vague placebo** (comparaison 1997–2008), on lui applique donc l'état du réseau d'AP de 2008, de sorte que sa sélection de clusters est identique à celle de 2008 (mêmes unités, toutes pré-traitement). Pour les AP créées après une vague donnée (mais avant la dernière vague), c'est la limite en vigueur à leur création qui sert à identifier les clusters qui seront traités ("Before treatment") ; le statut de traitement effectif reste déterminé par `STATUS_YR`.
+**Sémantique des variables de classification.** Deux concepts distincts sont explicitement séparés :
 
-Les AP encore au statut "Proposed" (jamais officialisées pendant la période d'étude) sont exclues du jeu d'analyse : les clusters proches de ces AP sont classés **Control**, conformément au pré-analyse plan (aucune restriction n'existait pendant les enquêtes).
+-   `GROUP` (Treatment / Control / Excluded) désigne **l'appartenance à la géographie de traitement éventuelle** pendant la période d'étude : un cluster rural à moins de 10 km d'une AP de l'univers de traitement (créée entre 2008 et 2021, hors "Proposed") est `Treatment`, **y compris dans les vagues antérieures à la date de création de l'AP**. C'est cette variable qui définit le groupe de traitement dans le DiD en double différence (l'activation du traitement est représentée par l'interaction avec la période post).
+-   `treated_now` indique si l'AP est **effectivement en vigueur à la date de référence de la vague** (1er juin) : un cluster `Treatment` observé avant sa date de début de traitement a `treated_now = 0`, après cette date `treated_now = 1`.
+-   `treatment_date` est la date de début de traitement de l'AP assignée (premier `valid_from` de la base dynamique, qui coïncide avec l'année `STATUS_YR` pour toutes les AP de l'univers, à l'exception correctif documenté du WDPAID 555697871) ; `treatment_year` reprend l'année de création `STATUS_YR` (définition substantielle inchangée).
+
+Ce choix suit le plan de pré-analyse : le groupe de traitement du placebo 1997 est défini par la proximité des AP créées pendant la période de traitement ultérieure (2008–2021). On ne requalifie donc pas en `Control` une localisation traitée à terme au seul motif que l'AP n'existe pas encore à la date de l'enquête. En particulier, une AP créée tardivement dans l'année d'une vague (p. ex. oct.–déc. 2008, après le 1er juin) reste `Treatment` avec `treated_now = 0` à la baseline 2008 — la comparaison `STATUS_YR > année`, qui perdait ces cas, est abandonnée au profit des dates.
+
+Les limites des AP ayant évolué au cours du temps (le fichier `dynamic_wdpa.gpkg` documente chaque état des limites avec ses périodes de validité `valid_from`/`valid_to`), la classification est faite **par vague d'enquête** : pour chaque année, on utilise l'état du réseau d'AP valide à la date de référence (1er juin — la collecte s'étalant sur plusieurs mois, cette date coupe l'année en deux et approche la date moyenne d'interview), et non les limites actuelles. Pour une AP encore future à cette date, c'est la limite en vigueur à son entrée en traitement qui sert à identifier les clusters qui seront traités. La vague 1997 fait exception : elle sert de **vague placebo** (comparaison 1997–2008), on lui applique donc l'univers et les limites de 2008, de sorte que sa sélection de clusters est identique à celle de 2008 (mêmes unités, toutes pré-traitement : `treated_now = 0`).
+
+Les AP encore au statut "Proposed" (jamais officialisées pendant la période d'étude) sont exclues du jeu d'analyse : les clusters proches de ces AP sont classés **Control**, conformément au pré-analyse plan (aucune restriction n'existait pendant les enquêtes). Les clusters exposés à une AP antérieure à 2008 restent **Excluded**, y compris lorsque la zone chevauche celle d'une AP post-2008 (PAP : la date de création la plus ancienne l'emporte).
 
 ```{r fig.cap="Figure 6: DHS survey clusters relative to existing protected areas"}
 
 # Helpers réutilisables définis plus haut : pa_states_analysis, pa_states_fixed,
-# get_pa_network(), pa_states_future(), buffer_10km() — état du réseau d'AP à une
-# date donnée.
+# survey_reference_date(), pa_first, pa_universe_ids, pa_pre_ids,
+# pa_effective_states(), pa_layers(), buffer_10km() — état du réseau d'AP et
+# limites effectives à une date donnée.
 
 pa_buffered <- function(pa, buffer_dist = 10000) {
   pa |>
-    select(WDPAID, STATUS_YR, IUCN_CAT, geometry) |>
+    select(WDPAID, STATUS_YR, IUCN_CAT, treatment_date, geometry) |>
     mutate(pa_geom = geometry) |>
     st_transform(mdg_crs) |>
     mutate(geometry = st_buffer(geometry, buffer_dist)) |>
@@ -573,50 +630,51 @@ pa_buffered <- function(pa, buffer_dist = 10000) {
 
 classify_clusters_with_pa <- function(cluster_gps, year, fixed = FALSE,
                                       buffer_dist = 10000) {
-  # 1997 sert de vague placebo (comparaison 1997-2008) : on y applique l'état
-  # du réseau d'AP de 2008, afin que la sélection des clusters soit identique
-  # à celle de 2008 (mêmes unités, toutes pré-traitement en 1997).
-  year_net <- max(year, 2008)
-  net <- get_pa_network(
-    if (fixed) pa_states_fixed else pa_states_analysis,
-    year_net
-  )
-  pa_before_y <- net |> filter(STATUS_YR < 2008)
-  pa_after_y  <- net |> filter(STATUS_YR >= 2008, STATUS_YR <= year_net)
-  pa_future_y <- pa_states_future(year_net, fixed)
+  # Couches effectives de la vague (1997 placebo -> univers et limites de 2008)
+  lay <- pa_layers(year, fixed)
+  ref_wave <- survey_reference_date(year)
 
-  buffer_before <- buffer_10km(pa_before_y, buffer_dist)
-  buffer_after  <- buffer_10km(pa_after_y, buffer_dist)
-  buffer_future <- buffer_10km(pa_future_y, buffer_dist)
+  buf_pre  <- buffer_10km(lay$pre,  buffer_dist)
+  buf_univ <- buffer_10km(lay$univ, buffer_dist)
 
-  in_before <- st_within(cluster_gps, buffer_before, sparse = FALSE)[, 1]
-  in_after  <- st_within(cluster_gps, buffer_after,  sparse = FALSE)[, 1]
-  in_future <- st_within(cluster_gps, buffer_future, sparse = FALSE)[, 1]
+  in_pre  <- st_within(cluster_gps, buf_pre,  sparse = FALSE)[, 1]
+  in_univ <- st_within(cluster_gps, buf_univ, sparse = FALSE)[, 1]
 
+  # GROUP = appartenance à la géographie de traitement éventuelle (pas
+  # l'activation à la date d'enquête) ; les clusters exposés à une AP
+  # antérieure à 2008 sont exclus, y compris en cas de chevauchement.
   base <- cluster_gps |>
-    mutate(groupe = case_when(
-      (in_after | in_future) & !in_before & URBAN_RURA == "R" ~ "Treatment",
-      in_before | URBAN_RURA == "U" ~ "Excluded",
+    mutate(GROUP = case_when(
+      URBAN_RURA == "U" ~ "Excluded",
+      in_pre  ~ "Excluded",
+      URBAN_RURA == "R" & in_univ ~ "Treatment",
       TRUE ~ "Control"
     ))
 
-  # enrich treated with the oldest+nearest PA (existing at wave date first)
-  treated_pts <- base |> filter(groupe == "Treatment")
-  if (nrow(treated_pts) == 0) return(base)
+  # enrich treated with the earliest-treated + nearest PA
+  treated_pts <- base |> filter(GROUP == "Treatment")
+  if (nrow(treated_pts) == 0) {
+    return(base |>
+      mutate(WDPAID = NA_integer_, STATUS_YR = NA_integer_,
+             IUCN_CAT = NA_character_, treatment_date = as.Date(NA),
+             dist_km = NA_real_))
+  }
 
-  cand_pa <- pa_buffered(bind_rows(pa_after_y, pa_future_y), buffer_dist)
+  cand_pa <- pa_buffered(lay$univ, buffer_dist)
   cand <- st_join(treated_pts, cand_pa, join = st_within, left = FALSE) |>
     mutate(dist_km = as.numeric(st_distance(geometry, pa_geom, by_element = TRUE)) / 1000)
 
   best <- cand |>
-    group_by(DHSCLUST) |>
-    slice_min(STATUS_YR, with_ties = TRUE) |>
+    st_drop_geometry() |>
+    group_by(DHSYEAR, DHSCLUST) |>
+    slice_min(treatment_date, with_ties = TRUE) |>
     slice_min(dist_km, with_ties = FALSE) |>
     ungroup() |>
-    st_drop_geometry() |>
-    select(DHSYEAR, DHSCLUST, WDPAID, STATUS_YR, IUCN_CAT, dist_km)
+    select(DHSYEAR, DHSCLUST, WDPAID, STATUS_YR, IUCN_CAT, treatment_date, dist_km)
 
-  base |> left_join(best, by = c("DHSYEAR", "DHSCLUST"))
+  base |>
+    left_join(best, by = c("DHSYEAR", "DHSCLUST")) |>
+    mutate(treated_now = as.integer(!is.na(treatment_date) & ref_wave >= treatment_date))
 }
 
 gps_all_class <- bind_rows(
@@ -626,7 +684,7 @@ gps_all_class <- bind_rows(
 )
 ```
 
-### Tests : la sélection des clusters reflète-t-elle l'état du réseau d'AP à chaque date d'enquête ?
+### Tests : invariants de la classification (revue v2)
 
 ```{r}
 # WDPAIDs des AP "Proposed" (exclues du jeu d'analyse)
@@ -634,49 +692,130 @@ prop_ids <- dynamic_wdpa_metadata |>
   filter(STATUS == "Proposed") |>
   pull(WDPAID)
 
-test_results <- purrr::map_dfr(survey_years, function(y) {
-  d_y <- gps_all_class |> filter(DHSYEAR == y)
-  # même année de réseau que dans classify_clusters_with_pa (placebo 1997)
-  y_net <- max(y, 2008)
-  net <- get_pa_network(pa_states_analysis, y_net)
-  buf_after  <- buffer_10km(net |> filter(STATUS_YR >= 2008, STATUS_YR <= y_net))
-  buf_before <- buffer_10km(net |> filter(STATUS_YR < 2008))
-  buf_future <- buffer_10km(pa_states_future(y_net))
+# T9 : l'univers de traitement du placebo 1997 est identique à celui de la
+# baseline 2008 (mêmes AP, mêmes limites effectives)
+l97 <- pa_layers(1997)
+l08 <- pa_layers(2008)
+t9_universe_same <- (
+  setequal(l97$univ$WDPAID, l08$univ$WDPAID) &&
+  setequal(l97$pre$WDPAID,  l08$pre$WDPAID)  &&
+  abs(sum(st_area(l97$univ)) - sum(st_area(l08$univ))) < 1 &&
+  abs(sum(st_area(l97$pre))  - sum(st_area(l08$pre)))  < 1
+)
 
-  in_after  <- st_within(d_y, buf_after,  sparse = FALSE)[, 1]
-  in_before <- st_within(d_y, buf_before, sparse = FALSE)[, 1]
-  in_future <- st_within(d_y, buf_future, sparse = FALSE)[, 1]
-  rural <- d_y$URBAN_RURA == "R"
+test_results <- purrr::map_dfr(survey_years, function(y) {
+  d_y    <- gps_all_class |> filter(DHSYEAR == y)
+  d_attr <- d_y |> st_drop_geometry()
+  lay    <- pa_layers(y)
+  ref_wave <- survey_reference_date(y)
+  rural  <- d_attr$URBAN_RURA == "R"
+  urban  <- d_attr$URBAN_RURA == "U"
+
+  buf_pre  <- buffer_10km(lay$pre)
+  buf_univ <- buffer_10km(lay$univ)
+  in_pre  <- st_within(d_y, buf_pre,  sparse = FALSE)[, 1]
+  in_univ <- st_within(d_y, buf_univ, sparse = FALSE)[, 1]
+
+  # T8 : AP de l'univers créées l'année de la vague, après la date de référence
+  late_ids <- pa_first |>
+    filter(WDPAID %in% pa_universe_ids,
+           treatment_date > ref_wave,
+           treatment_date <= as.Date(sprintf("%d-12-31", y))) |>
+    pull(WDPAID)
+  in_late <- if (length(late_ids)) {
+    st_within(d_y, buffer_10km(lay$univ |> filter(WDPAID %in% late_ids)),
+              sparse = FALSE)[, 1]
+  } else rep(FALSE, nrow(d_y))
 
   tibble(
     DHSYEAR = y,
-    n_clusters = nrow(d_y),
+    n_clusters = nrow(d_attr),
     # T1 : les AP "Proposed" ne génèrent jamais de traitement
-    t1_treated_proposed = sum(d_y$groupe == "Treatment" & d_y$WDPAID %in% prop_ids),
-    # T2 : un cluster rural dans le buffer d'une AP existant à la date de
-    #      l'enquête n'est jamais Control
-    t2_control_in_existing = sum(d_y$groupe == "Control" & rural & in_after),
-    # T3 : aucun cluster n'est Treatment via le buffer des AP antérieures à 2008
-    t3_treated_in_pre2008 = sum(d_y$groupe == "Treatment" & in_before),
-    # T4 : tout cluster traité est dans le buffer d'une AP post-2008
-    #      (existante à la date d'enquête ou à venir)
-    t4_treated_outside = sum(d_y$groupe == "Treatment" & !(in_after | in_future)),
-    # T5 : "Already treated" implique une AP existant à la date d'enquête
-    t5_prev_inconsistent = sum(d_y$groupe == "Treatment" & !is.na(d_y$STATUS_YR) &
-                                 d_y$STATUS_YR <= d_y$DHSYEAR & !in_after)
+    t1_treated_proposed = sum(d_attr$GROUP == "Treatment" & d_attr$WDPAID %in% prop_ids),
+    # T2 : tout cluster Treatment a une AP et une date de traitement renseignées
+    t2_treated_missing_info = sum(d_attr$GROUP == "Treatment" &
+      (is.na(d_attr$WDPAID) | is.na(d_attr$treatment_date))),
+    # T3 : aucun Control ne reçoit de date de traitement
+    t3_control_with_treat_date = sum(d_attr$GROUP == "Control" & !is.na(d_attr$treatment_date)),
+    # T4 : tout cluster urbain est Excluded
+    t4_urban_not_excluded = sum(urban & d_attr$GROUP != "Excluded"),
+    # T5 : tout cluster exposé à une AP pré-baseline est Excluded
+    t5_pre_pa_not_excluded = sum(in_pre & d_attr$GROUP != "Excluded"),
+    # T6 : Treatment avant sa date de traitement => treated_now = 0
+    t6_pre_activation = sum(d_attr$GROUP == "Treatment" &
+      d_attr$treatment_date > ref_wave & d_attr$treated_now != 0),
+    # T7 : Treatment après sa date de traitement => treated_now = 1
+    t7_post_activation = sum(d_attr$GROUP == "Treatment" &
+      d_attr$treatment_date <= ref_wave & d_attr$treated_now != 1),
+    # T8 : pas de perte des traitements futurs de l'année même (fin du
+    #      critère STATUS_YR > year)
+    t8_sameyear_lost = sum(rural & in_late & !in_pre & d_attr$GROUP != "Treatment")
   )
 })
 
 # Tous les compteurs de violation doivent être nuls
 stopifnot(
-  "T1-T5 : la classification viole la cohérence temporelle du réseau d'AP" =
-    all(unlist(test_results |> select(starts_with("t")))) == 0
+  "T1-T8 : la classification viole les invariants de traitement" =
+    all(unlist(test_results |> select(matches("^t[0-9]_")))) == 0,
+  "T9 : l'univers de traitement 1997 (placebo) diffère de celui de 2008" =
+    t9_universe_same
 )
 
 test_results
 ```
 
-Tous les tests passent pour les sept vagues : aucune AP "Proposed" ne génère de traitement (T1), aucun cluster rural à moins de 10 km d'une AP existant à la date de l'enquête n'est classé Control (T2), aucun cluster traité ne l'est via les AP antérieures à 2008 (T3) ou en dehors des buffers post-2008 (T4), et tout cluster "Already treated" est bien dans le buffer d'une AP existant à la date d'enquête (T5).
+Tous les tests passent pour les sept vagues : aucune AP "Proposed" ne génère de traitement (T1), tout cluster Treatment est rattaché à une AP et à une date de début de traitement (T2), aucun Control ne porte de date de traitement (T3), tout cluster urbain est Excluded (T4), tout cluster exposé à une AP pré-baseline est Excluded (T5), `treated_now` est cohérent avec la date de traitement (T6, T7), et aucune localisation à moins de 10 km d'une AP créée l'année même de la vague (après le 1er juin) n'est perdue — ces clusters sont `Treatment` avec `treated_now = 0` (T8). L'univers de traitement du placebo 1997 est identique à celui de la baseline 2008 (T9).
+
+### Tableaux d'audit de la classification (revue v2)
+
+```{r}
+#| label: audit-classification
+dir.create("output/review_v2", showWarnings = FALSE)
+
+# Tableau d'audit par vague
+audit_clusters <- gps_all_class |>
+  st_drop_geometry() |>
+  group_by(DHSYEAR) |>
+  summarise(
+    n_clusters        = n(),
+    treatment_total   = sum(GROUP == "Treatment"),
+    treatment_not_yet = sum(GROUP == "Treatment" & treated_now == 0),
+    treatment_already = sum(GROUP == "Treatment" & treated_now == 1),
+    control           = sum(GROUP == "Control"),
+    excluded          = sum(GROUP == "Excluded"),
+    n_treatment_pas   = n_distinct(WDPAID[GROUP == "Treatment"]),
+    .groups = "drop"
+  )
+
+write_csv(audit_clusters, "output/review_v2/audit_clusters_by_wave.csv")
+audit_clusters
+```
+
+```{r}
+#| label: diag-pa-2008-cutoff
+# Diagnostic des AP autour de la coupure 2008 : appartenance à l'univers de
+# traitement et statut d'activation à la date de référence de la baseline.
+first_valid_to <- pa_states_analysis |>
+  st_drop_geometry() |>
+  group_by(WDPAID) |>
+  slice_min(valid_from, n = 1, with_ties = FALSE) |>
+  ungroup() |>
+  select(WDPAID, first_valid_to = valid_to)
+
+pa_cutoff_diag <- pa_first |>
+  filter(STATUS_YR >= 2005) |>
+  left_join(first_valid_to, by = "WDPAID") |>
+  mutate(
+    in_treatment_universe = WDPAID %in% pa_universe_ids,
+    active_at_2008_ref    = treatment_date <= survey_reference_date(2008)
+  ) |>
+  arrange(STATUS_YR, WDPAID) |>
+  select(WDPAID, NAME, STATUS, STATUS_YR, treatment_date, first_valid_to,
+         in_treatment_universe, active_at_2008_ref)
+
+write_csv(pa_cutoff_diag, "output/review_v2/diag_pa_2008_cutoff.csv")
+pa_cutoff_diag
+```
 
 ### Test de sensibilité : limites fixes vs limites à date
 
@@ -691,14 +830,14 @@ gps_all_class_fixed <- bind_rows(
 
 boundary_sensitivity <- gps_all_class |>
   st_drop_geometry() |>
-  select(DHSYEAR, DHSCLUST, groupe) |>
+  select(DHSYEAR, DHSCLUST, GROUP) |>
   left_join(
     gps_all_class_fixed |>
       st_drop_geometry() |>
-      select(DHSYEAR, DHSCLUST, groupe_fixed = groupe),
+      select(DHSYEAR, DHSCLUST, GROUP_fixed = GROUP),
     by = c("DHSYEAR", "DHSCLUST")
   ) |>
-  count(DHSYEAR, changed = groupe != groupe_fixed) |>
+  count(DHSYEAR, changed = GROUP != GROUP_fixed) |>
   pivot_wider(names_from = changed, values_from = n, values_fill = 0,
               names_prefix = "changed_")
 
@@ -732,7 +871,7 @@ map_ap <- tm_shape(contour_mada) +
 
   tm_shape(gps_all_class) +
   tm_symbols(
-    fill = "groupe",
+    fill = "GROUP",
     fill.scale = tm_scale(values = c(
       "Treatment" = "red",
       "Control"   = "blue",
@@ -778,13 +917,14 @@ Nous produisons un tableau récapitulatif du nombre de grappes d'enquête class�
 
 ```{r}
 
-# Sous-catégories pour le groupe "Traitement" (dépend de DHSYEAR vs STATUS_YR)
+# Sous-catégories pour le groupe "Traitement" (activation effective à la date
+# de référence de la vague : treated_now)
 treated_sub_clusters <- gps_all_class %>%
   st_drop_geometry() %>%
-  filter(groupe == "Treatment") %>%
+  filter(GROUP == "Treatment") %>%
   mutate(subcat = case_when(
-    !is.na(STATUS_YR) & DHSYEAR <  STATUS_YR ~ "Before treatment",
-    !is.na(STATUS_YR) & DHSYEAR >= STATUS_YR ~ "Already treated",
+    treated_now == 0 ~ "Before treatment",
+    treated_now == 1 ~ "Already treated",
     TRUE ~ NA_character_
   )) %>%
   count(DHSYEAR, subcat, name = "n_clusters") %>%
@@ -793,14 +933,14 @@ treated_sub_clusters <- gps_all_class %>%
 # Ligne "Ensemble" (tous les traités, quel que soit le statut)
 treated_all_clusters <- gps_all_class %>%
   st_drop_geometry() %>%
-  filter(groupe == "Treatment") %>%
+  filter(GROUP == "Treatment") %>%
   count(DHSYEAR, name = "All_clusters")
 
 # Colonnes Contrôles / Exclus
 ctrl_excl_clusters <- gps_all_class %>%
   st_drop_geometry() %>%
-  filter(groupe %in% c("Control", "Excluded")) %>%
-  mutate(Groupe = recode(groupe, Control = "Controls",Excluded = "Excluded")) %>%
+  filter(GROUP %in% c("Control", "Excluded")) %>%
+  mutate(Groupe = recode(GROUP, Control = "Controls",Excluded = "Excluded")) %>%
   count(DHSYEAR, Groupe, name = "n") %>%
   pivot_wider(names_from = Groupe, values_from = n, values_fill = 0)
 
@@ -834,7 +974,7 @@ gt_table_clusters <- tab_wide_clusters %>%
   ) %>%
   cols_align(align = "center", columns = everything()) %>%
   tab_footnote(
-    footnote = md("**Before treatment** : DHSYEAR < STATUS_YR (PA are not yet created). **Already treated** : DHSYEAR ≥ STATUS_YR. **All clusters** : total number of clusters*Treatment*."),
+    footnote = md("**Before treatment** : the PA is not yet in force at the survey reference date (treated_now = 0). **Already treated** : the PA is in force at the survey reference date (treated_now = 1). **All clusters** : total number of clusters*Treatment*. GROUP identifies eventual treatment group membership, irrespective of current PA activation."),
     locations = cells_title(groups = "title")
   )
 
@@ -902,19 +1042,19 @@ households_counts_all <- map_dfr(years_all, function(y) {
   cl_y <- gps_all_class %>%
     st_drop_geometry() %>%
     filter(DHSYEAR == y) %>%
-    select(DHSYEAR, DHSCLUST, groupe, STATUS_YR)
+    select(DHSYEAR, DHSCLUST, GROUP, treated_now)
 
   # Jointure ménages <- classification (par cluster hv001)
   hr_cl <- hr %>%
     select(DHSYEAR, hv001) %>%
     left_join(cl_y, by = c("DHSYEAR" = "DHSYEAR", "hv001" = "DHSCLUST"))
 
-  # Comptes par sous-catégories du traitement (DHSYEAR vs STATUS_YR)
-  avant  <- hr_cl %>% filter(groupe == "Treatment", !is.na(STATUS_YR), DHSYEAR <  STATUS_YR) %>% nrow()
-  deja   <- hr_cl %>% filter(groupe == "Treatment", !is.na(STATUS_YR), DHSYEAR >= STATUS_YR) %>% nrow()
-  ens    <- hr_cl %>% filter(groupe == "Treatment") %>% nrow()
-  ctrl   <- hr_cl %>% filter(groupe == "Control")   %>% nrow()
-  excl   <- hr_cl %>% filter(groupe == "Excluded")  %>% nrow()
+  # Comptes par sous-catégories du traitement (activation effective treated_now)
+  avant  <- hr_cl %>% filter(GROUP == "Treatment", treated_now == 0) %>% nrow()
+  deja   <- hr_cl %>% filter(GROUP == "Treatment", treated_now == 1) %>% nrow()
+  ens    <- hr_cl %>% filter(GROUP == "Treatment") %>% nrow()
+  ctrl   <- hr_cl %>% filter(GROUP == "Control")   %>% nrow()
+  excl   <- hr_cl %>% filter(GROUP == "Excluded")  %>% nrow()
 
   tibble(
     DHSYEAR = y,
@@ -948,7 +1088,7 @@ gt_table_menages_all <- households_counts_all %>%
   ) %>%
   cols_align(align = "center", columns = everything()) %>%
   tab_footnote(
-    footnote = md("**Before treatment** : DHSYEAR < STATUS_YR (PA not yet created). **Already treated** : DHSYEAR ≥ STATUS_YR. **All clusters** : total number of households in the group *Treatment*. Note that 1997 uses the state of the PA network in 2008 (not 1997), for placebo test."), locations = cells_title(groups = "title"))
+    footnote = md("**Before treatment** : the PA is not yet in force at the survey reference date (treated_now = 0). **Already treated** : the PA is in force at the survey reference date (treated_now = 1). **All clusters** : total number of households in the group *Treatment*. GROUP identifies eventual treatment group membership, irrespective of current PA activation. Note that 1997 uses the state of the PA network in 2008 (not 1997), for placebo test."), locations = cells_title(groups = "title"))
 
 gt_table_menages_all   
 ```
@@ -960,9 +1100,14 @@ Les informations essentielles sur la classification des grappes d'enquête sont 
 ```{r}
 # Issue U2 #1 : la géométrie doit être retirée avant write_csv, sinon elle est
 # sérialisée en texte WKT et se propage dans les chapitres suivants.
+# GROUP = appartenance à la géographie de traitement éventuelle ;
+# treatment_date / treatment_year = début du traitement de l'AP assignée ;
+# treated_now = AP en vigueur à la date de référence de la vague.
 all_class <- gps_all_class %>%
   st_drop_geometry() %>%
-  select(DHSYEAR, DHSCLUST, DHSREGNA, GROUP = groupe, WDPAID, STATUS_YR, IUCN_CAT, dist_km)
+  select(DHSYEAR, DHSCLUST, DHSREGNA, GROUP, WDPAID, STATUS_YR,
+         treatment_year = STATUS_YR, IUCN_CAT, dist_km,
+         treatment_date, treated_now)
 
 write_csv(all_class, "data/derived/cluster_treatment_classification_staggered.csv")
 
