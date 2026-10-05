@@ -1,0 +1,4 @@
+specification,overall_ATT,overall_SE
+"principal (ipw, never-treated, 7 vagues)",2.7876333192743257,4.8761096971979025
+robustesse : notyettreated,2.669701072327682,4.854300456941405
+"robustesse : reg, hors vague 1997",1.700270763244653,4.7844690721589

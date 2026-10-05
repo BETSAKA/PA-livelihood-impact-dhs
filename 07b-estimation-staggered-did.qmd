@@ -1,0 +1,374 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Estimation échelonnée avec `did` (coupes répétées)
+
+Ce document met en œuvre l'estimation échelonnée (*staggered adoption*) de référence pour les coupes répétées, avec le package `did` (Callaway & Sant'Anna 2021) : `att_gt(..., panel = FALSE)` puis agrégations `aggte()`.
+
+**Statut par rapport au PAP.** Cette analyse est **secondaire** par rapport au dessin 2×2 préenregistré (placebo 1997–2008, effet principal 2008–2021, chapitre 07). Le PAP prévoit un estimateur moderne adapté à l'adoption échelonnée et aux effets hétérogènes en citant Borusyak et al. (2024), sans prescrire de logiciel : ni `did2s`, ni `did`, ni une fonction R particulière ne sont « préenregistrés ». `did` est retenu ici parce qu'il prend **explicitement en charge les coupes répétées** (`panel = FALSE`), contrairement à `did2s`/`didimputation` (conservés à titre de trace d'audit dans le chapitre 07).
+
+## Méthodes
+
+**Cohortes.** Le groupe de traitement est défini par la géographie (GROUP = Treatment, appartenance éventuelle, indépendamment de l'activation courante). La cohorte `did` est la **première vague observée dont la date de référence (1er juin) est postérieure ou égale à la date exacte d'entrée en traitement** de l'AP (`first_treated_survey_year`). Une AP entrée en traitement en octobre 2008 est donc codée cohorte 2011, pas 2008 : aucune observation n'est codée traitée avant sa date exacte de traitement (assertion ci-dessous). Les contrôles (jamais traités) reçoivent `g = 0`, convention du package. Les vagues étant irrégulières (1997, 2008, 2011, 2013, 2016, 2018, 2021), la cohorte est la première **période observée** traitée ; la date légale exacte reste stockée dans `treatment_date`.
+
+**Inférence.** Erreurs types par *multiplier bootstrap* (1 000 réplications) **clusterisées au niveau des grappes d'énumération de chaque vague** (`clustervars = "cluster_uid_num"`, identifiant `interaction(DHSYEAR, hv001)`) ; bandes de confiance **simultanées** (`cband = TRUE`) pour les ATT(g,t) et l'event-study. Sous `panel = FALSE`, chaque observation est sa propre unité dans `did` ; le regroupement au niveau grappe est assuré par `clustervars` (le bootstrap multiplieur est recalculé par grappe). Les poids sont les poids d'analyse (`w_all` = poids d'enquête × poids de matching), passés via `weightsname`.
+
+**Estimateur des ATT(g,t).** `est_method` : voir le choix documenté ci-dessous (l'estimateur par défaut `"dr"` — doubly robust — se heurte à des matrices de régression singulières dans des cellules de soutien faible ; la raison exacte est consignée au moment de l'exécution).
+
+**Groupe de comparaison.** `control_group = "nevertreated"` en spécification principale — l'appariement génétique a été construit entre ménages Treatment (éventuels) et Control, jamais traités sur la période. `notyettreated` est ajouté en robustesse, clairement étiqueté.
+
+**Covariables.** Contrôles du PAP, identiques au 2×2 : SPEI t−1, sexe et âge du chef de ménage, couvert arboré 2000, pente 2000, altitude 2000, population 2000, temps de trajet 2000. Aucune covariable post-traitement.
+
+**Temps d'événement.** L'agrégation dynamique de `did` exprime le temps d'événement comme **l'écart entre années d'enquête observées** (`t − g`, en années civiles), pas comme une position relative de vague : du fait de l'irrégularité des vagues, un même `e` regroupe des écarts réels différents (p. ex. `e = 3` agrège 2011→2008, 2016→2013 et 2021→2018). Cette convention du package est conservée et documentée ; la définition de l'activation effective, elle, repose toujours sur la comparaison exacte des dates (`treated_now`, audité au chapitre 01).
+
+**Date d'entrée en traitement.** `treatment_date` est le premier `valid_from` de l'état dynamique de l'AP (entrée en protection temporaire ou définitive selon les cas) — voir l'audit du chapitre 01. Il ne s'agit pas nécessairement de la date de « gestion opérationnelle » effective (présence de gardes, financement, plan d'aménagement) : le PAP décrit un traitement « déclaré par décret et géré opérationnellement », et la mise en œuvre opérationnelle peut différer de l'entrée légale. Cette limite est documentée comme axe de sensibilité futur si des dates de gestion défendables deviennent disponibles ; aucune date de substitution n'est inventée ici.
+
+## Données
+
+```{r}
+#| label: 07b-setup
+library(tidyverse)
+library(haven)
+library(did)
+library(ggplot2)
+library(sf) # st_drop_geometry
+
+survey_reference_date <- function(year) as.Date(sprintf("%d-06-01", year))
+survey_years <- c(1997, 2008, 2011, 2013, 2016, 2018, 2021)
+
+# Chargement identique au chapitre 07 (données appariées finales)
+dlist <- lapply(survey_years, function(y) {
+  d <- read_rds(glue::glue("data/derived/data_matched_{y}.rds"))
+  d |> rename(spei_wc_n_1 = !!glue::glue("spei_wc_{y-1}")) |>
+    mutate(hv219 = zap_labels(hv219),   # sexe du chef de ménage (1/2)
+           hv220 = zap_labels(hv220),   # âge du chef de ménage
+           DHSYEAR = y)
+})
+
+dat <- bind_rows(dlist) |>
+  filter(GROUP %in% c("Treatment", "Control")) |>
+  st_drop_geometry() |>
+  mutate(
+    treat           = as.integer(GROUP == "Treatment"),
+    treatment_date  = as.Date(treatment_date),
+    survey_ref_date = survey_reference_date(DHSYEAR),
+    hv219_femme     = as.integer(hv219 == 2),
+    hv220           = as.numeric(hv220),
+    w_svy           = hv005 / 1e6,
+    w_all           = w_svy * weights,   # poids d'enquête × poids de matching
+    cluster_uid     = interaction(DHSYEAR, hv001, drop = TRUE),
+    cluster_uid_num = as.integer(cluster_uid)
+  )
+
+# Cohorte did : première vague observée dont la date de référence est
+# postérieure ou égale à la date exacte de traitement (0 si jamais traité)
+pa_cohorts <- dat |>
+  filter(GROUP == "Treatment") |>
+  distinct(WDPAID, treatment_date) |>
+  mutate(first_treated_survey_year = vapply(treatment_date, function(td) {
+    w <- survey_years[vapply(survey_years, function(y) survey_reference_date(y) >= td, logical(1))]
+    if (length(w) == 0) 0 else min(w)
+  }, numeric(1)))
+
+did_dat <- dat |>
+  left_join(pa_cohorts |> select(WDPAID, first_treated_survey_year) |> distinct(),
+            by = "WDPAID") |>
+  mutate(g = if_else(GROUP == "Treatment", first_treated_survey_year, 0))
+
+# Cohortes sans vague observée postérieure au traitement (aucune ici) :
+# elles seraient codées 0 (jamais traitées) et documentées comme telles.
+n_pa_after_last <- sum(pa_cohorts$first_treated_survey_year == 0)
+cat("AP du groupe Treatment sans vague postérieure à leur traitement :",
+    n_pa_after_last, "\n")
+
+# Contrôle de cohérence des dates : aucune observation codée traitée avant
+# sa date exacte de traitement, aucune codée non traitée après.
+stopifnot(
+  "07b : observations codées traitées avant leur date exacte" =
+    !any(did_dat$g > 0 & did_dat$DHSYEAR == did_dat$g &
+         did_dat$treatment_date > survey_reference_date(did_dat$DHSYEAR)),
+  "07b : observations codées traitées avant leur date exacte (treated_now)" =
+    !any(did_dat$treated_now == 1 &
+         did_dat$treatment_date > did_dat$survey_ref_date),
+  "07b : observations codées non traitées après leur date exacte" =
+    !any(did_dat$treated_now == 0 & did_dat$GROUP == "Treatment" &
+         did_dat$treatment_date <= did_dat$survey_ref_date)
+)
+
+# Échantillon d'analyse : outcome, contrôles PAP et poids complets
+controls_pap <- c("spei_wc_n_1", "hv219_femme", "hv220",
+                  "treecover_area_2000", "slope_2000", "elevation_2000",
+                  "population_count_2000", "traveltime_2000_2000")
+analysis_vars <- c("wealth_centile_rural_weighted", controls_pap, "w_all",
+                   "g", "DHSYEAR", "cluster_uid_num")
+did_dat <- did_dat |> filter(if_all(all_of(analysis_vars), complete.cases))
+
+cat("N analyse :", nrow(did_dat), "\n")
+```
+
+**Choix de l'estimateur des ATT(g,t).** L'estimateur par défaut de `att_gt()` (`est_method = "dr"`, doubly robust) repose, dans chaque cellule (g,t), sur des régressions dont la matrice de design doit être de rang plein **côté traités en période pré-traitement** et **côté contrôles**. Deux limitations structurelles des données appariées empêchent son emploi ici :
+
+1. la vague 1997 appariée ne compte que **3 grappes de contrôle** : les cinq covariables de niveau grappe (couvert arboré, pente, altitude, population, temps de trajet — et SPEI) y sont de rang au plus 3, toute cellule utilisant 1997 comme période de base est donc de rang deficient pour les régressions d'issue (estimateurs `"dr"` et `"reg"`) ;
+2. les cellules de la cohorte 2021 en période pré-traitement (vague 2018) ne comptent que des ménages d'une seule grappe, dont la SPEI (niveau grappe) est constante : la régression côté traités de l'estimateur doubly robust y est singulière.
+
+L'estimateur **`"ipw"`** (pondération par inverse de probabilité, supporté par `did` et DRDID) ne repose pas sur ces régressions d'issue et s'exécute sur **les sept vagues sans exclusion** ; il est retenu comme spécification principale de l'analyse échelonnée secondaire. Une spécification de robustesse `"reg"` **hors vague 1997** (les régressions d'issue y sont de rang plein) est également rapportée. L'écart par rapport au `"dr"` par défaut est ainsi limité et documenté ; le diagnostic de tendances pré-traitement principal reste le placebo 2×2 1997–2008 du chapitre 07.
+
+```{r}
+#| label: 07b-attgt
+STAGGERED_EST_METHOD <- "ipw"   # voir « Choix de l'estimateur » ci-dessus
+
+xformla_pap <- as.formula(paste("~", paste(controls_pap, collapse = " + ")))
+
+attgt_out <- att_gt(
+  yname         = "wealth_centile_rural_weighted",
+  tname         = "DHSYEAR",
+  idname        = "cluster_uid_num",
+  gname         = "g",
+  xformla       = xformla_pap,
+  data          = as.data.frame(did_dat),
+  panel         = FALSE,
+  weightsname   = "w_all",
+  control_group = "nevertreated",
+  clustervars   = "cluster_uid_num",
+  bstrap        = TRUE,
+  cband         = TRUE,
+  biters        = 1000,
+  est_method    = STAGGERED_EST_METHOD
+)
+
+summary(attgt_out)
+```
+
+```{r}
+#| label: 07b-export-attgt
+dir.create("output/review_v2/did_rcs", showWarnings = FALSE)
+
+# did 2.1.2 : les ATT(g,t) sont stockes directement dans l'objet MP
+# (summary()$attgt n'existe pas dans cette version) ; bande simultanee =
+# estimate +/- c * SE avec le c du bootstrap.
+att_gt_export <- data.frame(
+  group = attgt_out$group,
+  time = attgt_out$t,
+  estimate = attgt_out$att,
+  std.error = attgt_out$se,
+  crit_value = unname(attgt_out$c),
+  band_lower = attgt_out$att - unname(attgt_out$c) * attgt_out$se,
+  band_upper = attgt_out$att + unname(attgt_out$c) * attgt_out$se
+) |>
+  mutate(pre_post = if_else(time < group, "pre", "post"))
+write_csv(att_gt_export, "output/review_v2/did_rcs/att_gt.csv")
+att_gt_export
+```
+
+## Agrégations
+
+```{r}
+#| label: 07b-aggte
+# na.rm = TRUE : certaines cellules (g,t) sont non estimables faute
+# d'observations appariees dans la vague (lacunes de soutien du design fige,
+# voir la section « Soutien ») ; na.rm saute ces cellules vides, il ne supprime
+# aucune cellule disposee de donnees.
+agg_simple <- aggte(attgt_out, type = "simple", na.rm = TRUE)
+agg_dyn    <- aggte(attgt_out, type = "dynamic", na.rm = TRUE)
+agg_group  <- aggte(attgt_out, type = "group", na.rm = TRUE)
+agg_cal    <- aggte(attgt_out, type = "calendar", na.rm = TRUE)
+
+agg_simple_export <- data.frame(
+  estimate = agg_simple$overall.att, se = agg_simple$overall.se)
+write_csv(agg_simple_export, "output/review_v2/did_rcs/aggte_simple.csv")
+
+agg_dyn_export <- data.frame(
+  event_time = agg_dyn$egt,
+  estimate   = agg_dyn$att.egt,
+  se         = agg_dyn$se.egt,
+  ci_lower   = agg_dyn$att.egt - 1.96 * agg_dyn$se.egt,
+  ci_upper   = agg_dyn$att.egt + 1.96 * agg_dyn$se.egt
+)
+write_csv(agg_dyn_export, "output/review_v2/did_rcs/aggte_dynamic.csv")
+
+agg_group_export <- data.frame(
+  cohort   = agg_group$eg,
+  estimate = agg_group$att,
+  se       = agg_group$se)
+write_csv(agg_group_export, "output/review_v2/did_rcs/aggte_group.csv")
+
+agg_cal_export <- data.frame(
+  time     = agg_cal$egt,
+  estimate = agg_cal$att.egt,
+  se       = agg_cal$se.egt)
+write_csv(agg_cal_export, "output/review_v2/did_rcs/aggte_calendar.csv")
+
+list(simple = agg_simple, dynamic = agg_dyn, group = agg_group, calendar = agg_cal)
+```
+
+### Event-study
+
+```{r}
+#| label: 07b-event-study-plot
+#| fig-cap: "Event-study (did, coupes répétées) — bandes de confiance simultanées"
+es <- data.frame(
+  event_time = agg_dyn$egt,
+  estimate   = agg_dyn$att.egt,
+  se         = agg_dyn$se.egt
+)
+# Bande simultanée à 95 % pour l'ensemble des ATT(g,t) (cband = TRUE)
+# did 2.1.2 stocke la valeur critique dans crit.val.egt pour l'aggregation
+# dynamique (agg_dyn$c est NULL dans cette version)
+crit <- if (is.null(agg_dyn$c)) unname(agg_dyn$crit.val.egt) else max(abs(agg_dyn$c))
+es <- es |>
+  mutate(
+    band_lower = estimate - crit * se,
+    band_upper = estimate + crit * se,
+    support = case_when(
+      event_time < 0 ~ "pré-traitement",
+      TRUE ~ "post-traitement"))
+
+ggplot(es, aes(event_time, estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey40") +
+  geom_vline(xintercept = 0, linetype = "dotted", colour = "grey40") +
+  geom_ribbon(aes(ymin = band_lower, ymax = band_upper), alpha = 0.2) +
+  geom_point(aes(shape = support), size = 2) +
+  scale_x_continuous(breaks = es$event_time) +
+  labs(x = "Temps d'événement (écart d'années d'enquête, t − g)",
+       y = "ATT (centile de richesse rurale)",
+       shape = NULL,
+       caption = "did::att_gt(panel = FALSE), contrôle never-treated, poids d'enquête × matching,\nbootstrap multiplieur clusterisé au niveau grappe, bande simultanée à 95 %") +
+  theme_minimal()
+
+write_csv(es, "output/review_v2/did_rcs/event_study.csv")
+```
+
+## Diagnostics de tendances pré-traitement
+
+```{r}
+#| label: 07b-pretrend
+# Nombre de cohortes contribuant a chaque temps d'evenement pre-traitement
+pre_cells <- att_gt_export |> filter(pre_post == "pre") |>
+  filter(!is.na(estimate)) |>
+  mutate(e = time - group) |>
+  group_by(e) |>
+  summarise(n_cohorts = n(), n_estimables = sum(!is.na(estimate)),
+            .groups = "drop")
+
+pretrend_export <- att_gt_export |>
+  filter(pre_post == "pre") |>
+  mutate(e = time - group) |>
+  left_join(pre_cells, by = "e") |>
+  select(group, time, estimate, std.error, e, n_cohorts)
+write_csv(pretrend_export, "output/review_v2/did_rcs/pretrend_diagnostics.csv")
+
+# Test conjoint de pre-tendance (Wald) produit par att_gt
+p_pretest <- attgt_out$Wpval
+list(pretrend_cells = pre_cells, wald_pretest_p = p_pretest)
+```
+
+Les ATT(g,t) pré-traitement ne sont pas des preuves de tendances parallèles : un test non significatif (`p > 0.05`) peut refléter une faible puissance — les magnitudes et le soutien effectif (nombre de cohortes par temps d'événement) priment. Le diagnostic **principal** de tendances parallèles demeure le placebo 2×2 1997–2008 du chapitre 07 ; ces diagnostics sont supplémentaires.
+
+**Caveat sur `Wpval` avec cette configuration.** Ici le test conjoint rapporté par `att_gt()` vaut `p = 0` alors qu'aucune cellule pré-traitement estimable n'est individuellement significative (plus grand |t| observé ≈ 1,1 sur 4 cellules). Cette valeur n'est pas crédible : elle reflète probablement l'interaction entre le bootstrap multiplieur, le très petit nombre de grappes treated par cellule (1 à 7 PA) et les cellules NA du pré-traitement. Il ne faut donc **pas** interpréter ce test comme un rejet des tendances parallèles ; les magnitudes pré-traitement individuelles et le placebo 2×2 restent les diagnostics pertinents.
+
+## Soutien et équilibre par cohorte × vague
+
+Le matching a été optimisé **par vague** (Treatment éventuel vs Control), pas par cohorte : l'équilibre au niveau cohorte × vague doit être vérifié avant d'interpréter les ATT(g,t).
+
+```{r}
+#| label: 07b-cohort-wave-support
+matching_variables <- c("treecover_area_2000", "slope_2000", "elevation_2000",
+                        "population_count_2000", "traveltime_2000_2000")
+
+smd_att <- function(x, tr) {
+  # SMD standardise cote traite (estimand ATT, convention cobalt)
+  xt <- x[tr == 1]; xc <- x[tr == 0]
+  if (length(xt) < 2 || length(xc) < 2) return(NA_real_)
+  s2t <- var(xt)
+  if (!is.finite(s2t) || s2t == 0) return(NA_real_)
+  abs((mean(xt) - mean(xc)) / sqrt(s2t))
+}
+
+# ATTENTION : les controles (never-treated) ont g = 0 ; regrouper par g
+# separerait traites et controles dans des cellules distinctes. La comparaison
+# pertinente pour chaque cellule (cohort, vague) est : traites de la cohorte
+# dans la vague vs CONTROLES DE LA MEME VAGUE (partages entre cohortes).
+cohorts <- sort(unique(did_dat$g[did_dat$g > 0]))
+cohort_rows <- list()
+for (co in cohorts) {
+  for (w in survey_years) {
+    dt <- did_dat[did_dat$g == co & did_dat$DHSYEAR == w & did_dat$GROUP == "Treatment", ]
+    dc <- did_dat[did_dat$DHSYEAR == w & did_dat$GROUP == "Control", ]
+    tr <- c(rep(1, nrow(dt)), rep(0, nrow(dc)))
+    dd <- rbind(dt[, matching_variables], dc[, matching_variables])
+    smds <- vapply(matching_variables, function(nm) smd_att(dd[[nm]], tr), numeric(1))
+    cohort_rows[[length(cohort_rows) + 1]] <- tibble(
+      cohort = co, DHSYEAR = w,
+      n_treated = nrow(dt),
+      n_control = nrow(dc),
+      n_pas = n_distinct(dt$WDPAID),
+      w_mass_treated = sum(dt$w_all),
+      w_mass_total = sum(dt$w_all) + sum(dc$w_all),
+      max_smd = if (all(is.na(smds))) NA_real_ else max(smds, na.rm = TRUE),
+      var_max_smd = names(which.max(smds))[1]
+    )
+  }
+}
+cohort_wave <- bind_rows(cohort_rows) |>
+  mutate(
+    flag_no_treated   = n_treated == 0,
+    flag_weak_support = n_treated < 30 | n_control < 30,
+    flag_smd_gt_10    = max_smd > 0.10
+  )
+
+dir.create("output/review_v2/did_rcs", showWarnings = FALSE)
+write_csv(cohort_wave, "output/review_v2/did_rcs/cohort_support.csv")
+cohort_wave
+```
+
+Les cellules signalées (`flag_weak_support`, `flag_smd_gt_10`, `flag_no_treated`) ne sont **pas** écartées automatiquement : elles appellent une lecture prudente des ATT(g,t) concernés (soutien faible, équilibre imparfait hérité du matching par vague). Le tableau révèle en particulier : (i) la cohorte 2016 n'a **aucune** observation dans la vague 2016 (les AP de cette cohorte ne sont pas présentes dans l'échantillon apparié de cette vague) ; (ii) les cohortes 2016 et 2021 reposent sur 1 à 4 AP par cellule, avec des SMD de cohorte × vague souvent très supérieurs à 0,10 — l'équilibre du design figé a été obtenu **par vague** (tous ménages Treatment éventuels vs Control), pas par cohorte ; (iii) le petit nombre de grappes treated limite la fiabilité du bootstrap multiplieur pour ces cohortes. Les ATT(g,t) et agrégations par cohorte (2016, 2021) doivent être lus comme une exploration de soutien faible, non comme des estimations au même niveau de confiance que le 2×2 principal.
+
+## Robustesses
+
+```{r}
+#| label: 07b-robustness
+# (a) Groupe de comparaison : notyettreated
+rob_nyt <- tryCatch(
+  att_gt(yname = "wealth_centile_rural_weighted", tname = "DHSYEAR",
+         idname = "cluster_uid_num", gname = "g", xformla = xformla_pap,
+         data = as.data.frame(did_dat), panel = FALSE,
+         weightsname = "w_all", control_group = "notyettreated",
+         clustervars = "cluster_uid_num",
+         bstrap = TRUE, cband = TRUE, biters = 1000,
+         est_method = STAGGERED_EST_METHOD),
+  error = function(e) conditionMessage(e))
+
+# (b) Estimateur "reg" hors vague 1997 (régressions d'issue de rang plein)
+rob_reg <- tryCatch({
+  att_gt(yname = "wealth_centile_rural_weighted", tname = "DHSYEAR",
+         idname = "cluster_uid_num", gname = "g", xformla = xformla_pap,
+         data = as.data.frame(did_dat |> filter(DHSYEAR != 1997)),
+         panel = FALSE, weightsname = "w_all",
+         control_group = "nevertreated", clustervars = "cluster_uid_num",
+         bstrap = TRUE, cband = TRUE, biters = 1000, est_method = "reg")
+}, error = function(e) conditionMessage(e))
+
+rob_nyt_simple <- if (inherits(rob_nyt, "MP"))
+  tryCatch(aggte(rob_nyt, type = "simple", na.rm = TRUE)$overall.att,
+           error = function(e) conditionMessage(e)) else rob_nyt
+rob_reg_simple <- if (inherits(rob_reg, "MP"))
+  tryCatch(aggte(rob_reg, type = "simple", na.rm = TRUE)$overall.att,
+           error = function(e) conditionMessage(e)) else rob_reg
+
+data.frame(
+  specification = c(
+    "principal (ipw, never-treated, 7 vagues)",
+    "robustesse : notyettreated",
+    "robustesse : reg, hors vague 1997"),
+  overall_ATT = c(agg_simple$overall.att, rob_nyt_simple, rob_reg_simple)
+)
+```
+
+## Synthèse
+
+- L'analyse échelonnée `did` (`panel = FALSE`) confirme (ou nuance) le dessin 2×2 : l'ATT global agrégé, les effets dynamiques et les diagnostics de pré-tendance sont rapportés sous `output/review_v2/did_rcs/`.
+- Elle est **secondaire** : le PAP préenregistre le 2×2 ; l'estimateur échelonné répond au cas où le 2×2 manque de puissance, et le PAP cite Borusyak et al. (2024) sans prescrire d'implémentation logicielle.
+- Limites documentées : choix de `est_method` (voir « Choix de l'estimateur »), cohortes à soutien faible (tableau cohorte × vague), temps d'événement en écarts d'années d'enquête, date d'entrée en traitement = premier `valid_from` (pas nécessairement la mise en œuvre opérationnelle).
