@@ -1,0 +1,4 @@
+year,caliper,eligible_treated,eligible_control,matched_treated,matched_control,treated_retention,max_smd_cobalt,worst_covariate,max_smd_pooled,runtime_min,pop.size,max.generations,seed
+2013,0.5,724,4455,436,436,0.6022,0.3592,population_count_2000,0.3151,0.6,100,10,20263017
+2013,1,724,4455,692,692,0.9558,0.2855,population_count_2000,0.2183,1,100,10,20263017
+2013,1.5,724,4455,724,724,1,0.2846,population_count_2000,0.2336,1.7,100,10,20263017

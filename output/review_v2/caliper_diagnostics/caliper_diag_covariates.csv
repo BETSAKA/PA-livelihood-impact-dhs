@@ -1,0 +1,4 @@
+year,caliper,smd_treecover_area_2000,smd_slope_2000,smd_elevation_2000,smd_population_count_2000,smd_traveltime_2000_2000
+2013,0.5,0.0061,0.0557,0.0824,0.3592,0.0482
+2013,1,0.0081,1e-4,0.022,0.2855,0.0378
+2013,1.5,0.0376,0.037,0.0248,0.2846,0.0134
