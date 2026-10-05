@@ -14,7 +14,7 @@ En effet, si les deux groupes sont très différents avant le traitement, il est
 
 Nous réalisons le matching à l'aide de la méthode genetic matching du package R MatchIt, en appelant directement `matchit(method = "genetic", distance = "mahalanobis", ...)`. Cette méthode combine les variables de matching en une seule mesure unique de distance "Mahalanobis distance matching". Cette distance mesurera la différence entre les unités des groupes appariés pour quantifier la similitude entre les deux groupes d'observations, tout en tenant compte des corrélations entre les covariables et de leurs covariances [@Diamond2013]. L'algorithme génétique (via `Matching::GenMatch`, appelé en interne par `matchit()`) sélectionne les facteurs d'échelle attribués à chaque covariable afin de maximiser l'équilibre entre le groupe de traitement et le groupe de contrôle, puis les paires sont formées en une seule étape.
 
-**TODO (caliper) :** le caliper préenregistré de 0.25 écart-type sera réexaminé dans une revue séparée ; il n'est **pas** appliqué dans la présente exécution et les résultats ne doivent pas être présentés comme appariés avec caliper.
+**Caliper préenregistré.** Le PAP prévoit un caliper « de 0.25 écart-type de la distance de Mahalanobis » [@rosenbaum_central_1983]. Un caliper portant littéralement sur la distance de Mahalanobis *par paire* n'est implémenté ni par `MatchIt` (un caliper non nommé est refusé avec `distance = "mahalanobis"`, aucune mesure de distance vectorielle n'étant conservée dans cette configuration — vérifié sur les versions 4.7.2 et 4.8.1) ni par `Matching::Match`, le moteur appelé en interne. En revanche, dans la pile logicielle exacte que décrit le PAP (`GenMatch()` via MatchIt), `caliper = 0.25` a une sémantique documentée : un caliper de 0.25 **écart-type de chaque covariable de matching**, appliqué pendant la recherche génétique (« caliper=.25 means that all matches not equal to or within .25 standard deviations of each covariate in 'X' are dropped », documentation de `Matching::Match`). Nous implémentons donc le caliper préenregistré sous cette forme : `caliper = 0.25` (`std.caliper = TRUE`) sur chacune des cinq covariables, ce qui interdit toute paire s'écartant de plus de 0.25 écart-type sur l'une d'elles. Conformément au PAP, si le SMD dépasse 0.1 après appariement, l'intervalle du caliper sera augmenté.
 
 ## Exécution du matching pour toutes les années
 
@@ -76,6 +76,16 @@ matching_arguments <- list(
   estimand = "ATT",
   replace = FALSE,
   ratio = 1L,
+  # Caliper préenregistré (PAP, Rosenbaum 1983) : 0,25 écart-type.
+  # Implémentation : calipers nommés de 0,25 SD sur chaque covariable de
+  # matching (std.caliper = TRUE), appliqués pendant la recherche génétique.
+  # C'est la sémantique documentée de caliper = 0.25 dans Matching::GenMatch /
+  # Match, le moteur appelé par matchit(method = "genetic",
+  # distance = "mahalanobis") ; un caliper littéral sur la distance de
+  # Mahalanobis par paire n'est supporté par aucun des deux packages.
+  caliper = setNames(rep(0.25, length(matching_variables)),
+                     matching_variables),
+  std.caliper = TRUE,
   pop.size = 1000,
   max.generations = 100,
   wait.generations = 4
@@ -182,8 +192,6 @@ run_matching_year <- function(year, force = FORCE_REMATCH) {
     set.seed(seed)
     fml <- as.formula(paste("treatment ~", paste(matching_variables, collapse=" + ")))
 
-    # TODO(caliper) : le caliper préenregistré de 0.25 SD sera réexaminé dans
-    # une revue séparée ; il n'est PAS appliqué ici.
     m_out <- matchit(
       formula   = fml,
       data      = dat_m,
@@ -192,6 +200,8 @@ run_matching_year <- function(year, force = FORCE_REMATCH) {
       estimand  = "ATT",
       replace   = FALSE,
       ratio     = 1,
+      caliper   = matching_arguments$caliper,
+      std.caliper = matching_arguments$std.caliper,
       pop.size  = 1000,
       max.generations = 100,
       wait.generations = 4
