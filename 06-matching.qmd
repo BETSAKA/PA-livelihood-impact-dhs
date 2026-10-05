@@ -324,12 +324,22 @@ cobalt_smd <- map_dfr(seq_along(yrs), function(i) {
                   SMD_after_cobalt = NA_real_))
   }
   bal <- as.data.frame(bt$Balance)
-  un_col  <- grep("^Diff\\.Un$",  colnames(bal), value = TRUE)[1]
   adj_col <- grep("^Diff\\.Adj$", colnames(bal), value = TRUE)[1]
+  # SMD avant appariement : bal.tab(matchit) ne calcule Diff.Un que si
+  # un = TRUE ; on le recalcule explicitement sur les données brutes.
+  dat_raw <- readRDS(glue("data/derived/hr_{yrs[i]}_final.rds")) %>%
+    filter(GROUP %in% c("Treatment", "Control")) %>%
+    mutate(treatment = if_else(GROUP == "Treatment", 1L, 0L)) %>%
+    # même échantillon éligible que le matching (exclusion des NA de covariables)
+    tidyr::drop_na(all_of(matching_variables))
+  bal_pre <- cobalt::bal.tab(
+    reformulate(matching_variables, response = "treatment"),
+    data = as.data.frame(sf::st_drop_geometry(dat_raw)),
+    estimand = "ATT", un = TRUE, abs = TRUE
+  )$Balance
   tibble(
     Year = yrs[i],
-    SMD_before_cobalt = if (!is.na(un_col))
-      max(abs(bal[[un_col]]), na.rm = TRUE) else NA_real_,
+    SMD_before_cobalt = max(abs(bal_pre$Diff.Un), na.rm = TRUE),
     SMD_after_cobalt = if (!is.na(adj_col))
       max(abs(bal[[adj_col]]), na.rm = TRUE) else NA_real_
   )
@@ -522,7 +532,7 @@ balance_results
 
 ```
 
-L'analyse des distributions des covariables avant le matching montrent un déséquilibre important entre les groupes de traitement et de contrôle. En 1997, l'équilibre des covariables est partiellement atteint. Deux variables montrent un déséquilibre dont la couverture forestière en 2000 (avec un SMD = 0.15) et l'accessibilité en 2000 (avec un SMD = 0.17). Cela montre des différences structurelles persistantes entre les groupes. En 2008, l'équilibre est globalement satisfaisant, avec un léger déséquilibre pour la variable densité de population avec un SMD égale à 0.10, tandis que l'ensemble des autres covariables présente un SMD inférieur à 0.05. En 2011, tous les covariables sont bien équilibrées sauf pour la variable densité de population. Cette dernière montre un déséquilibre modéré dont la SMD est égale à 0.15. Cela suggère une certaine hétérogénéité territoriale entre les zones traitées et non traitées. Cette année est celle où le matching est le plus performant. En 2013, la majorité des covariables sont équilibrées mais le temps de déplacement reste déséquilibré avec un SMD égale à 0.14. Cela indique l'existence d'une différence persistante d'accessibilité entre les groupes. En 2016, toutes les covariables présentent un SMD inférieur au seuil de 0.1, qui indique un équilibre satisfaisant entre les groupes. En 2021, plusieurs covariables présentent un léger déséquilibre. Les groupes restent structurellement différents en termes de contexte géographique et socio-démographique.
+L'analyse des distributions des covariables avant le matching (définition cobalt : SMD standardisé par l'écart-type du groupe traité, estimand ATT) montre un déséquilibre important entre les groupes de traitement et de contrôle. La densité de population en 2000 est systématiquement la covariable la plus déséquilibrée, avec un SMD allant de 0.93 (2018) à 7.30 (2013) selon la vague. Le couvert forestier 2000 est déséquilibré dans toutes les vagues (SMD de 0.18 à 0.76), de même que l'altitude (0.13 à 0.88) et le temps d'accès dans toutes les vagues sauf 1997. Ces écarts traduisent des différences structurelles persistantes entre les zones traitées et non traitées et justifient le recours à l'appariement. NB : ces valeurs diffèrent des SMD « pooled » calculés par la fonction interne `smd_by_var()` (voir tableau de synthèse plus bas) ; la définition cobalt est celle de référence.
 
 ```{r}
 # Load data before matching
