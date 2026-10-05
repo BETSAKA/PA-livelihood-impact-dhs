@@ -39,6 +39,7 @@ library(gt)
 library(gtExtras)
 library(did2s)
 library(modelsummary)
+library(sf) # st_drop_geometry (contrôle des bornes temporelles)
 
 # Dictionnaire de noms de variables
 var_labels <- c(
