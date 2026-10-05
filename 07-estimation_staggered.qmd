@@ -189,14 +189,27 @@ endpoint_check <- dat %>%
   )
 print(endpoint_check)
 
+# Garde-fou strict (revue v2) : plus de tolérance arbitraire (l'ancienne
+# garde admettait jusqu'à 5 % de Traités 2021 non traités). Pour le dessin
+# principal 2008–2021, tout Traité de 2008 doit être non traité à la date
+# de référence de la baseline, et tout Traité de 2021 doit être traité à
+# celle du end-point. En cas de violation, les AP concernées sont listées
+# (WDPAID, date de traitement, effectifs de grappes et de ménages).
+endpoint_violations_2021 <- dat %>%
+  st_drop_geometry() %>%
+  filter(GROUP == "Treatment", DHSYEAR == 2021, treated_now == 0) %>%
+  count(WDPAID, treatment_date, name = "n_households") %>%
+  mutate(n_clusters = vapply(WDPAID, function(id) {
+    n_distinct(dat$cluster_uid[dat$GROUP == "Treatment" & dat$DHSYEAR == 2021 &
+                               dat$treated_now == 0 & dat$WDPAID == id])
+  }, numeric(1)))
+
 stopifnot(
   "07 : des observations Treatment de 2008 sont déjà traitées à la baseline" =
-    all(endpoint_check$n_already[endpoint_check$DHSYEAR == 2008] == 0)
+    all(endpoint_check$n_already[endpoint_check$DHSYEAR == 2008] == 0),
+  "07 : des observations Treatment de 2021 ne sont pas encore traitées à la date de référence" =
+    all(endpoint_check$n_not_yet[endpoint_check$DHSYEAR == 2021] == 0)
 )
-if (any(endpoint_check$share_not_yet[endpoint_check$DHSYEAR == 2021] > 0.05)) {
-  stop("07 : part non négligeable de Traités 2021 non encore traités à la ",
-       "date de référence — décision substantielle requise (voir untreated_pas).")
-}
 
 h1_m_main_2x2 <- feols(f_main, data = main, weights = ~ w_all, cluster = ~ cluster_uid)
 
@@ -433,6 +446,8 @@ count_binned_obs_plot
 ```
 
 Pour l'instant, on n'arrive pas à appliquer l'approche de @borusyak2024 avec des données en coupes répétées (pas du panel) avec le package R didimputation. En théorie cette méthode peut s'appliquer à des données "repeated cross sections" et il semblerait qu'un package STATA le fasse. Mais nous ne disposons pas de STATA pour tester. On va donc appliquer la méthode de Gardner, qui en principe est très proche (avec des intervalles de confiance un peu plus large).
+
+**Mise en garde (revue v2) : implémentation *legacy / exploratory*.** L'implémentation `did2s` qui suit est conservée à titre de trace d'audit ; ce n'est **pas** l'estimateur échelonné final privilégié pour les coupes répétées (son traitement des coupes répétées n'a pas pu être validé lors de la revue). L'analyse échelonnée de référence est désormais réalisée avec le package `did` (`att_gt(..., panel = FALSE)`), qui prend explicitement en charge les coupes répétées, dans un document séparé : `07b-estimation-staggered-did.qmd`.
 
 Nota bene : Afin de stabiliser les estimations de l’event-study, nous avons appliqué un binning des années relatives au traitement, regroupant toutes les observations au-delà de ±5 années dans des catégories communes. Ce choix est motivé par l’espacement irrégulier des enquêtes disponibles, qui implique que certaines valeurs de temps relatif sont représentées par très peu d’observations et produisent des coefficients instables. Comme le soulignent Borusyak, Jaravel et Spiess (2024, p. 22) : “*In practice, it is common to bin distant leads and lags into a single category, both to improve statistical precision and to avoid presenting very noisy and uninformative coefficients.*” Cette approche permet ainsi de réduire le bruit aux extrêmes et de se concentrer sur l’interprétation des dynamiques principales autour du traitement.s
 
