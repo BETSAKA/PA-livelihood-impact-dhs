@@ -1,0 +1,5 @@
+DHSYEAR,GROUP,n_households,n_clusters,n_pas
+2008,Control,6323,214,1
+2008,Treatment,1155,38,30
+2021,Control,5922,189,1
+2021,Treatment,1601,52,34

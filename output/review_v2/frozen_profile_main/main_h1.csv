@@ -1,0 +1,2 @@
+outcome,estimate,std.error,statistic,p.value,conf_low,conf_high,n_obs,n_clusters
+wealth_centile_rural_weighted,4.396877298761092,4.870770882990399,0.9027066565819739,0.36712333147295206,-5.149833631900091,13.943588229422275,15001,493
