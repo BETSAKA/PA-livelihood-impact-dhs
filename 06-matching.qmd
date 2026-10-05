@@ -62,10 +62,12 @@ if (exists("run_matching_year")) rm(run_matching_year)
 # Revue v2 : graine de base fixe, graine spécifique par vague (reproductibilité)
 MATCHING_BASE_SEED <- 20261004L
 
-# Revue v2 : relance complète de toutes les vagues, indépendamment des caches
-# existants (les anciens caches, sans métadonnées de spécification, sont de
-# toute façon invalidés par l'échec de validation du hash).
-FORCE_REMATCH <- TRUE
+# Revue v2 : la première exécution doit forcer une relance complète de toutes
+# les vagues (les anciens caches, sans métadonnées de spécification, sont de
+# toute façon invalidés par l'échec de validation du hash). Une fois ce
+# rematch initial effectué, passer à FALSE : les caches ne sont alors
+# réutilisés que si le hash de spécification est identique.
+FORCE_REMATCH <- FALSE
 
 # Arguments du matching (source unique du hash de spécification)
 matching_arguments <- list(
@@ -129,8 +131,11 @@ run_matching_year <- function(year, force = FORCE_REMATCH) {
     return(NULL)
   }
 
-  # Garde-fou : GROUP valide partout, et aucune observation Treatment issue
-  # d'une AP "Proposed" (aucune reclassification issue d'un RDS périmé)
+  # Garde-fou : GROUP valide partout où il est renseigné, et aucune
+  # observation Treatment issue d'une AP "Proposed" (aucune reclassification
+  # issue d'un RDS périmé). Les ménages des clusters retirés pour coordonnées
+  # GPS invalides (9 en 2008, 1 en 2011) ont GROUP manquant : ils ne peuvent
+  # pas être classés et sont exclus du matching (comme auparavant).
   prop_ids <- readr::read_csv(
     "data/PA_creation/wdpa_data/dynamic_wdpa_metadata.csv",
     show_col_types = FALSE) |>
@@ -138,7 +143,9 @@ run_matching_year <- function(year, force = FORCE_REMATCH) {
     dplyr::pull(WDPAID)
   stopifnot(
     "GROUP invalide dans les données de matching" =
-      all(dat$GROUP %in% c("Treatment", "Control", "Excluded")),
+      all(dat$GROUP[!is.na(dat$GROUP)] %in% c("Treatment", "Control", "Excluded")),
+    "GROUP manquant parmi les observations éligibles au matching" =
+      all(!is.na(dat_m$GROUP)),
     "treated_now incohérent" =
       all(dat_m$treated_now[dat_m$treatment == 1L] %in% c(0L, 1L)),
     "Treatment rattaché à une AP Proposed" =
@@ -210,6 +217,12 @@ run_matching_year <- function(year, force = FORCE_REMATCH) {
 
   matched <- match.data(m_out, data = sf::st_drop_geometry(dat_m)) %>%
     dplyr::filter(weights > 0)
+
+  # Chaque observation appariée porte un GROUP valide
+  stopifnot(
+    "GROUP invalide dans l'échantillon apparié" =
+      all(matched$GROUP %in% c("Treatment", "Control"))
+  )
 
   saveRDS(matched, matched_out_path)
   cat(glue(">> N appariés = {nrow(matched)} (écrit: {matched_out_path})\n"))
@@ -711,7 +724,9 @@ library(gt)
 yrs <- c(1997, 2008, 2011, 2013, 2016, 2018, 2021)
 
 bal_after <- lapply(yrs, function(y){
-  m_out <- readRDS(glue("data/derived/matching_result_{y}.rds"))
+  # Revue v2 : le cache est une liste m_out + meta ; on passe l'objet matchit
+  cached <- readRDS(glue("data/derived/matching_result_{y}.rds"))
+  m_out <- if (is.list(cached) && !is.null(cached$m_out)) cached$m_out else cached
   bt <- bal.tab(m_out, un = TRUE, abs = TRUE, m.threshold = 0.1)
   saveRDS(bt, glue("data/derived/bal_tab_{y}.rds"))
   bt
