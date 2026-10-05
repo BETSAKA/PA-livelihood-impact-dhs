@@ -150,10 +150,56 @@ dynamic_wdpa_vect <- vect("data/PA_creation/dynamic_wdpa.gpkg") |>
     ),
     WDPAID = as.integer(WDPAID)
   ) |>
+  # Correction de source (revue v2) : Mandrozo (WDPAID 555547961) et le
+  # Complexe Tsimembo-Manambolomaty (WDPAID 166880) ont reçu leur désignation
+  # nationale définitive de Paysage Harmonieux Protégé (PHP, UICN V) le
+  # 21 avril 2015 (décrets 2015-714 et 2015-715). La base dynamique conserve
+  # leur état Ramsar après l'expiration de la protection temporaire : le
+  # filtre générique ci-dessous, qui ne retire du réseau national que les
+  # désignations purement internationales, les aurait donc supprimés après
+  # cette date. On réattribue la désignation nationale PHP à ces deux AP —
+  # correction de la source, le statut Ramsar lui-même n'étant pas traité
+  # comme une protection nationale.
+  mutate(
+    DESIG = if_else(
+      WDPAID %in% c(555547961L, 166880L) &
+        DESIG == "Ramsar Site, Wetland of International Importance",
+      "Paysage Harmonieux Protégé",
+      DESIG
+    )
+  ) |>
   filter(DESIG != "Ramsar Site, Wetland of International Importance") |>
   filter(STATUS != "Inscribed") |>
   select(WDPAID, NAME, DESIG, MANG_AUTH, IUCN_CAT, STATUS, STATUS_YR_DYN,
          zone_type, state_id, valid_from, valid_to)
+
+# Audit (revue v2) : Mandrozo et Tsimembo-Manambolomaty restent dans le
+# réseau national après le 21 avril 2015 sous désignation PHP (états
+# external_boundary et secondary_zoning), leurs états antérieurs restant
+# inchangés (protection temporaire), et la réattribution ne concerne que
+# leurs 4 états postérieurs au 21/04/2015 dans la source.
+php_audit <- as.data.frame(dynamic_wdpa_vect)[, c("WDPAID", "NAME", "DESIG",
+                                                  "zone_type", "state_id",
+                                                  "valid_from", "valid_to")]
+php_audit$valid_from <- as.Date(php_audit$valid_from)
+php_audit$valid_to   <- as.Date(php_audit$valid_to)
+php_ids  <- c(555547961L, 166880L)
+php_date <- as.Date("2015-04-21")
+stopifnot(
+  "Mandrozo/Tsimembo : absents du réseau national après le 21/04/2015" =
+    sum(php_audit$WDPAID %in% php_ids &
+        php_audit$valid_from <= php_date &
+        (is.na(php_audit$valid_to) | php_audit$valid_to > php_date) &
+        php_audit$DESIG == "Paysage Harmonieux Protégé") == 4L,
+  "Mandrozo/Tsimembo : états antérieurs au 21/04/2015 modifiés" =
+    all(php_audit$DESIG[php_audit$WDPAID %in% php_ids &
+                        php_audit$valid_from < php_date] ==
+          "Protection Temporaire"),
+  "Mandrozo/Tsimembo : désignations inattendues" =
+    all(php_audit$DESIG[php_audit$WDPAID %in% php_ids] %in%
+          c("Protection Temporaire", "Paysage Harmonieux Protégé"))
+)
+php_audit
 
 dynamic_wdpa_metadata <- readr::read_csv("data/PA_creation/wdpa_data/dynamic_wdpa_metadata.csv",
                                          show_col_types = FALSE)
