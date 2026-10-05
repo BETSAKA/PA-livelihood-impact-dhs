@@ -6,7 +6,7 @@ editor_options:
 
 # Matching
 
-Le document illustre l'application de la méthode de matching dans l'analyse. L'objectif de cette méthode est d'équilibrer les échantillons, c'est-à-dire de maximiser la comparabilité entre les groupes de traitement et de contrôle en termes de caractéristiques observables [@ho2007]. Nous comparons donc des groupes traités et contrôles en les appariant selon 5 covariables environnementales (taux de couvert forestier en 2000, la pente, l'altitude, la densité de population en 2000 et l'accessibilité en 2000).
+Le document illustre l'application de la méthode de matching dans l'analyse. L'objectif de cette méthode est d'équilibrer les échantillons, c'est-à-dire de maximiser la comparabilité entre les groupes de traitement et de contrôle en termes de caractéristiques observables [@Ho2007]. Nous comparons donc des groupes traités et contrôles en les appariant selon 5 covariables environnementales (taux de couvert forestier en 2000, la pente, l'altitude, la densité de population en 2000 et l'accessibilité en 2000).
 
 En effet, si les deux groupes sont très différents avant le traitement, il est difficile de savoir si les différences observées après viennent du traitement ou simplement de ces différences initiales. D'où l'importance du matching, qui permet de neutraliser ces différences. Plus précisement, nous utilisons le genetic matching, une variante des méthodes de matching. Bien qu'ayant le même objectif, cette approche repose sur des algorithmes d'optimisation qui ajustent les facteurs de confusion susceptibles d'influencer à la fois la probabilité de recevoir le traitement et les résultats observés.
 
@@ -486,7 +486,7 @@ Pour effectuer le test avant l'appariement, on détermine les déséquilibres in
 
 -   Si \|SMD\| \< 0.1, il existe un équilibre satisfaisant entre les groupes pour la covariable.
 
--   Si SMD \> 0.1, le déséquilibre est significatif [@austin2009]. Pour réajuster l'équilibre, on augmentera l'intervalle des calipers afin d'obtenir un SMD **≤** 0.1.
+-   Si SMD \> 0.1, le déséquilibre est significatif [@Austin2009]. Pour réajuster l'équilibre, on augmentera l'intervalle des calipers afin d'obtenir un SMD **≤** 0.1.
 
 ```{r}
 # Load 
