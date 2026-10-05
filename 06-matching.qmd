@@ -269,6 +269,17 @@ for (i in seq_along(yrs)) {
 })
 
 result_list <- purrr::compact(res_list) |> bind_rows()
+
+# Garde-fou : le résumé doit couvrir exactement les sept vagues. Un
+# tryCatch() qui avorterait silencieusement une vague ne doit pas pouvoir
+# produire un résumé partiel (c'est ce qui s'était produit lors du rendu
+# de nuit interrompu : le fichier ne contenait que cinq vagues).
+stopifnot(
+  "06 : le résumé du matching ne couvre pas les sept vagues" =
+    nrow(result_list) == length(yrs),
+  setequal(result_list$Année, yrs)
+)
+
 saveRDS(result_list, "data/derived/matching_summary_all_years.rds")
 
 # Balance tables cobalt à partir des objets matchit sauvegardés
@@ -299,8 +310,42 @@ result_list <- result_list %>%
 
 saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years.rds")
 
+# Harmonisation du diagnostic d'équilibre : cobalt est le diagnostic
+# standard du workflow de matching / du PAP. Sous estimand ATT, cobalt
+# standardise l'écart de moyennes par l'écart-type du groupe traité, tandis
+# que smd_by_var() ci-dessus utilise l'écart-type pooled des deux groupes ;
+# les deux définitions coexistent dans le tableau, la lecture de référence
+# pour le critère SMD <= 0.1 est celle de cobalt.
+cobalt_smd <- map_dfr(seq_along(yrs), function(i) {
+  bt <- bal_tabs[[i]]
+  if (is.null(bt)) {
+    return(tibble(Year = yrs[i],
+                  SMD_before_cobalt = NA_real_,
+                  SMD_after_cobalt = NA_real_))
+  }
+  bal <- as.data.frame(bt$Balance)
+  un_col  <- grep("^Diff\\.Un$",  colnames(bal), value = TRUE)[1]
+  adj_col <- grep("^Diff\\.Adj$", colnames(bal), value = TRUE)[1]
+  tibble(
+    Year = yrs[i],
+    SMD_before_cobalt = if (!is.na(un_col))
+      max(abs(bal[[un_col]]), na.rm = TRUE) else NA_real_,
+    SMD_after_cobalt = if (!is.na(adj_col))
+      max(abs(bal[[adj_col]]), na.rm = TRUE) else NA_real_
+  )
+})
+
+result_list <- result_list %>%
+  left_join(cobalt_smd, by = "Year") %>%
+  relocate(SMD_before_cobalt, SMD_after_cobalt, .after = Max_SMD_after)
+
+dir.create("output/review_v2", showWarnings = FALSE)
+write_csv(result_list, "output/review_v2/matching_summary.csv")
+
 print(result_list)
 ```
+
+Le tableau reporte deux définitions du SMD : la définition interne `smd_by_var()` (écart-type pooled) et la définition cobalt (écart-type du groupe traité, standard pour un estimand ATT). Le diagnostic de référence est celui de cobalt. **La vague 2013 ne satisfait pas le critère préenregistré de SMD <= 0.1** selon cette définition (déséquilibre persistant de `population_count_2000` après appariement) ; le caliper préenregistré de 0.25 écart-type, qui pourrait corriger ce déséquilibre, est délibérément reporté à une revue séparée et n'est pas appliqué ici.
 
 Nous obtenons un tableau qui présente, pour chaque année d'analyse, le nombre total d'observations initialement disponibles, le nombre d'observations conservées après exclusion des observations ne relevant ni du groupe Treatment ni du groupe Control, ainsi que celles présentant des valeurs manquantes sur les variables utilisées pour le matching. Le tableau indique également les effectifs des groupes traités et contrôles avant et après le matching.
 
