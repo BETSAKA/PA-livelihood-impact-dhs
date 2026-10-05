@@ -138,9 +138,40 @@ Ces helpers reconstruisent l'état du réseau d'AP **valide à une date donnée*
 
 # Chargement de la base dynamique (mêmes filtres que data/PA_creation/PA_database.R,
 # en conservant les champs temporels state_id / valid_from / valid_to)
-library(terra)
+#
+# Import via sf::st_read() (revue v2) : terra::vect() supprimait
+# silencieusement les géométries MULTIPOINT — 3 états external_boundary
+# perdus à la lecture (Sahamalaza-Iles Radama 900667, écarté ensuite par le
+# filtre marin, Littoral de Toliara 901250 et Mananara Nord 20017, tous deux
+# conservés dans le jeu d'analyse). st_read préserve tous les types de
+# géométrie ; l'assertion ci-dessous garantit qu'aucune entité de la source
+# n'est perdue à l'import, et les géométries invalides sont signalées
+# explicitement (elles sont corrigées en aval par st_make_valid()).
+sf_dynamic_wdpa <- st_read("data/PA_creation/dynamic_wdpa.gpkg", quiet = TRUE)
 
-dynamic_wdpa_vect <- vect("data/PA_creation/dynamic_wdpa.gpkg") |>
+n_source <- sum(st_layers("data/PA_creation/dynamic_wdpa.gpkg")$features)
+stopifnot(
+  "Import dynamic_wdpa : des entités de la source ont été perdues" =
+    nrow(sf_dynamic_wdpa) == n_source
+)
+# La réattribution PHP (cf. ci-dessous) ne concerne que les états Ramsar de
+# Mandrozo et Tsimembo-Manambolomaty dans la source
+php_ids  <- c(555547961L, 166880L)
+php_date <- as.Date("2015-04-21")
+stopifnot(
+  "Mandrozo/Tsimembo : états Ramsar inattendus dans la source" =
+    sum(sf_dynamic_wdpa$WDPAID %in% php_ids &
+        sf_dynamic_wdpa$DESIG ==
+          "Ramsar Site, Wetland of International Importance") == 4L
+)
+n_invalid_geom <- sum(!st_is_valid(sf_dynamic_wdpa))
+if (n_invalid_geom > 0) {
+  warning(sprintf("%d géométrie(s) invalide(s) dans la source (corrigée(s) en aval par st_make_valid())",
+                  n_invalid_geom))
+}
+table(st_geometry_type(sf_dynamic_wdpa))
+
+dynamic_wdpa_vect <- sf_dynamic_wdpa |>
   filter(MARINE %in% 0:1) |>
   mutate(
     STATUS_YR_DYN = case_when(
@@ -176,15 +207,12 @@ dynamic_wdpa_vect <- vect("data/PA_creation/dynamic_wdpa.gpkg") |>
 # Audit (revue v2) : Mandrozo et Tsimembo-Manambolomaty restent dans le
 # réseau national après le 21 avril 2015 sous désignation PHP (états
 # external_boundary et secondary_zoning), leurs états antérieurs restant
-# inchangés (protection temporaire), et la réattribution ne concerne que
-# leurs 4 états postérieurs au 21/04/2015 dans la source.
+# inchangés (protection temporaire).
 php_audit <- as.data.frame(dynamic_wdpa_vect)[, c("WDPAID", "NAME", "DESIG",
                                                   "zone_type", "state_id",
                                                   "valid_from", "valid_to")]
 php_audit$valid_from <- as.Date(php_audit$valid_from)
 php_audit$valid_to   <- as.Date(php_audit$valid_to)
-php_ids  <- c(555547961L, 166880L)
-php_date <- as.Date("2015-04-21")
 stopifnot(
   "Mandrozo/Tsimembo : absents du réseau national après le 21/04/2015" =
     sum(php_audit$WDPAID %in% php_ids &
