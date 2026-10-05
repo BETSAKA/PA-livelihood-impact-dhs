@@ -1,0 +1,8 @@
+year,eligible_treated,eligible_control,retained_treated,retained_control,treated_retention_pct,control_retention_pct,max_smd,worst_covariate,runtime_sec,solver_status
+1997,335,3699,335,335,100,9.06,0.0998,elevation_2000,0.09,optimal
+2008,1155,9697,1155,1155,100,11.91,0.0999,traveltime_2000_2000,0.29,optimal
+2011,441,4617,441,441,100,9.55,0.0999,elevation_2000,0.26,optimal
+2013,724,4455,724,724,100,16.25,0.0999,elevation_2000,0.15,optimal
+2016,637,7170,637,637,100,8.88,0.089,elevation_2000,0.33,optimal
+2018,1194,10731,1194,1194,100,11.13,0.0779,population_count_2000,0.32,optimal
+2021,1601,10737,1601,1601,100,14.91,0.0892,elevation_2000,0.34,optimal
