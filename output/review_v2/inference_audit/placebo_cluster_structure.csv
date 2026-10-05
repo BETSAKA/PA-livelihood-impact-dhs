@@ -1,0 +1,14 @@
+metric,value
+clusters_total_used,351
+clusters_1997_treated,11
+clusters_1997_control,88
+clusters_2008_treated,38
+clusters_2008_control,214
+hh_per_cluster_min,3
+hh_per_cluster_p25,28
+hh_per_cluster_median,31
+hh_per_cluster_p75,32
+hh_per_cluster_p90,34
+hh_per_cluster_max,60
+w_mass_max_cluster_share,0.008002706420342728
+w_mass_top5_cluster_share,0.038161321116940164

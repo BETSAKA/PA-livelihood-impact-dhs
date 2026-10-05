@@ -1,0 +1,3 @@
+outcome,n_eigenvalues,n_negative_eigenvalues,n_below_fixest_threshold_1e12,min_eigenvalue,max_eigenvalue,ratio_abs_neg_over_max_pos,sum_negative_eigenvalues,did_var_positive_before_repair,se_did_before_repair,se_did_after_fix
+wealth_centile_rural_weighted,12,0,0,1.6439617492763145e-9,86.5243099809961,0,0,TRUE,7.3211374980447825,53.59905426527742
+zscore_wealth,12,0,1,2.406323446662775e-15,0.0011752517229074496,0,0,TRUE,0.007211511391215521,5.200589654563116e-5

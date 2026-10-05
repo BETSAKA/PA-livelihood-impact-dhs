@@ -1,0 +1,5 @@
+check,DHSYEAR,GROUP,hv001,hv002,WDPAID,missing_variable,matched_sample_n,regression_n,exclusion_share,note
+dropped_observation_placebo,1997,Control,159,10,NA,hv220,10732,10731,9.31792769287565e-5,1 observation ecartee par fixest (NA sur hv220) ; part << 2% du seuil PAP
+wave_missingness_screen,1997,NA,NA,NA,NA,NA,3254,3253,3.0731407498463427e-4,verification ex-ante de la missingness RHS par vague (design fige)
+wave_missingness_screen,2008,NA,NA,NA,NA,NA,7478,7478,0,verification ex-ante de la missingness RHS par vague (design fige)
+wave_missingness_screen,2021,NA,NA,NA,NA,NA,7523,7523,0,verification ex-ante de la missingness RHS par vague (design fige)
