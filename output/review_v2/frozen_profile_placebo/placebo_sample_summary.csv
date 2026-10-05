@@ -1,0 +1,5 @@
+DHSYEAR,GROUP,n_households,n_clusters,n_pas
+1997,Control,2919,88,1
+1997,Treatment,335,11,9
+2008,Control,6323,214,1
+2008,Treatment,1155,38,30
