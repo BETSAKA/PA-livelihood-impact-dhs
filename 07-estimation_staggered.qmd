@@ -634,6 +634,68 @@ write_csv(did_df, "output/review_v2/did_2x2_h2.csv")
 write_rds(h2_2x2_plot, "paper/figures/h2_2x2_plot.rds")
 ```
 
+### Analyse supplémentaire (non préenregistrée) : dispersion intra-grappe
+
+```{r}
+#| label: h2-supplementary-dispersion
+# Analyse SUPPLÉMENTAIRE, NON PRÉENREGISTRÉE : l'issue H2 préenregistrée reste
+# le z-score signé au niveau du ménage (ci-dessus). On complète ici par une
+# estimation 2×2 sur la dispersion intra-grappe de la richesse (écart-type et
+# IQR du centile de richesse rurale non normalisé), calculées en 03 au niveau
+# grappe (wealth_sd_cluster, wealth_iqr_cluster).
+#
+# Unité d'analyse : la grappe appariée × vague. Les contrôles sont les
+# covariables de niveau grappe du PAP (SPEI t−1 + les cinq covariables
+# statiques 2000) ; le sexe et l'âge du chef de ménage, de niveau ménage, ne
+# s'agrègent pas de manière interprétable et sont écartés dans cette
+# spécification supplémentaire. Pas de pondération (agrégats de grappe) ;
+# erreurs types hétéroscédasticité-robustes.
+disp <- read_rds("data/derived/wealth_dispersion_clusters.rds")
+
+dat_cluster <- dat %>%
+  st_drop_geometry() %>%
+  distinct(DHSYEAR, hv001, GROUP, spei_wc_n_1, treecover_area_2000,
+           slope_2000, elevation_2000, population_count_2000,
+           traveltime_2000_2000) %>%
+  inner_join(disp, by = c("DHSYEAR", "hv001")) %>%
+  mutate(treat = as.integer(GROUP == "Treatment"))
+
+f_clust <- function(yvar) {
+  pre <- dat_cluster %>%
+    filter(DHSYEAR %in% c(1997, 2008)) %>%
+    mutate(post = as.integer(DHSYEAR == 2008), treat_post = treat * post)
+  main <- dat_cluster %>%
+    filter(DHSYEAR %in% c(2008, 2021)) %>%
+    mutate(post = as.integer(DHSYEAR == 2021), treat_post = treat * post)
+  fs <- as.formula(paste(yvar, "~ treat + post + treat_post +",
+    "spei_wc_n_1 + treecover_area_2000 + slope_2000 + elevation_2000 +",
+    "population_count_2000 + traveltime_2000_2000"))
+  list(
+    placebo = feols(fs, data = pre, vcov = "hetero"),
+    main    = feols(fs, data = main, vcov = "hetero"))
+}
+
+m_sd  <- f_clust("wealth_sd_cluster")
+m_iqr <- f_clust("wealth_iqr_cluster")
+
+h2_supp <- bind_rows(
+  did_row(m_sd$placebo, 2008),  did_row(m_sd$main, 2021),
+  did_row(m_iqr$placebo, 2008), did_row(m_iqr$main, 2021),
+  .id = "outcome"
+) |>
+  mutate(outcome = recode(outcome,
+                          "1" = "wealth_sd_cluster",
+                          "2" = "wealth_iqr_cluster"),
+         period = if_else(year == 2008, "1997-2008 (placebo)",
+                          "2008-2021 (effect)"))
+
+dir.create("output/review_v2", showWarnings = FALSE)
+write_csv(h2_supp, "output/review_v2/did_2x2_h2_supplementary_dispersion.csv")
+etable(m_sd$placebo, m_sd$main, m_iqr$placebo, m_iqr$main,
+       headers = c("SD grappe — placebo", "SD grappe — effet",
+                   "IQR grappe — placebo", "IQR grappe — effet"))
+```
+
 ## Estimation statique
 
 ```{r}
