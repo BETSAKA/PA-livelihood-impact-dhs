@@ -1,0 +1,5 @@
+year,tolerance,eligible_treated,eligible_control,retained_treated,retained_control,treated_retention_pct,control_retention_pct,max_smd_cobalt,worst_covariate,max_smd_manual_worst,manual_cobalt_absdiff,distinct_control_clusters,cluster_HHI,cluster_ESS,runtime_sec,solver_status
+1997,0.1,335,3699,335,2946,100,79.64,0.099842,slope_2000,0.099842,0,89,0.013001,76.9,0.24,optimal
+1997,0.095,335,3699,335,2919,100,78.91,0.094998,population_count_2000,0.094998,0,88,0.013101,76.3,0.16,optimal
+2011,0.1,441,4617,441,1929,100,41.78,0.099993,traveltime_2000_2000,0.099993,0,66,0.015689,63.7,0.2,optimal
+2011,0.095,441,4617,441,1910,100,41.37,0.094998,traveltime_2000_2000,0.094998,0,66,0.015895,62.9,0.24,optimal
