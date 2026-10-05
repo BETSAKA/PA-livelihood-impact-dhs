@@ -1,0 +1,6 @@
+covariate,smd_before_cobalt_att,smd_after_cobalt_att
+treecover_area_2000,0.1829,0.0465
+slope_2000,0.3397,0.0993
+elevation_2000,0.6963,0.0999
+population_count_2000,7.3031,0.0975
+traveltime_2000_2000,0.18,0.0975

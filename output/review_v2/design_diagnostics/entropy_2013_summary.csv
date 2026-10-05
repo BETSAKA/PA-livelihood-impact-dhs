@@ -1,0 +1,2 @@
+treated_N,control_N_positive,max_smd,worst_covariate,sum_control_weights,control_ESS,max_control_weight,p99_control_weight,cv_control_weights,top1pct_share,top5pct_share,top10pct_share,runtime_sec
+724,4455,2.32e-4,population_count_2000,724,3116.8,0.4275,0.3879,0.6553,0.0259,0.1123,0.2095,0.05

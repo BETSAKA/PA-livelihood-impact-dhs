@@ -1,0 +1,2 @@
+tolerance,eligible_treated,eligible_control,retained_treated,retained_control,treated_retention_pct,max_smd,worst_covariate,runtime_sec
+0.1,724,4455,724,724,100,0.0999,elevation_2000,0.16

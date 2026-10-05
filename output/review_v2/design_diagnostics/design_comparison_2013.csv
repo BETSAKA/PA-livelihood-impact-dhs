@@ -1,0 +1,5 @@
+strategy,treated_retained,treated_retention_pct,controls_used,max_smd,worst_covariate,control_ESS,notes
+"A: GenMatch no caliper (production, pre-8b02041)",724,100,724,0.2535,population_count_2000,NA,echantillon complet mais SMD > 0.10 : critere PAP non satisfait
+"B: GenMatch caliper 0.25 SD (production, 8b02041)",185,25.6,185,0.07413279772555402,population_count_2000,NA,equilibre satisfait mais 74.4% des traites ecartes
+"C: Cardinality matching, SMD <= 0.10 (MatchIt + HiGHS)",724,100,724,0.0999,elevation_2000,724,"1:1 sans remplacement ; tous les traites retenus, equilibre garanti"
+D: Entropy balancing ATT (WeightIt),724,100,4455,2.32e-4,population_count_2000,3116.8,tous les traites retenus ; controls repondérés ; ESS 3117/4455
