@@ -8,13 +8,15 @@ editor_options:
 
 Le document illustre l'application de la méthode de matching dans l'analyse. L'objectif de cette méthode est d'équilibrer les échantillons, c'est-à-dire de maximiser la comparabilité entre les groupes de traitement et de contrôle en termes de caractéristiques observables [@Ho2007]. Nous comparons donc des groupes traités et contrôles en les appariant selon 5 covariables environnementales (taux de couvert forestier en 2000, la pente, l'altitude, la densité de population en 2000 et l'accessibilité en 2000).
 
-En effet, si les deux groupes sont très différents avant le traitement, il est difficile de savoir si les différences observées après viennent du traitement ou simplement de ces différences initiales. D'où l'importance du matching, qui permet de neutraliser ces différences. Plus précisement, nous utilisons le genetic matching, une variante des méthodes de matching. Bien qu'ayant le même objectif, cette approche repose sur des algorithmes d'optimisation qui ajustent les facteurs de confusion susceptibles d'influencer à la fois la probabilité de recevoir le traitement et les résultats observés.
+En effet, si les deux groupes sont très différents avant le traitement, il est difficile de savoir si les différences observées après viennent du traitement ou simplement de ces différences initiales. D'où l'importance du matching, qui permet de neutraliser ces différences.
 
 ## Méthodes
 
-Nous réalisons le matching à l'aide de la méthode genetic matching du package R MatchIt, en appelant directement `matchit(method = "genetic", distance = "mahalanobis", ...)`. Cette méthode combine les variables de matching en une seule mesure unique de distance "Mahalanobis distance matching". Cette distance mesurera la différence entre les unités des groupes appariés pour quantifier la similitude entre les deux groupes d'observations, tout en tenant compte des corrélations entre les covariables et de leurs covariances [@Diamond2013]. L'algorithme génétique (via `Matching::GenMatch`, appelé en interne par `matchit()`) sélectionne les facteurs d'échelle attribués à chaque covariable afin de maximiser l'équilibre entre le groupe de traitement et le groupe de contrôle, puis les paires sont formées en une seule étape.
+**Plan préenregistré (PAP).** Le PAP prévoit un Genetic Matching / appariement au plus proche voisin sur distance de Mahalanobis [@Diamond2013], une logique de caliper [@rosenbaum_central_1983], un critère d'équilibre SMD ≤ 0.10, l'élargissement du caliper en cas de dépassement de ce seuil, la possibilité d'exclure les observations non appariées, et la combinaison des poids de matching avec les poids d'enquête DHS. Le PAP **ne spécifie ni ratio fixe 1:1 ni règle de remplacement**.
 
-**Caliper préenregistré.** Le PAP prévoit un caliper « de 0.25 écart-type de la distance de Mahalanobis » [@rosenbaum_central_1983]. Un caliper portant littéralement sur la distance de Mahalanobis *par paire* n'est implémenté ni par `MatchIt` (un caliper non nommé est refusé avec `distance = "mahalanobis"`, aucune mesure de distance vectorielle n'étant conservée dans cette configuration — vérifié sur les versions 4.7.2 et 4.8.1) ni par `Matching::Match`, le moteur appelé en interne. En revanche, dans la pile logicielle exacte que décrit le PAP (`GenMatch()` via MatchIt), `caliper = 0.25` a une sémantique documentée : un caliper de 0.25 **écart-type de chaque covariable de matching**, appliqué pendant la recherche génétique (« caliper=.25 means that all matches not equal to or within .25 standard deviations of each covariate in 'X' are dropped », documentation de `Matching::Match`). Nous implémentons donc le caliper préenregistré sous cette forme : `caliper = 0.25` (`std.caliper = TRUE`) sur chacune des cinq covariables, ce qui interdit toute paire s'écartant de plus de 0.25 écart-type sur l'une d'elles. Conformément au PAP, si le SMD dépasse 0.1 après appariement, l'intervalle du caliper sera augmenté.
+**Problème observé (avant tout examen des outcomes).** L'implémentation directe de ce plan s'est révélée problématique en pratique : le Genetic Matching sans caliper satisfaisait le critère SMD ≤ 0.10 (définition cobalt, estimand ATT) dans six vagues mais échouait en 2013 (déséquilibre persistant de `population_count_2000`), tandis que l'implémentation d'un caliper marginal de 0.25 écart-type sur chaque covariable provoquait une attrition sévère des ménages traités et un mauvais équilibre dans plusieurs vagues (diagnostic `scripts/diag_matching_caliper.R`).
+
+**Déviation outcome-blind retenue.** Le design de production retient désormais le **profile matching cardinality sous estimand ATT** : `matchit(method = "cardinality", estimand = "ATT", ratio = NA, tols = 0.095, std.tols = TRUE, solver = "highs")`. Ce design sélectionne le plus grand sous-ensemble apparié équilibré avec **tous les ménages traités fixes comme cible** : il retient 100 % des traités, maximise l'échantillon de contrôles utilisable et impose directement le critère SMD ≤ 0.10 preregistre, avec exactement les cinq covariables de matching du PAP et la même population éligible. Le choix a été fait **avant** l'inspection de tout outcome sous ce design. Le `tols = 0.095` n'est qu'une garde numérique garantissant une marge par rapport à la borne : le **critère substantiel reste l'équilibre externe max |SMD| ≤ 0.10** (définition cobalt). Le profile cardinality matching est une **déviation méthodologique documentée, pas un estimateur préenregistré** (voir `documentation/matching_design_freeze.md`, commit `b89b8c2`) ; il n'était pas préenregistré dans le PAP, et le PAP n'exigeait pas de ratio 1:1. Le cardinality 1:1 et l'entropy balancing ATT sont réservés à des robustesses ultérieures.
 
 ## Exécution du matching pour toutes les années
 
@@ -69,39 +71,44 @@ MATCHING_BASE_SEED <- 20261004L
 # réutilisés que si le hash de spécification est identique.
 FORCE_REMATCH <- FALSE
 
-# Arguments du matching (source unique du hash de spécification)
+# Regle figee avant toute inspection d'outcome
+# (documentation/matching_design_freeze.md, commit b89b8c2) :
+# profile matching cardinality ATT. FINAL_PROFILE_TOL = 0.095 n'est qu'une
+# garde numerique ; le critere substantiel reste max |SMD| externe <= 0.10.
+FINAL_PROFILE_TOL <- 0.095
+
+# Arguments du matching (source unique du hash de specification)
 matching_arguments <- list(
-  method = "genetic",
-  distance = "mahalanobis",
+  method = "cardinality",
   estimand = "ATT",
-  replace = FALSE,
-  ratio = 1L,
-  # Caliper préenregistré (PAP, Rosenbaum 1983) : 0,25 écart-type.
-  # Implémentation : calipers nommés de 0,25 SD sur chaque covariable de
-  # matching (std.caliper = TRUE), appliqués pendant la recherche génétique.
-  # C'est la sémantique documentée de caliper = 0.25 dans Matching::GenMatch /
-  # Match, le moteur appelé par matchit(method = "genetic",
-  # distance = "mahalanobis") ; un caliper littéral sur la distance de
-  # Mahalanobis par paire n'est supporté par aucun des deux packages.
-  caliper = setNames(rep(0.25, length(matching_variables)),
-                     matching_variables),
-  std.caliper = TRUE,
-  pop.size = 1000,
-  max.generations = 100,
-  wait.generations = 4
+  ratio = NA,
+  tols = FINAL_PROFILE_TOL,
+  std.tols = TRUE,
+  solver = "highs"
 )
 
-# Hash de spécification : tout changement d'assignation du traitement, des
-# covariables, des arguments du matching ou de la graine invalide le cache.
+# Versions de paquets (entrent dans le hash de specification)
+pkg_versions <- list(
+  R = paste(R.version$major, R.version$minor, sep = "."),
+  MatchIt = as.character(packageVersion("MatchIt")),
+  cobalt = as.character(packageVersion("cobalt")),
+  highs = as.character(packageVersion("highs"))
+)
+
+# Hash de specification : tout changement d'assignation du traitement, des
+# covariables, des arguments du matching, des versions de paquets ou de la
+# graine invalide le cache. spec_version passe a "review_v2_profile" :
+# les anciens caches genetic matching sont de fait invalides.
 matching_spec_hash <- function(year, dat_m, X_match, seed) {
   digest::digest(list(
-    spec_version = "review_v2",
+    spec_version = "review_v2_profile",
     year = year,
     treatment = dat_m$treatment,
     row_ids = paste(dat_m$DHSYEAR, dat_m$hv001, dat_m$hv002, sep = "-"),
     matching_variables = matching_variables,
     X = X_match,
     matching_arguments = matching_arguments,
+    package_versions = pkg_versions,
     seed = seed
   ), algo = "sha256")
 }
@@ -173,7 +180,12 @@ run_matching_year <- function(year, force = FORCE_REMATCH) {
   match_path       <- glue("data/derived/matching_result_{year}.rds")
   matched_out_path <- glue("data/derived/data_matched_{year}.rds")
 
-  # --- matchit(method = "genetic") en une seule étape ---
+  # --- matchit(method = "cardinality") : regle figee ---
+  # Profile matching ATT : le plus grand sous-ensemble equilibre avec tous
+  # les traites fixes comme cible. Pas d'etape d'appariement par paires
+  # Mahalanobis apres selection : le profile matching est un design de
+  # selection d'ensemble equilibre, pas un appariement par paires.
+  # Solveur deterministe : pas de set.seed necessaire au calcul.
   used_cache <- FALSE
   t0 <- Sys.time()
   if (!force && file.exists(match_path)) {
@@ -184,38 +196,35 @@ run_matching_year <- function(year, force = FORCE_REMATCH) {
       m_out <- cached$m_out
       used_cache <- TRUE
     } else {
-      cat(">> matchit: cache absent ou périmé (hash différent) -> recalcul\n")
+      cat(">> matchit: cache absent ou perime (hash different) -> recalcul\n")
     }
   }
   if (!used_cache) {
-    cat(glue(">> matchit: calcul en cours (seed = {seed}, hash = {substr(spec_hash, 1, 12)})...\n"))
-    set.seed(seed)
+    cat(glue(">> matchit: calcul en cours (hash = {substr(spec_hash, 1, 12)})...\n"))
     fml <- as.formula(paste("treatment ~", paste(matching_variables, collapse=" + ")))
 
     m_out <- matchit(
       formula   = fml,
       data      = dat_m,
-      method    = "genetic",
-      distance  = "mahalanobis",
+      method    = "cardinality",
       estimand  = "ATT",
-      replace   = FALSE,
-      ratio     = 1,
-      caliper   = matching_arguments$caliper,
-      std.caliper = matching_arguments$std.caliper,
-      pop.size  = 1000,
-      max.generations = 100,
-      wait.generations = 4
+      ratio     = NA,
+      tols      = FINAL_PROFILE_TOL,
+      std.tols  = TRUE,
+      solver    = "highs",
+      time      = 1800
     )
 
     saveRDS(list(
       m_out = m_out,
       meta = list(
-        spec_version = "review_v2",
+        spec_version = "review_v2_profile",
         spec_hash = spec_hash,
         seed = seed,
         year = year,
         matching_variables = matching_variables,
         matching_arguments = matching_arguments,
+        package_versions = pkg_versions,
         n_eligible = n_filt,
         n_treated = n_treat,
         n_control = n_ctrl
@@ -223,7 +232,7 @@ run_matching_year <- function(year, force = FORCE_REMATCH) {
     ), match_path)
   }
   t_match <- as.numeric(difftime(Sys.time(), t0, units="mins"))
-  cat(glue(">> matchit temps = {round(t_match,1)} min (cache={used_cache})\n"))
+  cat(glue(">> matchit temps = {round(t_match,2)} min (cache={used_cache})\n"))
 
   matched <- match.data(m_out, data = sf::st_drop_geometry(dat_m)) %>%
     dplyr::filter(weights > 0)
@@ -233,6 +242,29 @@ run_matching_year <- function(year, force = FORCE_REMATCH) {
     "GROUP invalide dans l'échantillon apparié" =
       all(matched$GROUP %in% c("Treatment", "Control"))
   )
+
+  # Gardes de production de la regle figee : retention 100% des traites,
+  # toutes les PA traitees representees, equilibre externe cobalt <= 0.10,
+  # poids de design verifies. Profile matching : poids de design 1 pour les
+  # unites retenues (traites et controles), 0 pour les controles ecartes.
+  n_t_elig <- sum(dat_m$treatment == 1L)
+  n_t_match <- sum(matched$treatment == 1L)
+  bt_year <- cobalt::bal.tab(m_out, estimand = "ATT", un = TRUE)
+  smd_year <- abs(bt_year$Balance$Diff.Adj)
+  w_t <- matched$weights[matched$treatment == 1L]
+  w_c <- matched$weights[matched$treatment == 0L]
+  stopifnot(
+    "retention des traites < 100%" = n_t_match == n_t_elig,
+    "PA traitee non representee dans l'echantillon apparié" =
+      setequal(unique(dat_m$WDPAID[dat_m$treatment == 1L]),
+               unique(matched$WDPAID[matched$treatment == 1L])),
+    "equilibre externe cobalt > 0.10" = max(smd_year) <= 0.10 + 1e-8,
+    "poids de design traites != 1" = all(abs(w_t - 1) < 1e-8),
+    "poids de design controles retenus != 1" = all(abs(w_c - 1) < 1e-8)
+  )
+  cat(glue(">> gardes design : traites {n_t_match}/{n_t_elig} (100%), ",
+           "max SMD cobalt = {round(max(smd_year), 4)}, ",
+           "poids design = 1 (traites et controles retenus)\n"))
 
   saveRDS(matched, matched_out_path)
   cat(glue(">> N appariés = {nrow(matched)} (écrit: {matched_out_path})\n"))
@@ -365,7 +397,7 @@ write_csv(result_list, "output/review_v2/matching_summary.csv")
 print(result_list)
 ```
 
-Le tableau reporte deux définitions du SMD : la définition interne `smd_by_var()` (écart-type pooled) et la définition cobalt (écart-type du groupe traité, standard pour un estimand ATT). Le diagnostic de référence est celui de cobalt. **La vague 2013 ne satisfait pas le critère préenregistré de SMD <= 0.1** selon cette définition (déséquilibre persistant de `population_count_2000` après appariement) ; le caliper préenregistré de 0.25 écart-type, qui pourrait corriger ce déséquilibre, est délibérément reporté à une revue séparée et n'est pas appliqué ici.
+Le tableau reporte deux définitions du SMD : la définition interne `smd_by_var()` (écart-type pooled) et la définition cobalt (écart-type du groupe traité, standard pour un estimand ATT). Le diagnostic de référence est celui de cobalt : c'est lui qui fonde le critère préenregistré de SMD ≤ 0.1, désormais imposé directement comme contrainte du matching cardinality (avec une garde numérique à 0.095) et revérifié par un garde-fou de production après chaque vague. Sous le design figé, **les sept vagues satisfont le critère externe max |SMD| ≤ 0.1**, avec 100 % des ménages traités retenus dans chaque vague (voir `documentation/matching_design_freeze.md`).
 
 Nous obtenons un tableau qui présente, pour chaque année d'analyse, le nombre total d'observations initialement disponibles, le nombre d'observations conservées après exclusion des observations ne relevant ni du groupe Treatment ni du groupe Control, ainsi que celles présentant des valeurs manquantes sur les variables utilisées pour le matching. Le tableau indique également les effectifs des groupes traités et contrôles avant et après le matching.
 
@@ -486,7 +518,7 @@ Pour effectuer le test avant l'appariement, on détermine les déséquilibres in
 
 -   Si \|SMD\| \< 0.1, il existe un équilibre satisfaisant entre les groupes pour la covariable.
 
--   Si SMD \> 0.1, le déséquilibre est significatif [@Austin2009]. Pour réajuster l'équilibre, on augmentera l'intervalle des calipers afin d'obtenir un SMD **≤** 0.1.
+-   Si SMD \> 0.1, le déséquilibre est significatif [@Austin2009]. Le PAP prévoyait d'élargir l'intervalle des calipers pour rétablir l'équilibre ; sous le design figé (profile cardinality ATT, voir `documentation/matching_design_freeze.md`), le critère SMD **≤** 0.1 est imposé directement comme contrainte d'optimisation, ce qui rend l'élargissement itératif du caliper sans objet.
 
 ```{r}
 # Load 
