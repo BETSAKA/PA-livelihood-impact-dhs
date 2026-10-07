@@ -1,0 +1,14 @@
+criterion,region_FE,district_FE
+FE groups in GADM,22 (ADM2),110 (ADM3)
+Groups represented in matched data,22,99
+Treated groups represented,17,36
+Treated groups with untreated support,17,36
+Treated HH with identified FE,4387,4387
+Treated clusters with identified FE,153,153
+Treated PAs with identified FE,41,41
+Median untreated HH per treated group,1380,271.5
+Median untreated clusters per treated group,50,9.5
+Median untreated waves per treated group,6,5
+Fake-run imputable treated share,1,1
+Collinearity / singleton warnings,none,none
+Number of clustering units,22 (region_id),99 (district_id)

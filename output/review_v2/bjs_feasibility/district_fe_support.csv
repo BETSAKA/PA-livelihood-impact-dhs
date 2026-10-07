@@ -1,0 +1,111 @@
+level,unit,unit_name,represented,fe_identified,treated_hh,untreated_hh,treated_clusters,untreated_clusters,treated_pas,waves_represented,untreated_waves
+district,MDG.1.1.1_1,Ambohidratrimo,TRUE,TRUE,0,120,0,4,0,3,3
+district,MDG.1.1.2_1,Andramasina,TRUE,TRUE,0,89,0,2,0,2,2
+district,MDG.1.1.3_1,Anjozorobe,TRUE,TRUE,0,152,0,6,0,5,5
+district,MDG.1.1.4_1,Ankazobe,TRUE,TRUE,0,70,0,2,0,2,2
+district,MDG.1.1.5_1,Antananarivo-Nord,FALSE,FALSE,0,0,0,0,0,0,0
+district,MDG.1.1.6_1,Antananarivo-Sud,TRUE,TRUE,0,29,0,1,0,1,1
+district,MDG.1.1.7_1,Antananarivo renivohitra,FALSE,FALSE,0,0,0,0,0,0,0
+district,MDG.1.1.8_1,Manjakandriana,TRUE,TRUE,0,134,0,4,0,3,3
+district,MDG.1.2.1_1,Fenoarivo-Centre,TRUE,TRUE,0,621,0,21,0,5,5
+district,MDG.1.2.2_1,Tsiroanomandidy,TRUE,TRUE,0,1026,0,35,0,6,6
+district,MDG.1.3.1_1,Arivonimamo,TRUE,TRUE,84,55,3,2,1,3,1
+district,MDG.1.3.2_1,Miarinarivo,TRUE,TRUE,0,65,0,2,0,2,2
+district,MDG.1.3.3_1,Soavinandriana,TRUE,TRUE,0,258,0,8,0,4,4
+district,MDG.1.4.1_1,Ambatolampy,TRUE,TRUE,84,79,3,3,1,4,3
+district,MDG.1.4.2_1,Antanifotsy,TRUE,TRUE,33,156,1,5,1,4,3
+district,MDG.1.4.3_1,Antsirabe Rural,TRUE,TRUE,155,303,5,11,1,7,4
+district,MDG.1.4.4_1,Antsirabe Urban,FALSE,FALSE,0,0,0,0,0,0,0
+district,MDG.1.4.5_1,Betafo,TRUE,TRUE,0,225,0,7,0,4,4
+district,MDG.1.4.6_1,Faratsiho,TRUE,TRUE,0,219,0,7,0,4,4
+district,MDG.2.1.1_1,Ambanja,TRUE,TRUE,272,299,9,10,2,6,4
+district,MDG.2.1.2_1,Ambilobe,TRUE,TRUE,238,517,8,17,2,6,5
+district,MDG.2.1.3_1,Antsiranana Rural,TRUE,TRUE,0,146,0,5,0,5,5
+district,MDG.2.1.4_1,Antsiranana Urban,FALSE,FALSE,0,0,0,0,0,0,0
+district,MDG.2.1.5_1,Nosibe,FALSE,FALSE,0,0,0,0,0,0,0
+district,MDG.2.2.1_1,Andapa,FALSE,FALSE,0,0,0,0,0,0,0
+district,MDG.2.2.2_1,Antalaha,TRUE,TRUE,0,431,0,15,0,6,6
+district,MDG.2.2.3_1,Sambava,TRUE,TRUE,140,535,5,19,2,6,6
+district,MDG.2.2.4_1,Vohimarina (Iharana),TRUE,TRUE,174,579,6,19,2,6,6
+district,MDG.3.1.1_1,Ambatofinandrahana,TRUE,TRUE,30,280,1,10,1,6,6
+district,MDG.3.1.2_1,Ambositra,TRUE,TRUE,94,433,3,16,2,5,5
+district,MDG.3.1.3_1,Fandriana,TRUE,TRUE,31,395,1,15,1,4,4
+district,MDG.3.1.4_1,Manandriana,TRUE,TRUE,0,212,0,7,0,3,3
+district,MDG.3.2.1_1,Befotaka,TRUE,TRUE,0,34,0,1,0,1,1
+district,MDG.3.2.2_1,Farafangana,TRUE,TRUE,0,952,0,32,0,6,6
+district,MDG.3.2.3_1,Midongy-Sud,FALSE,FALSE,0,0,0,0,0,0,0
+district,MDG.3.2.4_1,Vangaindrano,TRUE,TRUE,253,604,9,21,3,6,6
+district,MDG.3.2.5_1,Vondrozo,TRUE,TRUE,0,326,0,11,0,5,5
+district,MDG.3.3.1_1,Ambalavao,TRUE,TRUE,0,165,0,6,0,4,4
+district,MDG.3.3.2_1,Ambohimahasoa,TRUE,TRUE,0,320,0,10,0,4,4
+district,MDG.3.3.3_1,Fianarantsoa Rural,TRUE,TRUE,0,436,0,15,0,6,6
+district,MDG.3.3.4_1,Fianarantsoa Urban,FALSE,FALSE,0,0,0,0,0,0,0
+district,MDG.3.3.5_1,Ikalamavony,TRUE,TRUE,0,93,0,3,0,3,3
+district,MDG.3.4.1_1,Iakora,TRUE,TRUE,0,270,0,9,0,5,5
+district,MDG.3.4.2_1,Ihosy,TRUE,TRUE,0,698,0,25,0,4,4
+district,MDG.3.4.3_1,Ivohibe,TRUE,TRUE,31,116,1,4,1,3,3
+district,MDG.3.5.1_1,Ifanadiana,TRUE,TRUE,0,256,0,9,0,6,6
+district,MDG.3.5.2_1,Ikongo,TRUE,TRUE,0,26,0,1,0,1,1
+district,MDG.3.5.3_1,Manakara-Sud,TRUE,TRUE,0,1038,0,35,0,7,7
+district,MDG.3.5.4_1,Mananjary,TRUE,TRUE,0,659,0,23,0,7,7
+district,MDG.3.5.5_1,Nosy varika,TRUE,TRUE,0,667,0,23,0,7,7
+district,MDG.3.5.6_1,Vohipeno,TRUE,TRUE,0,537,0,18,0,6,6
+district,MDG.4.1.1_1,Kandreho,TRUE,TRUE,0,49,0,2,0,2,2
+district,MDG.4.1.2_1,Maevatanana,TRUE,TRUE,0,586,0,20,0,6,6
+district,MDG.4.1.3_1,Tsaratanana,TRUE,TRUE,0,854,0,29,0,6,6
+district,MDG.4.2.1_1,Ambato-Boina,TRUE,TRUE,0,515,0,18,0,7,7
+district,MDG.4.2.2_1,Mahajanga Rural,TRUE,TRUE,0,326,0,11,0,6,6
+district,MDG.4.2.3_1,Mahajanga Urban,FALSE,FALSE,0,0,0,0,0,0,0
+district,MDG.4.2.4_1,Marovoay,TRUE,TRUE,115,124,4,4,1,6,4
+district,MDG.4.2.5_1,Mitsinjo,FALSE,FALSE,0,0,0,0,0,0,0
+district,MDG.4.2.6_1,Soalala,TRUE,TRUE,0,50,0,2,0,2,2
+district,MDG.4.3.1_1,Ambatomainty,TRUE,TRUE,0,250,0,9,0,4,4
+district,MDG.4.3.2_1,Antsalova,TRUE,TRUE,123,121,4,4,1,4,2
+district,MDG.4.3.3_1,Besalampy,TRUE,TRUE,0,401,0,13,0,4,4
+district,MDG.4.3.4_1,Maintirano,TRUE,TRUE,187,509,7,18,2,4,4
+district,MDG.4.3.5_1,Morafanobe,TRUE,TRUE,32,240,1,8,1,6,5
+district,MDG.4.4.1_1,Analalava,TRUE,TRUE,0,272,0,9,0,6,6
+district,MDG.4.4.2_1,Antsihihy,TRUE,TRUE,0,422,0,14,0,5,5
+district,MDG.4.4.3_1,Bealanana,TRUE,TRUE,115,273,4,9,3,6,6
+district,MDG.4.4.4_1,Befandriana-Nord,TRUE,TRUE,0,429,0,14,0,6,6
+district,MDG.4.4.5_1,Mampikony,TRUE,TRUE,0,344,0,11,0,6,6
+district,MDG.4.4.6_1,Mandritsara,TRUE,TRUE,0,554,0,17,0,6,6
+district,MDG.4.4.7_1,Port Bergé,TRUE,TRUE,0,308,0,10,0,5,5
+district,MDG.5.1.1_1,Ambatondrazaka,TRUE,TRUE,94,247,3,8,2,6,5
+district,MDG.5.1.2_1,Amparafaravola,TRUE,TRUE,0,181,0,6,0,5,5
+district,MDG.5.1.3_1,Andilamena,TRUE,TRUE,0,156,0,5,0,5,5
+district,MDG.5.1.4_1,Anosibe,TRUE,TRUE,66,172,2,6,2,5,4
+district,MDG.5.1.5_1,Moramanga,TRUE,TRUE,119,211,4,8,2,6,5
+district,MDG.5.2.1_1,Fenoarivo Atsinanana,TRUE,TRUE,0,577,0,20,0,7,7
+district,MDG.5.2.2_1,Mananara,TRUE,TRUE,0,334,0,11,0,5,5
+district,MDG.5.2.3_1,Maroansetra,TRUE,TRUE,0,136,0,5,0,4,4
+district,MDG.5.2.4_1,Nosy-Boraha (St. Marie),FALSE,FALSE,0,0,0,0,0,0,0
+district,MDG.5.2.5_1,Soanierana-Ivongo,TRUE,TRUE,130,209,4,7,1,5,4
+district,MDG.5.2.6_1,Vavatenina,TRUE,TRUE,0,694,0,23,0,7,7
+district,MDG.5.3.1_1,Ampasimanolotra,TRUE,TRUE,32,456,1,15,1,6,5
+district,MDG.5.3.2_1,Antanambao manampotsy,TRUE,TRUE,0,169,0,5,0,5,5
+district,MDG.5.3.3_1,Mahanoro,TRUE,TRUE,58,565,2,19,1,6,6
+district,MDG.5.3.4_1,Marolambo,TRUE,TRUE,177,217,6,7,2,7,5
+district,MDG.5.3.5_1,Toamasina Rural,TRUE,TRUE,0,261,0,9,0,6,6
+district,MDG.5.3.6_1,Vatomandry,TRUE,TRUE,0,256,0,9,0,4,4
+district,MDG.6.1.1_1,Ambovombe-Androy,TRUE,TRUE,624,871,21,28,2,7,5
+district,MDG.6.1.2_1,Bekily,TRUE,TRUE,0,58,0,3,0,2,2
+district,MDG.6.1.3_1,Beloha,TRUE,TRUE,62,536,2,17,1,6,6
+district,MDG.6.1.4_1,Tsiombe,TRUE,TRUE,0,555,0,18,0,4,4
+district,MDG.6.2.1_1,Amboasary-Sud,TRUE,TRUE,214,442,7,15,3,7,5
+district,MDG.6.2.2_1,Betroka,TRUE,TRUE,0,269,0,9,0,4,4
+district,MDG.6.2.3_1,Taolagnaro,TRUE,TRUE,85,232,3,8,1,7,6
+district,MDG.6.3.1_1,Ampanihy,TRUE,TRUE,63,1039,2,35,1,7,7
+district,MDG.6.3.2_1,Ankazoabo-Sud,TRUE,TRUE,0,119,0,4,0,4,4
+district,MDG.6.3.3_1,Benenitra,TRUE,TRUE,0,59,0,2,0,2,2
+district,MDG.6.3.4_1,Beroroha,TRUE,TRUE,0,110,0,4,0,4,4
+district,MDG.6.3.5_1,Betioky-Sud,TRUE,TRUE,0,705,0,23,0,7,7
+district,MDG.6.3.6_1,Morombe,TRUE,TRUE,155,167,6,5,1,5,4
+district,MDG.6.3.7_1,Sakaraha,TRUE,TRUE,28,170,1,7,1,6,5
+district,MDG.6.3.9_1,Toliary,TRUE,TRUE,166,91,6,3,1,5,3
+district,MDG.6.3.8_1,Toliary Urban,TRUE,TRUE,0,28,0,1,0,1,1
+district,MDG.6.4.1_1,Belon-i Tsiribihina,TRUE,TRUE,32,144,1,5,1,4,4
+district,MDG.6.4.2_1,Mahabo,TRUE,TRUE,0,478,0,17,0,5,5
+district,MDG.6.4.3_1,Manja,TRUE,TRUE,121,270,4,10,1,6,5
+district,MDG.6.4.4_1,Miandrivazo,TRUE,TRUE,90,313,3,12,1,6,6
+district,MDG.6.4.5_1,Morondava,TRUE,TRUE,0,175,0,6,0,4,4

@@ -1,0 +1,23 @@
+level,unit,unit_name,represented,fe_identified,treated_hh,untreated_hh,treated_clusters,untreated_clusters,treated_pas,waves_represented,untreated_waves
+region,MDG.1.1_1,Analamanga,TRUE,TRUE,0,594,0,19,0,6,6
+region,MDG.1.2_1,Bongolava,TRUE,TRUE,0,1647,0,56,0,6,6
+region,MDG.1.3_1,Itasy,TRUE,TRUE,84,378,3,12,1,5,5
+region,MDG.1.4_1,Vakinankaratra,TRUE,TRUE,272,982,9,33,3,7,5
+region,MDG.2.1_1,Diana,TRUE,TRUE,510,962,17,32,3,7,6
+region,MDG.2.2_1,Sava,TRUE,TRUE,314,1545,11,53,3,6,6
+region,MDG.3.1_1,Amoron'i mania,TRUE,TRUE,155,1320,5,48,3,6,6
+region,MDG.3.2_1,Atsimo-Atsinana,TRUE,TRUE,253,1916,9,65,3,6,6
+region,MDG.3.3_1,Haute matsiatra,TRUE,TRUE,0,1014,0,34,0,6,6
+region,MDG.3.4_1,Ihorombe,TRUE,TRUE,31,1084,1,38,1,5,5
+region,MDG.3.5_1,Vatovavy Fitovinany,TRUE,TRUE,0,3183,0,109,0,7,7
+region,MDG.4.1_1,Betsiboka,TRUE,TRUE,0,1489,0,51,0,6,6
+region,MDG.4.2_1,Boeny,TRUE,TRUE,115,1015,4,35,1,7,7
+region,MDG.4.3_1,Melaky,TRUE,TRUE,342,1521,12,52,3,6,5
+region,MDG.4.4_1,Sofia,TRUE,TRUE,115,2602,4,84,3,7,7
+region,MDG.5.1_1,Alaotra-Mangoro,TRUE,TRUE,279,967,9,33,6,6,6
+region,MDG.5.2_1,Analanjirofo,TRUE,TRUE,130,1950,4,66,1,7,7
+region,MDG.5.3_1,Atsinanana,TRUE,TRUE,267,1924,9,64,3,7,7
+region,MDG.6.1_1,Androy,TRUE,TRUE,686,2020,23,66,3,7,6
+region,MDG.6.2_1,Anosy,TRUE,TRUE,299,943,10,32,4,7,7
+region,MDG.6.3_1,Atsimo-Andrefana,TRUE,TRUE,412,2488,15,84,4,7,7
+region,MDG.6.4_1,Menabe,TRUE,TRUE,243,1380,8,50,3,7,6

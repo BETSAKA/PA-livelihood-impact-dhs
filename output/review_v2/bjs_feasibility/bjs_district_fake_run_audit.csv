@@ -1,0 +1,2 @@
+fe_level,rows_input,rows_first_stage,treated_rows_targeted,treated_rows_imputed,treated_rows_unimputable,untreated_rows_unimputable,treated_zero_weight_rows,zero_weight_rows_total,fe_collinearity_warnings,singleton_fe_levels,clustering_units
+district (ADM3),36519,32132,4387,4387,0,0,0,0,none (feols run with warn = TRUE),0,99
