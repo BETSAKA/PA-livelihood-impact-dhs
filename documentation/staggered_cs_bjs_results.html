@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Staggered head-to-head: Callaway–Sant’Anna vs Borusyak–Jaravel–Spiess (repeated cross-sections)</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="staggered_cs_bjs_results_files/libs/clipboard/clipboard.min.js"></script>
+<script src="staggered_cs_bjs_results_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="staggered_cs_bjs_results_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="staggered_cs_bjs_results_files/libs/quarto-html/popper.min.js"></script>
+<script src="staggered_cs_bjs_results_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="staggered_cs_bjs_results_files/libs/quarto-html/anchor.min.js"></script>
+<link href="staggered_cs_bjs_results_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="staggered_cs_bjs_results_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="staggered_cs_bjs_results_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="staggered_cs_bjs_results_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="staggered_cs_bjs_results_files/libs/bootstrap/bootstrap-efbb37e9afcc02144ebbc7afd12a776f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Staggered head-to-head: Callaway–Sant’Anna vs Borusyak–Jaravel–Spiess (repeated cross-sections)</h1>
+<p class="subtitle lead">Frozen design, annual exact-date cohorts, output/review_v2/staggered_head_to_head</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="frozen-design-statement" class="level1">
+<h1>1. Frozen design statement</h1>
+<p>All estimates below use the frozen design: profile cardinality matching (tols = 0.095), the five PAP matching covariates, the frozen matched waves (1997, 2008, 2011, 2013, 2016, 2018, 2021), the June-1 survey reference date, frozen <code>treatment_date</code>/<code>treated_now</code>, annual exact-date-consistent cohorts <code>g_eff</code>, the frozen two-year event-time bins, and <code>w_all</code> = survey weight × frozen profile-design weight. Nothing was retuned after seeing results (prompt section 22). The preregistered 2×2 remains the primary design; this comparison is secondary.</p>
+</section>
+<section id="annual-treatment-timing-and-cohorts" class="level1">
+<h1>2. Annual treatment timing and cohorts</h1>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Annual exact-date-consistent treatment cohorts.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">annual cohort g_eff</th>
+<th style="text-align: right;">protected areas</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">2009</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2014</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2015</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2020</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Annual cohorts are highly concentrated: the 2009 cohort contains 36 of 43 treated protected areas; cohorts 2014, 2015 and 2020 contain 1, 4 and 2 PAs. The assertion <code>treated_now_from_g == treated_now</code> passes for all treated observations (0 mismatches).</p>
+</section>
+<section id="specifications-side-by-side" class="level1">
+<h1>3. Specifications side by side</h1>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Callaway–Sant’Anna (<code>did</code> 2.1.2)</th>
+<th>BJS imputation (<code>didimputation</code> 0.3.0)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Design</td>
+<td>repeated cross-sections, <code>panel = FALSE</code></td>
+<td>repeated cross-sections, imputation</td>
+</tr>
+<tr class="even">
+<td>Cohorts</td>
+<td>annual <code>g_eff</code></td>
+<td>annual <code>g_bjs</code> (same timing)</td>
+</tr>
+<tr class="odd">
+<td>Comparison group</td>
+<td>never-treated</td>
+<td>untreated observations (first stage)</td>
+</tr>
+<tr class="even">
+<td>Adjustments</td>
+<td>PAP covariates via IPW in each (g,t) cell</td>
+<td>district (ADM3) FE + survey-year FE + PAP covariates</td>
+</tr>
+<tr class="odd">
+<td>Weights</td>
+<td><code>w_all</code></td>
+<td><code>w_all</code></td>
+</tr>
+<tr class="even">
+<td>Inference</td>
+<td>multiplier bootstrap, 1 000 draws, clustered at enumeration clusters (1 269)</td>
+<td>district-clustered (99 districts)</td>
+</tr>
+<tr class="odd">
+<td>Estimand</td>
+<td>weighted average of ATT(g,t) by group shares</td>
+<td>weighted ATT over imputable post-treatment treated rows</td>
+</tr>
+</tbody>
+</table>
+<p>Both estimators use identical samples: 36 519 rows, identical row sets (verified).</p>
+</section>
+<section id="sample-and-missingness-comparison" class="level1">
+<h1>4. Sample and missingness comparison</h1>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">quantity</th>
+<th style="text-align: right;">value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">full stacked rows</td>
+<td style="text-align: right;">37431</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">positive-weight rows</td>
+<td style="text-align: right;">36520</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">complete cases on PAP covariates</td>
+<td style="text-align: right;">36519</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">rows used by C&amp;S, wealth_centile_rural_weighted</td>
+<td style="text-align: right;">36519</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">rows used by C&amp;S, zscore_wealth</td>
+<td style="text-align: right;">36519</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">rows used by BJS, wealth_centile_rural_weighted</td>
+<td style="text-align: right;">36519</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">rows used by BJS, zscore_wealth</td>
+<td style="text-align: right;">36519</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">post-treated rows used (treated_now = 1)</td>
+<td style="text-align: right;">4387</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">post-treated zero-weight rows in sample</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">rows lost to covariate missingness</td>
+<td style="text-align: right;">912</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">rows lost to outcome missingness (H1)</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">rows lost to outcome missingness (H2)</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The full stacked sample has 37 431 rows. 912 rows are dropped for incomplete PAP covariates; 911 of them are the 2018 zero-weight rows (790 control, 121 treatment, 120 <code>treated_now</code>), i.e.&nbsp;the known zero-weight rows are inherited from the frozen matching/covariate pipeline and are excluded by covariate missingness, not by any estimator choice. Outcome missingness is zero on covariate-complete rows. C&amp;S and BJS use exactly the same 36 519 rows; 4 387 post-treatment treated rows, none with zero weight. BJS cannot impute 79 treated rows (1.8%): all treated rows of district MDG.1.3.1_1, which has no untreated households — a structural support limit already documented in the feasibility audit.</p>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Losses by survey year and group (rows, zero-weight rows, outcome missingness).</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 5%">
+<col style="width: 2%">
+<col style="width: 13%">
+<col style="width: 16%">
+<col style="width: 8%">
+<col style="width: 16%">
+<col style="width: 12%">
+<col style="width: 9%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">DHSYEAR</th>
+<th style="text-align: left;">GROUP</th>
+<th style="text-align: right;">rows</th>
+<th style="text-align: right;">lost_covariate_missingness</th>
+<th style="text-align: right;">lost_zero_weight_and_cov_missing</th>
+<th style="text-align: right;">zero_weight_rows</th>
+<th style="text-align: right;">zero_weight_rows_in_cov_complete</th>
+<th style="text-align: right;">zero_weight_treated_now</th>
+<th style="text-align: right;">outcome_missing_h1</th>
+<th style="text-align: right;">outcome_missing_h2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">Control</td>
+<td style="text-align: right;">2919</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1997</td>
+<td style="text-align: left;">Treatment</td>
+<td style="text-align: right;">335</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">Control</td>
+<td style="text-align: right;">6323</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2008</td>
+<td style="text-align: left;">Treatment</td>
+<td style="text-align: right;">1155</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">Control</td>
+<td style="text-align: right;">1910</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2011</td>
+<td style="text-align: left;">Treatment</td>
+<td style="text-align: right;">441</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">Control</td>
+<td style="text-align: right;">3175</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2013</td>
+<td style="text-align: left;">Treatment</td>
+<td style="text-align: right;">724</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">Control</td>
+<td style="text-align: right;">4296</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2016</td>
+<td style="text-align: left;">Treatment</td>
+<td style="text-align: right;">637</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2018</td>
+<td style="text-align: left;">Control</td>
+<td style="text-align: right;">6799</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">790</td>
+<td style="text-align: right;">790</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2018</td>
+<td style="text-align: left;">Treatment</td>
+<td style="text-align: right;">1194</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">121</td>
+<td style="text-align: right;">121</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">Control</td>
+<td style="text-align: right;">5922</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2021</td>
+<td style="text-align: left;">Treatment</td>
+<td style="text-align: right;">1601</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="h1-overall-table-wealth-centile-rural-weighted" class="level1">
+<h1>5. H1 overall table (wealth centile, rural, weighted)</h1>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>H1 overall comparison. Targets differ; see column ‘clustering’ and section 12.</caption>
+<colgroup>
+<col style="width: 33%">
+<col style="width: 6%">
+<col style="width: 3%">
+<col style="width: 10%">
+<col style="width: 5%">
+<col style="width: 4%">
+<col style="width: 6%">
+<col style="width: 30%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">estimand</th>
+<th style="text-align: right;">estimate</th>
+<th style="text-align: right;">SE</th>
+<th style="text-align: left;">95% CI</th>
+<th style="text-align: right;">p-value</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">clusters</th>
+<th style="text-align: left;">clustering</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Frozen 2x2 endpoint (2008 vs 2021), treat_post</td>
+<td style="text-align: right;">4.40</td>
+<td style="text-align: right;">4.87</td>
+<td style="text-align: left;">[-5.15, 13.94]</td>
+<td style="text-align: right;">0.367</td>
+<td style="text-align: right;">15001</td>
+<td style="text-align: right;">493</td>
+<td style="text-align: left;">enumeration cluster (CR1, fixest)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">C&amp;S simple overall ATT (annual cohorts)</td>
+<td style="text-align: right;">1.72</td>
+<td style="text-align: right;">4.62</td>
+<td style="text-align: left;">[-7.34, 10.77]</td>
+<td style="text-align: right;">0.710</td>
+<td style="text-align: right;">36519</td>
+<td style="text-align: right;">1269</td>
+<td style="text-align: left;">enumeration cluster (multiplier bootstrap)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C&amp;S calendar-2021 ATT</td>
+<td style="text-align: right;">6.81</td>
+<td style="text-align: right;">4.78</td>
+<td style="text-align: left;">[-2.57, 16.18]</td>
+<td style="text-align: right;">0.155</td>
+<td style="text-align: right;">36519</td>
+<td style="text-align: right;">1269</td>
+<td style="text-align: left;">enumeration cluster (multiplier bootstrap)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BJS overall ATT, district FE (primary)</td>
+<td style="text-align: right;">-2.27</td>
+<td style="text-align: right;">2.57</td>
+<td style="text-align: left;">[-7.31, 2.78]</td>
+<td style="text-align: right;">0.379</td>
+<td style="text-align: right;">4308</td>
+<td style="text-align: right;">99</td>
+<td style="text-align: left;">district (ADM3, didimputation)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BJS overall ATT, region FE (robustness)</td>
+<td style="text-align: right;">-1.20</td>
+<td style="text-align: right;">2.48</td>
+<td style="text-align: left;">[-6.05, 3.65]</td>
+<td style="text-align: right;">0.628</td>
+<td style="text-align: right;">4308</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: left;">region (ADM2, didimputation)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="h1-head-to-head-event-study" class="level1">
+<h1>6. H1 head-to-head event study</h1>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="staggered_head_to_head_figs/h1_eventstudy_cs_vs_bjs.png" class="img-fluid figure-img" width="1425"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>C&amp;S binned event study, H1 (custom aggregation validated exactly against aggte(dynamic)).</caption>
+<colgroup>
+<col style="width: 9%">
+<col style="width: 13%">
+<col style="width: 9%">
+<col style="width: 21%">
+<col style="width: 9%">
+<col style="width: 15%">
+<col style="width: 6%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">bin</th>
+<th style="text-align: right;">estimate</th>
+<th style="text-align: right;">SE</th>
+<th style="text-align: left;">95% CI</th>
+<th style="text-align: right;">cells</th>
+<th style="text-align: left;">cohorts</th>
+<th style="text-align: right;">PAs</th>
+<th style="text-align: right;">treated HH</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">-8:-7</td>
+<td style="text-align: right;">-26.14</td>
+<td style="text-align: right;">12.87</td>
+<td style="text-align: left;">[-51.4, -0.9]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">2015</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">-6:-5</td>
+<td style="text-align: right;">27.00</td>
+<td style="text-align: right;">9.66</td>
+<td style="text-align: left;">[8.1, 45.9]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">2014</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">-4:-3</td>
+<td style="text-align: right;">28.74</td>
+<td style="text-align: right;">11.18</td>
+<td style="text-align: left;">[6.8, 50.7]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">2015</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">-2:-1</td>
+<td style="text-align: right;">-8.37</td>
+<td style="text-align: right;">9.45</td>
+<td style="text-align: left;">[-26.9, 10.1]</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">2009;2015</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">0:1</td>
+<td style="text-align: right;">-17.57</td>
+<td style="text-align: right;">7.17</td>
+<td style="text-align: left;">[-31.6, -3.5]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">2020</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">64</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2:3</td>
+<td style="text-align: right;">6.32</td>
+<td style="text-align: right;">8.67</td>
+<td style="text-align: left;">[-10.7, 23.3]</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">2009;2015</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">485</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">4:5</td>
+<td style="text-align: right;">-3.07</td>
+<td style="text-align: right;">5.61</td>
+<td style="text-align: left;">[-14.1, 7.9]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">2009</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">789</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6:7</td>
+<td style="text-align: right;">-2.93</td>
+<td style="text-align: right;">5.15</td>
+<td style="text-align: left;">[-13, 7.2]</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">2009;2015</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">800</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">8:9</td>
+<td style="text-align: right;">2.74</td>
+<td style="text-align: right;">6.37</td>
+<td style="text-align: left;">[-9.7, 15.2]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">2009</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">875</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">&gt;=10</td>
+<td style="text-align: right;">6.04</td>
+<td style="text-align: right;">5.39</td>
+<td style="text-align: left;">[-4.5, 16.6]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">2009</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">1374</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>BJS binned event study, H1 (district-clustered).</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">bin</th>
+<th style="text-align: right;">estimate</th>
+<th style="text-align: right;">SE</th>
+<th style="text-align: left;">95% CI</th>
+<th style="text-align: right;">treated HH</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">&lt;=-9</td>
+<td style="text-align: right;">5.47</td>
+<td style="text-align: right;">5.72</td>
+<td style="text-align: left;">[-5.7, 16.7]</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">-8:-7</td>
+<td style="text-align: right;">-11.52</td>
+<td style="text-align: right;">3.92</td>
+<td style="text-align: left;">[-19.2, -3.8]</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">-6:-5</td>
+<td style="text-align: right;">-10.33</td>
+<td style="text-align: right;">3.31</td>
+<td style="text-align: left;">[-16.8, -3.9]</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">-4:-3</td>
+<td style="text-align: right;">10.10</td>
+<td style="text-align: right;">3.61</td>
+<td style="text-align: left;">[3, 17.2]</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">-2:-1</td>
+<td style="text-align: right;">-1.14</td>
+<td style="text-align: right;">3.83</td>
+<td style="text-align: left;">[-8.6, 6.4]</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">0:1</td>
+<td style="text-align: right;">-12.80</td>
+<td style="text-align: right;">2.71</td>
+<td style="text-align: left;">[-18.1, -7.5]</td>
+<td style="text-align: right;">64</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2:3</td>
+<td style="text-align: right;">-2.32</td>
+<td style="text-align: right;">8.28</td>
+<td style="text-align: left;">[-18.6, 13.9]</td>
+<td style="text-align: right;">485</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">4:5</td>
+<td style="text-align: right;">-7.26</td>
+<td style="text-align: right;">3.86</td>
+<td style="text-align: left;">[-14.8, 0.3]</td>
+<td style="text-align: right;">789</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">6:7</td>
+<td style="text-align: right;">-5.41</td>
+<td style="text-align: right;">3.01</td>
+<td style="text-align: left;">[-11.3, 0.5]</td>
+<td style="text-align: right;">800</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8:9</td>
+<td style="text-align: right;">1.32</td>
+<td style="text-align: right;">4.35</td>
+<td style="text-align: left;">[-7.2, 9.9]</td>
+<td style="text-align: right;">875</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">&gt;=10</td>
+<td style="text-align: right;">1.09</td>
+<td style="text-align: right;">2.80</td>
+<td style="text-align: left;">[-4.4, 6.6]</td>
+<td style="text-align: right;">1374</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="h1-pretrend-diagnostics" class="level1">
+<h1>7. H1 pretrend diagnostics</h1>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>C&amp;S joint test: all displayed pre bins = 0, cluster-robust IF covariance.</caption>
+<colgroup>
+<col style="width: 47%">
+<col style="width: 6%">
+<col style="width: 3%">
+<col style="width: 9%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">test</th>
+<th style="text-align: right;">W</th>
+<th style="text-align: right;">df</th>
+<th style="text-align: right;">p-value</th>
+<th style="text-align: right;">native Wpval (diagnostic only)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">C&amp;S binned pre bins = 0 (cluster-robust IF)</td>
+<td style="text-align: right;">24.04</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">7.84e-05</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>BJS pre bins, H1 (leads aggregated with untreated w_all mass weights).</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">bin</th>
+<th style="text-align: right;">estimate</th>
+<th style="text-align: right;">SE</th>
+<th style="text-align: left;">95% CI</th>
+<th style="text-align: right;">leads</th>
+<th style="text-align: right;">lead w_all mass</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">&lt;=-9</td>
+<td style="text-align: right;">5.47</td>
+<td style="text-align: right;">5.72</td>
+<td style="text-align: left;">[-5.75, 16.68]</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">291.3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">-8:-7</td>
+<td style="text-align: right;">-11.52</td>
+<td style="text-align: right;">3.92</td>
+<td style="text-align: left;">[-19.21, -3.83]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">85.5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">-6:-5</td>
+<td style="text-align: right;">-10.33</td>
+<td style="text-align: right;">3.31</td>
+<td style="text-align: left;">[-16.81, -3.85]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">57.4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">-4:-3</td>
+<td style="text-align: right;">10.10</td>
+<td style="text-align: right;">3.61</td>
+<td style="text-align: left;">[3.02, 17.17]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">41.8</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">-2:-1</td>
+<td style="text-align: right;">-1.14</td>
+<td style="text-align: right;">3.83</td>
+<td style="text-align: left;">[-8.64, 6.36]</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1018.2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>BJS joint test (district-clustered covariance): all displayed pre bins = 0.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">W</th>
+<th style="text-align: right;">df</th>
+<th style="text-align: right;">p_value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">28.52635</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">2.9e-05</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="h2-overall-table-wealth-z-score" class="level1">
+<h1>8. H2 overall table (wealth z-score)</h1>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>H2 overall comparison.</caption>
+<colgroup>
+<col style="width: 31%">
+<col style="width: 6%">
+<col style="width: 4%">
+<col style="width: 12%">
+<col style="width: 5%">
+<col style="width: 4%">
+<col style="width: 6%">
+<col style="width: 29%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">estimand</th>
+<th style="text-align: right;">estimate</th>
+<th style="text-align: right;">SE</th>
+<th style="text-align: left;">95% CI</th>
+<th style="text-align: right;">p-value</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">clusters</th>
+<th style="text-align: left;">clustering</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Frozen 2x2 endpoint (2008 vs 2021), treat_post</td>
+<td style="text-align: right;">0.0068</td>
+<td style="text-align: right;">0.0071</td>
+<td style="text-align: left;">[-0.0072, 0.0207]</td>
+<td style="text-align: right;">0.341</td>
+<td style="text-align: right;">15001</td>
+<td style="text-align: right;">493</td>
+<td style="text-align: left;">enumeration cluster (CR1, fixest)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">C&amp;S simple overall ATT (annual cohorts)</td>
+<td style="text-align: right;">0.0037</td>
+<td style="text-align: right;">0.0103</td>
+<td style="text-align: left;">[-0.0165, 0.024]</td>
+<td style="text-align: right;">0.718</td>
+<td style="text-align: right;">36519</td>
+<td style="text-align: right;">1269</td>
+<td style="text-align: left;">enumeration cluster (multiplier bootstrap)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C&amp;S calendar-2021 ATT</td>
+<td style="text-align: right;">0.0058</td>
+<td style="text-align: right;">0.0049</td>
+<td style="text-align: left;">[-0.0039, 0.0154]</td>
+<td style="text-align: right;">0.244</td>
+<td style="text-align: right;">36519</td>
+<td style="text-align: right;">1269</td>
+<td style="text-align: left;">enumeration cluster (multiplier bootstrap)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BJS overall ATT, district FE (primary)</td>
+<td style="text-align: right;">-0.0005</td>
+<td style="text-align: right;">0.0056</td>
+<td style="text-align: left;">[-0.0116, 0.0105]</td>
+<td style="text-align: right;">0.925</td>
+<td style="text-align: right;">4308</td>
+<td style="text-align: right;">99</td>
+<td style="text-align: left;">district (ADM3, didimputation)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BJS overall ATT, region FE (robustness)</td>
+<td style="text-align: right;">0.0047</td>
+<td style="text-align: right;">0.0062</td>
+<td style="text-align: left;">[-0.0076, 0.0169]</td>
+<td style="text-align: right;">0.455</td>
+<td style="text-align: right;">4308</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: left;">region (ADM2, didimputation)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="h2-head-to-head-event-study" class="level1">
+<h1>9. H2 head-to-head event study</h1>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="staggered_head_to_head_figs/h2_eventstudy_cs_vs_bjs.png" class="img-fluid figure-img" width="1425"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="h2-pretrend-diagnostics" class="level1">
+<h1>10. H2 pretrend diagnostics</h1>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>C&amp;S joint test, H2.</caption>
+<colgroup>
+<col style="width: 47%">
+<col style="width: 6%">
+<col style="width: 3%">
+<col style="width: 8%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">test</th>
+<th style="text-align: right;">W</th>
+<th style="text-align: right;">df</th>
+<th style="text-align: right;">p-value</th>
+<th style="text-align: right;">native Wpval (diagnostic only)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">C&amp;S binned pre bins = 0 (cluster-robust IF)</td>
+<td style="text-align: right;">68.46</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.99921</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>BJS pre bins, H2.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">bin</th>
+<th style="text-align: right;">estimate</th>
+<th style="text-align: right;">SE</th>
+<th style="text-align: left;">95% CI</th>
+<th style="text-align: right;">leads</th>
+<th style="text-align: right;">lead w_all mass</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">&lt;=-9</td>
+<td style="text-align: right;">-0.0197</td>
+<td style="text-align: right;">0.0121</td>
+<td style="text-align: left;">[-0.0433, 0.004]</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">291.3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">-8:-7</td>
+<td style="text-align: right;">-0.0347</td>
+<td style="text-align: right;">0.0083</td>
+<td style="text-align: left;">[-0.051, -0.0184]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">85.5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">-6:-5</td>
+<td style="text-align: right;">-0.0314</td>
+<td style="text-align: right;">0.0154</td>
+<td style="text-align: left;">[-0.0616, -0.0012]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">57.4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">-4:-3</td>
+<td style="text-align: right;">-0.0543</td>
+<td style="text-align: right;">0.0106</td>
+<td style="text-align: left;">[-0.075, -0.0336]</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">41.8</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">-2:-1</td>
+<td style="text-align: right;">-0.0006</td>
+<td style="text-align: right;">0.0068</td>
+<td style="text-align: left;">[-0.014, 0.0128]</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1018.2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>BJS joint test, H2 (district-clustered).</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">W</th>
+<th style="text-align: right;">df</th>
+<th style="text-align: right;">p_value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">41.05222</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">1e-07</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="bjs-region-fe-robustness" class="level1">
+<h1>11. BJS region-FE robustness</h1>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Region-FE robustness (22 region clusters only; robustness, never primary).</caption>
+<colgroup>
+<col style="width: 8%">
+<col style="width: 43%">
+<col style="width: 8%">
+<col style="width: 9%">
+<col style="width: 7%">
+<col style="width: 22%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">outcome</th>
+<th style="text-align: left;">estimand</th>
+<th style="text-align: left;">bin</th>
+<th style="text-align: right;">estimate</th>
+<th style="text-align: right;">SE</th>
+<th style="text-align: left;">95% CI</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">H1</td>
+<td style="text-align: left;">BJS overall ATT, region FE (robustness)</td>
+<td style="text-align: left;">overall</td>
+<td style="text-align: right;">-1.1979</td>
+<td style="text-align: right;">2.4754</td>
+<td style="text-align: left;">[-6.0496, 3.6538]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H1</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">0:1</td>
+<td style="text-align: right;">-19.4929</td>
+<td style="text-align: right;">3.5992</td>
+<td style="text-align: left;">[-26.5472, -12.4387]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H1</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">2:3</td>
+<td style="text-align: right;">-2.0240</td>
+<td style="text-align: right;">6.6054</td>
+<td style="text-align: left;">[-14.9703, 10.9222]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H1</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">4:5</td>
+<td style="text-align: right;">-5.7790</td>
+<td style="text-align: right;">3.9236</td>
+<td style="text-align: left;">[-13.4691, 1.911]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H1</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">6:7</td>
+<td style="text-align: right;">-5.3380</td>
+<td style="text-align: right;">3.1466</td>
+<td style="text-align: left;">[-11.5051, 0.8292]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H1</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">8:9</td>
+<td style="text-align: right;">4.6152</td>
+<td style="text-align: right;">4.2366</td>
+<td style="text-align: left;">[-3.6884, 12.9189]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H1</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">&gt;=10</td>
+<td style="text-align: right;">1.7817</td>
+<td style="text-align: right;">2.2926</td>
+<td style="text-align: left;">[-2.7117, 6.275]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H2</td>
+<td style="text-align: left;">BJS overall ATT, region FE (robustness)</td>
+<td style="text-align: left;">overall</td>
+<td style="text-align: right;">0.0047</td>
+<td style="text-align: right;">0.0062</td>
+<td style="text-align: left;">[-0.0076, 0.0169]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H2</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">0:1</td>
+<td style="text-align: right;">-0.0013</td>
+<td style="text-align: right;">0.0066</td>
+<td style="text-align: left;">[-0.0142, 0.0116]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H2</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">2:3</td>
+<td style="text-align: right;">-0.0225</td>
+<td style="text-align: right;">0.0284</td>
+<td style="text-align: left;">[-0.0782, 0.0331]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H2</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">4:5</td>
+<td style="text-align: right;">0.0020</td>
+<td style="text-align: right;">0.0074</td>
+<td style="text-align: left;">[-0.0125, 0.0165]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H2</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">6:7</td>
+<td style="text-align: right;">-0.0044</td>
+<td style="text-align: right;">0.0059</td>
+<td style="text-align: left;">[-0.0161, 0.0072]</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">H2</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">8:9</td>
+<td style="text-align: right;">0.0331</td>
+<td style="text-align: right;">0.0181</td>
+<td style="text-align: left;">[-0.0023, 0.0684]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">H2</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">&gt;=10</td>
+<td style="text-align: right;">0.0035</td>
+<td style="text-align: right;">0.0062</td>
+<td style="text-align: left;">[-0.0087, 0.0157]</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>There are only 22 region clusters, so region-clustered inference is fragile; region FE is reported for robustness only and was not promoted on the basis of p-values.</p>
+</section>
+<section id="methodological-comparison" class="level1">
+<h1>12. Methodological comparison</h1>
+<p><strong>Where the estimators agree.</strong> Both use the same frozen timing, weights, covariates, bins and sample. Both overall ATTs are statistically indistinguishable from zero for H1 and H2, and both event studies put the informative pre period (<code>-2:-1</code>) near zero with wide uncertainty. Both joint binned pretrend tests reject, and in both cases the rejection is driven by the sparse-cohort placebo bins (<code>-8:-7</code>, <code>-6:-5</code>, <code>-4:-3</code>), which come from the 1-PA (2014) and 4-PA (2015) cohorts.</p>
+<p><strong>Where they differ.</strong> (i) <em>Estimand</em>: C&amp;S targets a group-share-weighted average of ATT(g,t) (dominated by the 2009 cohort); BJS targets a weighted ATT over imputable post-treatment treated rows under an additive untreated-outcome model with district FE, survey-year FE and PAP covariates. These are not the same parameter and need not agree. (ii) <em>Support</em>: C&amp;S cannot estimate any cell at event time <code>&lt;= -9</code> (no pre-2009 cohort wave has an earlier base period), and several later-cohort cells are not estimable; BJS imputes 4 308 of 4 387 post-treatment treated rows. (iii) <em>Precision</em>: BJS district-clustered SEs are smaller, but this partly reflects the parametric untreated model pooling all districts and years; C&amp;S SEs reflect cell-by-cell estimation with very small cohorts. (iv) <em>Identifying assumptions</em>: C&amp;S relies on parallel trends conditional on covariates within (g,t) cells; BJS relies on a correctly specified additive untreated-outcome model (with the same covariates) plus district and year fixed effects — GADM ADM3 is a harmonized persistent partition, which supports the district FE, but the additive specification is a stronger functional-form assumption.</p>
+<p><strong>Interpretation rules respected here.</strong> Non-rejection of pretrends is not proof of parallel trends, and rejection here is not evidence that treatment effects are confounded — it mainly flags that the sparse cohorts’ placebo cells are imprecise and unstable. Pretrend uncertainty (bin SEs of roughly 9–13 wealth centiles for C&amp;S) is of the same order as post-treatment point estimates, so the event study cannot discriminate effect sizes of the magnitude estimated. The 2009 cohort dominates every informative post bin for C&amp;S; later-cohort bins must not be overinterpreted.</p>
+</section>
+<section id="manuscript-oriented-recommendation" class="level1">
+<h1>13. Manuscript-oriented recommendation</h1>
+<p>Based on design credibility, estimand relevance, support, precision and clarity — not on preferred signs or p-values:</p>
+<ol type="1">
+<li><strong>Main multi-period estimator.</strong> Keep the preregistered frozen 2×2 as the primary result. If a staggered estimator is promoted to the main text, C&amp;S (annual cohorts, never-treated, IPW) is the more defensible choice: its estimand is transparent, its cell-level support is auditable, and it does not hinge on an additive untreated model. Its weakness is the 2009-cohort dominance, which must be stated.</li>
+<li><strong>Robustness estimator.</strong> BJS with district FE, reported with its support limits (79 unimputable rows; district-clustered, 99 clusters) and the explicit caveat that agreement or disagreement with C&amp;S does not validate either design.</li>
+<li><strong>Event-study figure in the main manuscript?</strong> No.&nbsp;Given the pretrend rejections in both designs, the sparse-cohort bins and the empty <code>&lt;= -9</code> bin, the binned event-study figure belongs in the supplement; the main text should carry the 2×2 endpoint plus the overall staggered ATTs.</li>
+<li><strong>Pretrend diagnostics.</strong> Main text: the 2×2 1997–2008 placebo (already preregistered) and a one-sentence statement of the binned joint tests. Supplement: the full binned event studies, per-bin support tables and both joint tests with their covariance details.</li>
+<li><strong>Linking staggered results to the 2×2.</strong> Suggested wording: “As a robustness check, two modern staggered-adoption estimators using the same frozen treatment timing, weights and covariates (Callaway–Sant’Anna with annual cohorts; a Borusyak–Jaravel–Spiess imputation estimator with district fixed effects) yield overall effects statistically indistinguishable from zero and from the preregistered 2×2 endpoint estimate, with wide uncertainty that reflects limited post-treatment support (43 treated protected areas, 36 treated in 2009).”</li>
+</ol>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
