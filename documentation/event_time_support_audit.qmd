@@ -1,0 +1,294 @@
+---
+title: "Audit — annual treatment timing, event-time bin support, and staggered-estimator feasibility"
+subtitle: "Outcome-blind design audit for the staggered analysis (07/07b), review_v2"
+date: "2026-10-07"
+format:
+  html:
+    page-layout: full
+    toc: true
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(tidyverse)
+out_dir <- "output/review_v2/event_time_support_audit"
+img <- function(f, w = "100%") knitr::include_graphics(file.path("..", out_dir, f))
+```
+
+**Scope statement.** This audit evaluates design support only. No outcome variable was
+loaded into an estimation routine or inspected during this audit. The historical 2-year
+bin rule was recovered from code/manuscript predating the current outcome analysis; this
+audit evaluates support for that pre-existing rule and does not alter bin boundaries based
+on treatment-effect estimates.
+
+## 1. Exact-date annual treatment time (`g_eff`)
+
+Survey reference date = **June 1** of each survey year (frozen convention). For every
+eventual-treated observation:
+
+```r
+g_eff = treatment_calendar_year + 1*(treatment_date > June 1 of that year)
+```
+
+This is not a new causal assumption: it is the annual representation of the frozen rule
+`treated_now = survey_ref_date >= treatment_date`.
+
+**Assertions (all pass, 6,087 treated-household observations):**
+
+- `treated_now == as.integer(DHSYEAR >= g_eff)` holds for all treated observations.
+- `GROUP == Control` ⟹ `treatment_date` NA and `g_eff == 0` (31,344 observations).
+- One `(treatment_date, g_eff)` pair per treated PA (43 PAs).
+- Cross-check: `floor((survey_ref_date − treatment_date)/365.25) == DHSYEAR − g_eff`
+  for **all 6,087** treated observations. The date-consistent annual construction
+  **exactly reproduces** the fractional event time recovered from the manuscript-era code
+  (`07-estimation_staggered.qmd`), which itself superseded the older
+  `DHSYEAR − treatment_year` construction.
+
+**Annual cohorts (43 treated PAs):**
+
+```{r}
+#| label: cohort-table
+cohort_pa <- tribble(
+  ~treatment_date, ~n_PAs, ~g_eff,
+  "2008-10-17", 31, 2009,
+  "2008-12-02",  6, 2009,
+  "2013-07-18",  1, 2014,
+  "2015-01-01",  4, 2015,
+  "2020-01-29",  2, 2020
+)
+cohort_pa
+```
+
+Four annual cohorts (2009, 2014, 2015, 2020) instead of the three survey-wave cohorts
+(2011, 2016, 2021) used by the current 07b implementation.
+
+## 2. Old vs date-consistent bin shifts
+
+Relative time: old = `DHSYEAR − treatment_year`; date-consistent = `DHSYEAR − g_eff`.
+The same historical 2-year bin rule is applied to both. 91.8% of treated observations
+change their exact relative year (all PAs treated after June 1 shift by −1); 43.8% change
+their 2-year bin; **all 43 PAs** change bin somewhere.
+
+```{r}
+#| label: shift-table
+read_csv(file.path("..", out_dir, "bin_shift_observations.csv"), show_col_types = FALSE) |>
+  rename(`old bin` = bin_old_lab, `date-consistent bin` = bin_eff_lab, `HH obs` = hh_obs)
+```
+
+The dominant shift: the old `0:1` bin (1,006 HH / 25 PAs — the 2008-cohort baseline wave)
+moves into the reference bin `−2:−1`, because those PAs entered treatment **after** the
+June 2008 interview. This matches the correction documented in the manuscript-era code.
+
+```{r}
+#| label: fig-shift
+#| fig-cap: "Old integer bin vs date-consistent bin (households and distinct PAs)"
+img("bin_shift_matrix.png")
+```
+
+## 3. Exact event-time support (date-consistent)
+
+```{r}
+#| label: fig-hist
+#| fig-cap: "Exact relative-year histogram with the fixed historical bin overlay"
+img("event_time_exact_histogram.png")
+```
+
+Only **16 distinct exact relative years** exist (cohort × wave arithmetic); the remaining
+years are empty, which is precisely what the historical binning was designed to absorb.
+
+```{r}
+#| label: fig-binsup
+#| fig-cap: "Household, cluster and PA support per historical bin"
+img("event_time_binned_support.png")
+```
+
+Reading the three levels separately (rule: household mass alone is not credibility):
+
+- `≤ −9`: 10 PAs / 12 clusters / 365 HH — spread over 4 cohorts, but driven by the
+  1997 wave (rel −18, −17 from the 2015/2014 cohorts and −12 from the 2009 cohort).
+- `−8:−7`, `−6:−5`, `−4:−3`: 1–3 PAs each — fragile at the PA level.
+- `−2:−1` (reference bin): 27 PAs / 35 clusters / 1,064 HH — the strongest pre bin.
+- `0:1`: 2 PAs only. `2:3`: 13 PAs / 2 cohorts. `4:5`: 16 PAs / 2 cohorts.
+- `6:7`: 17 PAs / 3 cohorts. `8:9`: 22 PAs but **one cohort** (2009 @ 2018).
+- `≥10`: 30 PAs but **one cohort** (2009 @ 2021).
+
+## 4. Annual cohort support and cohort × wave structure
+
+```{r}
+#| label: fig-cohort
+#| fig-cap: "PAs, clusters and post-treatment household observations per annual cohort"
+img("annual_treatment_cohort_support.png")
+```
+
+```{r}
+#| label: fig-cohwave
+#| fig-cap: "Cohort × survey-wave support (post-treatment, treated side)"
+img("annual_cohort_wave_support.png")
+```
+
+Critical support gaps visible in the full treated-side table (pre-treatment observations
+included): the 2014 cohort has **no treated observations at 2011 or 2013**; the 2014 and
+2015 cohorts are **entirely absent from the 2016 wave** despite being treated by then;
+the 2020 cohort appears only at 2008, 2018 (pre) and 2021 (post).
+
+```{r}
+#| label: fig-collapse
+#| fig-cap: "Annual cohorts collapsed to survey-wave cohorts in current 07b"
+img("annual_vs_collapsed_cohorts.png")
+```
+
+```{r}
+#| label: fig-bincomp
+#| fig-cap: "PA support per bin, decomposed by annual cohort"
+img("event_bin_cohort_composition.png")
+```
+
+## 5. C&S feasibility: does `did` accept annual `g_eff` between survey waves?
+
+**YES.** Verified two ways against the installed **did 2.1.2** (R 4.5.1):
+
+1. **Source inspection** (`pre_process_did`, `compute.att_gt`):
+   - `gname` must be numeric but is never required to be a value of `tname`; groups are
+     selected by `data$.G <- 1*(gname == glist[g])`.
+   - `base_period = "universal"`: base = `tail(which(tlist < g), 1)` — the last observed
+     wave strictly before `g_eff`. Default is `"varying"` (base = preceding wave), which
+     is what 07b used.
+   - RCS cells are skipped (NA) exactly when treated units are missing at `t` or at the
+     base period, or controls are missing at either — a mechanical rule reproducible
+     without outcomes.
+   - Groups with `g > max(tlist)` are silently recoded never-treated (not applicable:
+     max `g_eff` = 2020 < 2021).
+
+2. **Synthetic toy test** (survey years matching ours; cohorts 2009/2014/2015/2020 between
+   waves; synthetic outcome unrelated to the study): `att_gt(panel = FALSE,
+   control_group = "nevertreated", est_method = "ipw")` produced all expected
+   (g,t) cells under both base-period conventions.
+
+### Estimability matrix (mechanical, no minimum-sample rules imposed)
+
+```{r}
+#| label: fig-estim
+#| fig-cap: "ATT(g,t) estimability. Tile annotation on estimable cells: treated clusters/PAs at t : at base."
+img("annual_attgt_estimability_matrix.png")
+```
+
+```{r}
+#| label: estim-counts
+cells <- read_csv(file.path("..", out_dir, "annual_attgt_cell_support.csv"), show_col_types = FALSE)
+cells |>
+  group_by(base_period, g_eff) |>
+  summarise(`cells` = n(), `estimable` = sum(estimable), .groups = "drop") |>
+  arrange(base_period, g_eff)
+```
+
+13 of 24 cells are mechanically estimable under the 07b default (`varying`); 13 of 28
+under `universal` (which adds the g=2009 pre cell at 1997 and g=2015/2020 pre cells, but
+loses g=2014 entirely). The g=2014 cohort has **no estimable cell under `universal`**
+(its base wave 2013 contains no treated observations) and only 2 fragile cells under
+`varying` (2008 pre: 1 PA; 2021 post: 1 PA at base).
+
+### Outcome-blind overlap diagnostics (estimable post cells)
+
+The exact `DRDID::std_ipw_did_rc` (v1.2.3) treatment-only machinery was replicated:
+weighted logit propensity score on the pooled two-period comparison sample (cohort-g
+units + never-treated controls; other cohorts excluded), PS capped at 1−1e-6, controls
+with PS ≥ 0.995 trimmed, ATT odds weights. No outcomes involved.
+
+```{r}
+#| label: fig-overlap
+#| fig-cap: "Max control PS, control ESS and post-IPW balance per estimable post cell"
+img("annual_attgt_overlap_diagnostics.png")
+```
+
+- No control propensity score reaches the 0.995 trim in any cell (max observed 0.877,
+  g=2015 at 2021 under `varying`).
+- Control ESS is ample for g=2009 cells (≈ 4,400–4,500 at base); fragile but non-zero for
+  the small cohorts (e.g., ESS ≈ 55 post / 188 base for g=2015 at 2021, `varying`).
+- Post-IPW max |SMD| remains ≈ 0.2–0.5 for the g=2009 cells (same machinery as the frozen
+  07b run, so inherited, not new).
+- **The small-cohort cells show extreme covariate imbalance that is already present
+  before IPW** (e.g., g=2020 at 2021: treated treecover mean 17,334 (SD 17) vs control
+  20,318 (SD 8,263), raw |SMD| ≈ 245; g=2014: population 124 (SD 0.9) vs 29 (SD 25),
+  raw |SMD| ≈ 96). The 2014/2015/2020 cohort PAs sit in landscapes far from the
+  never-treated pool on the matching covariates, and their within-cohort dispersion is
+  near zero. The frozen pooled matching balance (max |SMD| ≤ 0.10) does not carry over
+  to these cohort-specific comparisons. This is a support problem, not a software one.
+- One weighted logit showed near-separation ("fitted probabilities numerically 0 or 1")
+  — flagged in `annual_attgt_overlap.csv`.
+
+## 6. Aggregation of estimable cells into the historical bins
+
+```{r}
+#| label: fig-binnedcells
+#| fig-cap: "Estimable ATT(g,t) cells, PAs and clusters pooled per historical bin"
+img("binned_attgt_estimable_support.png")
+```
+
+```{r}
+#| label: binned-table
+read_csv(file.path("..", out_dir, "binned_attgt_support.csv"), show_col_types = FALSE) |>
+  arrange(base_period, bin_lab) |>
+  rename(bin = bin_lab, cells = n_cells, `# cohorts` = n_cohorts, PAs = n_PAs,
+         clusters = n_clusters, `HH rows` = hh_rows)
+```
+
+**Key test result.** The historical bins do **not** meaningfully pool sparse annual
+comparisons. Under the 07b default (`varying`), every bin except `6:7` draws on a
+**single** annual cohort — and for all post-treatment bins that cohort is 2009. Under
+`universal`, `≤ −9` pools 3 cohorts and `2:3`/`6:7` pool 2, but the g=2014 cohort
+contributes nothing anywhere. The binned event study, if estimated from annual C&S cells,
+is effectively a 2009-cohort event study at post horizons, with small-cohort contributions
+concentrated in the `6:7` bin and scattered pre bins.
+
+## 7. Estimator comparison (design feasibility only)
+
+| | A. Callaway–Sant'Anna (`did::att_gt`) | B. Borusyak–Jaravel–Spiess imputation (`did2s`) | C. Old `did2s` implementation |
+|---|---|---|---|
+| Repeated cross-sections | Explicitly supported (`panel = FALSE`, verified in source and toy test) | `did2s` canonical use requires unit fixed effects from a panel; no RCS support claim in the installed package | Ran on RCS data, but see first-stage below |
+| Treatment years between survey waves | **Yes** (annual `g_eff` accepted; base = last wave before `g_eff`) | Conceptually yes (imputation at observed periods), but targeting arbitrary binned event-time averages requires custom aggregation | Used date-exact fractional rel time, binned ±10 |
+| Required stable-group structure | None beyond `gname` (treatment timing) | A persistent group/unit whose fixed effect can be estimated from untreated observations. DHS clusters (`hv001`) are **not** longitudinal; `region` is too coarse; PA-level FE is the only defensible candidate and changes the estimand to "within-PA" comparisons | **Only survey-wave FE** (`| DHSYEAR`) — no unit or group FE at all |
+| Heterogeneity-robust | Yes (ATT(g,t) with aggregation) | Yes, if the group structure is valid | No — Gardner two-step with wave-FE-only first stage does not absorb time-invariant unit heterogeneity; binned second stage has no clean causal interpretation under effect heterogeneity |
+| Clustering | Cluster bootstrap on wave×cluster (frozen 07b choice) | Unclear for RCS without units | `cluster_uid` = wave×cluster (not longitudinal) |
+| Verdict | Mechanically feasible **today**; bins pool weakly across cohorts | Not adoptable without inventing a persistent-group structure; PA-FE variant would need methodological review | Legacy/exploratory; already flagged as not the reference estimator in the manuscript-era notes |
+
+## 8. Decision
+
+**Case B applies, with a sharp strong-cohort/weak-cohort structure.**
+
+- Annual `g_eff` **is** accepted by `did` and exactly reproduces the manuscript-era
+  fractional event time; the 2011/2016/2021 collapse was a design choice, not a software
+  constraint (this rules out Case C).
+- Mechanically, 13 ATT(g,t) cells are estimable, but the estimable set is dominated by
+  the 2009 cohort (36 of 43 PAs); the 2014 cohort contributes at most 2 fragile
+  single-PA cells, and the 2015/2020 cohorts rest on 1–3 PAs at base.
+- The historical bins pool across cohorts almost nowhere; post-treatment bins are
+  single-cohort by construction.
+- Overlap: PS tails are fine (no trimming triggered), but the small-cohort cells show
+  severe raw covariate displacement relative to the never-treated pool — the fragility is
+  in *support*, not in the propensity-score machinery.
+- BJS is **not** adoptable without a defensible stable-group structure; DHS clusters are
+  not longitudinal units, and a PA-level FE variant would need separate methodological
+  review. The old `did2s` implementation should not be revived merely for graphical
+  convenience.
+
+**Recommended next outcome-free methodological step.** Before any outcome is estimated,
+decide — as an explicit design choice — between:
+
+1. **Annual C&S with `varying` base (07b default) + historical bin aggregation**, reported
+   with a per-cohort decomposition of every bin (this audit's exports make that
+   transparent), acknowledging that post bins are 2009-cohort estimates; or
+2. **Annual C&S with `universal` base**, which restores the g=2009 pre cell at 1997 and
+   pools `≤ −9` across 3 cohorts, at the cost of losing g=2014 entirely — a trade-off
+   that must be justified on design grounds, not on resulting estimates.
+
+Either way: estimate C&S at annual cohorts first, aggregate into the fixed historical
+bins second, and report bin-level cohort composition alongside every binned coefficient.
+
+## 9. Files
+
+- Script: `scripts/audit_annual_event_time_support.R`
+- Outputs: `output/review_v2/event_time_support_audit/` (10 CSVs, 10 PNGs)
+- No production file (`07-estimation_staggered.qmd`, `07b-estimation-staggered-did.qmd`)
+  was modified.
