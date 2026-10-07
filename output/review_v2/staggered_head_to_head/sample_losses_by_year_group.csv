@@ -1,0 +1,15 @@
+DHSYEAR,GROUP,rows,lost_covariate_missingness,lost_zero_weight_and_cov_missing,zero_weight_rows,zero_weight_rows_in_cov_complete,zero_weight_treated_now,outcome_missing_h1,outcome_missing_h2
+1997,Control,2919,1,0,0,0,0,0,0
+1997,Treatment,335,0,0,0,0,0,0,0
+2008,Control,6323,0,0,0,0,0,0,0
+2008,Treatment,1155,0,0,0,0,0,0,0
+2011,Control,1910,0,0,0,0,0,0,0
+2011,Treatment,441,0,0,0,0,0,0,0
+2013,Control,3175,0,0,0,0,0,0,0
+2013,Treatment,724,0,0,0,0,0,0,0
+2016,Control,4296,0,0,0,0,0,0,0
+2016,Treatment,637,0,0,0,0,0,0,0
+2018,Control,6799,0,790,790,0,0,0,0
+2018,Treatment,1194,0,121,121,0,120,0,0
+2021,Control,5922,0,0,0,0,0,0,0
+2021,Treatment,1601,0,0,0,0,0,0,0

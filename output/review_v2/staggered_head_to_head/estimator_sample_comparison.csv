@@ -1,0 +1,13 @@
+quantity,value
+full stacked rows,37431
+positive-weight rows,36520
+complete cases on PAP covariates,36519
+"rows used by C&S, wealth_centile_rural_weighted",36519
+"rows used by C&S, zscore_wealth",36519
+"rows used by BJS, wealth_centile_rural_weighted",36519
+"rows used by BJS, zscore_wealth",36519
+post-treated rows used (treated_now = 1),4387
+post-treated zero-weight rows in sample,0
+rows lost to covariate missingness,912
+rows lost to outcome missingness (H1),0
+rows lost to outcome missingness (H2),0

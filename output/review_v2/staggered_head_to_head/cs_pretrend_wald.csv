@@ -1,0 +1,3 @@
+outcome_h,test,W,df,p_value,native_Wpval_diagnostic,pre_bins
+h1,C&S binned pre bins = 0 (cluster-robust IF),24.039889699451404,4,7.841757782656167e-5,0,-8:-7;-6:-5;-4:-3;-2:-1
+h2,C&S binned pre bins = 0 (cluster-robust IF),68.45595962044439,4,4.807265696626928e-14,0.99921,-8:-7;-6:-5;-4:-3;-2:-1
