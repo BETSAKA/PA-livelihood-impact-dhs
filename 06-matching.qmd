@@ -6,15 +6,17 @@ editor_options:
 
 # Matching
 
-Le document illustre l'application de la méthode de matching dans l'analyse. L'objectif de cette méthode est d'équilibrer les échantillons, c'est-à-dire de maximiser la comparabilité entre les groupes de traitement et de contrôle en termes de caractéristiques observables [@ho2007]. Nous comparons donc des groupes traités et contrôles en les appariant selon 5 covariables environnementales (taux de couvert forestier en 2000, la pente, l'altitude, la densité de population en 2000 et l'accessibilité en 2000).
+Le document illustre l'application de la méthode de matching dans l'analyse. L'objectif de cette méthode est d'équilibrer les échantillons, c'est-à-dire de maximiser la comparabilité entre les groupes de traitement et de contrôle en termes de caractéristiques observables [@Ho2007]. Nous comparons donc des groupes traités et contrôles en les appariant selon 5 covariables environnementales (taux de couvert forestier en 2000, la pente, l'altitude, la densité de population en 2000 et l'accessibilité en 2000).
 
-En effet, si les deux groupes sont très différents avant le traitement, il est difficile de savoir si les différences observées après viennent du traitement ou simplement de ces différences initiales. D'où l'importance du matching, qui permet de neutraliser ces différences. Plus précisement, nous utilisons le genetic matching, une variante des méthodes de matching. Bien qu'ayant le même objectif, cette approche repose sur des algorithmes d'optimisation qui ajustent les facteurs de confusion susceptibles d'influencer à la fois la probabilité de recevoir le traitement et les résultats observés.
+En effet, si les deux groupes sont très différents avant le traitement, il est difficile de savoir si les différences observées après viennent du traitement ou simplement de ces différences initiales. D'où l'importance du matching, qui permet de neutraliser ces différences.
 
 ## Méthodes
 
-Nous réalisons le matching à l'aide de la méthode genetic matching, en utilisant la fonction GenMatch() du package R MatchIt. Cette méthode combine les variables de matching en une seule mesure unique de distance "Mahalanobis distance matching". Cette distance mesurera la différence entre les unités des groupes appariés pour quantifier la similitude entre les deux groupes d'observations, tout en tenant compte des corrélations entre les covariables et de leurs covariances [@Diamond2013].
+**Plan préenregistré (PAP).** Le PAP prévoit un Genetic Matching / appariement au plus proche voisin sur distance de Mahalanobis [@Diamond2013], une logique de caliper [@rosenbaum_central_1983], un critère d'équilibre SMD ≤ 0.10, l'élargissement du caliper en cas de dépassement de ce seuil, la possibilité d'exclure les observations non appariées, et la combinaison des poids de matching avec les poids d'enquête DHS. Le PAP **ne spécifie ni ratio fixe 1:1 ni règle de remplacement**.
 
-Dans un premier temps, nous appliquons la fonction GenMatch() pour identifier la combinaison optimale de poids attribués à chaque covariable, dans le but de maximiser l'équilibre entre le groupe de traitement et de contrôle. Nous obtenons une matrice de poids mais aucune paire n'est encore formée. Dans un second temps, nous utilisons la fonction matchIt(), en intégrant la pondération trouvée auparavant, afin de constituer les paires entre les unités traitées et non traitées.
+**Problème observé (avant tout examen des outcomes).** L'implémentation directe de ce plan s'est révélée problématique en pratique : le Genetic Matching sans caliper satisfaisait le critère SMD ≤ 0.10 (définition cobalt, estimand ATT) dans six vagues mais échouait en 2013 (déséquilibre persistant de `population_count_2000`), tandis que l'implémentation d'un caliper marginal de 0.25 écart-type sur chaque covariable provoquait une attrition sévère des ménages traités et un mauvais équilibre dans plusieurs vagues.
+
+**Déviation outcome-blind retenue.** Le design de production retient désormais le **profile matching cardinality sous estimand ATT** : `matchit(method = "cardinality", estimand = "ATT", ratio = NA, tols = 0.095, std.tols = TRUE, solver = "highs")`. Ce design sélectionne le plus grand sous-ensemble apparié équilibré avec **tous les ménages traités fixes comme cible** : il retient 100 % des traités, maximise l'échantillon de contrôles utilisable et impose directement le critère SMD ≤ 0.10 preregistre, avec exactement les cinq covariables de matching du PAP et la même population éligible. Le choix a été fait **avant** l'inspection de tout outcome sous ce design. Le `tols = 0.095` n'est qu'une garde numérique garantissant une marge par rapport à la borne : le **critère substantiel reste l'équilibre externe max |SMD| ≤ 0.10** (définition cobalt). Le profile cardinality matching est une **déviation méthodologique documentée, pas un estimateur préenregistré** ; il n'était pas préenregistré dans le PAP, et le PAP n'exigeait pas de ratio 1:1. Le cardinality 1:1 et l'entropy balancing ATT sont réservés à des robustesses ultérieures.
 
 ## Exécution du matching pour toutes les années
 
@@ -59,113 +61,228 @@ prep_matching <- function(df_final) {
 # supprimer toute ancienne version pour éviter le masquage
 if (exists("run_matching_year")) rm(run_matching_year)
 
-run_matching_year <- function(year, overwrite = list(gen=FALSE, match=FALSE)) {
+# Graine de base fixe, graine spécifique par vague (reproductibilité)
+MATCHING_BASE_SEED <- 20261004L
+
+# La première exécution force une relance complète de toutes les vagues
+# (les anciens caches, sans métadonnées de spécification, sont de toute
+# façon invalidés par l'échec de validation du hash). Une fois ce rematch
+# initial effectué, passer à FALSE : les caches ne sont alors réutilisés
+# que si le hash de spécification est identique.
+FORCE_REMATCH <- FALSE
+
+# Régle arrêtée avant toute inspection d'outcome :
+# profile matching cardinality ATT. FINAL_PROFILE_TOL = 0.095 n'est qu'une
+# garde numérique ; le critère substantiel reste max |SMD| externe <= 0.10.
+FINAL_PROFILE_TOL <- 0.095
+
+# Arguments du matching (source unique du hash de specification)
+matching_arguments <- list(
+  method = "cardinality",
+  estimand = "ATT",
+  ratio = NA,
+  tols = FINAL_PROFILE_TOL,
+  std.tols = TRUE,
+  solver = "highs"
+)
+
+# Versions de paquets (entrent dans le hash de specification)
+pkg_versions <- list(
+  R = paste(R.version$major, R.version$minor, sep = "."),
+  MatchIt = as.character(packageVersion("MatchIt")),
+  cobalt = as.character(packageVersion("cobalt")),
+  highs = as.character(packageVersion("highs"))
+)
+
+# Hash de specification : tout changement d'assignation du traitement, des
+# covariables, des arguments du matching, des versions de paquets ou de la
+# graine invalide le cache. spec_version "profile_cardinality_v1" :
+# les anciens caches genetic matching sont de fait invalides.
+matching_spec_hash <- function(year, dat_m, X_match, seed) {
+  digest::digest(list(
+    spec_version = "profile_cardinality_v1",
+    year = year,
+    treatment = dat_m$treatment,
+    row_ids = paste(dat_m$DHSYEAR, dat_m$hv001, dat_m$hv002, sep = "-"),
+    matching_variables = matching_variables,
+    X = X_match,
+    matching_arguments = matching_arguments,
+    package_versions = pkg_versions,
+    seed = seed
+  ), algo = "sha256")
+}
+
+# SMD absolu par covariable (définition standard, écarts-types bruts)
+smd_by_var <- function(df, vars) {
+  X <- as.matrix(df[vars])
+  tr <- df$treatment == 1
+  m_t <- colMeans(X[tr, , drop = FALSE])
+  m_c <- colMeans(X[!tr, , drop = FALSE])
+  v_t <- apply(X[tr, , drop = FALSE], 2, var)
+  v_c <- apply(X[!tr, , drop = FALSE], 2, var)
+  abs((m_t - m_c) / sqrt((v_t + v_c) / 2))
+}
+
+run_matching_year <- function(year, force = FORCE_REMATCH) {
   cat("\n=== Matching", year, "===\n")
   fin_path <- glue("data/derived/hr_{year}_final.rds")
   if (!file.exists(fin_path)) stop("Fichier introuvable: ", fin_path)
-  
+
   dat   <- readRDS(fin_path)
   dat_m <- prep_matching(dat)
-  
-  
+
   n_total <- nrow(dat)
   n_filt <- nrow(dat_m)
   n_treat <- sum(dat_m$treatment == 1, na.rm = TRUE)
   n_ctrl <- sum(dat_m$treatment == 0, na.rm = TRUE)
-  
-  
+
   cat(glue(">> N total={n_total}, après filtre/NA={n_filt}; ",
            "Traités={n_treat}, ",
            "Contrôles={n_ctrl}\n"))
-  
+
   have_all_vars <- all(matching_variables %in% names(dat_m))
   cat(">> Toutes les covars présentes ? ", have_all_vars, "\n")
   if (n_filt < 5 || !have_all_vars) {
     warning(glue("Année {year}: données insuffisantes ou variables manquantes — on saute."))
     return(NULL)
   }
-  
+
+  # Garde-fou : GROUP valide partout où il est renseigné, et aucune
+  # observation Treatment issue d'une AP "Proposed" (aucune reclassification
+  # issue d'un RDS périmé). Les ménages des clusters retirés pour coordonnées
+  # GPS invalides (9 en 2008, 1 en 2011) ont GROUP manquant : ils ne peuvent
+  # pas être classés et sont exclus du matching (comme auparavant).
+  prop_ids <- readr::read_csv(
+    "data/PA_creation/wdpa_data/dynamic_wdpa_metadata.csv",
+    show_col_types = FALSE) |>
+    dplyr::filter(STATUS == "Proposed") |>
+    dplyr::pull(WDPAID)
+  stopifnot(
+    "GROUP invalide dans les données de matching" =
+      all(dat$GROUP[!is.na(dat$GROUP)] %in% c("Treatment", "Control", "Excluded")),
+    "GROUP manquant parmi les observations éligibles au matching" =
+      all(!is.na(dat_m$GROUP)),
+    "treated_now incohérent" =
+      all(dat_m$treated_now[dat_m$treatment == 1L] %in% c(0L, 1L)),
+    "Treatment rattaché à une AP Proposed" =
+      !any(dat_m$WDPAID[dat_m$treatment == 1L] %in% prop_ids)
+  )
+
   X_match <- dat_m %>%
     sf::st_drop_geometry() %>%
     dplyr::select(all_of(matching_variables)) %>%
     as.data.frame()
-  
-  gen_path         <- glue("data/derived/gen_match_model_{year}.rds")
+
+  seed <- MATCHING_BASE_SEED + as.integer(year)
+  spec_hash <- matching_spec_hash(year, dat_m, X_match, seed)
+
   match_path       <- glue("data/derived/matching_result_{year}.rds")
   matched_out_path <- glue("data/derived/data_matched_{year}.rds")
-  
-  # --- GenMatch ---
-  used_cache_gen <- FALSE
+
+  # --- matchit(method = "cardinality") : regle figee ---
+  # Profile matching ATT : le plus grand sous-ensemble equilibre avec tous
+  # les traites fixes comme cible. Pas d'etape d'appariement par paires
+  # Mahalanobis apres selection : le profile matching est un design de
+  # selection d'ensemble equilibre, pas un appariement par paires.
+  # Solveur deterministe : pas de set.seed necessaire au calcul.
+  used_cache <- FALSE
   t0 <- Sys.time()
-  if (file.exists(gen_path) && !isTRUE(overwrite$gen)) {
-    cat(">> GenMatch: cache trouvé -> lecture\n")
-    gen_model <- readRDS(gen_path)
-    used_cache_gen <- TRUE
-  } else {
-    cat(">> GenMatch: calcul en cours...\n")
-    gen_model <- GenMatch(
-      Tr = dat_m$treatment,
-      X  = X_match,
-      BalanceMatrix = X_match,
-      estimand = "ATT",
-      M = 1,
-      weights = NULL,
-      pop.size = 1000,
-      max.generations = 100,
-      wait.generations = 4,
-      caliper = .25,
-      print.level = 1,
-      cluster = rep("localhost", 4)
-    )
-    saveRDS(gen_model, gen_path)
+  if (!force && file.exists(match_path)) {
+    cached <- tryCatch(readRDS(match_path), error = function(e) NULL)
+    if (!is.null(cached) && !is.null(cached$meta) &&
+        identical(cached$meta$spec_hash, spec_hash)) {
+      cat(">> matchit: cache valide (hash identique) -> lecture\n")
+      m_out <- cached$m_out
+      used_cache <- TRUE
+    } else {
+      cat(">> matchit: cache absent ou perime (hash different) -> recalcul\n")
+    }
   }
-  t_gen <- as.numeric(difftime(Sys.time(), t0, units="mins"))
-  cat(glue(">> GenMatch temps = {round(t_gen,1)} min (cache={used_cache_gen})\n"))
-  
-  # --- matchit() ---
-  used_cache_match <- FALSE
-  t1 <- Sys.time()
-  if (file.exists(match_path) && !isTRUE(overwrite$match)) {
-    cat(">> matchit: cache trouvé → lecture\n")
-    m_out <- readRDS(match_path)
-    used_cache_match <- TRUE
-  } else {
-    cat(">> matchit: calcul en cours...\n")
+  if (!used_cache) {
+    cat(glue(">> matchit: calcul en cours (hash = {substr(spec_hash, 1, 12)})...\n"))
     fml <- as.formula(paste("treatment ~", paste(matching_variables, collapse=" + ")))
-   
-    
-     m_out <- matchit(
+
+    m_out <- matchit(
       formula   = fml,
       data      = dat_m,
-      method    = "genetic",
-      distance  = "mahalanobis",
-      gen.match = gen_model
+      method    = "cardinality",
+      estimand  = "ATT",
+      ratio     = NA,
+      tols      = FINAL_PROFILE_TOL,
+      std.tols  = TRUE,
+      solver    = "highs",
+      time      = 1800
     )
-     
-    saveRDS(m_out, match_path)
+
+    saveRDS(list(
+      m_out = m_out,
+      meta = list(
+        spec_version = "profile_cardinality_v1",
+        spec_hash = spec_hash,
+        seed = seed,
+        year = year,
+        matching_variables = matching_variables,
+        matching_arguments = matching_arguments,
+        package_versions = pkg_versions,
+        n_eligible = n_filt,
+        n_treated = n_treat,
+        n_control = n_ctrl
+      )
+    ), match_path)
   }
-  
+  t_match <- as.numeric(difftime(Sys.time(), t0, units="mins"))
+  cat(glue(">> matchit temps = {round(t_match,2)} min (cache={used_cache})\n"))
+
   matched <- match.data(m_out, data = sf::st_drop_geometry(dat_m)) %>%
     dplyr::filter(weights > 0)
-  
+
+  # Chaque observation appariée porte un GROUP valide
+  stopifnot(
+    "GROUP invalide dans l'échantillon apparié" =
+      all(matched$GROUP %in% c("Treatment", "Control"))
+  )
+
+  # Gardes de production de la regle figee : retention 100% des traites,
+  # toutes les PA traitees representees, equilibre externe cobalt <= 0.10,
+  # poids de design verifies. Profile matching : poids de design 1 pour les
+  # unites retenues (traites et controles), 0 pour les controles ecartes.
+  n_t_elig <- sum(dat_m$treatment == 1L)
+  n_t_match <- sum(matched$treatment == 1L)
+  bt_year <- cobalt::bal.tab(m_out, estimand = "ATT", un = TRUE)
+  smd_year <- abs(bt_year$Balance$Diff.Adj)
+  w_t <- matched$weights[matched$treatment == 1L]
+  w_c <- matched$weights[matched$treatment == 0L]
+  stopifnot(
+    "retention des traites < 100%" = n_t_match == n_t_elig,
+    "PA traitee non representee dans l'echantillon apparié" =
+      setequal(unique(dat_m$WDPAID[dat_m$treatment == 1L]),
+               unique(matched$WDPAID[matched$treatment == 1L])),
+    "equilibre externe cobalt > 0.10" = max(smd_year) <= 0.10 + 1e-8,
+    "poids de design traites != 1" = all(abs(w_t - 1) < 1e-8),
+    "poids de design controles retenus != 1" = all(abs(w_c - 1) < 1e-8)
+  )
+  cat(glue(">> gardes design : traites {n_t_match}/{n_t_elig} (100%), ",
+           "max SMD cobalt = {round(max(smd_year), 4)}, ",
+           "poids design = 1 (traites et controles retenus)\n"))
+
   saveRDS(matched, matched_out_path)
   cat(glue(">> N appariés = {nrow(matched)} (écrit: {matched_out_path})\n"))
-  
-  
+
   tibble(
     Année = year,
     'Total des observations' = n_total,
     'Après filtre/NA' = n_filt,
     Traités = n_treat,
     Contrôles = n_ctrl,
-    'N appariés' = nrow(matched)
+    'N appariés' = nrow(matched),
+    'Traités appariés' = sum(matched$treatment == 1L),
+    'Contrôles appariés' = sum(matched$treatment == 0L),
+    'Part écartés' = 1 - nrow(matched) / n_filt,
+    'SMD max avant' = max(smd_by_var(dat_m, matching_variables)),
+    'SMD max après' = max(smd_by_var(matched, matching_variables)),
+    seed = seed,
+    hash = substr(spec_hash, 1, 12)
   )
-}
-
-need_overwrite <- function(year) {
-  gen_path   <- glue("data/derived/gen_match_model_{year}.rds")
-  match_path <- glue("data/derived/matching_result_{year}.rds")
-  list(gen = !file.exists(gen_path), match = !file.exists(match_path))
 }
 
 # --- Exécution avec progression ---
@@ -180,27 +297,40 @@ with_progress({
 
 for (i in seq_along(yrs)) {
   yr <- yrs[i]
-  ow <- need_overwrite(yr) 
-  cat(glue("\n>> overwrite {yr}: gen={ow$gen}, match={ow$match}\n"))
   cat(sprintf("Start %s", yr))
   t_all <- Sys.time()
   res_list[[i]] <- tryCatch(
-    run_matching_year(yr, overwrite = ow),
+    run_matching_year(yr),
     error = function(e) { warning(glue("Year {yr} ERROR: {e$message}")); NULL }
   )
   cat(sprintf("Done %s (%.1f min)",
             yr, as.numeric(difftime(Sys.time(), t_all, units="mins"))))
+  p()
 }
 })
 
 result_list <- purrr::compact(res_list) |> bind_rows()
+
+# Garde-fou : le résumé doit couvrir exactement les sept vagues. Un
+# tryCatch() qui avorterait silencieusement une vague ne doit pas pouvoir
+# produire un résumé partiel (c'est ce qui s'était produit lors du rendu
+# de nuit interrompu : le fichier ne contenait que cinq vagues).
+stopifnot(
+  "06 : le résumé du matching ne couvre pas les sept vagues" =
+    nrow(result_list) == length(yrs),
+  setequal(result_list$Année, yrs)
+)
+
 saveRDS(result_list, "data/derived/matching_summary_all_years.rds")
 
-bal_tabs <- purrr::imap(res_list, ~ {if (!is.null(.x)) {
-  tryCatch(cobalt::bal.tab(.x$m), error = function(e) NULL) } else {
-    NULL
-  }
-})
+# Balance tables cobalt à partir des objets matchit sauvegardés
+bal_tabs <- setNames(lapply(yrs, function(y) {
+  p <- glue("data/derived/matching_result_{y}.rds")
+  if (file.exists(p)) {
+    obj <- tryCatch(readRDS(p)$m_out, error = function(e) NULL)
+    if (!is.null(obj)) tryCatch(cobalt::bal.tab(obj), error = function(e) NULL)
+  } else NULL
+}), yrs)
 
 result_list <- result_list %>%
   rename(
@@ -209,13 +339,64 @@ result_list <- result_list %>%
     after_filtre_NA = `Après filtre/NA`,
     Traited = Traités,
     Controls = Contrôles,
-    N_matched = `N appariés`
+    N_matched = `N appariés`,
+    Matched_treated = `Traités appariés`,
+    Matched_controls = `Contrôles appariés`,
+    Share_discarded = `Part écartés`,
+    Max_SMD_before = `SMD max avant`,
+    Max_SMD_after = `SMD max après`,
+    Seed = seed,
+    Cache_hash = hash
   )
 
 saveRDS(bal_tabs, "data/derived/matching_balance_tabs_all_years.rds")
 
+# Harmonisation du diagnostic d'équilibre : cobalt est le diagnostic
+# standard du workflow de matching / du PAP. Sous estimand ATT, cobalt
+# standardise l'écart de moyennes par l'écart-type du groupe traité, tandis
+# que smd_by_var() ci-dessus utilise l'écart-type pooled des deux groupes ;
+# les deux définitions coexistent dans le tableau, la lecture de référence
+# pour le critère SMD <= 0.1 est celle de cobalt.
+cobalt_smd <- map_dfr(seq_along(yrs), function(i) {
+  bt <- bal_tabs[[i]]
+  if (is.null(bt)) {
+    return(tibble(Year = yrs[i],
+                  SMD_before_cobalt = NA_real_,
+                  SMD_after_cobalt = NA_real_))
+  }
+  bal <- as.data.frame(bt$Balance)
+  adj_col <- grep("^Diff\\.Adj$", colnames(bal), value = TRUE)[1]
+  # SMD avant appariement : bal.tab(matchit) ne calcule Diff.Un que si
+  # un = TRUE ; on le recalcule explicitement sur les données brutes.
+  dat_raw <- readRDS(glue("data/derived/hr_{yrs[i]}_final.rds")) %>%
+    filter(GROUP %in% c("Treatment", "Control")) %>%
+    mutate(treatment = if_else(GROUP == "Treatment", 1L, 0L)) %>%
+    # même échantillon éligible que le matching (exclusion des NA de covariables)
+    tidyr::drop_na(all_of(matching_variables))
+  bal_pre <- cobalt::bal.tab(
+    reformulate(matching_variables, response = "treatment"),
+    data = as.data.frame(sf::st_drop_geometry(dat_raw)),
+    estimand = "ATT", un = TRUE, abs = TRUE
+  )$Balance
+  tibble(
+    Year = yrs[i],
+    SMD_before_cobalt = max(abs(bal_pre$Diff.Un), na.rm = TRUE),
+    SMD_after_cobalt = if (!is.na(adj_col))
+      max(abs(bal[[adj_col]]), na.rm = TRUE) else NA_real_
+  )
+})
+
+result_list <- result_list %>%
+  left_join(cobalt_smd, by = "Year") %>%
+  relocate(SMD_before_cobalt, SMD_after_cobalt, .after = Max_SMD_after)
+
+dir.create("output", showWarnings = FALSE)
+write_csv(result_list, "output/matching_summary.csv")
+
 print(result_list)
 ```
+
+Le tableau reporte deux définitions du SMD : la définition interne `smd_by_var()` (écart-type pooled) et la définition cobalt (écart-type du groupe traité, standard pour un estimand ATT). Le diagnostic de référence est celui de cobalt : c'est lui qui fonde le critère préenregistré de SMD ≤ 0.1, désormais imposé directement comme contrainte du matching cardinality (avec une garde numérique à 0.095) et revérifié par un garde-fou de production après chaque vague. **Les sept vagues satisfont le critère externe max |SMD| ≤ 0.1**, avec 100 % des ménages traités retenus dans chaque vague.
 
 Nous obtenons un tableau qui présente, pour chaque année d'analyse, le nombre total d'observations initialement disponibles, le nombre d'observations conservées après exclusion des observations ne relevant ni du groupe Treatment ni du groupe Control, ainsi que celles présentant des valeurs manquantes sur les variables utilisées pour le matching. Le tableau indique également les effectifs des groupes traités et contrôles avant et après le matching.
 
@@ -288,13 +469,15 @@ out <- map_dfr(years, function(y) {
     }
   }
 
-  # matching_result: matchit object — X matrix rows = inputs to matching (after NA drop)
+  # matching_result: matchit object (liste m_out + meta) —
+  # X matrix rows = inputs to matching (after NA drop)
   if (file.exists(matchres_file)) {
     mr <- readRDS(matchres_file)
-    if (is.list(mr) && "X" %in% names(mr)) {
-      After_NA_drop <- nrow(mr$X)
-      if (is.na(Treated) && "treat" %in% names(mr)) {
-        Treated <- sum(mr$treat == 1L)
+    mobj <- if (is.list(mr) && !is.null(mr$m_out)) mr$m_out else mr
+    if (is.list(mobj) && "X" %in% names(mobj)) {
+      After_NA_drop <- nrow(mobj$X)
+      if (is.na(Treated) && "treat" %in% names(mobj)) {
+        Treated <- sum(mobj$treat == 1L)
       }
     }
   }
@@ -334,7 +517,7 @@ Pour effectuer le test avant l'appariement, on détermine les déséquilibres in
 
 -   Si \|SMD\| \< 0.1, il existe un équilibre satisfaisant entre les groupes pour la covariable.
 
--   Si SMD \> 0.1, le déséquilibre est significatif [@austin2009]. Pour réajuster l'équilibre, on augmentera l'intervalle des calipers afin d'obtenir un SMD **≤** 0.1.
+-   Si SMD \> 0.1, le déséquilibre est significatif [@Austin2009]. Le PAP prévoyait d'élargir l'intervalle des calipers pour rétablir l'équilibre ; sous le design retenu (profile cardinality ATT), le critère SMD **≤** 0.1 est imposé directement comme contrainte d'optimisation, ce qui rend l'élargissement itératif du caliper sans objet.
 
 ```{r}
 # Load 
@@ -390,7 +573,7 @@ balance_results
 
 ```
 
-L'analyse des distributions des covariables avant le matching montrent un déséquilibre important entre les groupes de traitement et de contrôle. En 1997, l'équilibre des covariables est partiellement atteint. Deux variables montrent un déséquilibre dont la couverture forestière en 2000 (avec un SMD = 0.15) et l'accessibilité en 2000 (avec un SMD = 0.17). Cela montre des différences structurelles persistantes entre les groupes. En 2008, l'équilibre est globalement satisfaisant, avec un léger déséquilibre pour la variable densité de population avec un SMD égale à 0.10, tandis que l'ensemble des autres covariables présente un SMD inférieur à 0.05. En 2011, tous les covariables sont bien équilibrées sauf pour la variable densité de population. Cette dernière montre un déséquilibre modéré dont la SMD est égale à 0.15. Cela suggère une certaine hétérogénéité territoriale entre les zones traitées et non traitées. Cette année est celle où le matching est le plus performant. En 2013, la majorité des covariables sont équilibrées mais le temps de déplacement reste déséquilibré avec un SMD égale à 0.14. Cela indique l'existence d'une différence persistante d'accessibilité entre les groupes. En 2016, toutes les covariables présentent un SMD inférieur au seuil de 0.1, qui indique un équilibre satisfaisant entre les groupes. En 2021, plusieurs covariables présentent un léger déséquilibre. Les groupes restent structurellement différents en termes de contexte géographique et socio-démographique.
+L'analyse des distributions des covariables avant le matching (définition cobalt : SMD standardisé par l'écart-type du groupe traité, estimand ATT) montre un déséquilibre important entre les groupes de traitement et de contrôle. La densité de population en 2000 est systématiquement la covariable la plus déséquilibrée, avec un SMD allant de 0.93 (2018) à 7.30 (2013) selon la vague. Le couvert forestier 2000 est déséquilibré dans toutes les vagues (SMD de 0.18 à 0.76), de même que l'altitude (0.13 à 0.88) et le temps d'accès dans toutes les vagues sauf 1997. Ces écarts traduisent des différences structurelles persistantes entre les zones traitées et non traitées et justifient le recours à l'appariement. NB : ces valeurs diffèrent des SMD « pooled » calculés par la fonction interne `smd_by_var()` (voir tableau de synthèse plus bas) ; la définition cobalt est celle de référence.
 
 ```{r}
 # Load data before matching
@@ -637,7 +820,9 @@ library(gt)
 yrs <- c(1997, 2008, 2011, 2013, 2016, 2018, 2021)
 
 bal_after <- lapply(yrs, function(y){
-  m_out <- readRDS(glue("data/derived/matching_result_{y}.rds"))
+  # le cache est une liste m_out + meta ; on passe l'objet matchit
+  cached <- readRDS(glue("data/derived/matching_result_{y}.rds"))
+  m_out <- if (is.list(cached) && !is.null(cached$m_out)) cached$m_out else cached
   bt <- bal.tab(m_out, un = TRUE, abs = TRUE, m.threshold = 0.1)
   saveRDS(bt, glue("data/derived/bal_tab_{y}.rds"))
   bt
