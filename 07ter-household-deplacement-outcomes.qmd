@@ -69,6 +69,12 @@ library(broom)
 library(ggplot2)
 library(gt)
 library(sf)
+
+# Date de référence des vagues (même définition que 01-treatment-assignation :
+# 1er juin, un seul point de définition)
+survey_reference_date <- function(year) {
+  as.Date(sprintf("%d-06-01", year))
+}
 library(modelsummary)
 library(labelled)
 
@@ -97,7 +103,7 @@ load_matched <- function(path, year, spei_years) {
       hv220 = as.numeric(zap_labels(hv220))
     ) |>
     filter(GROUP %in% c("Treatment", "Control")) |>
-    select(DHSYEAR, hv001, hv002, hv005, GROUP, WDPAID, STATUS_YR, IUCN_CAT,
+    select(DHSYEAR, hv001, hv002, hv005, GROUP, WDPAID, treatment_date, IUCN_CAT,
            treatment, weights, spei_wc_n_2, spei_wc_n_1, spei_wc_n, hv219, hv220)
 }
 
@@ -114,7 +120,7 @@ matched_all <- bind_rows(
 # Vérification avant jointure 
 
 matched_all |> count(DHSYEAR, GROUP)
-matched_all |> summarise(prop_status_yr_na = mean(is.na(STATUS_YR)))
+matched_all |> summarise(prop_treatment_date_na = mean(is.na(treatment_date)))
 ```
 
 
@@ -756,7 +762,7 @@ matched_all <- matched_all |>
 migration_data <- migration_data |>
   left_join(matched_all, by = c("DHSYEAR" = "DHSYEAR", "v001" = "hv001", "v002" = "hv002"))
 
-stopifnot(all(c("GROUP", "STATUS_YR", "IUCN_CAT", "hv219", "hv220") %in% names(migration_data)))
+stopifnot(all(c("GROUP", "treatment_date", "IUCN_CAT", "hv219", "hv220") %in% names(migration_data)))
 
 # Contrôle de taux de correspondance 
 diagnostic_matching <- migration_data |>
@@ -1345,31 +1351,59 @@ We use the Gardner (2022) two-stage DiD estimator (`did2s`) to leverage all avai
 ```{r}
 #| label: migrant-staggered-static
 
-# Prepare relative year bins (same scheme as main analysis)
+# Préparation du design échelonné final : activation par date exacte,
+# cohortes g_eff, temps d'événement par dates et binnes historiques de deux ans
+# (même schéma que l'analyse principale).
 dat_migrant_did2s <- dat_migrant |>
   mutate(
-    rel_year = DHSYEAR - STATUS_YR,
-    rel_year_bin = case_when(
-      is.infinite(rel_year)        ~ "never",
-      is.na(rel_year)               ~ "never",
-      rel_year <= -10                ~ "pre_lointain",
-      rel_year >= -9 & rel_year <= -1 ~ "pre_proche",
-      rel_year >=  0 & rel_year <=  9 ~ "post_proche",
-      rel_year >= 10                ~ "post_lointain",
-      TRUE                           ~ NA_character_
+    treatment_date = as.Date(treatment_date),
+    treat_on = as.integer(treat == 1 & survey_reference_date(DHSYEAR) >= treatment_date),
+    # Cohorte de traitement g_eff (année calendaire d'entrée en traitement,
+    # décalée d'un an si l'AP entre en vigueur après le 1er juin) ; contrôles
+    # dans une cohorte "never" persistante. (NA de treatment_date neutralisés
+    # sur une année fictive.)
+    g_eff = {
+      ty <- as.integer(format(treatment_date, "%Y"))
+      ty[is.na(ty)] <- 2000L
+      if_else(treat == 1,
+              ty + as.integer(treatment_date > survey_reference_date(ty)),
+              NA_integer_)
+    },
+    treatment_cohort = factor(if_else(treat == 1, as.character(g_eff), "never")),
+    rel_year = if_else(treat == 1, as.numeric(DHSYEAR - g_eff), Inf),
+    rel_year_clipped = case_when(
+      is.infinite(rel_year) ~ NA_real_,
+      TRUE ~ pmax(pmin(rel_year, 10), -10)
     ),
-    rel_year_bin = factor(
-      rel_year_bin,
-      levels = c("pre_lointain", "pre_proche", "post_proche", "post_lointain", "never")
+    rel_year_2yr = case_when(
+      is.na(rel_year_clipped) ~ NA_integer_,
+      rel_year_clipped <= -9  ~ -5L,
+      rel_year_clipped <= -7  ~ -4L,
+      rel_year_clipped <= -5  ~ -3L,
+      rel_year_clipped <= -3  ~ -2L,
+      rel_year_clipped <= -1  ~ -1L,
+      rel_year_clipped <=  1  ~  0L,
+      rel_year_clipped <=  3  ~  1L,
+      rel_year_clipped <=  5  ~  2L,
+      rel_year_clipped <=  7  ~  3L,
+      rel_year_clipped <=  9  ~  4L,
+      TRUE                    ~  5L
     ),
-    treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR)
+    rel_year_2yr2 = case_when(
+      is.na(rel_year_2yr) ~ "never",
+      TRUE ~ as.character(rel_year_2yr)
+    ),
+    rel_year_2yr2 = factor(
+      rel_year_2yr2,
+      levels = c("-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "never")
+    )
   )
 
 
 did2s_static_migration <- did2s(
   data         = dat_migrant_did2s,
   yname        = "migrant",
-  first_stage  = ~ sexe + education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ sexe + education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -1389,13 +1423,11 @@ The static DID estimation suggests a positive, but statistically insignificant, 
 ```{r}
 #| label: migration-event-study
 
-#| label: migration-event-study
-
 did2s_migration_es <- did2s(
   data         = dat_migrant_did2s,
   yname        = "migrant",
-  first_stage  = ~ sexe + education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage = ~ i(rel_year_bin, ref = c("pre_proche", "never")),
+  first_stage  = ~ sexe + education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
   weights      = "w_all"
@@ -1406,25 +1438,34 @@ etable(did2s_migration_es, headers = "did2s migration event study")
 
 ```
 
-Unlike the static DID analysis, the event study reveals temporal heterogeneity in the treatment effect on migration (for men and women combined). Long before treatment, no significant difference is found prior to the intervention. However, immediately after treatment, the event study reveals a positive and significant effect (+5.2), but in the long term, the effect disappears. The coefficient approaches zero and becomes insignificant, suggesting that the treated and control regions converge toward the same level of migration. This positive effect can be explained by the fact the protected area creation may have disrupted local economic activities, temporarily prompting people to seek opportunities elsewhere. Conversely, it may have improved local economic conditions just enough to allow people to migrate, or it may have simply provided a period for the population to adapt before turning to normal. The graph below illustrates this variation in effects. 
+Unlike the static DID analysis, the event study examines the dynamics of the treatment effect on migration (for men and women combined) around the entry into force of the protected areas, using the same two-year bins as the main analysis. The graph below illustrates the estimated effects by relative period.
 
 
 ```{r}
 bin_label <- function(k) {
   dplyr::case_when(
-    is.na(k)             ~ NA_character_,
-    k == "pre_lointain"  ~ "Pre (>1 vague d'ecart)",
-    k == "post_proche"   ~ "Post (meme intervalle)",
-    k == "post_lointain" ~ "Post (>1 vague d'ecart)",
-    TRUE                 ~ as.character(k)
+    is.na(k)    ~ NA_character_,
+    k == "-5"   ~ "≤ −9",
+    k == "-4"   ~ "−8 to −7",
+    k == "-3"   ~ "−6 to −5",
+    k == "-2"   ~ "−4 to −3",
+    k == "-1"   ~ "−2 to −1",
+    k == "0"    ~ "0 to 1",
+    k == "1"    ~ "2 to 3",
+    k == "2"    ~ "4 to 5",
+    k == "3"    ~ "6 to 7",
+    k == "4"    ~ "8 to 9",
+    k == "5"    ~ "≥ 10",
+    k == "never" ~ "Never treated",
+    TRUE        ~ as.character(k)
   )
 }
- 
+
 event_study_df <- tidy(did2s_migration_es, conf.int = TRUE) |>
-  filter(grepl("^rel_year_bin::", term)) |>
+  filter(grepl("^rel_year_2yr2::", term)) |>
   mutate(
-    k = sub("^rel_year_bin::", "", term),
-    k = factor(k, levels = c("pre_lointain", "post_proche", "post_lointain"))
+    k = sub("^rel_year_2yr2::", "", term),
+    k = factor(k, levels = c("-5", "-4", "-3", "-2", "0", "1", "2", "3", "4", "5"))
   ) |>
   arrange(k)
 
@@ -1451,14 +1492,10 @@ We test whether effects differ between strict PAs (IUCN I–IV) and multi-use PA
 ```{r}
 #| label: migrant-iucn-2x2
 
-# Définir les fonctions
-is_strict <- function(iucn_cat) {
-  iucn_cat %in% c("Ia", "Ib", "II")  # Strictes
-}
-
-is_multi <- function(iucn_cat) {
-  iucn_cat %in% c("IV", "V", "VI")   # Multi-usages
-}
+# Classification stricte (IUCN I-IV) vs multi-usage (IUCN V-VI) : définition
+# partagée via utils/iucn_sets.R — harmonisée avec 01, 07, 07bis et 08
+# (l'ancienne définition locale classait IV en multi-usage)
+source("utils/iucn_sets.R")
 
 
 dat_migrant_iucn <- dat_migrant |>
@@ -1564,30 +1601,29 @@ ggplot(migrant_iucn_df, aes(x = period, y = estimate, colour = type)) +
 ```{r}
 #| label: migrant-iucn-staggered
 
-# Strict
-pre_strict_migrant <- dat_migrant_iucn |>
-  filter(GROUP == "Control" | (GROUP == "Treatment" & is_strict(IUCN_CAT))) |>
-  mutate(treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR))
+# Strict : sous-échantillon construit à partir du design échelonné final
+# (géographie conservée, activation = treat_on, cohortes g_eff)
+pre_strict_migrant <- dat_migrant_did2s |>
+  filter(GROUP == "Control" | (GROUP == "Treatment" & is_strict(IUCN_CAT)))
 
 iucn_strict_staggered <- did2s(
   data         = pre_strict_migrant,
   yname        = "migrant",
-  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
-# Multi-usage
-pre_multi_migrant <- dat_migrant_iucn |>
-  filter(GROUP == "Control" | (GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
-  mutate(treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR))
+# Multi-usage : même principe
+pre_multi_migrant <- dat_migrant_did2s |>
+  filter(GROUP == "Control" | (GROUP == "Treatment" & is_multi(IUCN_CAT)))
 
 iucn_multi_staggered <- did2s(
   data         = pre_multi_migrant,
   yname        = "migrant",
-  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -1607,57 +1643,56 @@ modelsummary(list(
 ```{r}
 #| label: migrant-iucn-event-study
 
-# Strict
-pre_strict_migrant_es <- dat_migrant_iucn |>
-  filter(GROUP == "Control" | (GROUP == "Treatment" & is_strict(IUCN_CAT))) |>
-  mutate(
-    treat_on = as.integer(treat == 1 & DHSYEAR >= STATUS_YR),
-    rel_year_2yr2 = as.factor(DHSYEAR - STATUS_YR)
-  )
+# Sous-échantillons par type d'AP à partir du design échelonné final
+# (géographie de traitement conservée, activation = treat_on, binnes
+# historiques de deux ans, cohortes g_eff).
+d_strict_mig_es <- dat_migrant_did2s |>
+  filter(GROUP == "Control" | (GROUP == "Treatment" & is_strict(IUCN_CAT)))
 
-# Vérifier les valeurs
-print(table(pre_strict_migrant_es$rel_year_2yr2, useNA = "ifany"))
-
-# Supprimer NA
-pre_strict_migrant_es <- pre_strict_migrant_es |>
-  filter(!is.na(rel_year_2yr2))
-
-iucn_strict_es <- did2s(
-  data         = pre_strict_migrant_es,
+did2s_migrant_es_strict <- did2s(
+  data         = d_strict_mig_es,
   yname        = "migrant",
-  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
-  second_stage = ~ i(rel_year_2yr2, ref = "-1"), 
-  treatment    = "treat_on",
-  cluster_var  = "cluster_uid",
-  weights      = "w_all"
-)
-
-```
-
-
-
-```{r}
-# covariate on the full sample, which is not the right comparator here).
-did2s_migrant_es <- did2s(
-  data         = dat_migrant_iucn,
-  yname        = "migrant",
-  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
+d_multi_mig_es <- dat_migrant_did2s |>
+  filter(GROUP == "Control" | (GROUP == "Treatment" & is_multi(IUCN_CAT)))
+
+did2s_migrant_es_multi <- did2s(
+  data         = d_multi_mig_es,
+  yname        = "migrant",
+  first_stage  = ~ education + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
+  second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
+  treatment    = "treat_on",
+  cluster_var  = "cluster_uid",
+  weights      = "w_all"
+)
+
+tidy_es_mig <- function(mod, type) {
+  tidy(mod, conf.int = TRUE) |>
+    filter(grepl("^rel_year_2yr2::", term)) |>
+    mutate(
+      k = sub("^rel_year_2yr2::", "", term),
+      k = factor(k, levels = c("-5", "-4", "-3", "-2", "0", "1", "2", "3", "4", "5")),
+      type = type
+    ) |>
+    arrange(k)
+}
+
 es_migrant_iucn <- bind_rows(
-  tidy_es(did2s_migrant_es_strict, "Strict"),
-  tidy_es(did2s_migrant_es_multi,  "Multi-use"),
-  tidy_es(did2s_migrant_es_femmes, "Both")
+  tidy_es_mig(did2s_migrant_es_strict, "Strict"),
+  tidy_es_mig(did2s_migrant_es_multi,  "Multi-use")
 )
 
 ggplot(es_migrant_iucn, aes(k, estimate, colour = type)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_point(position = pd2, size = 2) +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2, position = pd2) +
+  geom_point(position = position_dodge(width = 0.3), size = 2) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2,
+                position = position_dodge(width = 0.3)) +
   labs(x = "Years to treatment (2-year bins)",
        y = "Effect on Pr(migration)",
        colour = "PA type",
@@ -1670,11 +1705,23 @@ ggplot(es_migrant_iucn, aes(k, estimate, colour = type)) +
 ## Summary of results
 
 ```{r}
+#| label: migration-summary
+extract_did2s <- function(mod, label) {
+  tibble(
+    Specification = label,
+    Estimate = coef(mod)["treat_on::1"],
+    SE = se(mod)["treat_on::1"],
+    N = as.integer(nobs(mod))
+  )
+}
+
 summary_table <- bind_rows(
-  extract_did2s(did2s_migrant_static_femmes, "Migration — All PAs (women)"),
-  extract_did2s(did2s_migrant_strict, "Migration — Strict (women)"),
-  extract_did2s(did2s_migrant_multi, "Migration — Multi-use (women)")
+  extract_did2s(did2s_static_migration, "Migration — All PAs (pooled)"),
+  extract_did2s(iucn_strict_staggered, "Migration — Strict"),
+  extract_did2s(iucn_multi_staggered,  "Migration — Multi-use")
 )
+
+summary_table
 ```
 
 

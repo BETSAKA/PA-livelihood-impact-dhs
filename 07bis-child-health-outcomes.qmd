@@ -65,10 +65,10 @@ Weight-for-age z-scores measure a child's weight relative to the WHO 2006 refere
 
 ### Under-5 mortality
 
-A binary indicator equal to 1 if a child born in the 5 years preceding the survey died before the interview, 0 otherwise. Since the DHS/MICS children's recode (KR/bh) contains only births in the reference period (last 5 years), all deaths recorded (b5 = 0 in DHS, BH5 = 2 in MICS) are by construction under-5 deaths.
+A binary indicator equal to 1 if a child died before age 5, 0 otherwise. The DHS KR file and the MICS birth history (bh.sav) both contain the **complete birth history** of every interviewed woman aged 15–49, not just births in the last 5 years. We use all available births to maximise statistical power. Deaths before age 5 are identified using `b7` (age at death in months) for DHS and `BH9U`/`BH9N` for MICS.
 
 - DHS: `b5` (child is alive: 1 = yes, 0 = no). `b7` = age at death in completed months (available in full DHS rounds, NA in MIS surveys).
-- MICS: `BH5` (child alive: 1 = yes, 2 = no). Birth history file restricted to births in 2013–2018 for comparability with DHS 5-year window.
+- MICS: `BH5` (child alive: 1 = yes, 2 = no). Full birth history from `bh.sav`.
 
 ## Data loading and harmonization
 
@@ -88,6 +88,12 @@ library(gt)
 library(sf)
 
 options(scipen = 999)
+
+# Date de référence des vagues (même définition que 01-treatment-assignation :
+# 1er juin, un seul point de définition)
+survey_reference_date <- function(year) {
+  as.Date(sprintf("%d-06-01", year))
+}
 ```
 
 ### Load matched household data
@@ -109,7 +115,7 @@ load_matched <- function(path, year, spei_years) {
       hv220 = as.numeric(zap_labels(hv220))
     ) |>
     filter(GROUP %in% c("Treatment", "Control")) |>
-    select(DHSYEAR, hv001, hv002, hv005, GROUP, WDPAID, STATUS_YR, IUCN_CAT,
+    select(DHSYEAR, hv001, hv002, hv005, GROUP, WDPAID, treatment_date, IUCN_CAT,
            treatment, weights, spei_wc_n_2, spei_wc_n_1, spei_wc_n, hv219, hv220)
 }
 
@@ -217,10 +223,9 @@ mics_ch <- read_sav("data/raw/mics/2018/SPSS datasets/ch.sav",
     age_death_months = NA_real_
   )
 
-# Mortality from bh.sav (birth history, restricted to last 5 years: 2013–2018)
+# Mortality from bh.sav (full birth history)
 mics_bh <- read_sav("data/raw/mics/2018/SPSS datasets/bh.sav",
                     col_select = c(HH1, HH2, BH5, BH9U, BH9N, BH4Y, BH3)) |>
-  filter(BH4Y >= 2013 & BH4Y <= 2018) |>
   transmute(
     v001 = as.integer(HH1),
     v002 = as.integer(HH2),
@@ -259,8 +264,21 @@ dat_haz <- anthro_raw |>
     w_all   = w_svy * weights,
     cluster_uid = interaction(DHSYEAR, v001, drop = TRUE),
     child_sex_f = factor(child_sex, levels = c(1, 2), labels = c("Male", "Female")),
-    treat_on = as.integer(treatment > 0 & DHSYEAR >= STATUS_YR),
-    rel_year = if_else(STATUS_YR > 0, as.numeric(DHSYEAR - STATUS_YR), Inf)
+    treatment_date = as.Date(treatment_date),
+    treat_on = as.integer(treatment > 0 & survey_reference_date(DHSYEAR) >= treatment_date),
+    # Cohorte de traitement g_eff (année calendaire d'entrée en traitement,
+    # décalée d'un an si l'AP entre en vigueur après le 1er juin) ; contrôles
+    # dans une cohorte "never" persistante. (NA de treatment_date neutralisés
+    # sur une année fictive.)
+    g_eff = {
+      ty <- as.integer(format(treatment_date, "%Y"))
+      ty[is.na(ty)] <- 2000L
+      if_else(treatment > 0,
+              ty + as.integer(treatment_date > survey_reference_date(ty)),
+              NA_integer_)
+    },
+    treatment_cohort = factor(if_else(treatment > 0, as.character(g_eff), "never")),
+    rel_year = if_else(treatment > 0, as.numeric(DHSYEAR - g_eff), Inf)
   )
 
 # --- Mortality dataset ---
@@ -276,12 +294,37 @@ dat_mort <- mort_raw |>
     w_all   = w_svy * weights,
     cluster_uid = interaction(DHSYEAR, v001, drop = TRUE),
     child_sex_f = factor(child_sex, levels = c(1, 2), labels = c("Male", "Female")),
-    treat_on = as.integer(treatment > 0 & DHSYEAR >= STATUS_YR),
-    rel_year = if_else(STATUS_YR > 0, as.numeric(DHSYEAR - STATUS_YR), Inf)
+    treatment_date = as.Date(treatment_date),
+    treat_on = as.integer(treatment > 0 & survey_reference_date(DHSYEAR) >= treatment_date),
+    # Cohorte de traitement g_eff (année calendaire d'entrée en traitement,
+    # décalée d'un an si l'AP entre en vigueur après le 1er juin) ; contrôles
+    # dans une cohorte "never" persistante. (NA de treatment_date neutralisés
+    # sur une année fictive.)
+    g_eff = {
+      ty <- as.integer(format(treatment_date, "%Y"))
+      ty[is.na(ty)] <- 2000L
+      if_else(treatment > 0,
+              ty + as.integer(treatment_date > survey_reference_date(ty)),
+              NA_integer_)
+    },
+    treatment_cohort = factor(if_else(treatment > 0, as.character(g_eff), "never")),
+    rel_year = if_else(treatment > 0, as.numeric(DHSYEAR - g_eff), Inf)
   )
 
 cat("HAZ dataset:", nrow(dat_haz), "children across", n_distinct(dat_haz$DHSYEAR), "years\n")
 cat("Mortality dataset:", nrow(dat_mort), "births across", n_distinct(dat_mort$DHSYEAR), "years\n")
+
+# Assertions de bornes : tout ménage du groupe de traitement (géographie
+# éventuelle) est non traité à la date de référence de la baseline 2008 et
+# traité à celle du end-point 2021.
+stopifnot(
+  "07bis : des observations Treatment de 2008 sont déjà traitées à la baseline" =
+    all(matched_all$treated_now[matched_all$DHSYEAR == 2008 &
+                                  matched_all$treatment == 1] == 0),
+  "07bis : des observations Treatment de 2021 ne sont pas encore traitées" =
+    all(matched_all$treated_now[matched_all$DHSYEAR == 2021 &
+                                  matched_all$treatment == 1] == 1)
+)
 ```
 
 ## Descriptive statistics
@@ -458,7 +501,7 @@ dat_haz2 <- dat_haz |>
 did2s_haz_static <- did2s(
   data         = dat_haz2,
   yname        = "haz",
-  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -476,10 +519,10 @@ modelsummary(list("did2s HAZ (static)" = did2s_haz_static))
 did2s_haz_es <- did2s(
   data         = dat_haz2,
   yname        = "haz",
-  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment    = "treat_on",
-  cluster_var  = "v001",
+  cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
@@ -633,7 +676,7 @@ dat_mort2 <- dat_mort |>
 did2s_mort_static <- did2s(
   data         = dat_mort2,
   yname        = "died",
-  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -651,10 +694,10 @@ modelsummary(list("did2s Mortality (static)" = did2s_mort_static))
 did2s_mort_es <- did2s(
   data         = dat_mort2,
   yname        = "died",
-  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment    = "treat_on",
-  cluster_var  = "v001",
+  cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
@@ -692,8 +735,9 @@ We test whether effects differ between strict PAs (IUCN I–IV) and multi-use PA
 ```{r}
 #| label: heterogeneity-setup
 
-is_strict <- function(x) x %in% c("Ia", "Ib", "II", "III", "IV")
-is_multi  <- function(x) x %in% c("V", "VI")
+# Classification stricte (IUCN I-IV) vs multi-usage (IUCN V-VI) : définition
+# partagée via utils/iucn_sets.R
+source("utils/iucn_sets.R")
 ```
 
 ### HAZ by PA type — 2×2 DiD
@@ -715,7 +759,7 @@ pre_strict_haz <- dat_haz3 |>
 m_pre_strict_haz <- feols(
   haz ~ treat_strict + post + treat_strict:post + child_sex_f +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = pre_strict_haz, weights = ~w_all, cluster = ~v001
+  data = pre_strict_haz, weights = ~w_all, cluster = ~cluster_uid
 )
 
 # Placebo multi
@@ -726,7 +770,7 @@ pre_multi_haz <- dat_haz3 |>
 m_pre_multi_haz <- feols(
   haz ~ treat_multi + post + treat_multi:post + child_sex_f +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = pre_multi_haz, weights = ~w_all, cluster = ~v001
+  data = pre_multi_haz, weights = ~w_all, cluster = ~cluster_uid
 )
 
 # Treatment strict
@@ -737,7 +781,7 @@ main_strict_haz <- dat_haz3 |>
 m_main_strict_haz <- feols(
   haz ~ treat_strict + post + treat_strict:post + child_sex_f +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = main_strict_haz, weights = ~w_all, cluster = ~v001
+  data = main_strict_haz, weights = ~w_all, cluster = ~cluster_uid
 )
 
 # Treatment multi
@@ -748,7 +792,7 @@ main_multi_haz <- dat_haz3 |>
 m_main_multi_haz <- feols(
   haz ~ treat_multi + post + treat_multi:post + child_sex_f +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = main_multi_haz, weights = ~w_all, cluster = ~v001
+  data = main_multi_haz, weights = ~w_all, cluster = ~cluster_uid
 )
 
 etable(m_pre_strict_haz, m_main_strict_haz, m_pre_multi_haz, m_main_multi_haz,
@@ -790,13 +834,16 @@ ggplot(haz_iucn_df, aes(x = period, y = estimate, colour = type)) +
 #| label: haz-iucn-staggered
 
 d_strict_haz <- dat_haz2 |>
-  mutate(treat_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT))) |>
-  filter(treat_on == 1 | GROUP == "Control")
+  mutate(
+    grp_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
+    treat_on   = as.integer(grp_strict == 1 & survey_reference_date(DHSYEAR) >= treatment_date)
+  ) |>
+  filter(grp_strict == 1 | GROUP == "Control")
 
 did2s_haz_strict <- did2s(
   data         = d_strict_haz,
   yname        = "haz",
-  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -804,13 +851,16 @@ did2s_haz_strict <- did2s(
 )
 
 d_multi_haz <- dat_haz2 |>
-  mutate(treat_on = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
-  filter(treat_on == 1 | GROUP == "Control")
+  mutate(
+    grp_multi = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT)),
+    treat_on  = as.integer(grp_multi == 1 & survey_reference_date(DHSYEAR) >= treatment_date)
+  ) |>
+  filter(grp_multi == 1 | GROUP == "Control")
 
 did2s_haz_multi <- did2s(
   data         = d_multi_haz,
   yname        = "haz",
-  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -843,7 +893,7 @@ pre_strict_mort <- dat_mort3 |>
 m_pre_strict_mort <- feols(
   died ~ treat_strict + post + treat_strict:post + child_sex_f +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = pre_strict_mort, weights = ~w_all, cluster = ~v001
+  data = pre_strict_mort, weights = ~w_all, cluster = ~cluster_uid
 )
 
 # Placebo multi
@@ -854,7 +904,7 @@ pre_multi_mort <- dat_mort3 |>
 m_pre_multi_mort <- feols(
   died ~ treat_multi + post + treat_multi:post + child_sex_f +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = pre_multi_mort, weights = ~w_all, cluster = ~v001
+  data = pre_multi_mort, weights = ~w_all, cluster = ~cluster_uid
 )
 
 # Treatment strict
@@ -865,7 +915,7 @@ main_strict_mort <- dat_mort3 |>
 m_main_strict_mort <- feols(
   died ~ treat_strict + post + treat_strict:post + child_sex_f +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = main_strict_mort, weights = ~w_all, cluster = ~v001
+  data = main_strict_mort, weights = ~w_all, cluster = ~cluster_uid
 )
 
 # Treatment multi
@@ -876,7 +926,7 @@ main_multi_mort <- dat_mort3 |>
 m_main_multi_mort <- feols(
   died ~ treat_multi + post + treat_multi:post + child_sex_f +
     spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220,
-  data = main_multi_mort, weights = ~w_all, cluster = ~v001
+  data = main_multi_mort, weights = ~w_all, cluster = ~cluster_uid
 )
 
 etable(m_pre_strict_mort, m_main_strict_mort, m_pre_multi_mort, m_main_multi_mort,
@@ -916,13 +966,16 @@ ggplot(mort_iucn_df, aes(x = period, y = estimate, colour = type)) +
 #| label: mort-iucn-staggered
 
 d_strict_mort <- dat_mort2 |>
-  mutate(treat_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT))) |>
-  filter(treat_on == 1 | GROUP == "Control")
+  mutate(
+    grp_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
+    treat_on   = as.integer(grp_strict == 1 & survey_reference_date(DHSYEAR) >= treatment_date)
+  ) |>
+  filter(grp_strict == 1 | GROUP == "Control")
 
 did2s_mort_strict <- did2s(
   data         = d_strict_mort,
   yname        = "died",
-  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -930,13 +983,16 @@ did2s_mort_strict <- did2s(
 )
 
 d_multi_mort <- dat_mort2 |>
-  mutate(treat_on = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
-  filter(treat_on == 1 | GROUP == "Control")
+  mutate(
+    grp_multi = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT)),
+    treat_on  = as.integer(grp_multi == 1 & survey_reference_date(DHSYEAR) >= treatment_date)
+  ) |>
+  filter(grp_multi == 1 | GROUP == "Control")
 
 did2s_mort_multi <- did2s(
   data         = d_multi_mort,
   yname        = "died",
-  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(treat_on, ref = FALSE),
   treatment    = "treat_on",
   cluster_var  = "cluster_uid",
@@ -956,30 +1012,36 @@ modelsummary(list(
 #| label: mort-iucn-event-study
 
 d_strict_mort_es <- dat_mort2 |>
-  mutate(treat_on = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT))) |>
-  filter(treat_on == 1 | GROUP == "Control")
+  mutate(
+    grp_strict = as.integer(GROUP == "Treatment" & is_strict(IUCN_CAT)),
+    treat_on   = as.integer(grp_strict == 1 & survey_reference_date(DHSYEAR) >= treatment_date)
+  ) |>
+  filter(grp_strict == 1 | GROUP == "Control")
 
 did2s_mort_es_strict <- did2s(
   data         = d_strict_mort_es,
   yname        = "died",
-  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment    = "treat_on",
-  cluster_var  = "v001",
+  cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
 d_multi_mort_es <- dat_mort2 |>
-  mutate(treat_on = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT))) |>
-  filter(treat_on == 1 | GROUP == "Control")
+  mutate(
+    grp_multi = as.integer(GROUP == "Treatment" & is_multi(IUCN_CAT)),
+    treat_on  = as.integer(grp_multi == 1 & survey_reference_date(DHSYEAR) >= treatment_date)
+  ) |>
+  filter(grp_multi == 1 | GROUP == "Control")
 
 did2s_mort_es_multi <- did2s(
   data         = d_multi_mort_es,
   yname        = "died",
-  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | DHSYEAR,
+  first_stage  = ~ child_sex_f + spei_wc_n_2 + spei_wc_n_1 + spei_wc_n + hv219 + hv220 | treatment_cohort + DHSYEAR,
   second_stage = ~ i(rel_year_2yr2, ref = c("-1", "never")),
   treatment    = "treat_on",
-  cluster_var  = "v001",
+  cluster_var  = "cluster_uid",
   weights      = "w_all"
 )
 
