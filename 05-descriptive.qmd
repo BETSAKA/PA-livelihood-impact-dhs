@@ -20,9 +20,26 @@ library(sf) # Analyse spatiale
 library(readr)
 
 # On charge les données
-wdpa_before_2008 <- st_read("data/derived/wdpa_before_2008.csv") 
+# NB : les CSV produits par 01 (wdpa_before_2008.csv / wdpa_from_2008.csv) ne
+# comportent plus les attributs de superficie et de nom (PA_AREA_KM2, NAME).
+# Les attributs des AP sont donc reconstruits depuis la même source que
+# 08-sensitivity-checks (dynamic_pa_fixed_last.gpkg + métadonnées WDPA) ; les
+# AP encore au statut "Proposed" (jamais officialisées pendant la période
+# d'étude) sont exclues, conformément à l'univers d'analyse de 01.
+pa_sf_desc <- st_read("data/PA_creation/wdpa_data/dynamic_pa_fixed_last.gpkg", quiet = TRUE) %>%
+  mutate(WDPAID = as.character(WDPAID)) %>%
+  left_join(
+    read.csv("data/PA_creation/wdpa_data/dynamic_wdpa_metadata.csv") %>%
+      mutate(WDPAID = as.character(WDPAID)),
+    by = "WDPAID"
+  ) %>%
+  filter(is.na(STATUS) | STATUS != "Proposed")
 
-wdpa_from_2008 <- read.csv("data/derived/wdpa_from_2008.csv")
+wdpa_before_2008 <- pa_sf_desc %>%
+  filter(STATUS_YR < 2008)
+
+wdpa_from_2008 <- pa_sf_desc %>%
+  filter(STATUS_YR >= 2008)
 
 # Fonction utilitaire pour produire les statistiques d'une période
 get_descriptive_stats <- function(data, periode_label) {
@@ -299,8 +316,8 @@ library(tidyr)
 library(purrr)
 library(knitr)
 library(kableExtra)
-library(flextable)
-library(officer)
+# NB : flextable chargé mais jamais utilisé (package non installé) ; appel retiré.
+# library(officer) # idem : jamais utilisé
 
 # Load data 
 years <- c(1997, 2008, 2011, 2013, 2016, 2018, 2021)
