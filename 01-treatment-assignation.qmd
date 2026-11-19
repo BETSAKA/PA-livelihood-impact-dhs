@@ -230,7 +230,7 @@ stopifnot(
     all(php_audit$DESIG[php_audit$WDPAID %in% php_ids] %in%
           c("Protection Temporaire", "Paysage Harmonieux Protégé"))
 )
-php_audit
+# php_audit
 
 dynamic_wdpa_metadata <- readr::read_csv("data/PA_creation/wdpa_data/dynamic_wdpa_metadata.csv",
                                          show_col_types = FALSE)
