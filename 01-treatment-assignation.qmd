@@ -6,6 +6,51 @@ editor_options:
 
 # Treatment assignation
 
+## Définition et datation du traitement
+
+Le plan de pré-analyse (PAP, p. 7) définit le traitement comme "*an area that is declared as protected by a decree and that is operationally managed*". Il faut donc déterminer à partir de quand une AP bénéficie d'une protection juridique et d'une gestion effective. Ces deux dimensions ne commencent pas nécessairement au même moment.
+
+### Processus de création d'une aire protégée à Madagascar
+
+Pour les nouvelles AP développées à Madagascar depuis 2000, la procédure décrite dans les [guides officiels de 2008](https://www.fapbm.org/app/uploads/2023/05/procedure_de_creation_des_ap.pdf) [et 2009](https://www.pnae.mg/docs/ee/guides-directives/one-20-guide_creation_sapm.pdf) décrivent un processus comprenant plusieurs étapes :
+
+- **Initiative de création :** un *promoteur* (ONG internationale, association malgache, MNP, etc.) propose une AP, réalise des études préliminaires et engage les consultations locales.
+- **Protection temporaire :** un arrêté instaure un premier statut juridique, avec des restrictions d'usage, pendant que se poursuit la préparation de l'AP. Ce statut peut être prorogé.
+- **Création définitive :** un décret pérennise la protection juridique.
+
+Cette séquence décrit la procédure réglementaire, mais pas nécessairement la chronologie réelle : les activités de conservation peuvent précéder la protection temporaire, tandis que les conventions de délégation sont parfois formalisées bien après le début de la gestion
+
+En parallèle, l'État peut déléguer la gestion à un organisme spécialisé. Les guides prévoient cette délégation avant la création définitive, mais la chronologie réelle varie selon les sites.
+
+Dans le cadre de l'expansion du SAPM, [l'arrêté interministériel n° 18633/2008 du 17 octobre 2008](https://faolex.fao.org/docs/pdf/Mad173201.pdf) a placé sous protection temporaire 97 nouvelles AP en cours de création et 29 sites prioritaires pour la biodiversité et la gestion forestière durable. Cette protection collective a été prolongée par les arrêtés de 2010 et 2013. Un grand nombre de ces AP n'ont reçu leur décret de création définitive qu'en 2015.
+
+### Insuffisance de la date de création définitive
+
+Le décret définitif intervient souvent après plusieurs années de protection temporaire et d'activités de conservation. Le [manuel de 2008](https://www.fapbm.org/app/uploads/2023/05/procedure_de_creation_des_ap.pdf) indiquait qu'à l'époque, dans les sites étudiés, les démarches précédant même la protection temporaire duraient en moyenne deux ans. Ce délai s'est accru dans les années suivantes (cf. plus bas).
+
+La date de délégation de gestion n'est pas non plus un indicateur fiable du début des activités. Les textes attribuent généralement la responsabilité de gestion au ministère chargé de l'Environnement, qui peut ensuite la déléguer. Mais ses services ne disposent pas des moyens humains ou financiers pour gérer directement les AP et celles qui n'ont pas de gérant effectif au-delà du Ministère sont considérées comme des "*paper parks*", c'est à dire des AP qui n'existent que sur le papier [@Waeber2020]. Dans les faits, les promoteurs assurent souvent des activités de conservation avant la signature d'une convention. La Banque mondiale [-@WorldBank2022] signalait que la plupart des gestionnaires des nouvelles AP exerçaient sans contrat de délégation signé. D'importantes régularisations sont encore intervenues en 2025 et 2026.
+
+### Date retenue
+
+**Dans la spécification principale**, nous retenons le premier acte officiel identifiant individuellement une AP : arrêté de protection temporaire, décret de création définitive ou décision de délégation de gestion, selon l'événement le plus précoce. Les sites nommés dans un décret collectif sont également pris en compte.
+
+Nous n'utilisons pas directement l'arrêté collectif de 2008 pour dater chaque AP, car ses annexes cartographiques ne permettent pas d'identifier avec certitude les sites concernés. L'attribution de cette date à certaines AP de la base dynamique repose sur une reconstruction à partir de sources ultérieures.
+
+**Deux tests de robustesse** permettent d'examiner les conséquences de ce choix :
+
+- **Chronologie historique reconstituée :** inclure les protections collectives de 2008 attribuées aux sites dans la base dynamique.
+- **Création définitive uniquement :** retenir la date du décret permanent, qui correspond à la pérennisation juridique de la protection, potentiellement bien après le début de la gestion.
+
+Par exemple, pour **Loky Manambato**, la chronologie initiale attribue une protection temporaire en 2008, tandis qu'un acte de gestion nominatif est documenté en 2013 et le décret définitif date de 2015. Selon la définition choisie, la date de traitement est donc différente.
+
+**Ces dates restent des approximations.** Le premier acte nominatif ne prouve pas que la gestion était déjà opérationnelle, et certaines activités peuvent avoir commencé auparavant. Cette incertitude concerne notamment les observations des enquêtes de 2011 et 2013, qui peuvent être classées comme antérieures au traitement alors que certaines mesures de protection étaient déjà en vigueur.
+
+Cette définition opérationnelle et les tests associés constituent des analyses exploratoires. Ils ne modifient pas la stratégie principale en double différence enregistrée dans le PAP.
+
+
+
+## Règles d'assignation des ménages
+
 Les clusters d'enquêtes DHS (1997, 2008 et 2021), MIS (2011, 2013, 2016) et MICS (2018) sont classés par rapport à leur distance aux aires protégées (AP) et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
 
 -   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters ruraux à moins de 10 km d'une AP de l'univers de traitement (créée à partir de 2008 pendant la période d'étude) — appartenance au groupe, y compris avant l'entrée en vigueur de l'AP
@@ -14,9 +59,9 @@ Les clusters d'enquêtes DHS (1997, 2008 et 2021), MIS (2011, 2013, 2016) et MIC
 
 -   [Groupe à exclure]{.underline}: Ménages localisées dans les clusters à moins de 10 km des AP créées avant 2008 et dans la zone urbaine
 
-## Chargement des coordonnées GPS des clusters d'enquête
+### Chargement des coordonnées GPS des clusters d'enquête
 
-On charge les coordonnées GPS des enquêtes de 1997, 2008, 2011, 2013, 2016, 2018 et 2021, qui sont en WGS 84 (codé EPSG : 4326). NToutefois, uniquement pour le calcul des surfaces ou des distances, on va utiliser le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702).
+On charge les coordonnées GPS des enquêtes de 1997, 2008, 2011, 2013, 2016, 2018 et 2021, qui sont en WGS 84 (codé EPSG : 4326). Toutefois, uniquement pour le calcul des surfaces ou des distances, on va utiliser le système de projection officiel de Madagascar, qui est le Laborde (EPSG : 29702).
 
 ```{r, message=FALSE, warning=FALSE}
 library(tidyverse) #Manipulation et visualisation des données
@@ -84,7 +129,7 @@ bind_rows(gps_1997_initial, gps_2008_initial, gps_2011_initial,
 
 Nous obtenons une carte distincte pour chaque année d'enquête. Sur chaque carte figure des points, dans laquelle chaque point représente un cluster d'enquête, correspondant aux coordonnées GPS fournies par DHS.
 
-## Vérification des données gps des clusters
+### Vérification des données gps des clusters
 
 On vérifie que les coordonnées GPS sont bien dans le pays.
 
@@ -127,7 +172,7 @@ bind_rows(gps_1997, gps_2008, gps_2011,
 
 ## Une base actualisée des limites des aires protégées
 
-La base `dynamic_wdpa.gpkg` est le produit consolidé du travail intitulé « Dynamic conservation boundaries » [@bedecarratsReplicableTemporalExtension2026], dont le code source est archivé sur [GitHub](https://github.com/BETSAKA/conservation-dynamic-madagascar) et les données publiées sur un dépôt de données scientifique. Elle répond à plusieurs limite structurelle du *World Database on Protected Areas* (WDPA), qui ne conserve que l'état actuel de chaque site : à chaque modification (redécoupage, reclassement, dégazage, protection temporaire), la configuration antérieure est écrasée, ce qui altère les analyses rétrospectives et biaise les évaluations d'impact qui assimilent les limites actuelles à celles en vigueur par le passé. En outre les chercheurs utilisent couramment le champ `STATUS_YR` comme la date de création des aires protégées, mais ce n'est pas toujours le cas, car cette date est réinitialisée à chaque changement de statut ou de dénomination d'une aire protégée. Pour remédier à ces faille, la base `dynamic_wdpa.gpkg` documente **123 aires protégées terrestres de Madagascar de 2000 à 2025** sous forme d'**états temporels bornés dans le temps** : chaque ligne représente une zone dans un état donné, avec sa période de validité (`valid_from`/`valid_to`), sa géométrie (WGS84), et ses attributs (WDPAID, nom, désignation, catégorie UICN, statut, autorité de gestion), chaque état étant rattaché à une source juridique (registre d'amendements YAML consolidé par un moteur déterministe en R). Les zones sont typées par le champ `zone_type` : `external_boundary` (limite externe de l'AP), `core_zone` (noyau dur où l'usage extractif est prohibé), `internal_buffer_zone` et `external_buffer_zone` (zones tampons internes et externes). C'est ce découpage temporel qui permet, dans ce chapitre, de classer chaque cluster d'enquête selon la configuration des AP en vigueur à sa date d'enquête (cf. section « Classification des clusters »), et de mener le test de sensibilité « limites fixes vs limites à date ».
+La base `dynamic_wdpa.gpkg` est le produit consolidé du travail intitulé « Dynamic conservation boundaries » [@Bedecarrats2026], dont le code source est archivé sur [GitHub](https://github.com/BETSAKA/conservation-dynamic-madagascar) et les données publiées sur un dépôt de données scientifique. Elle répond à plusieurs limite structurelle du *World Database on Protected Areas* (WDPA), qui ne conserve que l'état actuel de chaque site : à chaque modification (redécoupage, reclassement, dégazage, protection temporaire), la configuration antérieure est écrasée, ce qui altère les analyses rétrospectives et biaise les évaluations d'impact qui assimilent les limites actuelles à celles en vigueur par le passé. En outre les chercheurs utilisent couramment le champ `STATUS_YR` comme la date de création des aires protégées, mais ce n'est pas toujours le cas, car cette date est réinitialisée à chaque changement de statut ou de dénomination d'une aire protégée. Pour remédier à ces faille, la base `dynamic_wdpa.gpkg` documente **123 aires protégées terrestres de Madagascar de 2000 à 2025** sous forme d'**états temporels bornés dans le temps** : chaque ligne représente une zone dans un état donné, avec sa période de validité (`valid_from`/`valid_to`), sa géométrie (WGS84), et ses attributs (WDPAID, nom, désignation, catégorie UICN, statut, autorité de gestion), chaque état étant rattaché à une source juridique (registre d'amendements YAML consolidé par un moteur déterministe en R). Les zones sont typées par le champ `zone_type` : `external_boundary` (limite externe de l'AP), `core_zone` (noyau dur où l'usage extractif est prohibé), `internal_buffer_zone` et `external_buffer_zone` (zones tampons internes et externes). C'est ce découpage temporel qui permet, dans ce chapitre, de classer chaque cluster d'enquête selon la configuration des AP en vigueur à sa date d'enquête (cf. section « Classification des clusters »), et de mener le test de sensibilité « limites fixes vs limites à date ». Les dates de validité des états géographiques permettent de reconstruire l'évolution juridique et spatiale du réseau. Elles ne correspondent toutefois pas nécessairement aux dates de début du traitement, déterminées séparément à partir des actes nominatifs.
 
 ### États successifs du réseau d'AP malgache aux dates des enquêtes
 
@@ -332,14 +377,15 @@ pa_pre_ids <- pa_first |> filter(STATUS_YR < 2008) |> pull(WDPAID)
 #   définitivement), on retient le dernier état antérieur — repli documenté,
 #   la définition du traitement du PAP reposant sur la création, non sur la
 #   dissolution.
-pa_effective_states <- function(ids, ref_date, fixed = FALSE) {
+pa_effective_states <- function(ids, ref_date, fixed = FALSE,
+                                first_tbl = pa_first_main) {
   if (fixed) {
     # Test de sensibilité : dernier état de limite connu, appliqué tel quel.
     return(pa_states_fixed |> filter(WDPAID %in% ids))
   }
   pa_states_analysis |>
     filter(WDPAID %in% ids) |>
-    left_join(pa_first |> select(WDPAID, treatment_date), by = "WDPAID") |>
+    left_join(first_tbl |> select(WDPAID, treatment_date), by = "WDPAID") |>
     filter(valid_from <= pmax(ref_date, treatment_date)) |>
     group_by(WDPAID) |>
     slice_max(valid_from, n = 1, with_ties = FALSE) |>
@@ -351,24 +397,51 @@ pa_effective_states <- function(ids, ref_date, fixed = FALSE) {
 # (GROUP = Treatment), avec la distinction actif / futur à la date de référence.
 # Exception placebo : la vague 1997 utilise l'univers et les limites de 2008,
 # de sorte que sa sélection de clusters est identique à celle de 2008.
-pa_layers <- function(year, fixed = FALSE) {
+# Variantes de datation (cf. sections « Reconstruction des dates ») :
+# spécification principale (premier jalon individuel, hors Nosivolo, AP non
+# résolues exclues) et test de robustesse (chronologie juridique reconstituée,
+# hors Nosivolo). Les arguments par défaut correspondent à la spécification
+# principale ; la reproduction de l'assignation « avant modification » (vérif
+# avant/après) passe explicitement les tables de référence.
+pa_layers <- function(year, fixed = FALSE,
+                      first_tbl = pa_first_main,
+                      universe_ids = pa_universe_ids_main,
+                      extra_excl_ids = pa_extra_excl_main) {
   ref_year <- max(year, 2008)
   ref_date <- survey_reference_date(ref_year)
   if (fixed) {
     pre  <- pa_states_fixed |> filter(WDPAID %in% pa_pre_ids)
-    univ <- pa_states_fixed |> filter(WDPAID %in% pa_universe_ids)
+    univ <- pa_states_fixed |> filter(WDPAID %in% universe_ids)
+    excl <- pa_states_fixed |> filter(WDPAID %in% extra_excl_ids)
   } else {
     net  <- get_pa_network(pa_states_analysis, ref_year)
     pre  <- net |> filter(WDPAID %in% pa_pre_ids)
-    univ <- pa_effective_states(pa_universe_ids, ref_date)
+    univ <- pa_effective_states(universe_ids, ref_date, first_tbl = first_tbl)
+    # Catchments exclus (Rivière Nosivolo ; AP sans date individuelle
+    # résolue) : limite en vigueur à la date de référence, repli sur le
+    # premier état connu si l'AP est encore future à cette date — repli
+    # documenté, identique à celui des AP de l'univers.
+    excl <- net |> filter(WDPAID %in% extra_excl_ids)
+    futur <- setdiff(extra_excl_ids, unique(excl$WDPAID))
+    if (length(futur) > 0) {
+      excl <- bind_rows(
+        excl,
+        pa_states_analysis |>
+          filter(WDPAID %in% futur) |>
+          group_by(WDPAID) |>
+          slice_min(valid_from, n = 1, with_ties = FALSE) |>
+          ungroup()
+      )
+    }
   }
   univ <- univ |>
-    left_join(pa_first |> select(WDPAID, treatment_date), by = "WDPAID") |>
+    left_join(first_tbl |> select(WDPAID, treatment_date), by = "WDPAID") |>
     select(WDPAID, STATUS, STATUS_YR, IUCN_CAT, valid_from, valid_to,
            treatment_date, geometry)
   list(
     pre = pre,
     univ = univ,
+    excl = excl,
     univ_active = univ |> filter(treatment_date <= ref_date),
     univ_future = univ |> filter(treatment_date >  ref_date)
   )
@@ -489,6 +562,281 @@ tab_pa |>
     locations = cells_column_labels(columns = survey_year)
   ) |>
   tab_options(table.width = pct(100))
+```
+
+### Exclusion de la Rivière Nosivolo du groupe de traitement
+
+La définition de l'exposition retenue par le plan de pré-analyse repose sur la **proximité d'un point de 10 km** d'une aire protégée. Cette règle, conçue pour des AP à base territoriale (massifs forestiers, plaines, plateaux), perd son interprétation lorsqu'elle est appliquée à un objet linéaire : l'aire potégée Rivière Nosivolo (WDPAID 555697874), inscrite au SAPM puis érigée en Paysage Harmonieux Protégé, est un couloir fluvial étroit dont la « superficie » protégée se réduit à un ruban de faible largeur (140m en moyenne) le long du cours d'eau et de ses berges. Traiter la proximité de ce couloir comme équivalente à la proximité d'une AP de surface équivalente mais compacte revient à comparer des expositions d'ordre très différent : un cluster rural à 9 km du corridor n'a de relation avec l'AP ni en termes d'usage des terres, ni en termes de gestion, alors que la règle des 10 km le classe comme exposé. L'équipe de recherche a donc décidé d'**exclure la Rivière Nosivolo de l'univers de traitement**, dans toutes les variantes de datation du début de traitement (spécification principale et test de robustesse, cf. sections suivantes). Les ménages et grappes situés dans son buffer potentiel de 10 km sont retirés **à la fois** du pool des traités et de celui des contrôles éligibles : cette restriction d'échantillon est **documentée explicitement** et se distingue du périmètre initialement enregistré dans le plan de pré-analyse. Cette décision découle de la géométrie de l'AP elle-même ; elle n'est pas justifiée par les résultats empiriques (coefficients d'event-study ou tests de pré-tendance), qui ne doivent pas piloter les définitions.
+
+NB : la Rivière Nosivolo (WDPAID 555697874) ne doit pas être confondue avec le site Ramsar distinct « Rivière Nosivolo et affluents » (WDPAID 555542728), hors du réseau national analysé ici. La carte ci-dessous utilise **la limite analytique réellement employée par le workflow d'assignation** : l'état de la base dynamique `dynamic_wdpa.gpkg` rattaché à ce WDPAID, avec la même logique d'états temporels que le reste du chapitre (les calculs de surface et de distance sont effectués en projection Laborde, EPSG : 29702, comme les buffers de 10 km).
+
+```{r}
+#| label: fig-nosivolo-exposure
+#| fig-cap: "Rivière Nosivolo (WDPAID 555697874) — aire protégée, buffer d'exposition potentiel de 10 km et empreinte combinée"
+#| fig-width: 11
+#| fig-height: 5.2
+
+# Buffer de 10 km (règle d'exposition inchangée)
+buffer_dist <- 10000
+
+# Géométrie analytique : état de limite externe de la base dynamique.
+# Le site Ramsar distinct (555542728) est filtré du réseau national et ne
+# doit pas apparaître ici.
+stopifnot(
+  "Nosivolo : la base dynamique filtrée contient le site Ramsar homonyme" =
+    !555542728L %in% dynamic_wdpa_vect$WDPAID
+)
+nosivolo_id <- 555697874L
+ns_state <- pa_states_analysis |> filter(WDPAID == nosivolo_id)
+stopifnot(
+  "Nosivolo : la base dynamique doit contenir exactement un état de limite externe" =
+    nrow(ns_state) == 1
+)
+
+# Calculs en Laborde (EPSG : 29702), même projection que les buffers
+ns_lab     <- ns_state |> st_make_valid() |> st_transform(mdg_crs)
+ns_buf_lab <- st_buffer(ns_lab, buffer_dist) |> st_make_valid()
+ns_ring    <- st_difference(ns_buf_lab, ns_lab)          # anneau sans surpeinture de l'AP
+ns_footprint_lab <- st_union(ns_buf_lab)                 # empreinte combinée AP + buffer
+
+stopifnot(
+  "Nosivolo : géométries invalides après buffer/différence" =
+    all(st_is_valid(ns_lab)) && all(st_is_valid(ns_ring)) &&
+    all(st_is_valid(ns_footprint_lab))
+)
+
+ns_metrics <- tibble(
+  Indicateur = c(
+    "Superficie de l'AP (km²)",
+    "Largeur proxy (2 × superficie / périmètre, en km)",
+    "Empreinte combinée AP + buffer 10 km (km²)",
+    "Ratio empreinte combinée / superficie de l'AP"
+  ),
+  Valeur = c(
+    as.numeric(st_area(ns_lab)) / 1e6,
+    as.numeric(st_perimeter(ns_lab)) / 1e3,
+    2 * as.numeric(st_area(ns_lab)) / as.numeric(st_perimeter(ns_lab)) / 1e3,
+    as.numeric(st_area(ns_footprint_lab)) / 1e6,
+    as.numeric(st_area(ns_footprint_lab)) / as.numeric(st_area(ns_lab))
+  )
+)
+
+ns_metrics |>
+  gt() |>
+  tab_header(
+    title = md("**Rivière Nosivolo — métriques de l'exposition potentielle**"),
+    subtitle = md("*Projection Laborde (EPSG : 29702) ; buffer de 10 km autour de la limite analytique*")
+  ) |>
+  fmt_number(columns = Valeur, decimals = 2) |>
+  tab_options(table.width = pct(80))
+
+# Carte : AP, anneau de 10 km, empreinte combinée + vignette de situation
+ns_wgs      <- st_transform(ns_lab, standard_crs)
+ns_ring_wgs <- st_transform(ns_ring, standard_crs)
+ns_foot_wgs <- st_transform(ns_footprint_lab, standard_crs)
+
+# Fenêtre d'affichage : tout le corridor, sans le rogner
+ns_window <- st_bbox(ns_foot_wgs) |>
+  st_as_sfc() |>
+  st_buffer(0.4) |>   # marge d'environ 40 km autour de l'empreinte
+  st_bbox() |>
+  st_as_sfc() |>
+  st_make_valid()
+mada_crop <- st_make_valid(contour_mada) |> st_intersection(ns_window)
+
+map_ns <- tm_shape(mada_crop, bbox = ns_window) +
+  tm_polygons(fill = "grey95", col = "grey60", lwd = 0.4) +
+tm_shape(ns_foot_wgs) +
+  tm_polygons(fill = "orange", fill_alpha = 0.25, col = NA,
+              fill.legend = tm_legend_hide()) +
+tm_shape(ns_ring_wgs) +
+  tm_polygons(fill = "orange", fill_alpha = 0.35, col = "darkorange3", lwd = 1,
+              fill.legend = tm_legend_hide()) +
+tm_shape(ns_wgs) +
+  tm_polygons(fill = "darkgreen", col = "black", fill_alpha = 0.85,
+              fill.legend = tm_legend_hide()) +
+  tm_add_legend(
+    type = "polygons",
+    fill = c("darkgreen", "orange"),
+    border.col = c("black", "darkorange3"),
+    labels = c("Rivière Nosivolo (AP)", "Buffer d'exposition potentiel de 10 km")
+  ) +
+  tm_title("Rivière Nosivolo (WDPAID 555697874) et buffer de 10 km",
+           size = 0.9, fontface = "bold") +
+  tm_compass(type = "arrow", position = c("RIGHT", "TOP"), size = 0.8) +
+  tm_scalebar(position = c("LEFT", "BOTTOM")) +
+  tm_credits("Source : dynamic conservation boundaries (dynamic_wdpa.gpkg) ; calculs en EPSG:29702.",
+             position = c("LEFT", "BOTTOM"), size = 0.5) +
+  tm_layout(legend.position = tm_pos_in("left", "top"))
+
+# Vignette de situation (contour national + emprise de l'empreinte)
+ns_bbox_wgs <- st_as_sfc(st_bbox(ns_foot_wgs))
+map_locator <- tm_shape(contour_mada) +
+  tm_polygons(fill = "grey95", col = "grey40", lwd = 0.5) +
+tm_shape(ns_bbox_wgs) +
+  tm_borders(col = "red", lwd = 1.2) +
+  tm_layout(title = "Situation", title.size = 0.7, frame = FALSE)
+
+map_nosivolo <- tmap_arrange(map_ns, map_locator, ncol = 2,
+                             widths = c(0.78, 0.22))
+map_nosivolo
+dir.create("output", showWarnings = FALSE)
+tmap_save(
+  tm       = map_nosivolo,
+  filename = "output/map_nosivolo_exposure_buffer.png",
+  width    = 11,
+  height   = 5.2,
+  dpi      = 300
+)
+```
+
+Les ordres de grandeur attendus par la revue documentaire — une superficie d'environ **67,5 km²**, un périmètre d'environ **954 km**, une largeur proxy d'environ **0,14 km** et un ratio empreinte combinée / AP d'environ **66,6** — servent uniquement de contrôle de cohérence : les valeurs affichées ci-dessus sont recalculées directement depuis la source. La largeur proxy confirme le diagnostic : le « territoire protégé » est en moyenne de 140 mètres de largeur estimée, à comparer avec une distance d'expositoin de 10km. 
+
+### Reconstruction des dates de traitement à partir des sources juridiques
+
+Les dates de la spécification principale sont reconstruites **de bout en bout** à partir des entrées ordinaires du projet — le corpus curatorisé de textes juridiques (`data/legal_texts.rds`) et les états temporels de la base dynamique (`dynamic_wdpa.gpkg`) — par les fonctions du script suivi en version `utils/pa_legal_dates.R`. Le registre distingue, pour chaque AP de l'univers de traitement :
+
+-   les événements **opératoires et nominatifs** (l'acte accorde, proroge ou modifie lui-même la protection ou la gestion du site nommé) — seuls ceux-ci qualifient ;
+-   les événements **non qualifiants** : actes-cadres blanket (18633/2008 et prorogations 52005/2010 et 9874/2013, appartenance uniquement inférée), textes abrogés, états de la base dynamique de précision annuelle (placeholders au 1er janvier) ou non datés, textes reliés au mauvais WDPAID (mélien Angavo/Ankafobe documenté ci-dessous) ;
+-   les corrections de dates **documentées par le pipeline de curation** (décret 2015-713 du Massif d'Itremo : 1951 → 21/04/2015 ; décret collectif 2015-808 : date de publication 2017 → signature 05/05/2015).
+
+Pour chaque AP sont calculés : `date_main` (premier jalon individuel : protection site-spécifique **ou** délégation de gestion, la plus précoce des deux — une protection site-spécifique antérieure n'est jamais remplacée par une délégation postérieure, p. ex. Tsitongambarika), `date_blanket_robustness` (chronologie reconstituée, premier état de la base dynamique), la source (type et numéro d'acte), la certitude d'appariement et un statut de non-résolution. Les appariements par le **décret collectif 2015-808** ne sont retenus que lorsqu'ils sont défendables au niveau individuel (nom unique dans la base dynamique) ; le cas d'**Angavo** (nom partagé avec l'ancien « Complexe Anjozorobe Angavo », doté de son propre décret le même jour) est conservé avec la certitude `uncertain` et signalé à l'arbitrage de l'équipe.
+
+```{r}
+#| label: pa-legal-dates
+source("utils/pa_legal_dates.R")
+
+pa_legal_register <- build_pa_legal_register(dynamic_wdpa_vect, pa_universe_ids)
+pa_onset_dates <- pa_main_onset_dates(
+  pa_legal_register,
+  pa_first |> filter(WDPAID %in% pa_universe_ids)
+)
+
+pa_legal_register |>
+  count(event_class, qualifying) |>
+  arrange(desc(n))
+```
+
+Contrôles d'arbitrage obligatoires — les cas documentés par l'équipe doivent ressortir exactement de la reconstruction :
+
+```{r}
+#| label: pa-legal-dates-checks
+get_date <- function(id) pa_onset_dates$date_main[pa_onset_dates$WDPAID == id]
+stopifnot(
+  "COMATSA Nord : acte de délégation de gestion du 13/08/2013 attendu" =
+    get_date(555697907L) == as.Date("2013-08-13"),
+  "Loky Manambato : délégation du 13/08/2013 antérieure à la création définitive de 2015" =
+    get_date(555697908L) == as.Date("2013-08-13"),
+  "Bemanevika : acte de délégation de gestion du 12/04/2018 attendu" =
+    get_date(555697906L) == as.Date("2018-04-12"),
+  "Tsitongambarika : la protection site-spécifique de 2008 prime sur la délégation de 2018" =
+    get_date(555697878L) == as.Date("2008-12-02"),
+  "Ranobe PK 32 : arrêté de site du 02/12/2008 (et non l'attribution blanket)" =
+    get_date(555549460L) == as.Date("2008-12-02"),
+  "Massif d'Itremo : décret 2015-713 corrigé au 21/04/2015 (et non 1951)" =
+    get_date(555697882L) == as.Date("2015-04-21"),
+  "Agnakatrika : le placeholder 2015-01-01 est remplacé par le décret 2015-794" =
+    get_date(555697901L) == as.Date("2015-04-28"),
+  "Ambohimirahavavy Marivorahona : décret 2015-782 (création du complexe)" =
+    get_date(555697871L) == as.Date("2015-04-28"),
+  "Ambondrobe et Mahimborondro : dates principales non résolues" =
+    all(is.na(get_date(555697875L)), is.na(get_date(555697905L))),
+  "Angavo/Ankafobe : mélien documenté — aucun arrêté de site crédit à Angavo, jalon principal = décret collectif 2015-808 à la certitude « uncertain », aucune date déduite pour Ankafobe" =
+    is.na(get_date(555790172L)) &&
+    pa_onset_dates$main_act_number[pa_onset_dates$WDPAID == 555549450L] == "2015-808" &&
+    pa_onset_dates$main_certainty[pa_onset_dates$WDPAID == 555549450L] == "uncertain" &&
+    !any(pa_legal_register$event_class[pa_legal_register$WDPAID == 555549450L] == "site_temp_arrete"),
+  "Aucune date principale antérieure au premier état reconstitué (T0)" =
+    all(pa_onset_dates$date_main[!is.na(pa_onset_dates$date_main)] >=
+          pa_onset_dates$date_blanket_robustness[!is.na(pa_onset_dates$date_main)])
+)
+"Contrôles d'arbitrage : OK"
+```
+
+Provenance PA par PA (registre complet exporté, et synthèse affichée) :
+
+```{r}
+#| label: tbl-pa-legal-dates
+#| tab-cap: "Dates de début de traitement par AP : chronologie reconstituée (robustesse) et premier jalon individuel (spécification principale)"
+
+pa_provenance <- pa_onset_dates |>
+  transmute(
+    WDPAID,
+    AP = NAME,
+    `Année source` = STATUS_YR,
+    `T0 (robustesse)` = date_blanket_robustness,
+    Attribution_2008 = if_else(blanket_attribution, "oui (proxy)", "non"),
+    `Date principale` = date_main,
+    `Jalon principal` = main_source,
+    Certitude = main_certainty,
+    `Cohorte T0` = cohort_blanket,
+    `Cohorte principale` = cohort_main,
+    `Non résolu` = unresolved_main,
+    Motif_non_resolu = unresolved_reason
+  )
+
+write_csv(pa_legal_register, "data/derived/pa_legal_events_register.csv")
+write_csv(pa_provenance, "data/derived/pa_treatment_dates_provenance.csv")
+
+pa_provenance |>
+  arrange(desc(is.na(`Date principale`)), `Cohorte principale`, AP) |>
+  select(-Motif_non_resolu) |>
+  gt() |>
+  tab_header(
+    title = md("**Dates de début de traitement par aire protégée**"),
+    subtitle = md("*Spécification principale (premier jalon individuel) vs chronologie juridique reconstituée (robustesse) — univers de traitement terrestre 2008–2021*")
+  ) |>
+  fmt_date(columns = c(`T0 (robustesse)`, `Date principale`)) |>
+  fmt_number(columns = c(`Année source`, `Cohorte T0`, `Cohorte principale`),
+             decimals = 0, use_seps = FALSE) |>
+  cols_width(WDPAID ~ px(90), AP ~ px(200), `Jalon principal` ~ px(260)) |>
+  tab_options(table.font.size = px(11), table.width = pct(100))
+```
+
+Les AP dont la date principale ne peut être établie à partir des sources locales (colonne « Non résolu » ; motif détaillé dans le CSV exporté) sont **exclues du pool des traités et des contrôles éligibles** dans la spécification principale — leur buffer ne devient jamais un ensemble de contrôle silencieusement, et elles restent dans le jeu de conservation source. Elles figurent dans la synthèse avant/après ci-dessous.
+
+```{r}
+#| label: pa-date-variants
+# Définition des variantes d'univers et de datation ------------------------
+
+nosivolo_id <- 555697874L
+
+# Reproduction « avant modification » (T0, univers complet) : référence
+pa_universe_ids_baseline <- pa_universe_ids
+pa_first_baseline <- pa_first  # premier état de la base dynamique (T0)
+
+# Exclusions par spécification
+pa_unresolved_main  <- pa_onset_dates |> filter(unresolved_main) |> pull(WDPAID)
+pa_universe_ids_blanket <- setdiff(pa_universe_ids, nosivolo_id)
+pa_universe_ids_main    <- setdiff(pa_universe_ids_blanket, pa_unresolved_main)
+pa_extra_excl_baseline  <- integer(0)
+pa_extra_excl_blanket   <- nosivolo_id
+pa_extra_excl_main      <- c(nosivolo_id, pa_unresolved_main)
+
+# Tables de dates par variante (treatment_date = date de début de traitement)
+pa_first_main <- pa_onset_dates |>
+  filter(!is.na(date_main)) |>
+  transmute(WDPAID, NAME, STATUS_YR,
+            treatment_date = date_main,
+            treatment_year = as.integer(format(date_main, "%Y")))
+pa_first_blanket <- pa_onset_dates |>
+  transmute(WDPAID, NAME, STATUS_YR,
+            treatment_date = date_blanket_robustness,
+            treatment_year = as.integer(format(date_blanket_robustness, "%Y")))
+
+tibble(
+  Variante = c("Avant modification (référence)", "Robustesse (chronologie reconstituée)",
+               "Principale (premier jalon individuel)"),
+  `AP de l'univers` = c(length(pa_universe_ids_baseline),
+                        length(pa_universe_ids_blanket),
+                        length(pa_universe_ids_main)),
+  `AP exclues` = c(0L, 1L, 1L + length(pa_unresolved_main)),
+  Détail = c("univers 2008–2021 complet",
+             paste("hors Rivière Nosivolo (555697874)"),
+             paste("hors Nosivolo et", length(pa_unresolved_main), "AP non résolues :",
+                   paste(pa_onset_dates$NAME[pa_onset_dates$WDPAID %in% pa_unresolved_main],
+                         collapse = ", ")))
+)
 ```
 
 ## Création de buffer pour les AP avant et après 2008
@@ -695,13 +1043,13 @@ Les grappes d'enquête sont classées selon leur proximité aux AP créées avan
 
 -   `GROUP` (Treatment / Control / Excluded) désigne **l'appartenance à la géographie de traitement éventuelle** pendant la période d'étude : un cluster rural à moins de 10 km d'une AP de l'univers de traitement (créée entre 2008 et 2021, hors "Proposed") est `Treatment`, **y compris dans les vagues antérieures à la date de création de l'AP**. C'est cette variable qui définit le groupe de traitement dans le DiD en double différence (l'activation du traitement est représentée par l'interaction avec la période post).
 -   `treated_now` indique si l'AP est **effectivement en vigueur à la date de référence de la vague** (1er juin) : un cluster `Treatment` observé avant sa date de début de traitement a `treated_now = 0`, après cette date `treated_now = 1`.
--   `treatment_date` est la date de début de traitement de l'AP assignée (premier `valid_from` de la base dynamique, qui coïncide avec l'année `STATUS_YR` pour toutes les AP de l'univers, à l'exception correctif documenté du WDPAID 555697871) ; `treatment_year` reprend l'année de création `STATUS_YR` (définition substantielle inchangée).
+-   `treatment_date` est la date de début de traitement de l'AP assignée. Spécification principale : **premier jalon juridique individuel** de l'AP — arrêté de protection temporaire site-nommé, décret de création définitive ou acte de délégation de gestion, la plus précoce des deux catégories (cf. section « Reconstruction des dates ») ; test de robustesse : premier état de la base dynamique (chronologie juridique reconstituée, attributions blanket de 2008 incluses), enregistré séparément et jamais réinjecté dans les variables principales. `treatment_year` reprend l'année du jalon retenu.
 
 Ce choix suit le plan de pré-analyse : le groupe de traitement du placebo 1997 est défini par la proximité des AP créées pendant la période de traitement ultérieure (2008–2021). On ne requalifie donc pas en `Control` une localisation traitée à terme au seul motif que l'AP n'existe pas encore à la date de l'enquête. En particulier, une AP créée tardivement dans l'année d'une vague (p. ex. oct.–déc. 2008, après le 1er juin) reste `Treatment` avec `treated_now = 0` à la baseline 2008 — la comparaison `STATUS_YR > année`, qui perdait ces cas, est abandonnée au profit des dates.
 
 Les limites des AP ayant évolué au cours du temps (le fichier `dynamic_wdpa.gpkg` documente chaque état des limites avec ses périodes de validité `valid_from`/`valid_to`), la classification est faite **par vague d'enquête** : pour chaque année, on utilise l'état du réseau d'AP valide à la date de référence (1er juin — la collecte s'étalant sur plusieurs mois, cette date coupe l'année en deux et approche la date moyenne d'interview), et non les limites actuelles. Pour une AP encore future à cette date, c'est la limite en vigueur à son entrée en traitement qui sert à identifier les clusters qui seront traités. La vague 1997 fait exception : elle sert de **vague placebo** (comparaison 1997–2008), on lui applique donc l'univers et les limites de 2008, de sorte qu'elle est construite avec le **même univers de traitement et les mêmes règles de classification** que la baseline 2008 (toutes les unités y sont pré-traitement : `treated_now = 0`). Il ne s'agit pas des *mêmes unités échantillonnées* : les vagues DHS/MIS sont des coupes répétées indépendantes et les identifiants de grappes ne sont pas des identifiants longitudinaux.
 
-Les AP encore au statut "Proposed" (jamais officialisées pendant la période d'étude) sont exclues du jeu d'analyse : les clusters proches de ces AP sont classés **Control**, conformément au pré-analyse plan (aucune restriction n'existait pendant les enquêtes). Les clusters exposés à une AP antérieure à 2008 restent **Excluded**, y compris lorsque la zone chevauche celle d'une AP post-2008 (PAP : la date de création la plus ancienne l'emporte).
+Les AP encore au statut "Proposed" (jamais officialisées pendant la période d'étude) sont exclues du jeu d'analyse : les clusters proches de ces AP sont classés **Control**, conformément au pré-analyse plan (aucune restriction n'existait pendant les enquêtes). Les clusters exposés à une AP antérieure à 2008 restent **Excluded**, y compris lorsque la zone chevauche celle d'une AP post-2008 (PAP : la date de création la plus ancienne l'emporte). Dans la spécification principale, les catchments de la **Rivière Nosivolo** (décision G1 de l'équipe, cf. section dédiée) et des **AP sans date individuelle résolue** sont également **Excluded** — ces zones ne deviennent jamais des contrôles, et les AP correspondantes ne sont ni traitées ni contrôles éligibles ; elles restent en revanche dans le jeu de conservation source.
 
 ```{r fig.cap="Figure 6: DHS survey clusters relative to existing protected areas"}
 
@@ -720,24 +1068,34 @@ pa_buffered <- function(pa, buffer_dist = 10000) {
 }
 
 classify_clusters_with_pa <- function(cluster_gps, year, fixed = FALSE,
-                                      buffer_dist = 10000) {
+                                      buffer_dist = 10000,
+                                      first_tbl = pa_first_main,
+                                      universe_ids = pa_universe_ids_main,
+                                      extra_excl_ids = pa_extra_excl_main) {
   # Couches effectives de la vague (1997 placebo -> univers et limites de 2008)
-  lay <- pa_layers(year, fixed)
+  lay <- pa_layers(year, fixed, first_tbl = first_tbl,
+                   universe_ids = universe_ids,
+                   extra_excl_ids = extra_excl_ids)
   ref_wave <- survey_reference_date(year)
 
   buf_pre  <- buffer_10km(lay$pre,  buffer_dist)
   buf_univ <- buffer_10km(lay$univ, buffer_dist)
+  buf_excl <- buffer_10km(lay$excl, buffer_dist)
 
   in_pre  <- st_within(cluster_gps, buf_pre,  sparse = FALSE)[, 1]
   in_univ <- st_within(cluster_gps, buf_univ, sparse = FALSE)[, 1]
+  in_excl <- st_within(cluster_gps, buf_excl, sparse = FALSE)[, 1]
 
   # GROUP = appartenance à la géographie de traitement éventuelle (pas
   # l'activation à la date d'enquête) ; les clusters exposés à une AP
-  # antérieure à 2008 sont exclus, y compris en cas de chevauchement.
+  # antérieure à 2008, à la Rivière Nosivolo (G1) ou à une AP sans date
+  # individuelle résolue sont exclus, y compris en cas de chevauchement —
+  # un catchment exclu ne devient jamais un contrôle par accident.
   base <- cluster_gps |>
     mutate(GROUP = case_when(
       URBAN_RURA == "U" ~ "Excluded",
       in_pre  ~ "Excluded",
+      in_excl ~ "Excluded",
       URBAN_RURA == "R" & in_univ ~ "Treatment",
       TRUE ~ "Control"
     ))
@@ -775,6 +1133,35 @@ gps_all_class <- bind_rows(
 )
 ```
 
+```{r}
+#| label: classification-variants
+# Assignation « avant modification » (référence de comparaison : T0, univers
+# complet) et variante de robustesse (chronologie reconstituée, hors
+# Nosivolo) — mêmes règles géographiques, seuls l'univers et les dates
+# changent.
+gps_all_class_baseline <- bind_rows(
+  purrr::map(survey_years, function(y) {
+    classify_clusters_with_pa(
+      get(paste0("gps_", y)), y,
+      first_tbl = pa_first_baseline,
+      universe_ids = pa_universe_ids_baseline,
+      extra_excl_ids = pa_extra_excl_baseline
+    )
+  })
+)
+
+gps_all_class_blanket <- bind_rows(
+  purrr::map(survey_years, function(y) {
+    classify_clusters_with_pa(
+      get(paste0("gps_", y)), y,
+      first_tbl = pa_first_blanket,
+      universe_ids = pa_universe_ids_blanket,
+      extra_excl_ids = pa_extra_excl_blanket
+    )
+  })
+)
+```
+
 ### Tests : invariants de la classification
 
 ```{r}
@@ -804,12 +1191,14 @@ test_results <- purrr::map_dfr(survey_years, function(y) {
 
   buf_pre  <- buffer_10km(lay$pre)
   buf_univ <- buffer_10km(lay$univ)
+  buf_excl <- buffer_10km(lay$excl)
   in_pre  <- st_within(d_y, buf_pre,  sparse = FALSE)[, 1]
   in_univ <- st_within(d_y, buf_univ, sparse = FALSE)[, 1]
+  in_excl <- st_within(d_y, buf_excl, sparse = FALSE)[, 1]
 
   # T8 : AP de l'univers créées l'année de la vague, après la date de référence
-  late_ids <- pa_first |>
-    filter(WDPAID %in% pa_universe_ids,
+  late_ids <- pa_first_main |>
+    filter(WDPAID %in% pa_universe_ids_main,
            treatment_date > ref_wave,
            treatment_date <= as.Date(sprintf("%d-12-31", y))) |>
     pull(WDPAID)
@@ -832,6 +1221,9 @@ test_results <- purrr::map_dfr(survey_years, function(y) {
     t4_urban_not_excluded = sum(urban & d_attr$GROUP != "Excluded"),
     # T5 : tout cluster exposé à une AP pré-baseline est Excluded
     t5_pre_pa_not_excluded = sum(in_pre & d_attr$GROUP != "Excluded"),
+    # T5b : tout cluster exposé à une AP exclue (Nosivolo, AP non résolues)
+    #       est Excluded — un catchment exclu ne devient jamais un contrôle
+    t5b_excluded_pa_not_excluded = sum(in_excl & d_attr$GROUP != "Excluded"),
     # T6 : Treatment avant sa date de traitement => treated_now = 0
     t6_pre_activation = sum(d_attr$GROUP == "Treatment" &
       d_attr$treatment_date > ref_wave & d_attr$treated_now != 0),
@@ -840,14 +1232,17 @@ test_results <- purrr::map_dfr(survey_years, function(y) {
       d_attr$treatment_date <= ref_wave & d_attr$treated_now != 1),
     # T8 : pas de perte des traitements futurs de l'année même (fin du
     #      critère STATUS_YR > year)
-    t8_sameyear_lost = sum(rural & in_late & !in_pre & d_attr$GROUP != "Treatment")
+    t8_sameyear_lost = sum(rural & in_late & !in_pre & !in_excl & d_attr$GROUP != "Treatment"),
+    # T10 : aucun cluster Treatment rattaché à une AP exclue
+    t10_treated_in_excluded_pa = sum(d_attr$GROUP == "Treatment" &
+      d_attr$WDPAID %in% pa_extra_excl_main)
   )
 })
 
 # Tous les compteurs de violation doivent être nuls
 stopifnot(
-  "T1-T8 : la classification viole les invariants de traitement" =
-    all(unlist(test_results |> select(matches("^t[0-9]_")))) == 0,
+  "T1-T10 : la classification viole les invariants de traitement" =
+    all(unlist(test_results |> select(matches("^t[0-9]+_")))) == 0,
   "T9 : l'univers de traitement 1997 (placebo) diffère de celui de 2008" =
     t9_universe_same
 )
@@ -855,7 +1250,7 @@ stopifnot(
 test_results
 ```
 
-Tous les tests passent pour les sept vagues : aucune AP "Proposed" ne génère de traitement (T1), tout cluster Treatment est rattaché à une AP et à une date de début de traitement (T2), aucun Control ne porte de date de traitement (T3), tout cluster urbain est Excluded (T4), tout cluster exposé à une AP pré-baseline est Excluded (T5), `treated_now` est cohérent avec la date de traitement (T6, T7), et aucune localisation à moins de 10 km d'une AP créée l'année même de la vague (après le 1er juin) n'est perdue — ces clusters sont `Treatment` avec `treated_now = 0` (T8). L'univers de traitement du placebo 1997 est identique à celui de la baseline 2008 (T9).
+Tous les tests passent pour les sept vagues : aucune AP "Proposed" ne génère de traitement (T1), tout cluster Treatment est rattaché à une AP et à une date de début de traitement (T2), aucun Control ne porte de date de traitement (T3), tout cluster urbain est Excluded (T4), tout cluster exposé à une AP pré-baseline (T5) ou à une AP exclue — Rivière Nosivolo (G1) ou AP sans date individuelle résolue (T5b) — est Excluded, aucun cluster Treatment n'est rattaché à une AP exclue (T10), `treated_now` est cohérent avec la date de traitement (T6, T7), et aucune localisation à moins de 10 km d'une AP créée l'année même de la vague (après le 1er juin) n'est perdue — ces clusters sont `Treatment` avec `treated_now = 0` (T8). L'univers de traitement du placebo 1997 est identique à celui de la baseline 2008 (T9).
 
 ### Résumé de la classification par vague
 
@@ -879,6 +1274,60 @@ clusters_by_wave <- gps_all_class |>
 
 write_csv(clusters_by_wave, "output/cluster_counts_by_wave.csv")
 clusters_by_wave
+```
+
+### Vérification avant/après : univers, cohortes et transitions
+
+Synthèse reproductible des effets du changement de définition : comptages d'AP par variante et motifs d'exclusion, distributions de cohortes (convention du 1er juin), et transitions de classification des grappes entre la référence « avant modification » (chronologie reconstituée, univers complet), la spécification principale (premier jalon individuel) et la variante de robustesse. Seuls des comptes non disclosifs sont affichés.
+
+```{r}
+#| label: before-after-assignment
+
+# 1) Cohortes effectives des AP de l'univers (convention du 1er juin) :
+#    chronologie reconstituée (T0) vs premier jalon individuel (principale).
+pa_onset_dates |>
+  count(`Cohorte T0` = cohort_blanket,
+        `Cohorte principale` = cohort_main) |>
+  gt() |>
+  tab_header(title = md("**Cohortes effectives par AP : T0 vs spécification principale**"),
+             subtitle = md("*Univers de traitement terrestre 2008–2021 ; cohorte = année + 1 si entrée après le 1er juin*")) |>
+  fmt_number(columns = everything(), decimals = 0, use_seps = FALSE) |>
+  tab_options(table.width = pct(60))
+
+# 2) Transitions de groupes des grappes : référence -> spécification principale
+trans_base_main <- gps_all_class_baseline |>
+  st_drop_geometry() |>
+  select(DHSYEAR, DHSCLUST, GROUP_base = GROUP) |>
+  left_join(
+    gps_all_class |>
+      st_drop_geometry() |>
+      select(DHSYEAR, DHSCLUST, GROUP_main = GROUP),
+    by = c("DHSYEAR", "DHSCLUST")
+  ) |>
+  count(DHSYEAR, GROUP_base, GROUP_main) |>
+  pivot_wider(names_from = GROUP_main, values_from = n, values_fill = 0,
+              names_prefix = "→ ")
+
+# 3) Transitions de groupes des grappes : spécification principale ->
+#    variante de robustesse (chronologie reconstituée)
+trans_main_blanket <- gps_all_class |>
+  st_drop_geometry() |>
+  select(DHSYEAR, DHSCLUST, GROUP_main = GROUP) |>
+  left_join(
+    gps_all_class_blanket |>
+      st_drop_geometry() |>
+      select(DHSYEAR, DHSCLUST, GROUP_blanket = GROUP),
+    by = c("DHSYEAR", "DHSCLUST")
+  ) |>
+  count(DHSYEAR, GROUP_main, GROUP_blanket) |>
+  pivot_wider(names_from = GROUP_blanket, values_from = n, values_fill = 0,
+              names_prefix = "→ ")
+
+list(
+  "Référence (T0, univers complet) → Principale (premier jalon individuel)" =
+    trans_base_main,
+  "Principale → Robustesse (chronologie reconstituée)" = trans_main_blanket
+)
 ```
 
 ### Test de sensibilité : limites fixes vs limites à date
@@ -1157,6 +1606,42 @@ gt_table_menages_all <- households_counts_all %>%
 gt_table_menages_all   
 ```
 
+Comparaison avant/après au niveau des ménages (comptes non disclosifs) :
+
+```{r}
+#| label: households-before-after
+households_variants <- map_dfr(years_all, function(y) {
+  if (y == 2018) {
+    hr <- read_spss("data/raw/mics/2018/SPSS datasets/hh.sav") |>
+      transmute(hv001 = HH1, DHSYEAR = y)
+  } else {
+    hr <- load_dhs_data(dhs_folder, y, "HR") |>
+      mutate(DHSYEAR = y) |>
+      select(hv001, DHSYEAR)
+  }
+  cl <- map_dfr(
+    list(Ref_T0 = gps_all_class_baseline, Principale = gps_all_class,
+         Robustesse_T0_sans_Nosivolo = gps_all_class_blanket),
+    ~ st_drop_geometry(.x) |>
+      filter(DHSYEAR == y) |>
+      select(DHSYEAR, DHSCLUST, GROUP),
+    .id = "Variante"
+  )
+  hr |>
+    left_join(cl, by = c("DHSYEAR", "hv001" = "DHSCLUST")) |>
+    count(Variante, GROUP, name = "n_menages") |>
+    pivot_wider(names_from = GROUP, values_from = n_menages, values_fill = 0)
+})
+
+households_variants |>
+  gt() |>
+  tab_header(title = md("**Ménages par vague et par variante de définition**"),
+             subtitle = md("*Référence (chronologie reconstituée, univers complet), spécification principale (premier jalon individuel) et robustesse (chronologie reconstituée, hors Nosivolo) — comptes non disclosifs*")) |>
+  cols_label(Treatment = "Traitement", Control = "Contrôles", Excluded = "Exclus") |>
+  fmt_number(columns = c(Treatment, Control, Excluded), decimals = 0, use_seps = TRUE) |>
+  tab_options(table.width = pct(80))
+```
+
 ## Enregistrement des variables classifiées
 
 Les informations essentielles sur la classification des grappes d'enquête sont extraites et enregistrées dans un fichier csv en vue d'une utilisation ultérieure. Seules les informations nécessaires à l'identification des grappes et à leur groupe de traitement sont conservées, excluant les données géographiques et les variables non pertinentes.
@@ -1165,15 +1650,37 @@ Les informations essentielles sur la classification des grappes d'enquête sont 
 # Issue U2 #1 : la géométrie doit être retirée avant write_csv, sinon elle est
 # sérialisée en texte WKT et se propage dans les chapitres suivants.
 # GROUP = appartenance à la géographie de traitement éventuelle ;
-# treatment_date / treatment_year = début du traitement de l'AP assignée ;
+# treatment_date / treatment_year = début du traitement de l'AP assignée
+# (spécification principale : premier jalon juridique individuel) ;
 # treated_now = AP en vigueur à la date de référence de la vague.
+# treatment_year = année calendaire du jalon retenu ; la cohorte effective
+# (année + 1 si entrée après le 1er juin) est dérivée de treatment_date en
+# aval (07) — les trois niveaux (date, année de première couverture, cohorte)
+# restent distincts.
 all_class <- gps_all_class %>%
   st_drop_geometry() %>%
+  mutate(treatment_year = as.integer(format(treatment_date, "%Y"))) %>%
   select(DHSYEAR, DHSCLUST, DHSREGNA, GROUP, WDPAID,
-         treatment_year = STATUS_YR, IUCN_CAT, dist_km,
+         treatment_year, IUCN_CAT, dist_km,
          treatment_date, treated_now)
 
 write_csv(all_class, "data/derived/cluster_treatment_classification_staggered.csv")
+
+# Variante de robustesse (chronologie juridique reconstituée, hors Nosivolo) :
+# même schéma, fichier distinct. Les dates de robustesse ne sont jamais
+# réinjectées dans les variables de traitement principales ; le passage à
+# cette variante en aval (04 -> 06 -> 07) consisterait à lire ce fichier à la
+# place du fichier principal dans 04-variable-consolidation.qmd — changement
+# minimal à documenter séparément, non appliqué ici.
+all_class_blanket <- gps_all_class_blanket %>%
+  st_drop_geometry() %>%
+  mutate(treatment_year = as.integer(format(treatment_date, "%Y"))) %>%
+  select(DHSYEAR, DHSCLUST, DHSREGNA, GROUP, WDPAID,
+         treatment_year, IUCN_CAT, dist_km,
+         treatment_date, treated_now)
+
+write_csv(all_class_blanket,
+          "data/derived/cluster_treatment_classification_staggered_blanket_robustness.csv")
 
 write_csv(st_drop_geometry(wdpa_before_2008), "data/derived/wdpa_before_2008.csv")
 write_csv(st_drop_geometry(wdpa_from_2008), "data/derived/wdpa_from_2008.csv")
