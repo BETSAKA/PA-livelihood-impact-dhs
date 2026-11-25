@@ -608,6 +608,7 @@ stopifnot(
 ns_metrics <- tibble(
   Indicateur = c(
     "Superficie de l'AP (km²)",
+    "Périmètre de l'AP (km)",
     "Largeur proxy (2 × superficie / périmètre, en km)",
     "Empreinte combinée AP + buffer 10 km (km²)",
     "Ratio empreinte combinée / superficie de l'AP"
@@ -697,10 +698,12 @@ Les ordres de grandeur attendus par la revue documentaire — une superficie d'e
 Les dates de la spécification principale sont reconstruites **de bout en bout** à partir des entrées ordinaires du projet — le corpus curatorisé de textes juridiques (`data/legal_texts.rds`) et les états temporels de la base dynamique (`dynamic_wdpa.gpkg`) — par les fonctions du script suivi en version `utils/pa_legal_dates.R`. Le registre distingue, pour chaque AP de l'univers de traitement :
 
 -   les événements **opératoires et nominatifs** (l'acte accorde, proroge ou modifie lui-même la protection ou la gestion du site nommé) — seuls ceux-ci qualifient ;
--   les événements **non qualifiants** : actes-cadres blanket (18633/2008 et prorogations 52005/2010 et 9874/2013, appartenance uniquement inférée), textes abrogés, états de la base dynamique de précision annuelle (placeholders au 1er janvier) ou non datés, textes reliés au mauvais WDPAID (mélien Angavo/Ankafobe documenté ci-dessous) ;
+-   les événements **non qualifiants** : actes-cadres blanket (18633/2008 et prorogations 52005/2010 et 9874/2013, appartenance uniquement inférée), textes abrogés, états de la base dynamique de précision annuelle (placeholders au 1er janvier) ou non datés. Les corrections de liens acte→WDPAID et les actes vérifiés absents du corpus, documentés par l'audit des décrets PA (novembre 2026, cf. section dédiée), sont appliqués au registre par une couche de correction reproductible ; les enregistrements bruts du corpus sont conservés ;
 -   les corrections de dates **documentées par le pipeline de curation** (décret 2015-713 du Massif d'Itremo : 1951 → 21/04/2015 ; décret collectif 2015-808 : date de publication 2017 → signature 05/05/2015).
 
-Pour chaque AP sont calculés : `date_main` (premier jalon individuel : protection site-spécifique **ou** délégation de gestion, la plus précoce des deux — une protection site-spécifique antérieure n'est jamais remplacée par une délégation postérieure, p. ex. Tsitongambarika), `date_blanket_robustness` (chronologie reconstituée, premier état de la base dynamique), la source (type et numéro d'acte), la certitude d'appariement et un statut de non-résolution. Les appariements par le **décret collectif 2015-808** ne sont retenus que lorsqu'ils sont défendables au niveau individuel (nom unique dans la base dynamique) ; le cas d'**Angavo** (nom partagé avec l'ancien « Complexe Anjozorobe Angavo », doté de son propre décret le même jour) est conservé avec la certitude `uncertain` et signalé à l'arbitrage de l'équipe.
+Pour chaque AP sont calculés : `date_main` (premier jalon individuel : protection site-spécifique **ou** délégation de gestion, la plus précoce des deux — une protection site-spécifique antérieure n'est jamais remplacée par une délégation postérieure, p. ex. Tsitongambarika), `date_blanket_robustness` (chronologie reconstituée, premier état de la base dynamique), la source (type et numéro d'acte), la certitude d'appariement et un statut de non-résolution. Les appariements par le **décret collectif 2015-808** ne sont retenus que lorsqu'ils sont défendables au niveau individuel (nom unique dans la base dynamique) ; le cas d'**Angavo**, d'abord conservé `uncertain` (nom partagé avec l'ancien « Complexe Anjozorobe Angavo », doté de son propre décret le même jour), a été arbitré par l'audit des décrets PA (novembre 2026) : l'article 1er et le tableau du décret identifient Angavo par le district d'Ambovombe et les communes Antanimora Atsimo et Ambanisarika (Grand Sud), ce que confirme la position du polygone analytique (centroid ≈ 45,8°E / 24,9°S), distinct du complexe Anjozorobe-Angavo — certitude portée à `high`.
+
+**Variante « création définitive uniquement » (test de robustesse institutionnel).** Une troisième date, `date_permanent`, est dérivée du même registre : le premier **décret de création définitive** vérifiable et individuellement attribuable à l'AP — décret individuel, ou site nommé dans un décret collectif lorsque l'appariement PA-décret est suffisamment documenté (certitude `high`/`medium` ; les appariements `uncertain`/`not_matched` ne sont pas convertis en date — aucun cas restant depuis l'audit de novembre 2026). La protection temporaire et ses prorogations, la délégation de gestion, les actes blanket et les modifications ultérieures de limites ou de désignation ne qualifient pas ; ni `STATUS_YR`, ni le premier `valid_from` de la base dynamique, ni un état définitif sans texte au corpus, ni une citation ultérieure ne sont utilisés. Les corrections documentées par la curation sont conservées (décret 2015-713 du Massif d'Itremo : 21/04/2015 ; décret collectif 2015-808 : signature 05/05/2015), ainsi que celle de l'audit (décret 2015-771 d'Oronjia : le bloc de signature du texte conservé au corpus porte « Fait à Antananarivo, le 28 Avril 2015 » ; 03/12/2018 est la publication au JO), de même que la source, le numéro, la date et la certitude de chaque décret retenu. Lorsqu'aucun décret ne peut être attribué avec certitude, `date_permanent` reste manquant et le motif est enregistré, en distinguant l'**absence de décret vérifié** (p. ex. Kinkony Lake, Ivohiboro — preuve manquante documentée dans la section d'audit), l'**attribution ambiguë** (aucun cas restant) et le **décret daté au-delà de la dernière enquête de 2021** (Tsinjoarivo Ambalaomby, décret 2026-1529 du 15/06/2026 — hors fenêtre d'observation) : dans tous ces cas, les catchments potentiels de 10 km des AP concernées sont classés `Excluded` dans cette variante et ne rejoignent jamais le pool de contrôle. Enfin, la création définitive est un événement institutionnel **postérieur** et distinct du début de la gestion de fait : cette variante retarde mécaniquement les dates de traitement et restreint l'échantillon éligible, sans prétendre dater le début opérationnel de la protection ; elle explore la sensibilité des résultats au moment retenu, sans réviser le PAP.
 
 ```{r}
 #| label: pa-legal-dates
@@ -723,13 +726,15 @@ Contrôles d'arbitrage obligatoires — les cas documentés par l'équipe doiven
 #| label: pa-legal-dates-checks
 get_date <- function(id) pa_onset_dates$date_main[pa_onset_dates$WDPAID == id]
 stopifnot(
-  "COMATSA Nord : acte de délégation de gestion du 13/08/2013 attendu" =
+  "COMATSA Nord : acte de délégation de gestion du 13/08/2013 attendu (antérieur au décret collectif 2015-782)" =
     get_date(555697907L) == as.Date("2013-08-13"),
-  "Loky Manambato : délégation du 13/08/2013 antérieure à la création définitive de 2015" =
-    get_date(555697908L) == as.Date("2013-08-13"),
-  "Bemanevika : acte de délégation de gestion du 12/04/2018 attendu" =
-    get_date(555697906L) == as.Date("2018-04-12"),
-  "Tsitongambarika : la protection site-spécifique de 2008 prime sur la délégation de 2018" =
+  "Loky Manambato : délégation du 13/08/2013 antérieure au décret de création définitive 2015-759 (28/04/2015)" =
+    get_date(555697908L) == as.Date("2013-08-13") &&
+    pa_onset_dates$permanent_act_number[pa_onset_dates$WDPAID == 555697908L] == "2015-759",
+  "Bemanevika : le décret collectif 2015-782 (28/04/2015) prime sur la délégation de gestion du 12/04/2018" =
+    get_date(555697906L) == as.Date("2015-04-28") &&
+    pa_onset_dates$main_act_number[pa_onset_dates$WDPAID == 555697906L] == "2015-782",
+  "Tsitongambarika : la protection site-spécifique de 2008 prime sur la délégation de 2018 et sur le décret 2015-720" =
     get_date(555697878L) == as.Date("2008-12-02"),
   "Ranobe PK 32 : arrêté de site du 02/12/2008 (et non l'attribution blanket)" =
     get_date(555549460L) == as.Date("2008-12-02"),
@@ -739,19 +744,313 @@ stopifnot(
     get_date(555697901L) == as.Date("2015-04-28"),
   "Ambohimirahavavy Marivorahona : décret 2015-782 (création du complexe)" =
     get_date(555697871L) == as.Date("2015-04-28"),
-  "Ambondrobe et Mahimborondro : dates principales non résolues" =
-    all(is.na(get_date(555697875L)), is.na(get_date(555697905L))),
-  "Angavo/Ankafobe : mélien documenté — aucun arrêté de site crédit à Angavo, jalon principal = décret collectif 2015-808 à la certitude « uncertain », aucune date déduite pour Ankafobe" =
-    is.na(get_date(555790172L)) &&
-    pa_onset_dates$main_act_number[pa_onset_dates$WDPAID == 555549450L] == "2015-808" &&
-    pa_onset_dates$main_certainty[pa_onset_dates$WDPAID == 555549450L] == "uncertain" &&
-    !any(pa_legal_register$event_class[pa_legal_register$WDPAID == 555549450L] == "site_temp_arrete"),
+  "Paire de décrets 758/759 (28/04/2015) : Ambondrobe = 2015-758 (premier jalon individuel du site), Loky Manambato = 2015-759 ; aucun croisement résiduel" =
+    get_date(555697875L) == as.Date("2015-04-28") &&
+    pa_onset_dates$main_act_number[pa_onset_dates$WDPAID == 555697875L] == "2015-758" &&
+    pa_onset_dates$permanent_act_number[pa_onset_dates$WDPAID == 555697875L] == "2015-758" &&
+    pa_onset_dates$permanent_act_number[pa_onset_dates$WDPAID == 555697908L] == "2015-759" &&
+    !any(na.omit(pa_legal_register$act_number[pa_legal_register$WDPAID == 555697875L]) == "2015-759") &&
+    !any(na.omit(pa_legal_register$act_number[pa_legal_register$WDPAID == 555697908L]) == "2015-758"),
+  "Paire de décrets 711/716 (21/04/2015) : Manjakatompo Ankaratra = 2015-711 (jalon principal = arrêté temporaire 14983/2013), Marolambo = 2015-716 ; aucun croisement résiduel" =
+    pa_onset_dates$permanent_act_number[pa_onset_dates$WDPAID == 555697911L] == "2015-711" &&
+    pa_onset_dates$permanent_act_number[pa_onset_dates$WDPAID == 555697917L] == "2015-716" &&
+    get_date(555697911L) == as.Date("2013-07-18") &&
+    get_date(555697917L) == as.Date("2015-04-21") &&
+    !any(na.omit(pa_legal_register$act_number[pa_legal_register$WDPAID == 555697917L]) == "2015-711") &&
+    !any(na.omit(pa_legal_register$act_number[pa_legal_register$WDPAID == 555697911L]) == "2015-716"),
+  "COMATSA Sud et Mahimborondro : décret collectif 2015-782, composants nommés dans le corps du texte (couverture spatiale vérifiée)" =
+    get_date(555697904L) == as.Date("2015-04-28") &&
+    get_date(555697905L) == as.Date("2015-04-28") &&
+    pa_onset_dates$main_act_number[pa_onset_dates$WDPAID == 555697904L] == "2015-782" &&
+    pa_onset_dates$main_act_number[pa_onset_dates$WDPAID == 555697905L] == "2015-782",
+  "Angavo : appariement au décret collectif 2015-808 arbitré « high » (géographie du Grand Sud confirmée)" =
+    get_date(555549450L) == as.Date("2015-05-05") &&
+    pa_onset_dates$main_certainty[pa_onset_dates$WDPAID == 555549450L] == "high",
+  "Ankafobe : mélien résolu — arrêté de mise en protection temporaire 23548/2018 (24/09/2018) comme jalon principal, aucun texte crédit à Angavo" =
+    get_date(555790172L) == as.Date("2018-09-24") &&
+    pa_onset_dates$main_act_number[pa_onset_dates$WDPAID == 555790172L] == "23548/2018" &&
+    !any(pa_legal_register$WDPAID == 555549450L &
+           pa_legal_register$act_number %in% c("23548/2018", "2021-919")),
+  "Oronjia : décret 2015-771 corrigé au 28/04/2015 (bloc de signature du texte conservé au corpus ; et non le 28/04/2018 du corpus brut)" =
+    get_date(555697896L) == as.Date("2015-04-28"),
+  "Analalava : décret 2015-750 (commune Amparihintsokatra, district d'Ambatondrazaka) rattaché au polygone analytique 555790237 (et non à 352240, région Atsinanana)" =
+    get_date(555790237L) == as.Date("2015-04-28") &&
+    pa_onset_dates$main_act_number[pa_onset_dates$WDPAID == 555790237L] == "2015-750",
+  "Andreba : décret 2015-791 (certitude « medium », source secondaire FAPBM, texte non disponible)" =
+    get_date(555697903L) == as.Date("2015-04-28") &&
+    pa_onset_dates$main_certainty[pa_onset_dates$WDPAID == 555697903L] == "medium",
+  "Kinkony Lake : date principale non résolue ; Ivohiboro : jalon principal = arrêté temporaire 2645/2020 (29/01/2020), preuve manquante documentée dans la section d'audit" =
+    is.na(get_date(20283L)) &&
+    get_date(555790169L) == as.Date("2020-01-29") &&
+    pa_onset_dates$main_act_number[pa_onset_dates$WDPAID == 555790169L] == "2645/2020",
   "Aucune date principale antérieure au premier état reconstitué (T0)" =
     all(pa_onset_dates$date_main[!is.na(pa_onset_dates$date_main)] >=
           pa_onset_dates$date_blanket_robustness[!is.na(pa_onset_dates$date_main)])
 )
 "Contrôles d'arbitrage : OK"
 ```
+
+Contrôles d'arbitrage de la variante « création définitive uniquement » :
+
+```{r}
+#| label: pa-legal-dates-permanent-checks
+get_perm <- function(id) pa_onset_dates$date_permanent[pa_onset_dates$WDPAID == id]
+get_perm_status <- function(id) {
+  pa_onset_dates$permanent_status[pa_onset_dates$WDPAID == id]
+}
+
+# Chaque date permanente résolue doit provenir d'un décret de création
+# définitive du corpus (pas d'un état de la base dynamique, de STATUS_YR ou
+# d'un valid_from), à la date exacte retenue. Les états de la base dynamique
+# partageant la même date sont écartés du contrôle.
+winning_decree <- pa_legal_register |>
+  filter(event_class %in%
+           c("definitive_decree", "definitive_decree_collective")) |>
+  inner_join(
+    pa_onset_dates |>
+      filter(permanent_status == "resolved") |>
+      select(WDPAID, date_permanent),
+    by = "WDPAID"
+  ) |>
+  filter(act_date == date_permanent)
+
+stopifnot(
+  "Loky Manambato : date permanente = décret de création définitive 2015-759 (28/04/2015), et non l'acte de délégation de 2013" =
+    get_perm(555697908L) == as.Date("2015-04-28") &&
+    pa_onset_dates$permanent_act_number[pa_onset_dates$WDPAID == 555697908L] == "2015-759",
+  "Ambondrobe : date permanente = décret 2015-758 (28/04/2015), premier et unique jalon individuel vérifié du site" =
+    get_perm(555697875L) == as.Date("2015-04-28") &&
+    pa_onset_dates$permanent_act_number[pa_onset_dates$WDPAID == 555697875L] == "2015-758",
+  "COMATSA Nord : délégation de 2013 conservée pour le jalon principal, mais date permanente résolue par le décret collectif 2015-782 (couverture spatiale vérifiée)" =
+    get_perm(555697907L) == as.Date("2015-04-28") &&
+    pa_onset_dates$permanent_act_number[pa_onset_dates$WDPAID == 555697907L] == "2015-782",
+  "COMATSA Sud, Bemanevika et Mahimborondro : date permanente = décret collectif 2015-782 (28/04/2015)" =
+    get_perm(555697904L) == as.Date("2015-04-28") &&
+    get_perm(555697906L) == as.Date("2015-04-28") &&
+    get_perm(555697905L) == as.Date("2015-04-28"),
+  "Tsitongambarika : décret 2015-720 du 21/04/2015 (permanent), postérieur à la protection temporaire de 2008 et antérieur à la délégation de 2018" =
+    get_perm(555697878L) == as.Date("2015-04-21") &&
+    pa_onset_dates$permanent_act_number[pa_onset_dates$WDPAID == 555697878L] == "2015-720",
+  "Ranobe PK 32 : décret collectif 2015-808 (05/05/2015), appariement « high »" =
+    get_perm(555549460L) == as.Date("2015-05-05") &&
+    pa_onset_dates$permanent_act_number[pa_onset_dates$WDPAID == 555549460L] == "2015-808" &&
+    pa_onset_dates$permanent_certainty[pa_onset_dates$WDPAID == 555549460L] == "high",
+  "Massif d'Itremo : décret permanent 2015-713 corrigé au 21/04/2015 (et non 1951)" =
+    get_perm(555697882L) == as.Date("2015-04-21"),
+  "Manjakatompo Ankaratra et Marolambo : décrets permanents respectifs 2015-711 et 2015-716 (21/04/2015)" =
+    get_perm(555697911L) == as.Date("2015-04-21") &&
+    get_perm(555697917L) == as.Date("2015-04-21"),
+  "Angavo : appariement « high » au décret collectif 2015-808 — date permanente résolue au 05/05/2015" =
+    get_perm(555549450L) == as.Date("2015-05-05") &&
+    pa_onset_dates$permanent_certainty[pa_onset_dates$WDPAID == 555549450L] == "high",
+  "Ankafobe : décret 2021-919 (15/09/2021) — dans la fenêtre (≤ 31/12/2021) mais après le 1er juin 2021 : cohorte 2022, aucune vague observée traitée" =
+    get_perm(555790172L) == as.Date("2021-09-15") &&
+    pa_onset_dates$permanent_act_number[pa_onset_dates$WDPAID == 555790172L] == "2021-919" &&
+    pa_onset_dates$cohort_permanent[pa_onset_dates$WDPAID == 555790172L] == 2022L,
+  "Tsinjoarivo Ambalaomby : décret 2026-1529 du 15/06/2026 hors fenêtre — statut post_2021_decree, catchments exclus, aucune date retenue" =
+    is.na(get_perm(555790168L)) &&
+    get_perm_status(555790168L) == "post_2021_decree" &&
+    pa_onset_dates$permanent_candidate_date[pa_onset_dates$WDPAID == 555790168L] ==
+      as.Date("2026-06-15"),
+  "Kinkony Lake et Ivohiboro : aucun décret de création définitive vérifié (preuve manquante documentée dans la section d'audit)" =
+    get_perm_status(20283L) == "no_verified_decree" &&
+    get_perm_status(555790169L) == "no_verified_decree",
+  "Aucune attribution ambiguë restante (audit 2026-11 : Angavo arbitré « high », mélien Angavo/Ankafobe résolu)" =
+    !any(pa_onset_dates$permanent_status == "ambiguous_attribution"),
+  "Toute date permanente résolue provient d'un décret de création définitive du corpus ou de la couche de correction, présent au registre à la date retenue (et non d'une modification ni d'un état de la base dynamique)" =
+    setequal(unique(winning_decree$WDPAID),
+             pa_onset_dates$WDPAID[pa_onset_dates$permanent_status == "resolved"]) &&
+    all(winning_decree$type_decision == "creation_definitive") &&
+    all(winning_decree$qualifying),
+  "Toute date permanente est postérieure ou égale au premier état reconstitué (T0)" =
+    all(pa_onset_dates$date_permanent[!is.na(pa_onset_dates$date_permanent)] >=
+          pa_onset_dates$date_blanket_robustness[!is.na(pa_onset_dates$date_permanent)]),
+  "Aucune date permanente résolue après la dernière enquête 2021 (un décret postérieur resterait signalé, sans date retenue)" =
+    all(pa_onset_dates$date_permanent[!is.na(pa_onset_dates$date_permanent)] <=
+          as.Date("2021-12-31"))
+)
+"Contrôles « création définitive uniquement » : OK"
+```
+
+Apparentes exceptions chronologiques — signalées pour inspection, jamais corrigées silencieusement : un décret de création définitive ne devrait pas être antérieur à la protection temporaire site-nommée qu'il est censé pérenniser. En revanche, une délégation de gestion postérieure au décret est une séquence normale (la délégation peut formaliser la gestion après la pérennisation juridique) et n'est pas signalée.
+
+```{r}
+#| label: pa-legal-dates-permanent-chronology
+chrono_flags <- pa_onset_dates |>
+  filter(permanent_status == "resolved") |>
+  left_join(
+    pa_legal_register |>
+      filter(qualifying, event_class == "site_temp_arrete") |>
+      group_by(WDPAID) |>
+      summarise(date_temp = pa_min_date(act_date), .groups = "drop"),
+    by = "WDPAID"
+  ) |>
+  filter(date_permanent < date_temp) |>
+  select(WDPAID, NAME, date_permanent, date_temp, date_main)
+
+if (nrow(chrono_flags) == 0) {
+  "Aucune exception chronologique apparente : aucun décret permanent retenu n'anticipe la protection temporaire site-nommée correspondante."
+} else {
+  chrono_flags
+}
+```
+
+### Audit des décrets PA (novembre 2026) : vérification des appariements et corrections
+
+Les textes listés dans la section précédente ont été vérifiés un à un contre les sources primaires disponibles (textes conservés au corpus `data/legal_texts.rds`, annexes des décrets, portails officiels) et contre la géométrie analytique. Le dépistage systématique de l'univers des 54 AP couvre les trois familles d'anomalies : liens acte→WDPAID en conflit, actes collectifs légitimes et écarts entre l'année du numéro d'acte et l'année de la date enregistrée.
+
+```{r}
+#| label: audit-screening
+# Dépistage : liens en conflit (un acte relié à plusieurs WDPAID) et écarts
+# numéro <-> date dans le corpus
+lt_screen <- readRDS("data/legal_texts.rds")
+link_conflicts <- lt_screen |>
+  filter(!is.na(WDPAID)) |>
+  group_by(num_texte) |>
+  summarise(n_wdpa = n_distinct(WDPAID),
+            wdp = paste(unique(WDPAID), collapse = ", "), .groups = "drop") |>
+  filter(n_wdpa > 1)
+
+year_mismatches <- lt_screen |>
+  mutate(y_num = suppressWarnings(as.integer(str_sub(num_texte, 1, 4))),
+         y_date = as.integer(format(date_texte, "%Y"))) |>
+  filter(!is.na(y_num), !is.na(y_date), y_num != y_date,
+         !grepl("/", num_texte)) |>
+  transmute(num_texte, ap_nom_texte, date_corpus = date_texte, date_jo,
+            WDPAID,
+            `dans l'univers 2008-2021` = WDPAID %in% pa_universe_ids)
+
+if (nrow(link_conflicts) == 0) {
+  "Aucun lien acte -> WDPAID en conflit dans le corpus (un acte = un WDPAID)."
+} else {
+  link_conflicts
+}
+
+year_mismatches
+```
+
+Quatre écarts numéro/date : 2015-713 et 2015-808 (corrections documentées par la curation, conservées) ; **2015-753** (Ambodivahibe, AP marine hors univers, non arbitrée ici) ; **2015-771** (Oronjia), corrigé par l'audit sur la foi du bloc de signature du texte conservé au corpus (« Fait à Antananarivo, le 28 Avril 2015 »), concordant avec la fiche du portail des AP (protectedareas.mg/fr/landscape/show/38) et le compte rendu du gestionnaire (MBG, avril 2015) ; la date du 03/12/2018 du corpus correspond à la publication au JO.
+
+Décisions d'appariement et de datation retenues par l'audit (les dates « old » sont celles de la version antérieure du registre ; les preuves sont citées) :
+
+```{r}
+#| label: audit-decisions
+#| tab-cap: "Audit des décrets PA : décisions d'appariement et de datation"
+audit_decisions <- tribble(
+  ~Site, ~WDPAID, ~Acte, ~`Ancienne datation`, ~`Datation corrigée`, ~`Preuve et source`,
+  "Loky Manambato", "555697908", "2015-759 (28/04/2015)",
+  "main 13/08/2013 (délégation 15862/2013) ; permanent « 2015-758 » 28/04/2015",
+  "inchangées (main 13/08/2013, permanent 28/04/2015) ; numéro du décret corrigé : 2015-758 -> 2015-759",
+  "le décret conservé au corpus sous « 2015-758 » est celui d'Ambondrobe ; document officiel protectedareas.mg/document/show/163248 (« DECRET N°2015-759 … Loky Manamabato, district Vohemar ») ; JO n° 3685 du 23/05/2016",
+  "Complexe Lac-Forêt Ambondrobe", "555697875", "2015-758 (28/04/2015)",
+  "main et permanent non résolus",
+  "main et permanent 28/04/2015 (décret 2015-758 : premier et unique jalon individuel vérifié du site)",
+  "objet et annexes du décret au corpus : « COMPLEXE LAC-FORET AMBONDROBE », communes Andimaky et Aboalimena, district Belo sur Tsiribihina ; CNLEGIS D2015-758.pdf",
+  "Forêt Naturelle de Tsitongambarika", "555697878", "2015-720 (21/04/2015)",
+  "main 02/12/2008 (arrêté de site 21480/2008) ; permanent non résolu",
+  "inchangées pour main ; permanent 21/04/2015 (cohorte 2015), antérieur à la délégation de 2018",
+  "texte du décret D2015-720 (signature « Antananarivo, le 21 Avril 2015 ») ; arrêté de site temporaire du 02/12/2008 conservé",
+  "Manjakatompo Ankaratra", "555697911", "2015-711 (21/04/2015)",
+  "main 18/07/2013 (arrêté 14983/2013) ; permanent non résolu",
+  "main inchangée ; permanent 21/04/2015 via 2015-711 (numéro réattribué)",
+  "annexes du décret 2015-711 : « Manjakatompo Ankaratra », communes Tsiafajavona et Sabotsy Namatoana, district d'Ambatolampy (le corpus le rattachait à tort à Marolambo)",
+  "Marolambo", "555697917", "2015-716 (21/04/2015)",
+  "main et permanent 21/04/2015, acte « 2015-711 »",
+  "inchangées ; numéro corrigé : 2015-711 -> 2015-716",
+  "annexes du décret 2015-716 : « Marolambo » et sa zone de protection (districts de Marolambo, Antanifotsy, Fandriana, Ambositra, Nosy-Varika, Ifanadiana)",
+  "COMATSA Nord", "555697907", "2015-782 (28/04/2015)",
+  "main 13/08/2013 (délégation 15865/2013) ; permanent non résolu",
+  "main inchangée (délégation antérieure conservée) ; permanent 28/04/2015 via 2015-782",
+  "le corps du décret 2015-782 nomme la « RRN de COMATSA-Nord » (cat. VI, 237 883 ha) ; couverture spatiale du polygone analytique par le complexe : 98,3 % (premiers états, EPSG:29702)",
+  "COMATSA Sud", "555697904", "2015-782 (28/04/2015)",
+  "main et permanent non résolus",
+  "main et permanent 28/04/2015 via 2015-782",
+  "le corps du décret 2015-782 nomme le « PHP de COMATSA-Sud » (cat. V, 80 204 ha) ; couverture spatiale : 93,7 % (premiers états, EPSG:29702)",
+  "Bemanevika", "555697906", "2015-782 (28/04/2015)",
+  "main 12/04/2018 (délégation 8897/2018) ; permanent non résolu",
+  "main 28/04/2015 (décret antérieur à la délégation) ; permanent 28/04/2015 via 2015-782",
+  "le décret 2015-782 et ses annexes 3 et 6 délimitent Bemanevika ; couverture spatiale : 98,1 % (premiers états, EPSG:29702)",
+  "Mahimborondro", "555697905", "2015-782 (28/04/2015)",
+  "main et permanent non résolus",
+  "main et permanent 28/04/2015 via 2015-782",
+  "le décret 2015-782 et ses annexes 3 et 6 délimitent Mahimborondro ; couverture spatiale : 98,2 % (premiers états, EPSG:29702)",
+  "Angavo", "555549450", "2015-808 (05/05/2015)",
+  "main 05/05/2015, certitude « uncertain » ; permanent non résolu (attribution ambiguë)",
+  "inchangées ; certitude portée à « high » (arbitrage géographique), permanent résolu 05/05/2015",
+  "article 1er et tableau du décret 2015-808 : « Angavo », district d'Ambovombe, communes Antanimora Atsimo et Ambanisarika ; centroid du polygone ≈ 45,8°E / 24,9°S (Grand Sud), distinct du Complexe Anjozorobe Angavo (352242, décret 2015-763 le même jour)",
+  "Oronjia", "555697896", "2015-771 (28/04/2015)",
+  "main et permanent 28/04/2018 (date du corpus)",
+  "main et permanent 28/04/2015 (cohorte 2015 au lieu de 2018 ; effets quantifiés sur la vague 2016)",
+  "bloc de signature du texte conservé au corpus : « Fait à Antananarivo, le 28 Avril 2015 » ; protectedareas.mg/fr/landscape/show/38 et gestionnaire MBG concordent ; 03/12/2018 = publication au JO",
+  "Ankafobe", "555790172", "23548/2018 (24/09/2018) ; 2021-919 (15/09/2021)",
+  "main non résolue ; permanent « attribution ambiguë » (mélien Angavo/Ankafobe)",
+  "main 24/09/2018 (arrêté de mise en protection temporaire) ; permanent 15/09/2021 (cohorte 2022 : dans la fenêtre, après le 1er juin 2021, aucune vague observée traitée)",
+  "l'arrêté 23548/2018 et le décret 2021-919 nomment « Ankafobe », district d'Ankazobe, région Analamanga (textes locaux A23548-2018 et D2021-919-VF) ; le mélien vers Angavo (555549450) est résolu par la couche de correction de liens",
+  "Tsinjoarivo Ambalaomby", "555790168", "2026-1529 (15/06/2026)",
+  "main 29/01/2020 (arrêté 2644/2020) ; permanent non résolu",
+  "main inchangée (arrêté temporaire 2020 conservé) ; permanent : décret 2026-1529 du 15/06/2026, postérieur à la fenêtre — statut post_2021_decree, catchments exclus",
+  "record librejustice.fr (décret n° 2026-1529 du 15/06/2026 portant création définitive) corroboré par Rainforest Trust (officialisation le 15/06/2026) ; aucun décret définitif antérieur localisé",
+  "Andreba", "555697903", "2015-791 (28/04/2015)",
+  "main et permanent non résolus",
+  "main et permanent 28/04/2015 (certitude « medium »)",
+  "source secondaire FAPBM (décret n° 2015-791 du 28/04/2015, Analanjirofo, ~39 ha, gestion WCS) ; texte du décret non disponible (CNLEGIS) ; localisation et superficie concordent avec le polygone analytique",
+  "Analalava", "555790237", "2015-750 (28/04/2015)",
+  "main et permanent non résolus (corpus : décret lié à 352240)",
+  "main et permanent 28/04/2015 via 2015-750 (numéro réattribué)",
+  "le décret 2015-750 nomme « Analalava » dans la commune Amparihintsokatra, district d'Ambatondrazaka, région Alaotra Mangoro ; le polygone 555790237 est dans la région Alaotra-Mangoro (~30 km d'Ambatondrazaka), alors que 352240 est dans la région Atsinanana à ~87 km (hors univers)"
+)
+audit_decisions |>
+  gt() |>
+  tab_header(
+    title = md("**Audit des décrets PA : décisions d'appariement et de datation**"),
+    subtitle = md("*Vérification contre les sources primaires et la géométrie analytique ; corrections appliquées par la couche de correction de `utils/pa_legal_dates.R`*")
+  ) |>
+  tab_options(table.font.size = px(10), table.width = pct(100))
+```
+
+Cas restant **non résolus** et implication pour l'éligibilité — la preuve manquante est documentée dans la provenance exportée (`PA_LEGAL_AUDIT_UNRESOLVED_NOTES`) :
+
+- **Kinkony Lake (20283)** : le décret 2015-718 (21/04/2015) crée le complexe « Zones Humides Mahavavy Kinkony » (352248, pré-2008). Le polygone analytique de la « Kinkony Lake Hunting Reserve » n'est couvert qu'à **79 %** par le complexe (premiers états, EPSG:29702) et porte une désignation distincte (réserve de chasse, état placeholder 2017-01-01) que le décret ne nomme pas (aucune mention de réserve de chasse dans le texte). Le décret n'est donc pas attribué à l'unité analytique ; preuve manquante = texte propre de la réserve de chasse. Catchments exclus dans les spécifications principale et permanente tant que non résolu.
+- **Ivohiboro (555790169)** : seul l'arrêté 2645/2020 (protection temporaire, 29/01/2020) est vérifié ; aucun décret de création définitive localisé (CNLEGIS et web, novembre 2026 ; des sources secondaires évoquent une officialisation en 2023, postérieure à la fenêtre). Catchments exclus dans la variante permanente.
+
+Vérification spatiale de la couverture composants/complexe du décret collectif 2015-782 (EPSG:29702, premiers états de limite) :
+
+```{r}
+#| label: audit-comatsa-coverage
+pf_geom <- function(id) {
+  dynamic_wdpa_vect |>
+    filter(WDPAID == id, zone_type == "external_boundary") |>
+    group_by(state_id) |>
+    slice_min(as.Date(valid_from), n = 1, with_ties = FALSE) |>
+    ungroup() |>
+    st_transform(29702) |> st_make_valid()
+}
+parent_geom <- pf_geom(555697871L)
+comatsa_comps <- c(`COMATSA Nord` = 555697907L, `COMATSA Sud` = 555697904L,
+                   Bemanevika = 555697906L, Mahimborondro = 555697905L)
+comatsa_cov <- imap_dfr(comatsa_comps, function(id, nm) {
+  comp <- pf_geom(id)
+  tibble(
+    composant = nm,
+    WDPAID = id,
+    `Aire composant (km2)` = as.numeric(st_area(comp)) / 1e6,
+    `Part dans le complexe` = as.numeric(st_area(st_intersection(comp, parent_geom))) /
+      as.numeric(st_area(comp))
+  )
+})
+comatsa_cov |>
+  mutate(`Aire composant (km2)` = round(`Aire composant (km2)`, 0),
+         `Part dans le complexe` = round(`Part dans le complexe`, 3)) |>
+  gt() |>
+  tab_header(
+    title = md("**Décret 2015-782 : couverture des composants par le complexe Ambohimirahavavy-Marivorahona**"),
+    subtitle = md("*Part de l'aire du composant incluse dans le périmètre du complexe (premiers états de limite, EPSG:29702)*")
+  ) |>
+  fmt_number(columns = `Part dans le complexe`, decimals = 3) |>
+  tab_options(table.width = pct(70))
+```
+
+La couverture des quatre composants par le périmètre du complexe (93,7 % à 98,3 % ; l'écart résiduel correspond aux différences de numérisation entre états de la base dynamique) fonde l'attribution du décret 2015-782 aux composants nommés dans son corps de texte. Dans la classification, chaque grappe reste comptée une seule fois : en cas de chevauchement des buffers, l'assignation retient la date de traitement la plus précoce puis l'AP la plus proche ; le diagnostic quantitatif (grappes du catchment du complexe que les buffers d'exclusion des composants auraient retirées si le décret n'y avait pas été appliqué) figure dans la section « Vérification avant/après ».
 
 Provenance PA par PA (registre complet exporté, et synthèse affichée) :
 
@@ -769,10 +1068,16 @@ pa_provenance <- pa_onset_dates |>
     `Date principale` = date_main,
     `Jalon principal` = main_source,
     Certitude = main_certainty,
+    `Date permanente` = date_permanent,
+    `Décret permanent` = permanent_source,
+    `Certitude perm.` = permanent_certainty,
     `Cohorte T0` = cohort_blanket,
     `Cohorte principale` = cohort_main,
+    `Cohorte permanente` = cohort_permanent,
     `Non résolu` = unresolved_main,
-    Motif_non_resolu = unresolved_reason
+    Motif_non_resolu = unresolved_reason,
+    `Statut permanent` = permanent_status,
+    Motif_permanent = permanent_unresolved_reason
   )
 
 write_csv(pa_legal_register, "data/derived/pa_legal_events_register.csv")
@@ -780,16 +1085,51 @@ write_csv(pa_provenance, "data/derived/pa_treatment_dates_provenance.csv")
 
 pa_provenance |>
   arrange(desc(is.na(`Date principale`)), `Cohorte principale`, AP) |>
-  select(-Motif_non_resolu) |>
+  select(-Motif_non_resolu, -Motif_permanent) |>
   gt() |>
   tab_header(
     title = md("**Dates de début de traitement par aire protégée**"),
-    subtitle = md("*Spécification principale (premier jalon individuel) vs chronologie juridique reconstituée (robustesse) — univers de traitement terrestre 2008–2021*")
+    subtitle = md("*Chronologie juridique reconstituée (robustesse), premier jalon individuel (spécification principale) et décret de création définitive (robustesse institutionnelle) — univers de traitement terrestre 2008–2021*")
   ) |>
-  fmt_date(columns = c(`T0 (robustesse)`, `Date principale`)) |>
-  fmt_number(columns = c(`Année source`, `Cohorte T0`, `Cohorte principale`),
+  fmt_date(columns = c(`T0 (robustesse)`, `Date principale`, `Date permanente`)) |>
+  fmt_number(columns = c(`Année source`, `Cohorte T0`, `Cohorte principale`,
+                         `Cohorte permanente`),
              decimals = 0, use_seps = FALSE) |>
-  cols_width(WDPAID ~ px(90), AP ~ px(200), `Jalon principal` ~ px(260)) |>
+  cols_width(WDPAID ~ px(90), AP ~ px(200), `Jalon principal` ~ px(260),
+             `Décret permanent` ~ px(220)) |>
+  tab_options(table.font.size = px(11), table.width = pct(100))
+```
+
+Statut de la datation permanente par AP : décrets résolus, absents, ambigus et (le cas échéant) postérieurs à la dernière enquête de 2021, avec l'identité des AP concernées.
+
+```{r}
+#| label: tbl-pa-legal-permanent-status
+#| tab-cap: "Statut de la datation par décret de création définitive"
+
+pa_permanent_status_labels <- c(
+  resolved              = "Décret permanent daté",
+  no_verified_decree    = "Aucun décret vérifié",
+  ambiguous_attribution = "Attribution ambiguë (à arbitrer)",
+  post_2021_decree      = "Décret après la dernière enquête 2021"
+)
+
+pa_permanent_status <- pa_onset_dates |>
+  mutate(pa_list = paste0(NAME, " [", WDPAID, "]")) |>
+  group_by(permanent_status) |>
+  summarise(n = n(), pa_list = paste(pa_list, collapse = ", "), .groups = "drop")
+
+pa_permanent_status |>
+  transmute(
+    Statut = pa_permanent_status_labels[permanent_status],
+    `Nb AP` = n,
+    `AP concernées (nom [WDPAID])` = pa_list
+  ) |>
+  gt() |>
+  tab_header(
+    title = md("**Datation par décret de création définitive**"),
+    subtitle = md("*Univers de traitement terrestre 2008–2021 ; les AP sans décret vérifié, ambigu ou post-2021 voient leurs catchments exclus dans la variante*")
+  ) |>
+  fmt_number(columns = `Nb AP`, decimals = 0, use_seps = FALSE) |>
   tab_options(table.font.size = px(11), table.width = pct(100))
 ```
 
@@ -824,17 +1164,41 @@ pa_first_blanket <- pa_onset_dates |>
             treatment_date = date_blanket_robustness,
             treatment_year = as.integer(format(date_blanket_robustness, "%Y")))
 
+# Variante « création définitive uniquement » : AP sans décret permanent
+# vérifiable — absent du corpus (Kinkony Lake, Ivohiboro) ou décret
+# postérieur à la dernière enquête 2021 (Tsinjoarivo Ambalaomby) —,
+# catchments exclus ; depuis l'audit de novembre 2026, plus aucun cas
+# d'attribution ambiguë (Angavo arbitré, mélien Angavo/Ankafobe résolu)
+pa_unresolved_permanent  <- pa_onset_dates |>
+  filter(unresolved_permanent) |>
+  pull(WDPAID)
+pa_universe_ids_permanent <- setdiff(pa_universe_ids_blanket, pa_unresolved_permanent)
+pa_extra_excl_permanent  <- c(nosivolo_id, pa_unresolved_permanent)
+
+pa_first_permanent <- pa_onset_dates |>
+  filter(permanent_status == "resolved") |>
+  transmute(WDPAID, NAME, STATUS_YR,
+            treatment_date = date_permanent,
+            treatment_year = as.integer(format(date_permanent, "%Y")))
+
 tibble(
   Variante = c("Avant modification (référence)", "Robustesse (chronologie reconstituée)",
-               "Principale (premier jalon individuel)"),
+               "Principale (premier jalon individuel)",
+               "Robustesse (création définitive uniquement)"),
   `AP de l'univers` = c(length(pa_universe_ids_baseline),
                         length(pa_universe_ids_blanket),
-                        length(pa_universe_ids_main)),
-  `AP exclues` = c(0L, 1L, 1L + length(pa_unresolved_main)),
+                        length(pa_universe_ids_main),
+                        length(pa_universe_ids_permanent)),
+  `AP exclues` = c(0L, 1L, 1L + length(pa_unresolved_main),
+                   1L + length(pa_unresolved_permanent)),
   Détail = c("univers 2008–2021 complet",
              paste("hors Rivière Nosivolo (555697874)"),
              paste("hors Nosivolo et", length(pa_unresolved_main), "AP non résolues :",
                    paste(pa_onset_dates$NAME[pa_onset_dates$WDPAID %in% pa_unresolved_main],
+                         collapse = ", ")),
+             paste("hors Nosivolo et", length(pa_unresolved_permanent),
+                   "AP sans décret permanent vérifié :",
+                   paste(pa_onset_dates$NAME[pa_onset_dates$WDPAID %in% pa_unresolved_permanent],
                          collapse = ", ")))
 )
 ```
@@ -1160,6 +1524,24 @@ gps_all_class_blanket <- bind_rows(
     )
   })
 )
+
+# Variante « création définitive uniquement » : mêmes règles géographiques
+# (buffer 10 km, exclusions pré-baseline, rural/urbain, date de référence du
+# 1er juin, placebo 1997 construit avec la géographie de 2008). L'univers est
+# restreint aux AP avec décret permanent vérifié et les catchments des AP
+# sans décret vérifié (absent, ambigu ou post-2021) sont Excluded — jamais
+# réassignés au pool de contrôle ; les enregistrements PA source restent
+# intacts.
+gps_all_class_permanent <- bind_rows(
+  purrr::map(survey_years, function(y) {
+    classify_clusters_with_pa(
+      get(paste0("gps_", y)), y,
+      first_tbl = pa_first_permanent,
+      universe_ids = pa_universe_ids_permanent,
+      extra_excl_ids = pa_extra_excl_permanent
+    )
+  })
+)
 ```
 
 ### Tests : invariants de la classification
@@ -1181,63 +1563,74 @@ t9_universe_same <- (
   abs(sum(as.numeric(st_area(l97$pre)))  - sum(as.numeric(st_area(l08$pre))))  < 1
 )
 
-test_results <- purrr::map_dfr(survey_years, function(y) {
-  d_y    <- gps_all_class |> filter(DHSYEAR == y)
-  d_attr <- d_y |> st_drop_geometry()
-  lay    <- pa_layers(y)
-  ref_wave <- survey_reference_date(y)
-  rural  <- d_attr$URBAN_RURA == "R"
-  urban  <- d_attr$URBAN_RURA == "U"
+# Invariants de classification, paramétrés par variante de datation
+# (spécification principale, robustesse « création définitive », etc.)
+classification_invariants <- function(class_df, first_tbl, universe_ids,
+                                      extra_excl_ids) {
+  purrr::map_dfr(survey_years, function(y) {
+    d_y    <- class_df |> filter(DHSYEAR == y)
+    d_attr <- d_y |> st_drop_geometry()
+    lay    <- pa_layers(y, first_tbl = first_tbl,
+                        universe_ids = universe_ids,
+                        extra_excl_ids = extra_excl_ids)
+    ref_wave <- survey_reference_date(y)
+    rural  <- d_attr$URBAN_RURA == "R"
+    urban  <- d_attr$URBAN_RURA == "U"
 
-  buf_pre  <- buffer_10km(lay$pre)
-  buf_univ <- buffer_10km(lay$univ)
-  buf_excl <- buffer_10km(lay$excl)
-  in_pre  <- st_within(d_y, buf_pre,  sparse = FALSE)[, 1]
-  in_univ <- st_within(d_y, buf_univ, sparse = FALSE)[, 1]
-  in_excl <- st_within(d_y, buf_excl, sparse = FALSE)[, 1]
+    buf_pre  <- buffer_10km(lay$pre)
+    buf_univ <- buffer_10km(lay$univ)
+    buf_excl <- buffer_10km(lay$excl)
+    in_pre  <- st_within(d_y, buf_pre,  sparse = FALSE)[, 1]
+    in_univ <- st_within(d_y, buf_univ, sparse = FALSE)[, 1]
+    in_excl <- st_within(d_y, buf_excl, sparse = FALSE)[, 1]
 
-  # T8 : AP de l'univers créées l'année de la vague, après la date de référence
-  late_ids <- pa_first_main |>
-    filter(WDPAID %in% pa_universe_ids_main,
-           treatment_date > ref_wave,
-           treatment_date <= as.Date(sprintf("%d-12-31", y))) |>
-    pull(WDPAID)
-  in_late <- if (length(late_ids)) {
-    st_within(d_y, buffer_10km(lay$univ |> filter(WDPAID %in% late_ids)),
-              sparse = FALSE)[, 1]
-  } else rep(FALSE, nrow(d_y))
+    # T8 : AP de l'univers créées l'année de la vague, après la date de référence
+    late_ids <- first_tbl |>
+      filter(WDPAID %in% universe_ids,
+             treatment_date > ref_wave,
+             treatment_date <= as.Date(sprintf("%d-12-31", y))) |>
+      pull(WDPAID)
+    in_late <- if (length(late_ids)) {
+      st_within(d_y, buffer_10km(lay$univ |> filter(WDPAID %in% late_ids)),
+                sparse = FALSE)[, 1]
+    } else rep(FALSE, nrow(d_y))
 
-  tibble(
-    DHSYEAR = y,
-    n_clusters = nrow(d_attr),
-    # T1 : les AP "Proposed" ne génèrent jamais de traitement
-    t1_treated_proposed = sum(d_attr$GROUP == "Treatment" & d_attr$WDPAID %in% prop_ids),
-    # T2 : tout cluster Treatment a une AP et une date de traitement renseignées
-    t2_treated_missing_info = sum(d_attr$GROUP == "Treatment" &
-      (is.na(d_attr$WDPAID) | is.na(d_attr$treatment_date))),
-    # T3 : aucun Control ne reçoit de date de traitement
-    t3_control_with_treat_date = sum(d_attr$GROUP == "Control" & !is.na(d_attr$treatment_date)),
-    # T4 : tout cluster urbain est Excluded
-    t4_urban_not_excluded = sum(urban & d_attr$GROUP != "Excluded"),
-    # T5 : tout cluster exposé à une AP pré-baseline est Excluded
-    t5_pre_pa_not_excluded = sum(in_pre & d_attr$GROUP != "Excluded"),
-    # T5b : tout cluster exposé à une AP exclue (Nosivolo, AP non résolues)
-    #       est Excluded — un catchment exclu ne devient jamais un contrôle
-    t5b_excluded_pa_not_excluded = sum(in_excl & d_attr$GROUP != "Excluded"),
-    # T6 : Treatment avant sa date de traitement => treated_now = 0
-    t6_pre_activation = sum(d_attr$GROUP == "Treatment" &
-      d_attr$treatment_date > ref_wave & d_attr$treated_now != 0),
-    # T7 : Treatment après sa date de traitement => treated_now = 1
-    t7_post_activation = sum(d_attr$GROUP == "Treatment" &
-      d_attr$treatment_date <= ref_wave & d_attr$treated_now != 1),
-    # T8 : pas de perte des traitements futurs de l'année même (fin du
-    #      critère STATUS_YR > year)
-    t8_sameyear_lost = sum(rural & in_late & !in_pre & !in_excl & d_attr$GROUP != "Treatment"),
-    # T10 : aucun cluster Treatment rattaché à une AP exclue
-    t10_treated_in_excluded_pa = sum(d_attr$GROUP == "Treatment" &
-      d_attr$WDPAID %in% pa_extra_excl_main)
-  )
-})
+    tibble(
+      DHSYEAR = y,
+      n_clusters = nrow(d_attr),
+      # T1 : les AP "Proposed" ne génèrent jamais de traitement
+      t1_treated_proposed = sum(d_attr$GROUP == "Treatment" & d_attr$WDPAID %in% prop_ids),
+      # T2 : tout cluster Treatment a une AP et une date de traitement renseignées
+      t2_treated_missing_info = sum(d_attr$GROUP == "Treatment" &
+        (is.na(d_attr$WDPAID) | is.na(d_attr$treatment_date))),
+      # T3 : aucun Control ne reçoit de date de traitement
+      t3_control_with_treat_date = sum(d_attr$GROUP == "Control" & !is.na(d_attr$treatment_date)),
+      # T4 : tout cluster urbain est Excluded
+      t4_urban_not_excluded = sum(urban & d_attr$GROUP != "Excluded"),
+      # T5 : tout cluster exposé à une AP pré-baseline est Excluded
+      t5_pre_pa_not_excluded = sum(in_pre & d_attr$GROUP != "Excluded"),
+      # T5b : tout cluster exposé à une AP exclue (Nosivolo, AP non résolues)
+      #       est Excluded — un catchment exclu ne devient jamais un contrôle
+      t5b_excluded_pa_not_excluded = sum(in_excl & d_attr$GROUP != "Excluded"),
+      # T6 : Treatment avant sa date de traitement => treated_now = 0
+      t6_pre_activation = sum(d_attr$GROUP == "Treatment" &
+        d_attr$treatment_date > ref_wave & d_attr$treated_now != 0),
+      # T7 : Treatment après sa date de traitement => treated_now = 1
+      t7_post_activation = sum(d_attr$GROUP == "Treatment" &
+        d_attr$treatment_date <= ref_wave & d_attr$treated_now != 1),
+      # T8 : pas de perte des traitements futurs de l'année même (fin du
+      #      critère STATUS_YR > year)
+      t8_sameyear_lost = sum(rural & in_late & !in_pre & !in_excl & d_attr$GROUP != "Treatment"),
+      # T10 : aucun cluster Treatment rattaché à une AP exclue
+      t10_treated_in_excluded_pa = sum(d_attr$GROUP == "Treatment" &
+        d_attr$WDPAID %in% extra_excl_ids)
+    )
+  })
+}
+
+test_results <- classification_invariants(
+  gps_all_class, pa_first_main, pa_universe_ids_main, pa_extra_excl_main
+)
 
 # Tous les compteurs de violation doivent être nuls
 stopifnot(
@@ -1251,6 +1644,62 @@ test_results
 ```
 
 Tous les tests passent pour les sept vagues : aucune AP "Proposed" ne génère de traitement (T1), tout cluster Treatment est rattaché à une AP et à une date de début de traitement (T2), aucun Control ne porte de date de traitement (T3), tout cluster urbain est Excluded (T4), tout cluster exposé à une AP pré-baseline (T5) ou à une AP exclue — Rivière Nosivolo (G1) ou AP sans date individuelle résolue (T5b) — est Excluded, aucun cluster Treatment n'est rattaché à une AP exclue (T10), `treated_now` est cohérent avec la date de traitement (T6, T7), et aucune localisation à moins de 10 km d'une AP créée l'année même de la vague (après le 1er juin) n'est perdue — ces clusters sont `Treatment` avec `treated_now = 0` (T8). L'univers de traitement du placebo 1997 est identique à celui de la baseline 2008 (T9).
+
+Les mêmes invariants sont vérifiés pour la variante « création définitive uniquement ». Les catchments des AP sans décret permanent vérifié — absent du corpus (Kinkony Lake, Ivohiboro) ou décret postérieur à la fenêtre d'observation (Tsinjoarivo Ambalaomby) — restent `Excluded` (T5b, T10) et ne rejoignent jamais le pool de contrôle ; `GROUP` reste la géographie de traitement *éventuelle* et `treated_now` suit la date du décret retenu (T2, T3, T6, T7, T8). Le cas limite d'**Ankafobe** (décret 2021-919 du 15/09/2021, dans la fenêtre mais après le 1er juin 2021) est vérifié explicitement : la résolution légale coexiste avec l'absence de vague observée traitée (cohorte 2022).
+
+```{r}
+#| label: classification-tests-permanent
+test_results_permanent <- classification_invariants(
+  gps_all_class_permanent,
+  pa_first_permanent, pa_universe_ids_permanent, pa_extra_excl_permanent
+)
+
+# T9 (variante permanente) : l'univers de traitement du placebo 1997 est
+# identique à celui de la baseline 2008
+l97p <- pa_layers(1997, first_tbl = pa_first_permanent,
+                  universe_ids = pa_universe_ids_permanent,
+                  extra_excl_ids = pa_extra_excl_permanent)
+l08p <- pa_layers(2008, first_tbl = pa_first_permanent,
+                  universe_ids = pa_universe_ids_permanent,
+                  extra_excl_ids = pa_extra_excl_permanent)
+t9_universe_same_permanent <- (
+  setequal(l97p$univ$WDPAID, l08p$univ$WDPAID) &&
+  setequal(l97p$pre$WDPAID,  l08p$pre$WDPAID)  &&
+  abs(sum(as.numeric(st_area(l97p$univ))) - sum(as.numeric(st_area(l08p$univ)))) < 1 &&
+  abs(sum(as.numeric(st_area(l97p$pre)))  - sum(as.numeric(st_area(l08p$pre))))  < 1
+)
+
+stopifnot(
+  "T1-T10 (variante permanente) : la classification viole les invariants de traitement" =
+    all(unlist(test_results_permanent |> select(matches("^t[0-9]+_")))) == 0,
+  "T9 (variante permanente) : l'univers de traitement 1997 (placebo) diffère de celui de 2008" =
+    t9_universe_same_permanent,
+  "GROUP (variante permanente) n'est pas un synonyme de treated_now : des clusters Treatment précèdent l'activation de leur AP" =
+    nrow(gps_all_class_permanent |> st_drop_geometry() |>
+           filter(GROUP == "Treatment", treated_now == 0)) > 0
+)
+
+# Clés uniques grappe x vague et cohérence de l'appartenance aux groupes, pour
+# les quatre classifications (référence, principale, robustesse T0, permanente)
+map(
+  list(Ref = gps_all_class_baseline, Principale = gps_all_class,
+       Robustesse = gps_all_class_blanket, Permanente = gps_all_class_permanent),
+  function(d) {
+    dd <- d |> st_drop_geometry()
+    stopifnot(
+      "Clé grappe x vague dupliquée" =
+        !any(duplicated(dd[, c("DHSYEAR", "DHSCLUST")])),
+      "GROUP prend une valeur inattendue" =
+        all(dd$GROUP %in% c("Treatment", "Control", "Excluded")),
+      "Clusters Control portant une AP ou une date de traitement" =
+        !any(dd$GROUP == "Control" & (!is.na(dd$WDPAID) | !is.na(dd$treatment_date)))
+    )
+  }
+)
+"Clés uniques et appartenance aux groupes : OK"
+
+test_results_permanent
+```
 
 ### Résumé de la classification par vague
 
@@ -1294,6 +1743,18 @@ pa_onset_dates |>
   fmt_number(columns = everything(), decimals = 0, use_seps = FALSE) |>
   tab_options(table.width = pct(60))
 
+# 1bis) Cohortes : spécification principale vs création définitive
+#       uniquement. Les AP sans décret permanent vérifié n'ont ni cohorte
+#       principale (si non résolues) ni cohorte permanente.
+pa_onset_dates |>
+  count(`Cohorte principale` = cohort_main,
+        `Cohorte permanente` = cohort_permanent) |>
+  gt() |>
+  tab_header(title = md("**Cohortes effectives par AP : spécification principale vs création définitive uniquement**"),
+             subtitle = md("*Cohorte = année + 1 si entrée après le 1er juin ; NA = AP sans date dans la spécification*")) |>
+  fmt_number(columns = everything(), decimals = 0, use_seps = FALSE) |>
+  tab_options(table.width = pct(60))
+
 # 2) Transitions de groupes des grappes : référence -> spécification principale
 trans_base_main <- gps_all_class_baseline |>
   st_drop_geometry() |>
@@ -1323,10 +1784,101 @@ trans_main_blanket <- gps_all_class |>
   pivot_wider(names_from = GROUP_blanket, values_from = n, values_fill = 0,
               names_prefix = "→ ")
 
+# 4) Transitions de groupes des grappes : spécification principale ->
+#    variante « création définitive uniquement ». La différence combine un
+#    effet de calendrier (décrets 2015-2018) et un changement d'échantillon
+#    éligible (AP sans décret permanent vérifié : Kinkony Lake, Ivohiboro,
+#    Tsinjoarivo Ambalaomby — catchments exclus) : elle ne
+#    s'interprète pas comme un pur effet de timing.
+trans_main_permanent <- gps_all_class |>
+  st_drop_geometry() |>
+  select(DHSYEAR, DHSCLUST, GROUP_main = GROUP) |>
+  left_join(
+    gps_all_class_permanent |>
+      st_drop_geometry() |>
+      select(DHSYEAR, DHSCLUST, GROUP_perm = GROUP),
+    by = c("DHSYEAR", "DHSCLUST")
+  ) |>
+  count(DHSYEAR, GROUP_main, GROUP_perm) |>
+  pivot_wider(names_from = GROUP_perm, values_from = n, values_fill = 0,
+              names_prefix = "→ ")
+
+# 5) Activation (treated_now) parmi les grappes Treatment retenues dans les
+#    deux spécifications (même appartenance à la géographie éventuelle)
+treated_now_perm <- gps_all_class |>
+  st_drop_geometry() |>
+  select(DHSYEAR, DHSCLUST, GROUP_main = GROUP, treated_now_main = treated_now) |>
+  left_join(
+    gps_all_class_permanent |>
+      st_drop_geometry() |>
+      select(DHSYEAR, DHSCLUST, GROUP_perm = GROUP, treated_now_perm = treated_now),
+    by = c("DHSYEAR", "DHSCLUST")
+  ) |>
+  filter(GROUP_main == "Treatment", GROUP_perm == "Treatment") |>
+  count(DHSYEAR, treated_now_main, treated_now_perm) |>
+  pivot_wider(names_from = treated_now_perm, values_from = n, values_fill = 0,
+              names_prefix = "perm_")
+
 list(
   "Référence (T0, univers complet) → Principale (premier jalon individuel)" =
     trans_base_main,
-  "Principale → Robustesse (chronologie reconstituée)" = trans_main_blanket
+  "Principale → Robustesse (chronologie reconstituée)" = trans_main_blanket,
+  "Principale → Robustesse (création définitive uniquement)" = trans_main_permanent,
+  "treated_now parmi les grappes Treatment retenues (principale → permanente)" =
+    treated_now_perm
+)
+```
+
+Diagnostics d'audit (chiffres documentés dans la section d'audit) : (a) les grappes du catchment du complexe Ambohimirahavavy-Marivorahona que les buffers d'exclusion des composants auraient retirées si le décret 2015-782 n'y avait pas été appliqué ; (b) l'effet de la correction du décret 2015-771 d'Oronjia (28/04/2018 -> 28/04/2015) sur la vague 2016, dans les deux spécifications.
+
+```{r}
+#| label: audit-cluster-diagnostics
+# (a) Grappes rurales du catchment du complexe 555697871 qui tombent aussi
+#     dans le buffer d'un composant : ce sont elles qu'une exclusion des
+#     composants aurait retirées du catchment éligible du parent.
+comatsa_diagnostic <- purrr::map_dfr(survey_years, function(y) {
+  d_y <- gps_all_class |> filter(DHSYEAR == y)
+  parent_buf <- buffer_10km(pa_states_analysis |> filter(WDPAID == 555697871L))
+  in_parent <- st_within(d_y, parent_buf, sparse = FALSE)[, 1]
+  comps <- c(555697904L, 555697905L, 555697906L, 555697907L)
+  in_comp <- Reduce(`|`, lapply(comps, function(id) {
+    st_within(d_y, buffer_10km(pa_states_analysis |> filter(WDPAID == id)),
+              sparse = FALSE)[, 1]
+  }))
+  tibble(
+    DHSYEAR = y,
+    `Grappe dans le catchment du complexe` = sum(in_parent & d_y$URBAN_RURA == "R"),
+    `... dont aussi dans le buffer d'un composant` = sum(in_parent & in_comp & d_y$URBAN_RURA == "R")
+  )
+})
+
+# (b) Oronjia : contrefactuel à l'ancienne date du corpus (28/04/2018) sur la
+#     vague 2016, spécifications principale et permanente
+gps_2016_cf <- purrr::map(
+  list(Principale = pa_first_main, Permanente = pa_first_permanent),
+  function(tbl) {
+    tbl_cf <- tbl
+    tbl_cf$treatment_date[tbl_cf$WDPAID == 555697896L] <- as.Date("2018-04-28")
+    classify_clusters_with_pa(get("gps_2016"), 2016, first_tbl = tbl_cf) |>
+      st_drop_geometry() |>
+      filter(WDPAID == 555697896L) |>
+      count(GROUP, treated_now, name = "Ancienne date (28/04/2018)")
+  }
+)
+
+gps_2016_corr <- gps_all_class |>
+  st_drop_geometry() |>
+  filter(DHSYEAR == 2016, WDPAID == 555697896L) |>
+  count(GROUP, treated_now, name = "Date corrigée (28/04/2015)")
+
+list(
+  "Catchment du complexe 2015-782 : grappes rurales par vague" = comatsa_diagnostic,
+  "Oronjia, vague 2016 : ancienne vs corrigée (principale)" =
+    full_join(gps_2016_cf$Principale, gps_2016_corr,
+              by = c("GROUP", "treated_now")),
+  "Oronjia, vague 2016 : ancienne vs corrigée (permanente)" =
+    full_join(gps_2016_cf$Permanente, gps_2016_corr,
+              by = c("GROUP", "treated_now"))
 )
 ```
 
@@ -1681,6 +2233,40 @@ all_class_blanket <- gps_all_class_blanket %>%
 
 write_csv(all_class_blanket,
           "data/derived/cluster_treatment_classification_staggered_blanket_robustness.csv")
+
+# Variante de robustesse « création définitive uniquement » : même schéma,
+# fichier distinct. Les exports principal et blanket restent inchangés.
+# Substitution en aval (04 -> 06 -> 07) : lire ce fichier à la place du
+# fichier principal dans 04-variable-consolidation.qmd — changement minimal
+# à documenter séparément, non appliqué ici. NB : cette variante combine un
+# effet de calendrier (décrets permanents, majoritairement 2015-2018) et un
+# changement d'échantillon éligible (AP sans décret permanent vérifié :
+# catchments exclus) ; une différence d'estimations ne s'interprète donc pas
+# comme un pur effet de timing.
+all_class_permanent <- gps_all_class_permanent %>%
+  st_drop_geometry() %>%
+  mutate(treatment_year = as.integer(format(treatment_date, "%Y"))) %>%
+  select(DHSYEAR, DHSCLUST, DHSREGNA, GROUP, WDPAID,
+         treatment_year, IUCN_CAT, dist_km,
+         treatment_date, treated_now)
+
+write_csv(all_class_permanent,
+          "data/derived/cluster_treatment_classification_staggered_permanent_robustness.csv")
+
+# Garde-fou : les exports existants conservent leur schéma (aucune colonne
+# retirée ou renommée) et le nouvel export reprend exactement celui de la
+# spécification principale.
+expected_schema <- c("DHSYEAR", "DHSCLUST", "DHSREGNA", "GROUP", "WDPAID",
+                     "treatment_year", "IUCN_CAT", "dist_km",
+                     "treatment_date", "treated_now")
+stopifnot(
+  "Schéma de l'export principal modifié" =
+    identical(names(all_class), expected_schema),
+  "Schéma de l'export blanket modifié" =
+    identical(names(all_class_blanket), expected_schema),
+  "Schéma de l'export permanent différent de l'export principal" =
+    identical(names(all_class_permanent), expected_schema)
+)
 
 write_csv(st_drop_geometry(wdpa_before_2008), "data/derived/wdpa_before_2008.csv")
 write_csv(st_drop_geometry(wdpa_from_2008), "data/derived/wdpa_from_2008.csv")

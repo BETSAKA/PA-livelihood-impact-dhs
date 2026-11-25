@@ -534,13 +534,13 @@ window.Quarto = {
 <pre><code># A tibble: 7 × 6
   DHSYEAR n_treatment n_already n_not_yet share_not_yet untreated_pas           
     &lt;dbl&gt;       &lt;int&gt;     &lt;int&gt;     &lt;int&gt;         &lt;dbl&gt; &lt;chr&gt;                   
-1    1997         335         0       335        1      "555549452;555697874;55…
-2    2008        1155         0      1155        1      "166880;555547961;55554…
-3    2011         441       409        32        0.0726 "555697874"             
-4    2013         724       692        32        0.0442 "555697901"             
-5    2016         637       637         0        0      ""                      
-6    2018        1194      1168        26        0.0218 "555790168"             
-7    2021        1601      1601         0        0      ""                      </code></pre>
+1    1997         308         0       308        1      "555549452;555697877;55…
+2    2008        1031         0      1031        1      "166880;555547961;55554…
+3    2011         409        92       317        0.775  "555549449;555549450;55…
+4    2013         724        96       628        0.867  "555549449;555549450;55…
+5    2016         605       605         0        0      ""                      
+6    2018        1038      1012        26        0.0250 "555790168"             
+7    2021        1470      1470         0        0      ""                      </code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
@@ -575,45 +575,45 @@ window.Quarto = {
                                     Placebo 97–08
 Dependent Var.:       wealth_centile_rural_weighted
                                                    
-Constant                           32.14*** (4.762)
-treat                                 1.687 (6.039)
-post                                 -2.773 (3.172)
-treat_post                           -4.503 (7.321)
-spei_wc_n_1                          -1.494 (1.999)
-hv219Femme                         -0.7860 (0.7901)
-hv220                            0.0983*** (0.0219)
+Constant                           30.55*** (4.291)
+treat                                 1.472 (6.438)
+post                                 -2.267 (2.940)
+treat_post                           -3.551 (7.829)
+spei_wc_n_1                          -1.654 (1.965)
+hv219Femme                         -0.5688 (0.7579)
+hv220                            0.0894*** (0.0210)
 treecover_area_2000                0.0004* (0.0002)
-slope_2000                        -0.7476* (0.3168)
-elevation_2000                   0.0141*** (0.0031)
-population_count_2000              0.0831* (0.0333)
-traveltime_2000_2000               -0.0043 (0.0092)
+slope_2000                        -0.6320. (0.3241)
+elevation_2000                   0.0148*** (0.0030)
+population_count_2000             0.0796** (0.0279)
+traveltime_2000_2000               -0.0034 (0.0088)
 _____________________ _____________________________
 S.E.: Clustered                     by: cluster_uid
-Observations                                 10,731
-R2                                          0.08918
-Adj. R2                                     0.08825
+Observations                                 11,361
+R2                                          0.09655
+Adj. R2                                     0.09567
 
                                       h1_m_main_2x2
                                  Traitement 08–21
 Dependent Var.:       wealth_centile_rural_weighted
                                                    
-Constant                           28.64*** (4.210)
-treat                                -2.523 (4.033)
-post                                  2.679 (2.069)
-treat_post                            4.397 (4.871)
-spei_wc_n_1                          -2.976 (1.906)
-hv219Femme                       -2.911*** (0.6887)
-hv220                             0.0537** (0.0179)
-treecover_area_2000                 0.0002 (0.0002)
-slope_2000                         -0.2110 (0.2902)
-elevation_2000                    0.0079** (0.0028)
-population_count_2000            0.1195*** (0.0352)
-traveltime_2000_2000                0.0130 (0.0081)
+Constant                           27.75*** (3.765)
+treat                                -1.630 (4.324)
+post                                  2.030 (2.033)
+treat_post                            4.723 (5.147)
+spei_wc_n_1                         -3.730* (1.899)
+hv219Femme                       -2.904*** (0.6785)
+hv220                             0.0507** (0.0173)
+treecover_area_2000                 0.0002 (0.0001)
+slope_2000                         -0.1551 (0.2929)
+elevation_2000                    0.0080** (0.0028)
+population_count_2000             0.1011** (0.0325)
+traveltime_2000_2000                0.0127 (0.0081)
 _____________________ _____________________________
 S.E.: Clustered                     by: cluster_uid
-Observations                                 15,001
-R2                                          0.05044
-Adj. R2                                     0.04974
+Observations                                 15,623
+R2                                          0.05405
+Adj. R2                                     0.05339
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -680,25 +680,25 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 
     <script>
       // Create table-specific functions using external factory
-      const tableFns_152ht87i1g98q5d98yaw = TinyTable.createTableFunctions("tinytable_152ht87i1g98q5d98yaw");
+      const tableFns_lcv7mh5734at2n944mls = TinyTable.createTableFunctions("tinytable_lcv7mh5734at2n944mls");
       // tinytable span after
       window.addEventListener('load', function () {
           var cellsToStyle = [
             // tinytable style arrays after
-          { positions: [ { i: '31', j: 2 }, { i: '31', j: 3 } ], css_id: 'tinytable_css_ukg6vxeiicghdt4f52yy',}, 
-          { positions: [ { i: '24', j: 2 }, { i: '24', j: 3 } ], css_id: 'tinytable_css_cpg30h5kaucapwmic7io',}, 
-          { positions: [ { i: '1', j: 2 }, { i: '2', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 }, { i: '9', j: 2 }, { i: '10', j: 2 }, { i: '11', j: 2 }, { i: '12', j: 2 }, { i: '13', j: 2 }, { i: '14', j: 2 }, { i: '15', j: 2 }, { i: '16', j: 2 }, { i: '17', j: 2 }, { i: '18', j: 2 }, { i: '19', j: 2 }, { i: '20', j: 2 }, { i: '21', j: 2 }, { i: '22', j: 2 }, { i: '23', j: 2 }, { i: '25', j: 2 }, { i: '26', j: 2 }, { i: '27', j: 2 }, { i: '28', j: 2 }, { i: '29', j: 2 }, { i: '30', j: 2 }, { i: '1', j: 3 }, { i: '2', j: 3 }, { i: '3', j: 3 }, { i: '4', j: 3 }, { i: '5', j: 3 }, { i: '6', j: 3 }, { i: '7', j: 3 }, { i: '8', j: 3 }, { i: '9', j: 3 }, { i: '10', j: 3 }, { i: '11', j: 3 }, { i: '12', j: 3 }, { i: '13', j: 3 }, { i: '14', j: 3 }, { i: '15', j: 3 }, { i: '16', j: 3 }, { i: '17', j: 3 }, { i: '18', j: 3 }, { i: '19', j: 3 }, { i: '20', j: 3 }, { i: '21', j: 3 }, { i: '22', j: 3 }, { i: '23', j: 3 }, { i: '25', j: 3 }, { i: '26', j: 3 }, { i: '27', j: 3 }, { i: '28', j: 3 }, { i: '29', j: 3 }, { i: '30', j: 3 } ], css_id: 'tinytable_css_ne30k0bvmnxvkmo4fez5',}, 
-          { positions: [ { i: '0', j: 2 }, { i: '0', j: 3 } ], css_id: 'tinytable_css_zpsinuk3y6zaasxj7j57',}, 
-          { positions: [ { i: '31', j: 1 } ], css_id: 'tinytable_css_6rfo5kooch6gapfe3ssp',}, 
-          { positions: [ { i: '24', j: 1 } ], css_id: 'tinytable_css_3nxgw75fphsbsjehxozp',}, 
-          { positions: [ { i: '1', j: 1 }, { i: '2', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 }, { i: '9', j: 1 }, { i: '10', j: 1 }, { i: '11', j: 1 }, { i: '12', j: 1 }, { i: '13', j: 1 }, { i: '14', j: 1 }, { i: '15', j: 1 }, { i: '16', j: 1 }, { i: '17', j: 1 }, { i: '18', j: 1 }, { i: '19', j: 1 }, { i: '20', j: 1 }, { i: '21', j: 1 }, { i: '22', j: 1 }, { i: '23', j: 1 }, { i: '25', j: 1 }, { i: '26', j: 1 }, { i: '27', j: 1 }, { i: '28', j: 1 }, { i: '29', j: 1 }, { i: '30', j: 1 } ], css_id: 'tinytable_css_7s7hikt34p9f9tk7avo0',}, 
-          { positions: [ { i: '0', j: 1 } ], css_id: 'tinytable_css_2fkwadu6voooiwayzu95',}, 
+          { positions: [ { i: '31', j: 2 }, { i: '31', j: 3 } ], css_id: 'tinytable_css_t743wqkcxx9p1qctgg3m',}, 
+          { positions: [ { i: '24', j: 2 }, { i: '24', j: 3 } ], css_id: 'tinytable_css_ls7r1x9aymx5d8ob1uj7',}, 
+          { positions: [ { i: '1', j: 2 }, { i: '2', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 }, { i: '9', j: 2 }, { i: '10', j: 2 }, { i: '11', j: 2 }, { i: '12', j: 2 }, { i: '13', j: 2 }, { i: '14', j: 2 }, { i: '15', j: 2 }, { i: '16', j: 2 }, { i: '17', j: 2 }, { i: '18', j: 2 }, { i: '19', j: 2 }, { i: '20', j: 2 }, { i: '21', j: 2 }, { i: '22', j: 2 }, { i: '23', j: 2 }, { i: '25', j: 2 }, { i: '26', j: 2 }, { i: '27', j: 2 }, { i: '28', j: 2 }, { i: '29', j: 2 }, { i: '30', j: 2 }, { i: '1', j: 3 }, { i: '2', j: 3 }, { i: '3', j: 3 }, { i: '4', j: 3 }, { i: '5', j: 3 }, { i: '6', j: 3 }, { i: '7', j: 3 }, { i: '8', j: 3 }, { i: '9', j: 3 }, { i: '10', j: 3 }, { i: '11', j: 3 }, { i: '12', j: 3 }, { i: '13', j: 3 }, { i: '14', j: 3 }, { i: '15', j: 3 }, { i: '16', j: 3 }, { i: '17', j: 3 }, { i: '18', j: 3 }, { i: '19', j: 3 }, { i: '20', j: 3 }, { i: '21', j: 3 }, { i: '22', j: 3 }, { i: '23', j: 3 }, { i: '25', j: 3 }, { i: '26', j: 3 }, { i: '27', j: 3 }, { i: '28', j: 3 }, { i: '29', j: 3 }, { i: '30', j: 3 } ], css_id: 'tinytable_css_72lwt4nfa6ma29fpekky',}, 
+          { positions: [ { i: '0', j: 2 }, { i: '0', j: 3 } ], css_id: 'tinytable_css_vmfxreed2ib60rmvnzni',}, 
+          { positions: [ { i: '31', j: 1 } ], css_id: 'tinytable_css_agwtmxojadllghx1dkg4',}, 
+          { positions: [ { i: '24', j: 1 } ], css_id: 'tinytable_css_p7f5uj0uytyn46brsb6j',}, 
+          { positions: [ { i: '1', j: 1 }, { i: '2', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 }, { i: '9', j: 1 }, { i: '10', j: 1 }, { i: '11', j: 1 }, { i: '12', j: 1 }, { i: '13', j: 1 }, { i: '14', j: 1 }, { i: '15', j: 1 }, { i: '16', j: 1 }, { i: '17', j: 1 }, { i: '18', j: 1 }, { i: '19', j: 1 }, { i: '20', j: 1 }, { i: '21', j: 1 }, { i: '22', j: 1 }, { i: '23', j: 1 }, { i: '25', j: 1 }, { i: '26', j: 1 }, { i: '27', j: 1 }, { i: '28', j: 1 }, { i: '29', j: 1 }, { i: '30', j: 1 } ], css_id: 'tinytable_css_bwkkzk36cgw2mvwo69b2',}, 
+          { positions: [ { i: '0', j: 1 } ], css_id: 'tinytable_css_axrfqb0dzl4sty6ajtdz',}, 
           ];
 
           // Loop over the arrays to style the cells
           cellsToStyle.forEach(function (group) {
               group.positions.forEach(function (cell) {
-                  tableFns_152ht87i1g98q5d98yaw.styleCell(cell.i, cell.j, group.css_id);
+                  tableFns_lcv7mh5734at2n944mls.styleCell(cell.i, cell.j, group.css_id);
               });
           });
       });
@@ -707,17 +707,17 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
     <style>
     /* tinytable css entries after */
-    #tinytable_152ht87i1g98q5d98yaw td.tinytable_css_ukg6vxeiicghdt4f52yy, #tinytable_152ht87i1g98q5d98yaw th.tinytable_css_ukg6vxeiicghdt4f52yy {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_152ht87i1g98q5d98yaw td.tinytable_css_cpg30h5kaucapwmic7io, #tinytable_152ht87i1g98q5d98yaw th.tinytable_css_cpg30h5kaucapwmic7io {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_152ht87i1g98q5d98yaw td.tinytable_css_ne30k0bvmnxvkmo4fez5, #tinytable_152ht87i1g98q5d98yaw th.tinytable_css_ne30k0bvmnxvkmo4fez5 { text-align: center }
-    #tinytable_152ht87i1g98q5d98yaw td.tinytable_css_zpsinuk3y6zaasxj7j57, #tinytable_152ht87i1g98q5d98yaw th.tinytable_css_zpsinuk3y6zaasxj7j57 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_152ht87i1g98q5d98yaw td.tinytable_css_6rfo5kooch6gapfe3ssp, #tinytable_152ht87i1g98q5d98yaw th.tinytable_css_6rfo5kooch6gapfe3ssp {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
-    #tinytable_152ht87i1g98q5d98yaw td.tinytable_css_3nxgw75fphsbsjehxozp, #tinytable_152ht87i1g98q5d98yaw th.tinytable_css_3nxgw75fphsbsjehxozp {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
-    #tinytable_152ht87i1g98q5d98yaw td.tinytable_css_7s7hikt34p9f9tk7avo0, #tinytable_152ht87i1g98q5d98yaw th.tinytable_css_7s7hikt34p9f9tk7avo0 { text-align: left }
-    #tinytable_152ht87i1g98q5d98yaw td.tinytable_css_2fkwadu6voooiwayzu95, #tinytable_152ht87i1g98q5d98yaw th.tinytable_css_2fkwadu6voooiwayzu95 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_lcv7mh5734at2n944mls td.tinytable_css_t743wqkcxx9p1qctgg3m, #tinytable_lcv7mh5734at2n944mls th.tinytable_css_t743wqkcxx9p1qctgg3m {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_lcv7mh5734at2n944mls td.tinytable_css_ls7r1x9aymx5d8ob1uj7, #tinytable_lcv7mh5734at2n944mls th.tinytable_css_ls7r1x9aymx5d8ob1uj7 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_lcv7mh5734at2n944mls td.tinytable_css_72lwt4nfa6ma29fpekky, #tinytable_lcv7mh5734at2n944mls th.tinytable_css_72lwt4nfa6ma29fpekky { text-align: center }
+    #tinytable_lcv7mh5734at2n944mls td.tinytable_css_vmfxreed2ib60rmvnzni, #tinytable_lcv7mh5734at2n944mls th.tinytable_css_vmfxreed2ib60rmvnzni {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_lcv7mh5734at2n944mls td.tinytable_css_agwtmxojadllghx1dkg4, #tinytable_lcv7mh5734at2n944mls th.tinytable_css_agwtmxojadllghx1dkg4 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_lcv7mh5734at2n944mls td.tinytable_css_p7f5uj0uytyn46brsb6j, #tinytable_lcv7mh5734at2n944mls th.tinytable_css_p7f5uj0uytyn46brsb6j {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_lcv7mh5734at2n944mls td.tinytable_css_bwkkzk36cgw2mvwo69b2, #tinytable_lcv7mh5734at2n944mls th.tinytable_css_bwkkzk36cgw2mvwo69b2 { text-align: left }
+    #tinytable_lcv7mh5734at2n944mls td.tinytable_css_axrfqb0dzl4sty6ajtdz, #tinytable_lcv7mh5734at2n944mls th.tinytable_css_axrfqb0dzl4sty6ajtdz {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
     </style>
     <div class="container">
-      <table class="tinytable" id="tinytable_152ht87i1g98q5d98yaw" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+      <table class="tinytable" id="tinytable_lcv7mh5734at2n944mls" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
         
         <thead>
               <tr>
@@ -730,73 +730,73 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
         <tbody>
                 <tr>
                   <td data-row="1" data-col="1">Constant</td>
-                  <td data-row="1" data-col="2">32.141</td>
-                  <td data-row="1" data-col="3">28.643</td>
+                  <td data-row="1" data-col="2">30.552</td>
+                  <td data-row="1" data-col="3">27.752</td>
                 </tr>
                 <tr>
                   <td data-row="2" data-col="1"></td>
-                  <td data-row="2" data-col="2">(4.762)</td>
-                  <td data-row="2" data-col="3">(4.210)</td>
+                  <td data-row="2" data-col="2">(4.291)</td>
+                  <td data-row="2" data-col="3">(3.765)</td>
                 </tr>
                 <tr>
                   <td data-row="3" data-col="1">Treatment</td>
-                  <td data-row="3" data-col="2">1.687</td>
-                  <td data-row="3" data-col="3">-2.523</td>
+                  <td data-row="3" data-col="2">1.472</td>
+                  <td data-row="3" data-col="3">-1.630</td>
                 </tr>
                 <tr>
                   <td data-row="4" data-col="1"></td>
-                  <td data-row="4" data-col="2">(6.039)</td>
-                  <td data-row="4" data-col="3">(4.033)</td>
+                  <td data-row="4" data-col="2">(6.438)</td>
+                  <td data-row="4" data-col="3">(4.324)</td>
                 </tr>
                 <tr>
                   <td data-row="5" data-col="1">Post</td>
-                  <td data-row="5" data-col="2">-2.773</td>
-                  <td data-row="5" data-col="3">2.679</td>
+                  <td data-row="5" data-col="2">-2.267</td>
+                  <td data-row="5" data-col="3">2.030</td>
                 </tr>
                 <tr>
                   <td data-row="6" data-col="1"></td>
-                  <td data-row="6" data-col="2">(3.172)</td>
-                  <td data-row="6" data-col="3">(2.069)</td>
+                  <td data-row="6" data-col="2">(2.940)</td>
+                  <td data-row="6" data-col="3">(2.033)</td>
                 </tr>
                 <tr>
                   <td data-row="7" data-col="1">Treatment × Post</td>
-                  <td data-row="7" data-col="2">-4.503</td>
-                  <td data-row="7" data-col="3">4.397</td>
+                  <td data-row="7" data-col="2">-3.551</td>
+                  <td data-row="7" data-col="3">4.723</td>
                 </tr>
                 <tr>
                   <td data-row="8" data-col="1"></td>
-                  <td data-row="8" data-col="2">(7.321)</td>
-                  <td data-row="8" data-col="3">(4.871)</td>
+                  <td data-row="8" data-col="2">(7.829)</td>
+                  <td data-row="8" data-col="3">(5.147)</td>
                 </tr>
                 <tr>
                   <td data-row="9" data-col="1">SPEI (t-1)</td>
-                  <td data-row="9" data-col="2">-1.494</td>
-                  <td data-row="9" data-col="3">-2.976</td>
+                  <td data-row="9" data-col="2">-1.654</td>
+                  <td data-row="9" data-col="3">-3.730</td>
                 </tr>
                 <tr>
                   <td data-row="10" data-col="1"></td>
-                  <td data-row="10" data-col="2">(1.999)</td>
-                  <td data-row="10" data-col="3">(1.906)</td>
+                  <td data-row="10" data-col="2">(1.965)</td>
+                  <td data-row="10" data-col="3">(1.899)</td>
                 </tr>
                 <tr>
                   <td data-row="11" data-col="1">Female household head</td>
-                  <td data-row="11" data-col="2">-0.786</td>
-                  <td data-row="11" data-col="3">-2.911</td>
+                  <td data-row="11" data-col="2">-0.569</td>
+                  <td data-row="11" data-col="3">-2.904</td>
                 </tr>
                 <tr>
                   <td data-row="12" data-col="1"></td>
-                  <td data-row="12" data-col="2">(0.790)</td>
-                  <td data-row="12" data-col="3">(0.689)</td>
+                  <td data-row="12" data-col="2">(0.758)</td>
+                  <td data-row="12" data-col="3">(0.678)</td>
                 </tr>
                 <tr>
                   <td data-row="13" data-col="1">Age of household head</td>
-                  <td data-row="13" data-col="2">0.098</td>
-                  <td data-row="13" data-col="3">0.054</td>
+                  <td data-row="13" data-col="2">0.089</td>
+                  <td data-row="13" data-col="3">0.051</td>
                 </tr>
                 <tr>
                   <td data-row="14" data-col="1"></td>
-                  <td data-row="14" data-col="2">(0.022)</td>
-                  <td data-row="14" data-col="3">(0.018)</td>
+                  <td data-row="14" data-col="2">(0.021)</td>
+                  <td data-row="14" data-col="3">(0.017)</td>
                 </tr>
                 <tr>
                   <td data-row="15" data-col="1">Tree cover 2000</td>
@@ -810,17 +810,17 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                 </tr>
                 <tr>
                   <td data-row="17" data-col="1">Slope 2000</td>
-                  <td data-row="17" data-col="2">-0.748</td>
-                  <td data-row="17" data-col="3">-0.211</td>
+                  <td data-row="17" data-col="2">-0.632</td>
+                  <td data-row="17" data-col="3">-0.155</td>
                 </tr>
                 <tr>
                   <td data-row="18" data-col="1"></td>
-                  <td data-row="18" data-col="2">(0.317)</td>
-                  <td data-row="18" data-col="3">(0.290)</td>
+                  <td data-row="18" data-col="2">(0.324)</td>
+                  <td data-row="18" data-col="3">(0.293)</td>
                 </tr>
                 <tr>
                   <td data-row="19" data-col="1">Elevation 2000</td>
-                  <td data-row="19" data-col="2">0.014</td>
+                  <td data-row="19" data-col="2">0.015</td>
                   <td data-row="19" data-col="3">0.008</td>
                 </tr>
                 <tr>
@@ -830,17 +830,17 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                 </tr>
                 <tr>
                   <td data-row="21" data-col="1">Population 2000</td>
-                  <td data-row="21" data-col="2">0.083</td>
-                  <td data-row="21" data-col="3">0.120</td>
+                  <td data-row="21" data-col="2">0.080</td>
+                  <td data-row="21" data-col="3">0.101</td>
                 </tr>
                 <tr>
                   <td data-row="22" data-col="1"></td>
-                  <td data-row="22" data-col="2">(0.033)</td>
-                  <td data-row="22" data-col="3">(0.035)</td>
+                  <td data-row="22" data-col="2">(0.028)</td>
+                  <td data-row="22" data-col="3">(0.033)</td>
                 </tr>
                 <tr>
                   <td data-row="23" data-col="1">Travel time 2000</td>
-                  <td data-row="23" data-col="2">-0.004</td>
+                  <td data-row="23" data-col="2">-0.003</td>
                   <td data-row="23" data-col="3">0.013</td>
                 </tr>
                 <tr>
@@ -850,33 +850,33 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                 </tr>
                 <tr>
                   <td data-row="25" data-col="1">Num.Obs.</td>
-                  <td data-row="25" data-col="2">10731</td>
-                  <td data-row="25" data-col="3">15001</td>
+                  <td data-row="25" data-col="2">11361</td>
+                  <td data-row="25" data-col="3">15623</td>
                 </tr>
                 <tr>
                   <td data-row="26" data-col="1">R2</td>
-                  <td data-row="26" data-col="2">0.089</td>
-                  <td data-row="26" data-col="3">0.050</td>
+                  <td data-row="26" data-col="2">0.097</td>
+                  <td data-row="26" data-col="3">0.054</td>
                 </tr>
                 <tr>
                   <td data-row="27" data-col="1">R2 Adj.</td>
-                  <td data-row="27" data-col="2">0.088</td>
-                  <td data-row="27" data-col="3">0.050</td>
+                  <td data-row="27" data-col="2">0.096</td>
+                  <td data-row="27" data-col="3">0.053</td>
                 </tr>
                 <tr>
                   <td data-row="28" data-col="1">AIC</td>
-                  <td data-row="28" data-col="2">100825.0</td>
-                  <td data-row="28" data-col="3">141246.5</td>
+                  <td data-row="28" data-col="2">106740.2</td>
+                  <td data-row="28" data-col="3">147230.8</td>
                 </tr>
                 <tr>
                   <td data-row="29" data-col="1">BIC</td>
-                  <td data-row="29" data-col="2">100912.4</td>
-                  <td data-row="29" data-col="3">141337.9</td>
+                  <td data-row="29" data-col="2">106828.2</td>
+                  <td data-row="29" data-col="3">147322.7</td>
                 </tr>
                 <tr>
                   <td data-row="30" data-col="1">RMSE</td>
-                  <td data-row="30" data-col="2">26.52</td>
-                  <td data-row="30" data-col="3">26.79</td>
+                  <td data-row="30" data-col="2">26.51</td>
+                  <td data-row="30" data-col="3">26.90</td>
                 </tr>
                 <tr>
                   <td data-row="31" data-col="1">Std.Errors</td>
@@ -1145,9 +1145,9 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <pre><code># A tibble: 4 × 6
   cohort n_pas n_waves_before n_waves_after n_hh_before n_hh_after
    &lt;int&gt; &lt;int&gt;          &lt;int&gt;         &lt;int&gt;       &lt;int&gt;      &lt;int&gt;
-1   2009    36              2             5        1259       4072
-2   2014     1              2             2          86        168
-3   2015     4              4             2         179        203
+1   2009     5              2             5         377        870
+2   2014     3              3             2         169        367
+3   2015    28              4             3        1708       1974
 4   2020     2              2             1          56         64</code></pre>
 </div>
 <details class="code-fold">
@@ -1156,13 +1156,13 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 5 × 8
-  cohort `1997` `2008` `2011` `2013` `2018` `2016` `2021`
+  cohort `1997` `2008` `2013` `2011` `2018` `2016` `2021`
   &lt;fct&gt;   &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;  &lt;int&gt;
-1 2009      253   1006      0      0      0      0      0
-2 2014       55     31      0      0      0      0      0
-3 2015       27     88     32     32      0      0      0
+1 2009      101    276      0      0      0      0      0
+2 2014       77     60     32      0      0      0      0
+3 2015      130    665    596    317      0      0      0
 4 2020        0     30      0      0     26      0      0
-5 never    2919   6323   1910   3175   6799   4296   5922</code></pre>
+5 never    3270   6753   3175   1579   7315   4321   6369</code></pre>
 </div>
 </div>
 </section>
@@ -1195,25 +1195,25 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 
     <script>
       // Create table-specific functions using external factory
-      const tableFns_3d6p14bdx6gno0uoigdr = TinyTable.createTableFunctions("tinytable_3d6p14bdx6gno0uoigdr");
+      const tableFns_09cgvlteqfomclqq06q2 = TinyTable.createTableFunctions("tinytable_09cgvlteqfomclqq06q2");
       // tinytable span after
       window.addEventListener('load', function () {
           var cellsToStyle = [
             // tinytable style arrays after
-          { positions: [ { i: '9', j: 2 } ], css_id: 'tinytable_css_s69vfqbnpfwuqiargd3c',}, 
-          { positions: [ { i: '2', j: 2 } ], css_id: 'tinytable_css_s550nwz4qncdrcfsub5u',}, 
-          { positions: [ { i: '1', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 } ], css_id: 'tinytable_css_rzuun3oe6uio6w9bjzri',}, 
-          { positions: [ { i: '0', j: 2 } ], css_id: 'tinytable_css_nugp8ebvckdzadytzcj4',}, 
-          { positions: [ { i: '9', j: 1 } ], css_id: 'tinytable_css_wipyev54f8gwh2m3kt97',}, 
-          { positions: [ { i: '2', j: 1 } ], css_id: 'tinytable_css_bi321wkhs72jqfjk1t0g',}, 
-          { positions: [ { i: '1', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 } ], css_id: 'tinytable_css_883hz46hpmraiceuakw6',}, 
-          { positions: [ { i: '0', j: 1 } ], css_id: 'tinytable_css_qej1lcwwlrokb93ywovv',}, 
+          { positions: [ { i: '9', j: 2 } ], css_id: 'tinytable_css_2p3s3x1opflm4im4f738',}, 
+          { positions: [ { i: '2', j: 2 } ], css_id: 'tinytable_css_gino6662awy4j919twhc',}, 
+          { positions: [ { i: '1', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 } ], css_id: 'tinytable_css_1dtncao1gpergenk3gwd',}, 
+          { positions: [ { i: '0', j: 2 } ], css_id: 'tinytable_css_xjsvwossz8oggfwvi580',}, 
+          { positions: [ { i: '9', j: 1 } ], css_id: 'tinytable_css_rv27as9uzrv1v075kdaa',}, 
+          { positions: [ { i: '2', j: 1 } ], css_id: 'tinytable_css_zieslf6mpx1bxkjgwnix',}, 
+          { positions: [ { i: '1', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 } ], css_id: 'tinytable_css_90zard9puoap0lfxhc78',}, 
+          { positions: [ { i: '0', j: 1 } ], css_id: 'tinytable_css_32gpl8di376yreze060x',}, 
           ];
 
           // Loop over the arrays to style the cells
           cellsToStyle.forEach(function (group) {
               group.positions.forEach(function (cell) {
-                  tableFns_3d6p14bdx6gno0uoigdr.styleCell(cell.i, cell.j, group.css_id);
+                  tableFns_09cgvlteqfomclqq06q2.styleCell(cell.i, cell.j, group.css_id);
               });
           });
       });
@@ -1222,17 +1222,17 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
     <style>
     /* tinytable css entries after */
-    #tinytable_3d6p14bdx6gno0uoigdr td.tinytable_css_s69vfqbnpfwuqiargd3c, #tinytable_3d6p14bdx6gno0uoigdr th.tinytable_css_s69vfqbnpfwuqiargd3c {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_3d6p14bdx6gno0uoigdr td.tinytable_css_s550nwz4qncdrcfsub5u, #tinytable_3d6p14bdx6gno0uoigdr th.tinytable_css_s550nwz4qncdrcfsub5u {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_3d6p14bdx6gno0uoigdr td.tinytable_css_rzuun3oe6uio6w9bjzri, #tinytable_3d6p14bdx6gno0uoigdr th.tinytable_css_rzuun3oe6uio6w9bjzri { text-align: center }
-    #tinytable_3d6p14bdx6gno0uoigdr td.tinytable_css_nugp8ebvckdzadytzcj4, #tinytable_3d6p14bdx6gno0uoigdr th.tinytable_css_nugp8ebvckdzadytzcj4 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_3d6p14bdx6gno0uoigdr td.tinytable_css_wipyev54f8gwh2m3kt97, #tinytable_3d6p14bdx6gno0uoigdr th.tinytable_css_wipyev54f8gwh2m3kt97 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
-    #tinytable_3d6p14bdx6gno0uoigdr td.tinytable_css_bi321wkhs72jqfjk1t0g, #tinytable_3d6p14bdx6gno0uoigdr th.tinytable_css_bi321wkhs72jqfjk1t0g {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
-    #tinytable_3d6p14bdx6gno0uoigdr td.tinytable_css_883hz46hpmraiceuakw6, #tinytable_3d6p14bdx6gno0uoigdr th.tinytable_css_883hz46hpmraiceuakw6 { text-align: left }
-    #tinytable_3d6p14bdx6gno0uoigdr td.tinytable_css_qej1lcwwlrokb93ywovv, #tinytable_3d6p14bdx6gno0uoigdr th.tinytable_css_qej1lcwwlrokb93ywovv {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_09cgvlteqfomclqq06q2 td.tinytable_css_2p3s3x1opflm4im4f738, #tinytable_09cgvlteqfomclqq06q2 th.tinytable_css_2p3s3x1opflm4im4f738 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_09cgvlteqfomclqq06q2 td.tinytable_css_gino6662awy4j919twhc, #tinytable_09cgvlteqfomclqq06q2 th.tinytable_css_gino6662awy4j919twhc {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_09cgvlteqfomclqq06q2 td.tinytable_css_1dtncao1gpergenk3gwd, #tinytable_09cgvlteqfomclqq06q2 th.tinytable_css_1dtncao1gpergenk3gwd { text-align: center }
+    #tinytable_09cgvlteqfomclqq06q2 td.tinytable_css_xjsvwossz8oggfwvi580, #tinytable_09cgvlteqfomclqq06q2 th.tinytable_css_xjsvwossz8oggfwvi580 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_09cgvlteqfomclqq06q2 td.tinytable_css_rv27as9uzrv1v075kdaa, #tinytable_09cgvlteqfomclqq06q2 th.tinytable_css_rv27as9uzrv1v075kdaa {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_09cgvlteqfomclqq06q2 td.tinytable_css_zieslf6mpx1bxkjgwnix, #tinytable_09cgvlteqfomclqq06q2 th.tinytable_css_zieslf6mpx1bxkjgwnix {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_09cgvlteqfomclqq06q2 td.tinytable_css_90zard9puoap0lfxhc78, #tinytable_09cgvlteqfomclqq06q2 th.tinytable_css_90zard9puoap0lfxhc78 { text-align: left }
+    #tinytable_09cgvlteqfomclqq06q2 td.tinytable_css_32gpl8di376yreze060x, #tinytable_09cgvlteqfomclqq06q2 th.tinytable_css_32gpl8di376yreze060x {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
     </style>
     <div class="container">
-      <table class="tinytable" id="tinytable_3d6p14bdx6gno0uoigdr" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+      <table class="tinytable" id="tinytable_09cgvlteqfomclqq06q2" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
         
         <thead>
               <tr>
@@ -1244,35 +1244,35 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
         <tbody>
                 <tr>
                   <td data-row="1" data-col="1">treat_on = 1</td>
-                  <td data-row="1" data-col="2">0.307</td>
+                  <td data-row="1" data-col="2">4.844</td>
                 </tr>
                 <tr>
                   <td data-row="2" data-col="1"></td>
-                  <td data-row="2" data-col="2">(3.882)</td>
+                  <td data-row="2" data-col="2">(3.697)</td>
                 </tr>
                 <tr>
                   <td data-row="3" data-col="1">Num.Obs.</td>
-                  <td data-row="3" data-col="2">36519</td>
+                  <td data-row="3" data-col="2">37429</td>
                 </tr>
                 <tr>
                   <td data-row="4" data-col="1">R2</td>
-                  <td data-row="4" data-col="2">-0.000</td>
+                  <td data-row="4" data-col="2">0.003</td>
                 </tr>
                 <tr>
                   <td data-row="5" data-col="1">R2 Adj.</td>
-                  <td data-row="5" data-col="2">-0.000</td>
+                  <td data-row="5" data-col="2">0.003</td>
                 </tr>
                 <tr>
                   <td data-row="6" data-col="1">AIC</td>
-                  <td data-row="6" data-col="2">343438.8</td>
+                  <td data-row="6" data-col="2">351614.1</td>
                 </tr>
                 <tr>
                   <td data-row="7" data-col="1">BIC</td>
-                  <td data-row="7" data-col="2">343447.3</td>
+                  <td data-row="7" data-col="2">351622.6</td>
                 </tr>
                 <tr>
                   <td data-row="8" data-col="1">RMSE</td>
-                  <td data-row="8" data-col="2">26.66</td>
+                  <td data-row="8" data-col="2">26.53</td>
                 </tr>
                 <tr>
                   <td data-row="9" data-col="1">Std.Errors</td>
@@ -1322,21 +1322,21 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                    did2s event-study (2-yr bins ±10)
 Dependent Var.:        wealth_centile_rural_weighted
                                                     
-rel_year_2yr2 = -5                     3.179 (4.128)
-rel_year_2yr2 = -4                    -7.058 (6.896)
-rel_year_2yr2 = -3                     6.028 (5.690)
-rel_year_2yr2 = -2                   23.58** (7.847)
-rel_year_2yr2 = 0                     -8.600 (5.535)
-rel_year_2yr2 = 1                      3.294 (7.820)
-rel_year_2yr2 = 2                     -4.444 (4.363)
-rel_year_2yr2 = 3                     -4.133 (4.668)
-rel_year_2yr2 = 4                      3.618 (5.283)
-rel_year_2yr2 = 5                      3.262 (4.810)
+rel_year_2yr2 = -5                     3.648 (4.771)
+rel_year_2yr2 = -4                    0.6342 (3.488)
+rel_year_2yr2 = -3                    0.4982 (3.911)
+rel_year_2yr2 = -2                     5.930 (4.978)
+rel_year_2yr2 = 0                     -3.584 (4.698)
+rel_year_2yr2 = 1                      6.250 (6.849)
+rel_year_2yr2 = 2                      3.999 (5.183)
+rel_year_2yr2 = 3                      5.040 (3.856)
+rel_year_2yr2 = 4                      10.59 (9.355)
+rel_year_2yr2 = 5                      8.270 (8.992)
 __________________     _____________________________
 S.E.: Clustered                      by: cluster_uid
-Observations                                  36,519
-R2                                           0.00376
-Adj. R2                                      0.00351
+Observations                                  37,429
+R2                                           0.00482
+Adj. R2                                      0.00459
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -1380,16 +1380,16 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 # A tibble: 10 × 8
    term            estimate std.error statistic p.value conf.low conf.high k    
    &lt;chr&gt;              &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt; &lt;fct&gt;
- 1 rel_year_2yr2:…     3.18      4.13     0.770 0.441      -4.91     11.3  -5   
- 2 rel_year_2yr2:…    -7.06      6.90    -1.02  0.306     -20.6       6.46 -4   
- 3 rel_year_2yr2:…     6.03      5.69     1.06  0.290      -5.13     17.2  -3   
- 4 rel_year_2yr2:…    23.6       7.85     3.00  0.00266     8.20     39.0  -2   
- 5 rel_year_2yr2:…    -8.60      5.54    -1.55  0.120     -19.4       2.25 0    
- 6 rel_year_2yr2:…     3.29      7.82     0.421 0.674     -12.0      18.6  1    
- 7 rel_year_2yr2:…    -4.44      4.36    -1.02  0.308     -13.0       4.11 2    
- 8 rel_year_2yr2:…    -4.13      4.67    -0.885 0.376     -13.3       5.02 3    
- 9 rel_year_2yr2:…     3.62      5.28     0.685 0.493      -6.74     14.0  4    
-10 rel_year_2yr2:…     3.26      4.81     0.678 0.498      -6.16     12.7  5    
+ 1 rel_year_2yr2:…    3.65       4.77     0.765   0.445    -5.70     13.0  -5   
+ 2 rel_year_2yr2:…    0.634      3.49     0.182   0.856    -6.20      7.47 -4   
+ 3 rel_year_2yr2:…    0.498      3.91     0.127   0.899    -7.17      8.16 -3   
+ 4 rel_year_2yr2:…    5.93       4.98     1.19    0.234    -3.83     15.7  -2   
+ 5 rel_year_2yr2:…   -3.58       4.70    -0.763   0.446   -12.8       5.62 0    
+ 6 rel_year_2yr2:…    6.25       6.85     0.912   0.362    -7.18     19.7  1    
+ 7 rel_year_2yr2:…    4.00       5.18     0.772   0.440    -6.16     14.2  2    
+ 8 rel_year_2yr2:…    5.04       3.86     1.31    0.191    -2.52     12.6  3    
+ 9 rel_year_2yr2:…   10.6        9.36     1.13    0.258    -7.75     28.9  4    
+10 rel_year_2yr2:…    8.27       8.99     0.920   0.358    -9.35     25.9  5    
 
 $plot</code></pre>
 </div>
@@ -1441,27 +1441,27 @@ $plot</code></pre>
 <span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>       )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>                                      m_pre                m_main
-                            Placebo 97–08    Traitement 08–21
-Dependent Var.:               zscore_wealth         zscore_wealth
-                                                                 
-Constant                -0.1404*** (0.0338)   -0.1094*** (0.0283)
-treat                      -0.0056 (0.0064)       0.0012 (0.0046)
-post                       -0.0032 (0.0046)       0.0005 (0.0029)
-treat_post                  0.0087 (0.0072)       0.0068 (0.0071)
-spei_wc_n_1                -0.0008 (0.0027)       0.0019 (0.0027)
-hv219Femme              -0.1162*** (0.0256)   -0.2110*** (0.0213)
-hv220                    0.0042*** (0.0008)    0.0037*** (0.0006)
-treecover_area_2000       9.85e-8 (1.01e-6)    -7.93e-8 (1.02e-6)
-slope_2000                 -0.0002 (0.0005)      -0.0003 (0.0005)
-elevation_2000        -1.28e-5*** (3.65e-6) -1.36e-5*** (4.11e-6)
-population_count_2000     -5.4e-5 (5.57e-5)     6.11e-5 (6.19e-5)
-traveltime_2000_2000      3.34e-6 (1.35e-5)    2.63e-5. (1.38e-5)
-_____________________ _____________________ _____________________
-S.E.: Clustered             by: cluster_uid       by: cluster_uid
-Observations                         10,731                15,001
-R2                                  0.00571               0.00987
-Adj. R2                             0.00469               0.00914
+<pre><code>                                     m_pre               m_main
+                           Placebo 97–08   Traitement 08–21
+Dependent Var.:              zscore_wealth        zscore_wealth
+                                                               
+Constant               -0.1468*** (0.0331)  -0.1133*** (0.0278)
+treat                     -0.0076 (0.0057)      0.0013 (0.0049)
+post                      -0.0036 (0.0043)     -0.0019 (0.0030)
+treat_post                 0.0118 (0.0073)      0.0085 (0.0071)
+spei_wc_n_1                0.0009 (0.0027)      0.0024 (0.0029)
+hv219Femme             -0.1029*** (0.0249)  -0.2045*** (0.0210)
+hv220                   0.0041*** (0.0007)   0.0038*** (0.0006)
+treecover_area_2000     -4.07e-7 (1.06e-6)   -1.11e-7 (1.03e-6)
+slope_2000                 0.0003 (0.0006)      0.0002 (0.0005)
+elevation_2000        -1.32e-5** (4.72e-6) -1.34e-5** (4.12e-6)
+population_count_2000      0.0001 (0.0001)   -3.08e-5 (5.08e-5)
+traveltime_2000_2000    3.57e-5* (1.61e-5)   2.41e-5. (1.45e-5)
+_____________________ ____________________ ____________________
+S.E.: Clustered            by: cluster_uid      by: cluster_uid
+Observations                        11,361               15,623
+R2                                 0.00521              0.00960
+Adj. R2                            0.00425              0.00890
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -1579,41 +1579,41 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                       SD grappe — placebo SD grappe — effet
 Dependent Var.:         wealth_sd_cluster  wealth_sd_cluster
                                                             
-Constant                 19.38*** (1.226)   18.75*** (1.016)
-treat                      0.5280 (1.546)    0.9467 (0.9633)
-post                     -1.582* (0.7161)    0.2252 (0.5136)
-treat_post                 0.4512 (1.815)    -0.9757 (1.261)
-spei_wc_n_1              -0.0793 (0.4249)   -0.0100 (0.4566)
-treecover_area_2000    -4.91e-5 (5.42e-5) -6.94e-7 (4.48e-5)
-slope_2000                0.1059 (0.0908)   -0.0237 (0.0731)
-elevation_2000            0.0001 (0.0010)    0.0006 (0.0007)
-population_count_2000    0.0203. (0.0114)    0.0006 (0.0109)
-traveltime_2000_2000      0.0033 (0.0023)    0.0013 (0.0020)
-_____________________  __________________ __________________
-S.E. type              Heteroskedas.-rob. Heteroskedas.-rob.
-Observations                          351                493
-R2                                0.05417            0.00504
-Adj. R2                           0.02921           -0.01350
+Constant                 19.47*** (1.128)  19.26*** (0.9583)
+treat                      0.2992 (1.646)      1.089 (1.042)
+post                     -1.340. (0.6878)    0.1452 (0.5070)
+treat_post                 0.8295 (1.936)     -1.552 (1.342)
+spei_wc_n_1              -0.0445 (0.4266)    0.0619 (0.4598)
+treecover_area_2000     -6.1e-5 (4.68e-5) -2.14e-5 (4.09e-5)
+slope_2000               0.1507. (0.0899)    0.0050 (0.0735)
+elevation_2000           -0.0001 (0.0009)    0.0004 (0.0007)
+population_count_2000    0.0179* (0.0084)    0.0003 (0.0086)
+traveltime_2000_2000      0.0027 (0.0023)    0.0010 (0.0020)
+_____________________   _________________ __________________
+S.E. type               Heteroskeda.-rob. Heteroskedas.-rob.
+Observations                          371                515
+R2                                0.05411            0.00611
+Adj. R2                           0.03053           -0.01160
 
                              m_iqr$placebo         m_iqr$main
                       IQR grappe — placebo IQR grappe — effet
 Dependent Var.:         wealth_iqr_cluster wealth_iqr_cluster
                                                              
-Constant                  30.30*** (2.736)   24.29*** (2.084)
-treat                      -0.2624 (3.758)      1.737 (2.160)
-post                      -5.219** (1.677)     0.6074 (1.108)
-treat_post                   1.888 (4.296)     -1.795 (2.646)
-spei_wc_n_1                 -1.584 (1.055)     -1.052 (1.146)
-treecover_area_2000       -0.0002 (0.0001) -6.08e-5 (9.07e-5)
-slope_2000                 0.2896 (0.1980)   -0.0591 (0.1500)
-elevation_2000            -0.0005 (0.0020)    0.0023 (0.0015)
-population_count_2000     0.0428. (0.0244)    0.0231 (0.0233)
-traveltime_2000_2000       0.0047 (0.0057)    0.0072 (0.0044)
+Constant                  29.17*** (2.587)   24.97*** (2.043)
+treat                        1.099 (3.939)      1.724 (2.338)
+post                      -4.446** (1.604)     0.5824 (1.098)
+treat_post                  0.4983 (4.522)     -2.659 (2.813)
+spei_wc_n_1                 -1.350 (1.047)    -0.9663 (1.149)
+treecover_area_2000     -0.0002. (9.86e-5)  -0.0001 (8.52e-5)
+slope_2000                0.3885. (0.1976)    0.0043 (0.1519)
+elevation_2000            -0.0008 (0.0019)    0.0018 (0.0015)
+population_count_2000     0.0403* (0.0176)    0.0277 (0.0183)
+traveltime_2000_2000       0.0045 (0.0058)   0.0075. (0.0045)
 _____________________   __________________ __________________
 S.E. type               Heteroskedas.-rob. Heteroskedas.-rob.
-Observations                           351                493
-R2                                 0.05921            0.01948
-Adj. R2                            0.03438            0.00121
+Observations                           371                515
+R2                                 0.06028            0.02172
+Adj. R2                            0.03685            0.00428
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -1648,25 +1648,25 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 
     <script>
       // Create table-specific functions using external factory
-      const tableFns_18w1djpffugxaza19opr = TinyTable.createTableFunctions("tinytable_18w1djpffugxaza19opr");
+      const tableFns_8kep8g18nqzy72owrv9x = TinyTable.createTableFunctions("tinytable_8kep8g18nqzy72owrv9x");
       // tinytable span after
       window.addEventListener('load', function () {
           var cellsToStyle = [
             // tinytable style arrays after
-          { positions: [ { i: '9', j: 2 } ], css_id: 'tinytable_css_5wqlgqle6jxq076zfhjl',}, 
-          { positions: [ { i: '2', j: 2 } ], css_id: 'tinytable_css_4tnnj7awh6wiij042zd0',}, 
-          { positions: [ { i: '1', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 } ], css_id: 'tinytable_css_t6o1q2yd608qyotu6h4a',}, 
-          { positions: [ { i: '0', j: 2 } ], css_id: 'tinytable_css_n5zlegwphssmbibqw7rh',}, 
-          { positions: [ { i: '9', j: 1 } ], css_id: 'tinytable_css_jkpax9m34c5hz7ehj2or',}, 
-          { positions: [ { i: '2', j: 1 } ], css_id: 'tinytable_css_25jvtld311xh3dxpl9j1',}, 
-          { positions: [ { i: '1', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 } ], css_id: 'tinytable_css_4pxpp0l5lsa7kljscppx',}, 
-          { positions: [ { i: '0', j: 1 } ], css_id: 'tinytable_css_rinrrw50v9kboqiwvihg',}, 
+          { positions: [ { i: '9', j: 2 } ], css_id: 'tinytable_css_qe49ihsnx8us9m1wjny4',}, 
+          { positions: [ { i: '2', j: 2 } ], css_id: 'tinytable_css_i7qduzqoja5w18akurpo',}, 
+          { positions: [ { i: '1', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 } ], css_id: 'tinytable_css_iegc4qbsr4hg3juzmxj9',}, 
+          { positions: [ { i: '0', j: 2 } ], css_id: 'tinytable_css_bn8l7jvbzd1c5ko13gv4',}, 
+          { positions: [ { i: '9', j: 1 } ], css_id: 'tinytable_css_ta8zlr7u7tzczocu87n3',}, 
+          { positions: [ { i: '2', j: 1 } ], css_id: 'tinytable_css_mdli99nlfhxgwq5yfgss',}, 
+          { positions: [ { i: '1', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 } ], css_id: 'tinytable_css_rz94gx786xk1r6a63788',}, 
+          { positions: [ { i: '0', j: 1 } ], css_id: 'tinytable_css_8qtb8736bae5p8njrejj',}, 
           ];
 
           // Loop over the arrays to style the cells
           cellsToStyle.forEach(function (group) {
               group.positions.forEach(function (cell) {
-                  tableFns_18w1djpffugxaza19opr.styleCell(cell.i, cell.j, group.css_id);
+                  tableFns_8kep8g18nqzy72owrv9x.styleCell(cell.i, cell.j, group.css_id);
               });
           });
       });
@@ -1675,17 +1675,17 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
     <style>
     /* tinytable css entries after */
-    #tinytable_18w1djpffugxaza19opr td.tinytable_css_5wqlgqle6jxq076zfhjl, #tinytable_18w1djpffugxaza19opr th.tinytable_css_5wqlgqle6jxq076zfhjl {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_18w1djpffugxaza19opr td.tinytable_css_4tnnj7awh6wiij042zd0, #tinytable_18w1djpffugxaza19opr th.tinytable_css_4tnnj7awh6wiij042zd0 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_18w1djpffugxaza19opr td.tinytable_css_t6o1q2yd608qyotu6h4a, #tinytable_18w1djpffugxaza19opr th.tinytable_css_t6o1q2yd608qyotu6h4a { text-align: center }
-    #tinytable_18w1djpffugxaza19opr td.tinytable_css_n5zlegwphssmbibqw7rh, #tinytable_18w1djpffugxaza19opr th.tinytable_css_n5zlegwphssmbibqw7rh {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_18w1djpffugxaza19opr td.tinytable_css_jkpax9m34c5hz7ehj2or, #tinytable_18w1djpffugxaza19opr th.tinytable_css_jkpax9m34c5hz7ehj2or {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
-    #tinytable_18w1djpffugxaza19opr td.tinytable_css_25jvtld311xh3dxpl9j1, #tinytable_18w1djpffugxaza19opr th.tinytable_css_25jvtld311xh3dxpl9j1 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
-    #tinytable_18w1djpffugxaza19opr td.tinytable_css_4pxpp0l5lsa7kljscppx, #tinytable_18w1djpffugxaza19opr th.tinytable_css_4pxpp0l5lsa7kljscppx { text-align: left }
-    #tinytable_18w1djpffugxaza19opr td.tinytable_css_rinrrw50v9kboqiwvihg, #tinytable_18w1djpffugxaza19opr th.tinytable_css_rinrrw50v9kboqiwvihg {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_8kep8g18nqzy72owrv9x td.tinytable_css_qe49ihsnx8us9m1wjny4, #tinytable_8kep8g18nqzy72owrv9x th.tinytable_css_qe49ihsnx8us9m1wjny4 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_8kep8g18nqzy72owrv9x td.tinytable_css_i7qduzqoja5w18akurpo, #tinytable_8kep8g18nqzy72owrv9x th.tinytable_css_i7qduzqoja5w18akurpo {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_8kep8g18nqzy72owrv9x td.tinytable_css_iegc4qbsr4hg3juzmxj9, #tinytable_8kep8g18nqzy72owrv9x th.tinytable_css_iegc4qbsr4hg3juzmxj9 { text-align: center }
+    #tinytable_8kep8g18nqzy72owrv9x td.tinytable_css_bn8l7jvbzd1c5ko13gv4, #tinytable_8kep8g18nqzy72owrv9x th.tinytable_css_bn8l7jvbzd1c5ko13gv4 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_8kep8g18nqzy72owrv9x td.tinytable_css_ta8zlr7u7tzczocu87n3, #tinytable_8kep8g18nqzy72owrv9x th.tinytable_css_ta8zlr7u7tzczocu87n3 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_8kep8g18nqzy72owrv9x td.tinytable_css_mdli99nlfhxgwq5yfgss, #tinytable_8kep8g18nqzy72owrv9x th.tinytable_css_mdli99nlfhxgwq5yfgss {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_8kep8g18nqzy72owrv9x td.tinytable_css_rz94gx786xk1r6a63788, #tinytable_8kep8g18nqzy72owrv9x th.tinytable_css_rz94gx786xk1r6a63788 { text-align: left }
+    #tinytable_8kep8g18nqzy72owrv9x td.tinytable_css_8qtb8736bae5p8njrejj, #tinytable_8kep8g18nqzy72owrv9x th.tinytable_css_8qtb8736bae5p8njrejj {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
     </style>
     <div class="container">
-      <table class="tinytable" id="tinytable_18w1djpffugxaza19opr" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+      <table class="tinytable" id="tinytable_8kep8g18nqzy72owrv9x" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
         
         <thead>
               <tr>
@@ -1697,7 +1697,7 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
         <tbody>
                 <tr>
                   <td data-row="1" data-col="1">treat_on = 1</td>
-                  <td data-row="1" data-col="2">0.005</td>
+                  <td data-row="1" data-col="2">0.015</td>
                 </tr>
                 <tr>
                   <td data-row="2" data-col="1"></td>
@@ -1705,7 +1705,7 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                 </tr>
                 <tr>
                   <td data-row="3" data-col="1">Num.Obs.</td>
-                  <td data-row="3" data-col="2">36519</td>
+                  <td data-row="3" data-col="2">37429</td>
                 </tr>
                 <tr>
                   <td data-row="4" data-col="1">R2</td>
@@ -1717,11 +1717,11 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                 </tr>
                 <tr>
                   <td data-row="6" data-col="1">AIC</td>
-                  <td data-row="6" data-col="2">101410.5</td>
+                  <td data-row="6" data-col="2">103776.9</td>
                 </tr>
                 <tr>
                   <td data-row="7" data-col="1">BIC</td>
-                  <td data-row="7" data-col="2">101419.0</td>
+                  <td data-row="7" data-col="2">103785.4</td>
                 </tr>
                 <tr>
                   <td data-row="8" data-col="1">RMSE</td>
@@ -1770,21 +1770,21 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
                    did2s event-study (2-yr bins ±10)
 Dependent Var.:                        zscore_wealth
                                                     
-rel_year_2yr2 = -5                   0.0015 (0.0047)
-rel_year_2yr2 = -4                   0.0026 (0.0067)
-rel_year_2yr2 = -3                 -0.0251. (0.0136)
-rel_year_2yr2 = -2                 -0.0217* (0.0090)
-rel_year_2yr2 = 0                  -0.0208* (0.0106)
-rel_year_2yr2 = 1                   -0.0215 (0.0269)
-rel_year_2yr2 = 2                    0.0002 (0.0097)
-rel_year_2yr2 = 3                  -7.76e-5 (0.0057)
-rel_year_2yr2 = 4                    0.0300 (0.0207)
-rel_year_2yr2 = 5                    0.0073 (0.0063)
+rel_year_2yr2 = -5                  -0.0015 (0.0055)
+rel_year_2yr2 = -4                   0.0003 (0.0041)
+rel_year_2yr2 = -3                 -0.0212. (0.0128)
+rel_year_2yr2 = -2                  -0.0085 (0.0088)
+rel_year_2yr2 = 0                   -0.0002 (0.0075)
+rel_year_2yr2 = 1                    0.0253 (0.0209)
+rel_year_2yr2 = 2                    0.0174 (0.0282)
+rel_year_2yr2 = 3                   0.0135* (0.0061)
+rel_year_2yr2 = 4                    0.0382 (0.0297)
+rel_year_2yr2 = 5                   -0.0058 (0.0095)
 __________________                 _________________
 S.E.: Clustered                      by: cluster_uid
-Observations                                  36,519
-R2                                           5.12e-6
-Adj. R2                                     -0.00024
+Observations                                  37,429
+R2                                           6.58e-6
+Adj. R2                                     -0.00023
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -1828,16 +1828,16 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 # A tibble: 10 × 8
    term            estimate std.error statistic p.value conf.low conf.high k    
    &lt;chr&gt;              &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt; &lt;fct&gt;
- 1 rel_year_2yr2:…  1.53e-3   0.00473    0.324   0.746  -0.00773   1.08e-2 -5   
- 2 rel_year_2yr2:…  2.60e-3   0.00671    0.388   0.698  -0.0105    1.57e-2 -4   
- 3 rel_year_2yr2:… -2.51e-2   0.0136    -1.84    0.0657 -0.0518    1.63e-3 -3   
- 4 rel_year_2yr2:… -2.17e-2   0.00904   -2.40    0.0165 -0.0394   -3.96e-3 -2   
- 5 rel_year_2yr2:… -2.08e-2   0.0106    -1.97    0.0490 -0.0416   -9.53e-5 0    
- 6 rel_year_2yr2:… -2.15e-2   0.0269    -0.799   0.424  -0.0743    3.13e-2 1    
- 7 rel_year_2yr2:…  1.92e-4   0.00966    0.0199  0.984  -0.0187    1.91e-2 2    
- 8 rel_year_2yr2:… -7.76e-5   0.00571   -0.0136  0.989  -0.0113    1.11e-2 3    
- 9 rel_year_2yr2:…  2.99e-2   0.0207     1.45    0.148  -0.0106    7.05e-2 4    
-10 rel_year_2yr2:…  7.33e-3   0.00634    1.16    0.248  -0.00509   1.97e-2 5    
+ 1 rel_year_2yr2:… -1.50e-3   0.00552   -0.272   0.785  -0.0123    0.00932 -5   
+ 2 rel_year_2yr2:…  2.68e-4   0.00411    0.0653  0.948  -0.00778   0.00831 -4   
+ 3 rel_year_2yr2:… -2.12e-2   0.0128    -1.65    0.0993 -0.0463    0.00400 -3   
+ 4 rel_year_2yr2:… -8.47e-3   0.00877   -0.966   0.334  -0.0257    0.00872 -2   
+ 5 rel_year_2yr2:… -2.37e-4   0.00752   -0.0314  0.975  -0.0150    0.0145  0    
+ 6 rel_year_2yr2:…  2.53e-2   0.0210     1.21    0.228  -0.0158    0.0663  1    
+ 7 rel_year_2yr2:…  1.74e-2   0.0282     0.615   0.538  -0.0380    0.0727  2    
+ 8 rel_year_2yr2:…  1.35e-2   0.00614    2.20    0.0280  0.00146   0.0255  3    
+ 9 rel_year_2yr2:…  3.82e-2   0.0297     1.29    0.198  -0.0200    0.0965  4    
+10 rel_year_2yr2:… -5.81e-3   0.00948   -0.613   0.540  -0.0244    0.0128  5    
 
 $plot</code></pre>
 </div>
@@ -2012,25 +2012,25 @@ $plot</code></pre>
 
     <script>
       // Create table-specific functions using external factory
-      const tableFns_ohhwc0eheddngpeu30rx = TinyTable.createTableFunctions("tinytable_ohhwc0eheddngpeu30rx");
+      const tableFns_rjaxkgrb6xxlpadvgxlh = TinyTable.createTableFunctions("tinytable_rjaxkgrb6xxlpadvgxlh");
       // tinytable span after
       window.addEventListener('load', function () {
           var cellsToStyle = [
             // tinytable style arrays after
-          { positions: [ { i: '9', j: 2 }, { i: '9', j: 3 }, { i: '9', j: 4 } ], css_id: 'tinytable_css_z1a007epu6a5e27vdm47',}, 
-          { positions: [ { i: '2', j: 2 }, { i: '2', j: 3 }, { i: '2', j: 4 } ], css_id: 'tinytable_css_b7hucjhdazn0aicqpm6q',}, 
-          { positions: [ { i: '1', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 }, { i: '1', j: 3 }, { i: '3', j: 3 }, { i: '4', j: 3 }, { i: '5', j: 3 }, { i: '6', j: 3 }, { i: '7', j: 3 }, { i: '8', j: 3 }, { i: '1', j: 4 }, { i: '3', j: 4 }, { i: '4', j: 4 }, { i: '5', j: 4 }, { i: '6', j: 4 }, { i: '7', j: 4 }, { i: '8', j: 4 } ], css_id: 'tinytable_css_c1aajvsftj0ujreb3qor',}, 
-          { positions: [ { i: '0', j: 2 }, { i: '0', j: 3 }, { i: '0', j: 4 } ], css_id: 'tinytable_css_gf483teif6lrfpp1k2fv',}, 
-          { positions: [ { i: '9', j: 1 } ], css_id: 'tinytable_css_sbgvtz5urfwrr759x5qq',}, 
-          { positions: [ { i: '2', j: 1 } ], css_id: 'tinytable_css_wu4mvwptw2f90f34o3pz',}, 
-          { positions: [ { i: '1', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 } ], css_id: 'tinytable_css_pbl0de5ndv4gtsolfk13',}, 
-          { positions: [ { i: '0', j: 1 } ], css_id: 'tinytable_css_vf0vz4oovrdzdqyq2wno',}, 
+          { positions: [ { i: '9', j: 2 }, { i: '9', j: 3 }, { i: '9', j: 4 } ], css_id: 'tinytable_css_p95sfe1w3g1hfzetcav0',}, 
+          { positions: [ { i: '2', j: 2 }, { i: '2', j: 3 }, { i: '2', j: 4 } ], css_id: 'tinytable_css_si32ojtsjp1bxbio099h',}, 
+          { positions: [ { i: '1', j: 2 }, { i: '3', j: 2 }, { i: '4', j: 2 }, { i: '5', j: 2 }, { i: '6', j: 2 }, { i: '7', j: 2 }, { i: '8', j: 2 }, { i: '1', j: 3 }, { i: '3', j: 3 }, { i: '4', j: 3 }, { i: '5', j: 3 }, { i: '6', j: 3 }, { i: '7', j: 3 }, { i: '8', j: 3 }, { i: '1', j: 4 }, { i: '3', j: 4 }, { i: '4', j: 4 }, { i: '5', j: 4 }, { i: '6', j: 4 }, { i: '7', j: 4 }, { i: '8', j: 4 } ], css_id: 'tinytable_css_dfoj3x4yme6xi31ner1h',}, 
+          { positions: [ { i: '0', j: 2 }, { i: '0', j: 3 }, { i: '0', j: 4 } ], css_id: 'tinytable_css_uad5vhjh2qs5b2ge2zfd',}, 
+          { positions: [ { i: '9', j: 1 } ], css_id: 'tinytable_css_j3bkwyck5hzmnvli4muk',}, 
+          { positions: [ { i: '2', j: 1 } ], css_id: 'tinytable_css_fdg9rlgn8lx55ivjvcee',}, 
+          { positions: [ { i: '1', j: 1 }, { i: '3', j: 1 }, { i: '4', j: 1 }, { i: '5', j: 1 }, { i: '6', j: 1 }, { i: '7', j: 1 }, { i: '8', j: 1 } ], css_id: 'tinytable_css_8zs6o0nflc60jh8nv67b',}, 
+          { positions: [ { i: '0', j: 1 } ], css_id: 'tinytable_css_33joz2b0q513ua4q29l6',}, 
           ];
 
           // Loop over the arrays to style the cells
           cellsToStyle.forEach(function (group) {
               group.positions.forEach(function (cell) {
-                  tableFns_ohhwc0eheddngpeu30rx.styleCell(cell.i, cell.j, group.css_id);
+                  tableFns_rjaxkgrb6xxlpadvgxlh.styleCell(cell.i, cell.j, group.css_id);
               });
           });
       });
@@ -2039,17 +2039,17 @@ $plot</code></pre>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vincentarelbundock/tinytable@main/inst/tinytable.css">
     <style>
     /* tinytable css entries after */
-    #tinytable_ohhwc0eheddngpeu30rx td.tinytable_css_z1a007epu6a5e27vdm47, #tinytable_ohhwc0eheddngpeu30rx th.tinytable_css_z1a007epu6a5e27vdm47 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_ohhwc0eheddngpeu30rx td.tinytable_css_b7hucjhdazn0aicqpm6q, #tinytable_ohhwc0eheddngpeu30rx th.tinytable_css_b7hucjhdazn0aicqpm6q {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_ohhwc0eheddngpeu30rx td.tinytable_css_c1aajvsftj0ujreb3qor, #tinytable_ohhwc0eheddngpeu30rx th.tinytable_css_c1aajvsftj0ujreb3qor { text-align: center }
-    #tinytable_ohhwc0eheddngpeu30rx td.tinytable_css_gf483teif6lrfpp1k2fv, #tinytable_ohhwc0eheddngpeu30rx th.tinytable_css_gf483teif6lrfpp1k2fv {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
-    #tinytable_ohhwc0eheddngpeu30rx td.tinytable_css_sbgvtz5urfwrr759x5qq, #tinytable_ohhwc0eheddngpeu30rx th.tinytable_css_sbgvtz5urfwrr759x5qq {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
-    #tinytable_ohhwc0eheddngpeu30rx td.tinytable_css_wu4mvwptw2f90f34o3pz, #tinytable_ohhwc0eheddngpeu30rx th.tinytable_css_wu4mvwptw2f90f34o3pz {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
-    #tinytable_ohhwc0eheddngpeu30rx td.tinytable_css_pbl0de5ndv4gtsolfk13, #tinytable_ohhwc0eheddngpeu30rx th.tinytable_css_pbl0de5ndv4gtsolfk13 { text-align: left }
-    #tinytable_ohhwc0eheddngpeu30rx td.tinytable_css_vf0vz4oovrdzdqyq2wno, #tinytable_ohhwc0eheddngpeu30rx th.tinytable_css_vf0vz4oovrdzdqyq2wno {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_rjaxkgrb6xxlpadvgxlh td.tinytable_css_p95sfe1w3g1hfzetcav0, #tinytable_rjaxkgrb6xxlpadvgxlh th.tinytable_css_p95sfe1w3g1hfzetcav0 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_rjaxkgrb6xxlpadvgxlh td.tinytable_css_si32ojtsjp1bxbio099h, #tinytable_rjaxkgrb6xxlpadvgxlh th.tinytable_css_si32ojtsjp1bxbio099h {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_rjaxkgrb6xxlpadvgxlh td.tinytable_css_dfoj3x4yme6xi31ner1h, #tinytable_rjaxkgrb6xxlpadvgxlh th.tinytable_css_dfoj3x4yme6xi31ner1h { text-align: center }
+    #tinytable_rjaxkgrb6xxlpadvgxlh td.tinytable_css_uad5vhjh2qs5b2ge2zfd, #tinytable_rjaxkgrb6xxlpadvgxlh th.tinytable_css_uad5vhjh2qs5b2ge2zfd {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: center }
+    #tinytable_rjaxkgrb6xxlpadvgxlh td.tinytable_css_j3bkwyck5hzmnvli4muk, #tinytable_rjaxkgrb6xxlpadvgxlh th.tinytable_css_j3bkwyck5hzmnvli4muk {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.1em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_rjaxkgrb6xxlpadvgxlh td.tinytable_css_fdg9rlgn8lx55ivjvcee, #tinytable_rjaxkgrb6xxlpadvgxlh th.tinytable_css_fdg9rlgn8lx55ivjvcee {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 0; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
+    #tinytable_rjaxkgrb6xxlpadvgxlh td.tinytable_css_8zs6o0nflc60jh8nv67b, #tinytable_rjaxkgrb6xxlpadvgxlh th.tinytable_css_8zs6o0nflc60jh8nv67b { text-align: left }
+    #tinytable_rjaxkgrb6xxlpadvgxlh td.tinytable_css_33joz2b0q513ua4q29l6, #tinytable_rjaxkgrb6xxlpadvgxlh th.tinytable_css_33joz2b0q513ua4q29l6 {  position: relative; --border-bottom: 1; --border-left: 0; --border-right: 0; --border-top: 1; --line-color-bottom: var(--tt-line-color); --line-color-left: var(--tt-line-color); --line-color-right: var(--tt-line-color); --line-color-top: var(--tt-line-color); --line-width-bottom: 0.05em; --line-width-left: 0.1em; --line-width-right: 0.1em; --line-width-top: 0.1em; --trim-bottom-left: 0%; --trim-bottom-right: 0%; --trim-left-bottom: 0%; --trim-left-top: 0%; --trim-right-bottom: 0%; --trim-right-top: 0%; --trim-top-left: 0%; --trim-top-right: 0%; ; text-align: left }
     </style>
     <div class="container">
-      <table class="tinytable" id="tinytable_ohhwc0eheddngpeu30rx" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
+      <table class="tinytable" id="tinytable_rjaxkgrb6xxlpadvgxlh" style="width: auto; margin-left: auto; margin-right: auto;" data-quarto-disable-processing="true">
         
         <thead>
               <tr>
@@ -2063,51 +2063,51 @@ $plot</code></pre>
         <tbody>
                 <tr>
                   <td data-row="1" data-col="1">treat_on = 1</td>
-                  <td data-row="1" data-col="2">-1.140</td>
-                  <td data-row="1" data-col="3">-0.290</td>
-                  <td data-row="1" data-col="4">0.307</td>
+                  <td data-row="1" data-col="2">5.829</td>
+                  <td data-row="1" data-col="3">4.747</td>
+                  <td data-row="1" data-col="4">4.844</td>
                 </tr>
                 <tr>
                   <td data-row="2" data-col="1"></td>
-                  <td data-row="2" data-col="2">(7.366)</td>
-                  <td data-row="2" data-col="3">(4.304)</td>
-                  <td data-row="2" data-col="4">(3.882)</td>
+                  <td data-row="2" data-col="2">(7.299)</td>
+                  <td data-row="2" data-col="3">(3.883)</td>
+                  <td data-row="2" data-col="4">(3.697)</td>
                 </tr>
                 <tr>
                   <td data-row="3" data-col="1">Num.Obs.</td>
-                  <td data-row="3" data-col="2">30994</td>
-                  <td data-row="3" data-col="3">36056</td>
-                  <td data-row="3" data-col="4">36519</td>
+                  <td data-row="3" data-col="2">32263</td>
+                  <td data-row="3" data-col="3">37095</td>
+                  <td data-row="3" data-col="4">37429</td>
                 </tr>
                 <tr>
                   <td data-row="4" data-col="1">R2</td>
-                  <td data-row="4" data-col="2">-0.000</td>
-                  <td data-row="4" data-col="3">-0.000</td>
-                  <td data-row="4" data-col="4">-0.000</td>
+                  <td data-row="4" data-col="2">0.000</td>
+                  <td data-row="4" data-col="3">0.002</td>
+                  <td data-row="4" data-col="4">0.003</td>
                 </tr>
                 <tr>
                   <td data-row="5" data-col="1">R2 Adj.</td>
-                  <td data-row="5" data-col="2">-0.000</td>
-                  <td data-row="5" data-col="3">-0.000</td>
-                  <td data-row="5" data-col="4">-0.000</td>
+                  <td data-row="5" data-col="2">0.000</td>
+                  <td data-row="5" data-col="3">0.002</td>
+                  <td data-row="5" data-col="4">0.003</td>
                 </tr>
                 <tr>
                   <td data-row="6" data-col="1">AIC</td>
-                  <td data-row="6" data-col="2">291655.4</td>
-                  <td data-row="6" data-col="3">339106.0</td>
-                  <td data-row="6" data-col="4">343438.8</td>
+                  <td data-row="6" data-col="2">303085.9</td>
+                  <td data-row="6" data-col="3">348514.6</td>
+                  <td data-row="6" data-col="4">351614.1</td>
                 </tr>
                 <tr>
                   <td data-row="7" data-col="1">BIC</td>
-                  <td data-row="7" data-col="2">291663.8</td>
-                  <td data-row="7" data-col="3">339114.5</td>
-                  <td data-row="7" data-col="4">343447.3</td>
+                  <td data-row="7" data-col="2">303094.2</td>
+                  <td data-row="7" data-col="3">348523.2</td>
+                  <td data-row="7" data-col="4">351622.6</td>
                 </tr>
                 <tr>
                   <td data-row="8" data-col="1">RMSE</td>
-                  <td data-row="8" data-col="2">26.74</td>
-                  <td data-row="8" data-col="3">26.67</td>
-                  <td data-row="8" data-col="4">26.66</td>
+                  <td data-row="8" data-col="2">26.53</td>
+                  <td data-row="8" data-col="3">26.54</td>
+                  <td data-row="8" data-col="4">26.53</td>
                 </tr>
                 <tr>
                   <td data-row="9" data-col="1">Std.Errors</td>
@@ -2193,41 +2193,41 @@ $plot</code></pre>
                                      Strict only                    Multi only
 Dependent Var.:    wealth_centile_rural_weighted wealth_centile_rural_weighted
                                                                               
-rel_year_2yr2 = -5                9.683* (4.391)                 2.673 (4.443)
-rel_year_2yr2 = 2                  8.904 (8.317)                -6.200 (4.588)
-rel_year_2yr2 = 3                 -8.511 (7.934)                -3.611 (4.918)
-rel_year_2yr2 = 4               -13.51** (4.576)                 4.368 (5.622)
-rel_year_2yr2 = 5                  7.357 (13.77)                 2.289 (5.251)
-rel_year_2yr2 = -4                                              -7.109 (6.869)
-rel_year_2yr2 = -3                                               5.922 (5.685)
-rel_year_2yr2 = -2                                             23.47** (7.825)
-rel_year_2yr2 = 0                                               -8.654 (5.516)
-rel_year_2yr2 = 1                                               0.5965 (8.411)
+rel_year_2yr2 = -5                 7.986 (5.673)                 3.500 (5.226)
+rel_year_2yr2 = -4                -9.380 (6.234)                 2.730 (3.882)
+rel_year_2yr2 = 0                  5.871 (6.343)                -4.437 (5.004)
+rel_year_2yr2 = 3                  5.821 (7.916)                 5.014 (4.130)
+rel_year_2yr2 = -3                                              0.3440 (3.926)
+rel_year_2yr2 = -2                                               5.545 (4.945)
+rel_year_2yr2 = 1                                                5.948 (6.918)
+rel_year_2yr2 = 2                                                4.027 (5.180)
+rel_year_2yr2 = 4                                                10.62 (9.365)
+rel_year_2yr2 = 5                                                8.301 (9.010)
 __________________ _____________________________ _____________________________
 S.E.: Clustered                  by: cluster_uid               by: cluster_uid
-Observations                              30,994                        36,056
-R2                                       0.00135                       0.00371
-Adj. R2                                  0.00122                       0.00346
+Observations                              32,263                        37,095
+R2                                       0.00069                       0.00482
+Adj. R2                                  0.00059                       0.00458
 
                                did2s_es_2yr_both
                                             Both
 Dependent Var.:    wealth_centile_rural_weighted
                                                 
-rel_year_2yr2 = -5                 3.179 (4.128)
-rel_year_2yr2 = 2                 -4.444 (4.363)
-rel_year_2yr2 = 3                 -4.133 (4.668)
-rel_year_2yr2 = 4                  3.618 (5.283)
-rel_year_2yr2 = 5                  3.262 (4.810)
-rel_year_2yr2 = -4                -7.058 (6.896)
-rel_year_2yr2 = -3                 6.028 (5.690)
-rel_year_2yr2 = -2               23.58** (7.847)
-rel_year_2yr2 = 0                 -8.600 (5.535)
-rel_year_2yr2 = 1                  3.294 (7.820)
+rel_year_2yr2 = -5                 3.648 (4.771)
+rel_year_2yr2 = -4                0.6342 (3.488)
+rel_year_2yr2 = 0                 -3.584 (4.698)
+rel_year_2yr2 = 3                  5.040 (3.856)
+rel_year_2yr2 = -3                0.4982 (3.911)
+rel_year_2yr2 = -2                 5.930 (4.978)
+rel_year_2yr2 = 1                  6.250 (6.849)
+rel_year_2yr2 = 2                  3.999 (5.183)
+rel_year_2yr2 = 4                  10.59 (9.355)
+rel_year_2yr2 = 5                  8.270 (8.992)
 __________________ _____________________________
 S.E.: Clustered                  by: cluster_uid
-Observations                              36,519
-R2                                       0.00376
-Adj. R2                                  0.00351
+Observations                              37,429
+R2                                       0.00482
+Adj. R2                                  0.00459
 ---
 Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -2277,75 +2277,74 @@ Signif. codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <pre><code>$models
 $models$strict
 OLS estimation, Dep. Var.: wealth_centile_rural_weighted
-Observations: 30,994
+Observations: 32,263
 Weights: weights_vector
 Standard-errors: Corrected Clustered (cluster_uid) 
-                   Estimate Std. Error   t value  Pr(&gt;|t|)    
-rel_year_2yr2::-5   9.68257    4.39096  2.205115 0.0274533 *  
-rel_year_2yr2::2    8.90388    8.31715  1.070544 0.2843829    
-rel_year_2yr2::3   -8.51053    7.93367 -1.072711 0.2834093    
-rel_year_2yr2::4  -13.51215    4.57641 -2.952568 0.0031538 ** 
-rel_year_2yr2::5    7.35668   13.76593  0.534412 0.5930602    
+                  Estimate Std. Error   t value Pr(&gt;|t|) 
+rel_year_2yr2::-5  7.98601    5.67306  1.407707  0.15923 
+rel_year_2yr2::-4 -9.37987    6.23426 -1.504568  0.13245 
+rel_year_2yr2::0   5.87114    6.34265  0.925660  0.35463 
+rel_year_2yr2::3   5.82103    7.91616  0.735334  0.46214 
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-RMSE: 26.7   Adj. R2: 0.001222
+RMSE: 26.5   Adj. R2: 5.934e-4
 
 $models$multi
 OLS estimation, Dep. Var.: wealth_centile_rural_weighted
-Observations: 36,056
+Observations: 37,095
 Weights: weights_vector
 Standard-errors: Corrected Clustered (cluster_uid) 
-                   Estimate Std. Error   t value  Pr(&gt;|t|)    
-rel_year_2yr2::-5  2.673270    4.44301  0.601680 0.5473913    
-rel_year_2yr2::-4 -7.109325    6.86858 -1.035051 0.3006522    
-rel_year_2yr2::-3  5.922476    5.68527  1.041722 0.2975474    
-rel_year_2yr2::-2 23.474944    7.82457  3.000157 0.0027002 ** 
-rel_year_2yr2::0  -8.654070    5.51632 -1.568813 0.1167003    
-rel_year_2yr2::1   0.596542    8.41069  0.070927 0.9434565    
-rel_year_2yr2::2  -6.199532    4.58750 -1.351396 0.1765770    
-rel_year_2yr2::3  -3.610525    4.91809 -0.734131 0.4628735    
-rel_year_2yr2::4   4.368264    5.62163  0.777046 0.4371366    
-rel_year_2yr2::5   2.289412    5.25144  0.435959 0.6628692    
+                   Estimate Std. Error   t value Pr(&gt;|t|) 
+rel_year_2yr2::-5  3.499604    5.22559  0.669705  0.50305 
+rel_year_2yr2::-4  2.730498    3.88212  0.703352  0.48184 
+rel_year_2yr2::-3  0.343953    3.92649  0.087598  0.93020 
+rel_year_2yr2::-2  5.545412    4.94534  1.121342  0.26215 
+rel_year_2yr2::0  -4.437374    5.00422 -0.886726  0.37523 
+rel_year_2yr2::1   5.948315    6.91810  0.859819  0.38989 
+rel_year_2yr2::2   4.027313    5.18001  0.777473  0.43688 
+rel_year_2yr2::3   5.014213    4.13020  1.214037  0.22474 
+rel_year_2yr2::4  10.622625    9.36532  1.134251  0.25670 
+rel_year_2yr2::5   8.300660    9.01018  0.921253  0.35692 
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-RMSE: 26.5   Adj. R2: 0.003461
+RMSE: 26.5   Adj. R2: 0.00458
 
 $models$both
 OLS estimation, Dep. Var.: wealth_centile_rural_weighted
-Observations: 36,519
+Observations: 37,429
 Weights: weights_vector
 Standard-errors: Corrected Clustered (cluster_uid) 
-                  Estimate Std. Error   t value  Pr(&gt;|t|)    
-rel_year_2yr2::-5  3.17927    4.12772  0.770223 0.4411726    
-rel_year_2yr2::-4 -7.05758    6.89558 -1.023493 0.3060815    
-rel_year_2yr2::-3  6.02750    5.69043  1.059234 0.2895001    
-rel_year_2yr2::-2 23.57566    7.84670  3.004533 0.0026617 ** 
-rel_year_2yr2::0  -8.60036    5.53504 -1.553804 0.1202399    
-rel_year_2yr2::1   3.29402    7.81964  0.421250 0.6735751    
-rel_year_2yr2::2  -4.44364    4.36289 -1.018508 0.3084432    
-rel_year_2yr2::3  -4.13275    4.66812 -0.885313 0.3759938    
-rel_year_2yr2::4   3.61792    5.28254  0.684882 0.4934226    
-rel_year_2yr2::5   3.26242    4.80971  0.678300 0.4975861    
+                   Estimate Std. Error   t value Pr(&gt;|t|) 
+rel_year_2yr2::-5  3.648002    4.77130  0.764573  0.44453 
+rel_year_2yr2::-4  0.634214    3.48787  0.181834  0.85571 
+rel_year_2yr2::-3  0.498209    3.91050  0.127403  0.89862 
+rel_year_2yr2::-2  5.930279    4.97785  1.191334  0.23353 
+rel_year_2yr2::0  -3.584028    4.69834 -0.762829  0.44557 
+rel_year_2yr2::1   6.249910    6.84946  0.912468  0.36153 
+rel_year_2yr2::2   3.999326    5.18341  0.771562  0.44038 
+rel_year_2yr2::3   5.040125    3.85595  1.307102  0.19119 
+rel_year_2yr2::4  10.588974    9.35544  1.131852  0.25770 
+rel_year_2yr2::5   8.270360    8.99227  0.919719  0.35773 
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-RMSE: 26.5   Adj. R2: 0.003513
+RMSE: 26.5   Adj. R2: 0.004585
 
 
 $tidy
-# A tibble: 25 × 9
+# A tibble: 24 × 9
    term      estimate std.error statistic p.value conf.low conf.high k     type 
    &lt;chr&gt;        &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt; &lt;fct&gt; &lt;chr&gt;
- 1 rel_year…     9.68      4.39     2.21  0.0275      1.08     18.3  -5    stri…
- 2 rel_year…     8.90      8.32     1.07  0.284      -7.40     25.2  2     stri…
- 3 rel_year…    -8.51      7.93    -1.07  0.283     -24.1       7.04 3     stri…
- 4 rel_year…   -13.5       4.58    -2.95  0.00315   -22.5      -4.54 4     stri…
- 5 rel_year…     7.36     13.8      0.534 0.593     -19.6      34.3  5     stri…
- 6 rel_year…     2.67      4.44     0.602 0.547      -6.04     11.4  -5    multi
- 7 rel_year…    -7.11      6.87    -1.04  0.301     -20.6       6.35 -4    multi
- 8 rel_year…     5.92      5.69     1.04  0.298      -5.22     17.1  -3    multi
- 9 rel_year…    23.5       7.82     3.00  0.00270     8.14     38.8  -2    multi
-10 rel_year…    -8.65      5.52    -1.57  0.117     -19.5       2.16 0     multi
-# ℹ 15 more rows
+ 1 rel_year…    7.99       5.67    1.41     0.159    -3.13     19.1  -5    stri…
+ 2 rel_year…   -9.38       6.23   -1.50     0.132   -21.6       2.84 -4    stri…
+ 3 rel_year…    5.87       6.34    0.926    0.355    -6.56     18.3  0     stri…
+ 4 rel_year…    5.82       7.92    0.735    0.462    -9.69     21.3  3     stri…
+ 5 rel_year…    3.50       5.23    0.670    0.503    -6.74     13.7  -5    multi
+ 6 rel_year…    2.73       3.88    0.703    0.482    -4.88     10.3  -4    multi
+ 7 rel_year…    0.344      3.93    0.0876   0.930    -7.35      8.04 -3    multi
+ 8 rel_year…    5.55       4.95    1.12     0.262    -4.15     15.2  -2    multi
+ 9 rel_year…   -4.44       5.00   -0.887    0.375   -14.2       5.37 0     multi
+10 rel_year…    5.95       6.92    0.860    0.390    -7.61     19.5  1     multi
+# ℹ 14 more rows
 
 $plot</code></pre>
 </div>
