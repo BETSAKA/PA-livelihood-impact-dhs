@@ -199,10 +199,13 @@ PA_LEGAL_EXTRA_ACTS <- tibble(
 # 3. Notes d'audit pour les cas restant non résolus (preuve manquante
 #    spécifique et implication pour l'éligibilité, documentées dans la
 #    provenance) — aucun cas arbitré ici : la date reste manquante.
+#    Cas du lac Kinkony (20283) : la note documente la décision d'équipe
+#    (hors univers analytique, seul le complexe 352248 est retenu) ; le
+#    WDPAID n'entre plus dans le registre calculé (univers filtré).
 PA_LEGAL_AUDIT_UNRESOLVED_NOTES <- tibble(
   WDPAID = c(20283L, 555790169L),
   audit_note = c(
-    "audit 2026-11 : le décret 2015-718 (21/04/2015) crée le complexe « Zones Humides Mahavavy Kinkony » (352248, pré-2008) ; chevauchement partiel (79 % du premier état du polygone analytique dans le complexe) et désignation distincte — « Kinkony Lake Hunting Reserve », état placeholder 2017-01-01 — non nommée par le décret (aucune mention de réserve de chasse dans le texte) ; preuve manquante : texte propre de la réserve de chasse ; catchments exclus tant que non résolu",
+    "audit 2026-11 : le décret 2015-718 (21/04/2015) crée le complexe « Zones Humides Mahavavy Kinkony » (352248, pré-2008) ; chevauchement partiel (79 % du premier état du polygone analytique dans le complexe) et désignation distincte — « Kinkony Lake Hunting Reserve », état placeholder 2017-01-01 — non nommée par le décret (aucune mention de réserve de chasse dans le texte) ; décision d'équipe (cf. 01-treatment-assignation.qmd) : le lac n'est pas une AP éligible indépendante, seul le complexe 352248 est retenu dans l'univers analytique — 20283 hors univers (ni AP traitée, ni exclusion autonome), enregistrement conservé dans les sources",
     "audit 2026-11 : seul l'arrêté 2645/2020 (protection temporaire, 29/01/2020) est vérifié ; aucun décret de création définitive localisé (CNLEGIS et web, novembre 2026 ; sources secondaires évoquent une officialisation en 2023, postérieure à la fenêtre) ; catchments exclus dans la variante permanente"
   )
 )
