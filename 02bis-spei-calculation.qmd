@@ -19,7 +19,7 @@ Nous avons chargé le dataframe contenant les données sur la précipitation, la
 On extrait la première ligne du dataframe pour calculer le SPEI mensuel sur un seul cluster. L'analyse d'un seul cluster permet de valider les étapes du calcul, mais aussi d'appréhender la structure des données et les résultats.
 
 ```{r}
-
+#| label: spei-setup
 library(SPEI) # Calcul de l'indice SPEI
 library(tidyverse) # Manipulation et visualisation des données
 library(sf) # Analyse des données spatiales
@@ -30,8 +30,23 @@ library(zoo) # Manipulation des données temporelles
 library(readr) # Lecture des données de texte rectangulaires
 library(ggplot2) # visualisation
 
-# Load data 
-spatial_covars <- read_rds("data/derived/spatial_covars_staggered.rds")
+# Chargement et validation du produit spatial précalculé du chapitre 02
+# (aucune extraction mapme pendant le rendu normal)
+SPATIAL_COVARS_PATH <- "data/derived/spatial_covars_staggered.rds"
+if (!file.exists(SPATIAL_COVARS_PATH)) {
+  stop(
+    "Fichier spatial précalculé introuvable : ", SPATIAL_COVARS_PATH,
+    "\nNe pas relancer l'extraction mapme.biodiversity : restaurer le fichier",
+    "\ndepuis une sauvegarde locale, puis relancer le rendu."
+  )
+}
+spatial_covars <- readRDS(SPATIAL_COVARS_PATH)
+stopifnot(
+  "spatial_covars_staggered : doublons de clés DHSYEAR × DHSCLUST" =
+    anyDuplicated(spatial_covars[, c("DHSYEAR", "DHSCLUST")]) == 0L,
+  "spatial_covars_staggered : séries WorldClim absentes" =
+    all(c("temperature_max_wc", "temperature_min_wc", "precipitation_wc") %in% names(spatial_covars))
+)
 
 # Function to compute SPEI
 compute_spei_annual <- function(tmin_tbl, tmax_tbl, prec_tbl, lat_deg) {
@@ -76,14 +91,16 @@ compute_spei_annual <- function(tmin_tbl, tmax_tbl, prec_tbl, lat_deg) {
     summarise(spei_mean = mean(spei, na.rm = TRUE), .groups = "drop") %>%
     complete(year = 1981:2021, fill = list(spei_mean = NA_real_))
 }
+```
 
-
-
-# Latitude géodésique depuis la géométrie (centroïde)
-spatial_covars_spei <- spatial_covars %>%
+```{r}
+#| label: spei-one-cluster
+# Illustration sur un seul cluster (calcul à la volée, coût négligeable)
+spatial_covars_spei_one <- spatial_covars %>%
+  slice(1) %>%
   mutate(lat = st_coordinates(st_centroid(geometry))[, 2])
 
-row1 <- spatial_covars_spei[1, ]
+row1 <- spatial_covars_spei_one[1, ]
 
 spei_tbl_one <- compute_spei_annual(
   tmin_tbl = row1$temperature_min_wc[[1]],
@@ -123,26 +140,47 @@ Le graphique illustre l'évolution annuelle de l'indice SPEI moyen pour un clust
 
 On observe qu'entre 1980 et 2000, la majorité des années a un SPEI supérieur à 0, correspondant à des conditions normales ou légèrement humides, avec peu d'épisodes de sécheresse significative selon la classification de Mckee et al @1993. En revanche, à partir des années 2004, on obtient des SPEI inférieur à 0, marquant une augmentation de la fréquence des épisodes de sécheresse. En 2017, le SPEI a une valeur particulièrement basse (SPEI = -2.40012658), qui d'après la classification de Vicente-Serrano et al. @2010 caractérise une sécheresse très sévère.
 
-Nous appliquons la même procédure pour l'ensemble des clusters étudiés.
+Nous appliquons la même procédure pour l'ensemble des grappes étudiées.
+
+**Important — précalcul SPEI.** Le calcul du SPEI pour l'ensemble des grappes (boucle `pmap()` sur les séries WorldClim, plusieurs heures) a été exécuté une fois pour toutes et sauvegardé dans `data/derived/spatial_covars_spei_staggered.rds` (schéma long `spei_wc` : `{datetime, variable, unit, value}`). Ce produit est **consommé** par le chapitre 04 ; un rendu ordinaire doit le **lire et le valider**, jamais le recalculer. Le bloc historique de régénération est conservé plus bas à titre documentaire, **non exécuté** ; la régénération explicite (si le fichier est absent ou périmé) s'effectue dans la console R avec `source("utils/spei_precompute.R")`.
 
 ```{r}
-# SPEI for all clusters 
-quiet <- function(x) {
-  tmp <- capture.output(res <- x, file = NULL)
-  res
-}
-
-spatial_covars_spei <- spatial_covars_spei %>%
-  mutate(
-    spei_wc = pmap(
-      list(temperature_min_wc, temperature_max_wc, precipitation_wc, lat),
-      ~ quiet(compute_spei_annual(..1, ..2, ..3, ..4))
-    )
+#| label: spei-load-precomputed
+SPEI_COVARS_PATH <- "data/derived/spatial_covars_spei_staggered.rds"
+if (!file.exists(SPEI_COVARS_PATH)) {
+  stop(
+    "Fichier SPEI précalculé introuvable : ", SPEI_COVARS_PATH,
+    "\nLe calcul du SPEI pour l'ensemble des grappes ne doit PAS être relancé",
+    "\npendant un rendu ordinaire. Pour le régénérer explicitement (plusieurs",
+    "\nheures) : source(\"utils/spei_precompute.R\")"
   )
+}
+spatial_covars_spei <- readRDS(SPEI_COVARS_PATH)
+stopifnot(
+  "spatial_covars_spei_staggered : doublons de clés DHSYEAR × DHSCLUST" =
+    anyDuplicated(spatial_covars_spei[, c("DHSYEAR", "DHSCLUST")]) == 0L,
+  "spatial_covars_spei_staggered : colonne spei_wc absente" =
+    "spei_wc" %in% names(spatial_covars_spei),
+  "spatial_covars_spei_staggered : séries SPEI mal formées" =
+    all(map_lgl(spatial_covars_spei$spei_wc,
+                ~ all(c("datetime", "variable", "unit", "value") %in% names(.x)))),
+  "spatial_covars_spei_staggered : périmètre grappes incohérent avec le produit spatial" =
+    nrow(spatial_covars_spei) == nrow(spatial_covars)
+)
 
+# Empreintes md5 : le rendu ordinaire ne doit modifier aucun des deux artefacts
+cat("md5 spatial_covars_staggered.rds :",
+    as.character(tools::md5sum(SPATIAL_COVARS_PATH)), "\n")
+cat("md5 spatial_covars_spei_staggered.rds :",
+    as.character(tools::md5sum(SPEI_COVARS_PATH)), "\n")
+cat("spatial_covars_spei_staggered.rds :", nrow(spatial_covars_spei),
+    "grappes,", ncol(spatial_covars_spei), "colonnes — validation OK\n")
+
+# Reconstruction des données de tracé depuis les séries spei_wc sauvegardées
 spei_df <- spatial_covars_spei %>%
   select(DHSCLUST, spei_wc) %>%
-  unnest(spei_wc)
+  unnest(spei_wc) %>%
+  mutate(year = year(datetime), spei_mean = value)
 
 ggplot(spei_df, aes(x = year, y = spei_mean, group = DHSCLUST)) +
   geom_line(alpha = 0.35) +
@@ -150,29 +188,17 @@ ggplot(spei_df, aes(x = year, y = spei_mean, group = DHSCLUST)) +
   labs(title = "Annual SPEI by cluster (1981–2021)",
        x = "Year", y = "SPEI (annual mean)") +
   theme_minimal()
-
 ```
 
 Chaque ligne bleue correspond à un groupe de ménages différent. On constate que ces lignes ne se superposent pas parfaitement, ce qui suggère que les conditions d'humidité varient d'une région à l'autre. Un indice SPEI positif indique des périodes plus humides, tandis qu'un indice SPEI négatif correspond à des périodes plus sèches. Cela montre que, même si les ménages sont regroupés, ils n'ont pas vécu les mêmes conditions climatiques. On observe néanmoins des baisses significatives de l'indice SPEI, notamment des épisodes de sécheresse très sévère en 1992 et entre 2017 et 2020.
 
 ## Transformation de la colonne spei_wc en format wide
 
-```{r}
-# Chaque élément spei_wc devient une table {datetime, variable, unit, value}
-spatial_covars_spei <- spatial_covars_spei %>%
-  mutate(
-    spei_wc = map(spei_wc, ~ .x %>%
-      mutate(
-        datetime = as.Date(paste0(.data$year, "-01-01")),
-        variable = "spei_scale12_mean",
-        unit     = "annual",
-        value    = .data$spei_mean
-      ) %>%
-      select(datetime, variable, unit, value))
-  )
+Le bloc ci-dessous documente le précalcul historique (calcul du SPEI pour toutes les grappes, conversion de `spei_wc` au format long `{datetime, variable, unit, value}` et sauvegarde de l'artefact). Il est très coûteux et **non exécuté** (`eval: false`) : aucun rendu ordinaire ne doit le déclencher. La régénération explicite passe par le script versionné `utils/spei_precompute.R`, qui reproduit exactement cette chaîne :
 
-# Sauvegarde (cohérente avec le reste de tes scripts)
-spatial_covars_spei_df <- as.data.frame(spatial_covars_spei)
-write_rds(spatial_covars_spei_df, "data/derived/spatial_covars_spei_staggered.rds")
-cat("SPEI (annuel, 1981–2021) enregistré dans data/derived/spatial_covars_spei_staggered.rds\n")
+```{r}
+#| label: spei-full-precompute
+#| eval: false
+# Précalcul complet (plusieurs heures) — à n'exécuter qu'explicitement :
+source("utils/spei_precompute.R")
 ```
