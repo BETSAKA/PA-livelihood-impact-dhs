@@ -4915,3 +4915,305 @@ tbl_did_rain <- tidy_did_rain %>%
 ```
 
 Le résultat montre que les aires protégées n'ont pas d'impact significatif sur la richesse, quelle que soit la condition climatique, même si les ménages observées en période de pluies semblent légèrement plus riches.
+
+## Sensibilité à la datation du traitement : décrets de création permanents
+
+Cette section évalue la sensibilité des estimations échelonnées du chapitre 07 à la définition de la **date d'entrée en traitement**. Dans la spécification principale, le traitement d'une aire protégée date du **premier jalon individuel de protection ou de gestion vérifié** (registre de `01-treatment-assignation.qmd` : arrêté de mise en protection temporaire, contrat ou délégation de gestion, etc.). La variante testée ici remplace cette date par celle du **premier décret de création définitive (permanent) vérifié** (`date_permanent` du même registre : décret individuel, ou site nommé dans un décret collectif dont l'appariement est documenté `high`/`medium`). La protection temporaire et ses prorogations, la délégation de gestion, les actes blanket et les modifications ultérieures de limites ne qualifient pas ; lorsqu'aucun décret ne peut être attribué avec certitude (absence de décret vérifié, ou décret daté au-delà de la fenêtre d'observation), les catchments potentiels de l'AP sont classés `Excluded` et ne rejoignent jamais le pool de contrôle.
+
+**Portée de l'exercice.** Il s'agit d'une analyse de sensibilité à la **datation** du traitement, et non d'une estimation de l'effet causal incrémental du statut permanent : les deux scénarios datent le même traitement de deux façons différentes, ils ne constituent pas deux designs causaux distincts. Les formules d'estimation, les covariables du PAP, les pondérations (enquête × appariement), le clustering (grappes d'enquête), les bornes temporelles et les binnes d'event-study sont strictement identiques au chapitre 07 ; seule la date d'entrée en traitement change, avec sa conséquence sur la construction des cohortes (`g_eff`) et de `treat_on`.
+
+### Définition et échantillon
+
+L'export de classification « permanent » (`data/derived/cluster_treatment_classification_staggered_permanent_robustness.csv`, produit par `01-treatment-assignation.qmd`) passe par la **chaîne de production identique** : jointure des covariables du chapitre 04, puis appariement par cardinalité du chapitre 06 (règle figée : ATT, tolérances standardisées 0,095, solveur `highs`), réexécuté en isolation sur la nouvelle affectation. Aucun fichier de production n'est modifié ; les intermédiaires vivent dans un cache local ignoré par git (`documentation/permanent_decree_estimation/data/`), validé par empreinte md5 des entrées — si le cache est absent ou périmé (entrées modifiées), le chunk ci-dessous relance automatiquement la chaîne complète en isolation (`pa_perm_run_substitution(force = TRUE)` de `utils/pa_permanent_scenario.R`). L'appariement et l'estimation passent par le script suivi `utils/pa_permanent_scenario.R`, qui encapsule cette chaîne sous forme de fonctions réutilisables (le comportement des chemins de production reste inchangé).
+
+L'exclusion de la Rivière Nosivolo (géométrie linéaire, cf. chapitre 01) est **indépendante de la datation** et s'applique à l'identique dans les deux scénarios ; elle se distingue du statut `Excluded` induit par l'absence de décret résolu (Tsinjoarivo Ambalaomby, Ivohiboro, Kinkony Lake). L'incertitude documentaire restante sur Ankafobe (décret 2021-919 vs texte « PROJET » 2026-1526 non adopté) n'a aucune conséquence ici : aucune grappe assignée, cohorte 2022 postérieure à la fenêtre d'observation.
+
+```{r}
+#| label: perm-scenario-setup
+#| message: false
+#| warning: false
+library(did2s)
+library(broom)
+source("utils/pa_permanent_scenario.R")
+source("utils/iucn_sets.R")
+
+# Cache du scénario permanent validé par empreinte md5 des entrées.
+# Si le cache est absent ou périmé (entrées modifiées), la chaîne
+# complète 04 -> 06 est relancée en isolation via
+# pa_perm_run_substitution(force = TRUE) ; les entrées de production
+# (data/derived/, paper/, docs/) ne sont jamais modifiées.
+matched_perm_sc <- tryCatch(
+  pa_perm_load_matched(regenerate = FALSE),
+  error = function(e) {
+    message("pa_perm : régénération du cache du scénario permanent (",
+            conditionMessage(e), ")")
+    pa_perm_run_substitution(force = TRUE)
+    pa_perm_load_matched(regenerate = FALSE)
+  }
+)
+
+dat_main_sc <- pa_perm_build_dat(pa_perm_matched_main_paths())
+dat_perm_sc <- pa_perm_build_dat(pa_perm_matched_perm_paths())
+dat2_main_sc <- pa_perm_build_dat2(dat_main_sc)
+dat2_perm_sc <- pa_perm_build_dat2(dat_perm_sc)
+
+# Gardes-fous : cohérence export/estimateur au niveau grappe-vague,
+# unicité des clés ménages, codage des contrôles, bornes temporelles.
+recon_sc <- bind_rows(
+  pa_perm_check_export_exposure(dat2_main_sc, pa_perm_export_main()) |>
+    mutate(scenario = "principal"),
+  pa_perm_check_export_exposure(dat2_perm_sc, pa_perm_export_permanent()) |>
+    mutate(scenario = "permanent")
+) |>
+  group_by(scenario) |>
+  summarise(
+    `grappes-vagues comparées` = sum(n_compared),
+    divergences = sum(n_mismatch),
+    perdues_par_appariement = sum(n_export_lost),
+    .groups = "drop"
+  )
+pa_perm_boundary_checks(dat2_main_sc, "principal")
+pa_perm_boundary_checks(dat2_perm_sc, "permanent")
+
+recon_sc
+
+bind_rows(
+  dat2_main_sc |> sf::st_drop_geometry() |> mutate(scenario = "principal"),
+  dat2_perm_sc |> sf::st_drop_geometry() |> mutate(scenario = "permanent")
+) |>
+  group_by(scenario) |>
+  summarise(
+    ménages_appariés = n(),
+    grappes = n_distinct(hv001),
+    ménages_traités = sum(treat == 1L),
+    ménages_traités_exposés = sum(treat == 1L & treated_now == 1),
+    .groups = "drop"
+  )
+```
+
+La réconciliation export/estimateur ne relève aucune divergence dans les deux scénarios ; les grappes-vagues « perdues » le sont uniquement par l'appariement, jamais par reclassification. L'échantillon permanent compte 37 802 ménages appariés contre 38 348 dans le scénario principal.
+
+### Chronologie et support du traitement
+
+```{r}
+#| label: perm-scenario-deltas
+#| message: false
+deltas_sc <- pa_perm_assignment_deltas()
+deltas_sc |>
+  gt() |>
+  fmt_number(columns = c(DHSYEAR), decimals = 0) |>
+  cols_label(
+    DHSYEAR = "Vague",
+    n_clusters = "Grappes",
+    n_treatment_to_excluded = "Trait. → Exclus",
+    n_treated_now_flips = "Bascules treated_now",
+    n_cohort_changes = "Changements de cohorte",
+    n_wdpaid_changes = "Réaffectations d'AP"
+  ) |>
+  tab_caption("Divergences d'affectation entre les deux datations (grappes-vagues)")
+```
+
+Par rapport à la datation principale, le scénario permanent produit **six grappes-vagues `Treatment → Excluded`** (buffers d'exclusion de Tsinjoarivo Ambalaomby et Ivohiboro, désormais sans décret résolu avant 2021), **six bascules de `treated_now`** (1 → 0 : trois grappes en 2011, trois en 2013), **61 changements de cohorte effective** parmi les 186 grappes-vagues `Treatment` communes — dont 42 de 2009 à 2015 et 19 de 2014 à 2015 sous la règle du 1er juin — et **quatre réaffectations d'AP** (WDPAID). Concrètement, les actes de protection temporaire de 2009 et 2014 ne comptent plus comme entrée en traitement : les AP concernées ne « démarrent » qu'à leur décret de création définitive, qui tombe en 2015 pour l'essentiel du réseau.
+
+Il convient de distinguer l'**année civile de l'acte** (`treatment_year`) de la **cohorte effective** (`g_eff`) : un décret signé après le 1er juin de son année place l'AP dans la cohorte de l'année suivante (règle du 1er juin, identique aux deux scénarios).
+
+```{r}
+#| label: perm-scenario-cohorts
+#| message: false
+cohort_support_sc <- bind_rows(
+  dat2_main_sc |> sf::st_drop_geometry() |>
+    filter(GROUP == "Treatment") |> mutate(scenario = "principal"),
+  dat2_perm_sc |> sf::st_drop_geometry() |>
+    filter(GROUP == "Treatment") |> mutate(scenario = "permanent")
+) |>
+  group_by(scenario, cohorte = g_eff) |>
+  summarise(
+    n_ap = n_distinct(WDPAID),
+    vagues_avant = n_distinct(DHSYEAR[treated_now == 0]),
+    vagues_apres = n_distinct(DHSYEAR[treated_now == 1]),
+    ménages_avant = sum(treated_now == 0),
+    ménages_apres = sum(treated_now == 1),
+    .groups = "drop"
+  )
+
+cohort_support_sc |>
+  gt() |>
+  fmt_number(columns = c(cohorte, n_ap, vagues_avant, vagues_apres, ménages_avant, ménages_apres), decimals = 0) |>
+  cols_label(
+    cohorte = "Cohorte (g_eff)",
+    n_ap = "AP",
+    vagues_avant = "Vagues avant",
+    vagues_apres = "Vagues après",
+    ménages_avant = "Ménages avant",
+    ménages_apres = "Ménages après"
+  ) |>
+  tab_caption("Support des cohortes de traitement : datation principale vs décrets permanents")
+```
+
+Sous la datation principale, l'identification post-traitement repose sur quatre cohortes (2009, 2014, 2015, 2020). Sous la datation permanente, **toutes** les grappes traitées et exposées appartiennent à une cohorte unique, **2015**, observée après traitement aux vagues 2016 (+1), 2018 (+3) et 2021 (+6) ; les périodes pré-traitement proviennent des vagues 1997–2013 des mêmes AP. Les cohortes 2018 (Anjajavy) et 2022 (Ankafobe) n'ont aucune grappe assignée dans aucun échantillon apparié : l'estimateur ne les observe jamais, et il n'existe **aucun support post-traitement** pour ces sites dans le scénario permanent.
+
+### Estimations
+
+```{r}
+#| label: perm-scenario-estimates
+#| message: false
+#| warning: false
+# Les neuf spécifications échelonnées du chapitre 07, refaites à
+# l'identique sur les deux scénarios (formules, contrôles, poids,
+# clustering et binnes inchangés).
+est_main_sc <- pa_perm_run_models(dat2_main_sc, "principal")
+est_perm_sc <- pa_perm_run_models(dat2_perm_sc, "permanent")
+est_all_sc <- bind_rows(est_main_sc, est_perm_sc)
+
+tbl_perm_static <- est_all_sc |>
+  filter(family == "static") |>
+  mutate(
+    outcome = dplyr::recode(
+      model_id,
+      "h1_static" = "H1 — centile de richesse",
+      "h2_static" = "H2 — z-score de richesse",
+      "h3_static_strict" = "H3 — strictes (IUCN I–IV)",
+      "h3_static_multi" = "H3 — multi-usages (IUCN V–VI)"
+    ),
+    scenario = factor(scenario, levels = c("principal", "permanent"),
+                      labels = c("Datation principale", "Décrets permanents"))
+  ) |>
+  dplyr::select(outcome, scenario, estimate, std.error, nobs) |>
+  gt() |>
+  fmt_number(columns = c(estimate, std.error), decimals = 3) |>
+  fmt_number(columns = c(nobs), decimals = 0) |>
+  cols_label(
+    outcome = "Résultat",
+    scenario = "Scénario",
+    estimate = "Coefficient",
+    std.error = "É.-t.",
+    nobs = "N"
+  ) |>
+  tab_caption("Effet statique (did2s, traité au 1er juin de référence) : datation principale vs décrets permanents")
+
+tbl_perm_static
+```
+
+L'effet statique garde le même signe (positif) et le même ordre de grandeur dans les deux scénarios : H1 passe de 5,45 (é.-t. 3,63) à 3,92 (é.-t. 3,30) centiles de richesse, soit un niveau d'environ 28 % plus faible sous la datation permanente ; H2 passe de 0,0173 (é.-t. 0,0074) à 0,0227 (é.-t. 0,0081) écart-type, légèrement plus élevé. Aucun scénario ne fait basculer un résultat significatif en non significatif ou inversement (H2 : t ≈ 2,4 et 2,8 ; H1 statique reste imprécis, t ≈ 1,5 et 1,2). L'hétérogénéité H3 suit la même logique, avec la limite de support propre au sous-échantillon strict signalée au chapitre 07, qui se retrouve — et se durcit — sous datation permanente.
+
+```{r}
+#| label: perm-scenario-es-figure
+#| message: false
+#| fig-cap: "Event-study (did2s, binnes de deux ans) : datation principale vs décrets permanents. Seules les binnes estimables sont représentées ; les binnes sans support ne sont ni tracées ni assimilées à zéro."
+es_plot_sc <- est_all_sc |>
+  filter(family == "es", model_id %in% c("h1_es", "h2_es"), !is.na(term)) |>
+  mutate(
+    outcome = dplyr::recode(model_id, "h1_es" = "H1 — centile de richesse",
+                     "h2_es" = "H2 — z-score de richesse"),
+    bin = sub("^rel_year_2yr2::", "", term),
+    bin = factor(bin, levels = pa_perm_es_levels),
+    scenario = factor(scenario, levels = c("principal", "permanent"),
+                      labels = c("Datation principale", "Décrets permanents"))
+  )
+
+ggplot(es_plot_sc, aes(bin, estimate, colour = scenario, group = scenario)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4)) +
+  geom_errorbar(
+    aes(ymin = conf.low, ymax = conf.high),
+    position = position_dodge(width = 0.4),
+    width = 0.2
+  ) +
+  facet_wrap(~outcome, ncol = 1, scales = "free_y") +
+  scale_x_discrete(labels = pa_perm_bin_label) +
+  labs(
+    x = "Année par rapport au traitement (binnes de 2 ans)",
+    y = "Effet estimé",
+    colour = "Scénario"
+  ) +
+  theme_minimal(base_size = 13)
+```
+
+Sur les binnes estimables dans les deux scénarios, les coefficients d'event-study sont proches (H1, binne −2 : 6,60 vs 6,67 ; binne 0 : −2,93 vs −3,11 ; binne +3 : 5,60 vs 5,60), avec des é.-t. légèrement plus serrés sous datation permanente. Aucune binne de pré-traitement n'est significativement différente de zéro dans les deux scénarios (test faible : la binne −2 est la seule à moins de deux ans du traitement).
+
+```{r}
+#| label: perm-scenario-es-support
+#| message: false
+# Support par binne (diagnostics agrégés uniquement) : les binnes sans
+# observation n'existent pas dans la régression et ne doivent pas être
+# lues comme des zéros.
+es_support_sc <- bind_rows(
+  pa_perm_es_support(dat2_main_sc, "principal"),
+  pa_perm_es_support(dat2_perm_sc, "permanent")
+)
+
+es_support_sc |>
+  dplyr::select(scenario, bin_label, n_hh_exposed, n_clusters, n_pas, n_cohorts, waves) |>
+  gt() |>
+  fmt_number(columns = c(n_hh_exposed, n_clusters, n_pas, n_cohorts), decimals = 0) |>
+  cols_label(
+    scenario = "Scénario",
+    bin_label = "Binne",
+    n_hh_exposed = "Ménages exposés",
+    n_clusters = "Grappes",
+    n_pas = "AP",
+    n_cohorts = "Cohortes",
+    waves = "Vagues"
+  ) |>
+  tab_caption("Support des binnes d'event-study (côté traité)")
+```
+
+### Diagnostic à échantillon commun
+
+Pour isoler l'effet de la **rechronologie** du traitement de celui des changements d'échantillon, on restreint les deux scénarios à l'intersection de leurs échantillons appariés (**37 359 ménages** ; appartenance de groupe identique à 100 % ; poids d'appariement identiques pour chaque ménage commun). Sur cet échantillon fixe — résultats, covariables, formules, clustering et poids inchangés — seule la datation du traitement varie, y compris sa conséquence sur la construction des cohortes. Il s'agit d'une **décomposition diagnostique**, pas d'une estimation causale de la permanence.
+
+```{r}
+#| label: perm-scenario-common
+#| message: false
+prep_sc <- pa_perm_common_sample_prep(
+  dat_main_sc, dat_perm_sc, dat2_main_sc, dat2_perm_sc
+)
+
+diag_specs_sc <- pa_perm_model_specs |>
+  filter(model_id %in% c("h1_static", "h2_static"))
+
+est_common_sc <- bind_rows(
+  pa_perm_run_models(prep_sc$dat2_common_main, "principal", diag_specs_sc),
+  pa_perm_run_models(prep_sc$dat2_common_perm, "permanent", diag_specs_sc)
+) |>
+  mutate(variant = "Échantillon commun")
+
+est_samepa_sc <- bind_rows(
+  pa_perm_run_models(prep_sc$dat2_samepa_main, "principal", diag_specs_sc),
+  pa_perm_run_models(prep_sc$dat2_samepa_perm, "permanent", diag_specs_sc)
+) |>
+  mutate(variant = "Même AP (traités réaffectés exclus)")
+
+bind_rows(est_common_sc, est_samepa_sc) |>
+  filter(family == "static") |>
+  mutate(
+    outcome = dplyr::recode(model_id,
+      "h1_static" = "H1 — centile de richesse",
+      "h2_static" = "H2 — z-score de richesse"),
+    scenario = factor(scenario, levels = c("principal", "permanent"),
+                      labels = c("Datation principale", "Décrets permanents"))
+  ) |>
+  dplyr::select(variant, outcome, scenario, estimate, std.error, nobs) |>
+  gt() |>
+  fmt_number(columns = c(estimate, std.error), decimals = 3) |>
+  fmt_number(columns = c(nobs), decimals = 0) |>
+  cols_label(
+    variant = "Variante",
+    outcome = "Résultat",
+    scenario = "Scénario",
+    estimate = "Coefficient",
+    std.error = "É.-t.",
+    nobs = "N"
+  ) |>
+  tab_caption("Diagnostic de décomposition : mêmes ménages, seule la datation change")
+
+prep_sc$counts
+```
+
+À échantillon commun, H1 passe de 5,52 (datation principale) à 3,88 (permanente) et H2 de 0,0178 à 0,0229 : la décomposition reproduit l'essentiel de l'écart entre spécifications complètes. Le contraste est donc attribuable à la **rechronologie du traitement**, et non aux grappes-vagues exclues, aux 123 ménages sous les quatre AP réaffectées, ni aux pools de contrôle resélectionnés. La variante « même AP » (traités conservant le même WDPAID dans les deux scénarios : 5 394 ménages traités sur 5 517) confirme le même sens et une ampleur comparable (H1 : 6,04 → 4,23). Rien n'indique que ces écarts soient eux-mêmes statistiquement significatifs : aucun test approprié de différence entre scénarios n'est effectué ici, et aucune prétention en ce sens n'est formulée.
+
+### Limites
+
+- **Design effectivement monocohorte.** Sous datation permanente, l'adoption échelonnée s'effondre sur une seule cohorte observée (2015) : l'event-study ne peut pas soutenir des dynamiques fines et les binnes « −6 à −5 », « 4 à 5 », « 8 à 9 » et « 10 et plus » (indices −3, +2, +4 et +5) sont **non estimables** par construction (aucune observation) ; elles ne sont ni tracées ni rapportées comme des zéros.
+- **Pré-periods non propres.** Les AP redatées en cohorte 2015 incluent celles datées 2009 et 2014 dans le scénario principal (décisions collectives, protections temporaires) : leurs observations 2008–2013 peuvent donc correspondre à des années de protection ou de gestion temporaires déjà effectives. Les coefficients de pré-period du scénario permanent ne sont pas des pré-tendances « non traitées » au sens propre et sous-estiment, le cas échéant, les écarts au contrefactuel non traité.
+- **Portée.** L'exercice explore la sensibilité des estimations au moment retenu de l'entrée en traitement ; il ne date pas le début opérationnel de la protection et n'identifie pas d'effet distinct du statut permanent. Aucune affirmation directionnelle sur un biais n'est possible sans hypothèse d'identification supplémentaire.

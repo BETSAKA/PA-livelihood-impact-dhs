@@ -281,6 +281,8 @@ modelsummary(
 
 
 
+**Provenance des entrées.** Les entrées de ce chapitre (`data/derived/data_matched_<année>.rds` et l'export `cluster_treatment_classification_staggered.csv`) ont été régénérées le 25 novembre 2026 après l'audit des dates légales de traitement (cf. `01-treatment-assignation.qmd` et `utils/pa_legal_dates.R`). Les résultats présentés reflètent cette classification corrigée et remplacent les versions rendues avant cet audit. La sensibilité de ces estimations à la datation du traitement (décrets de création permanents) est évaluée au chapitre 08, section « Sensibilité à la datation du traitement : décrets de création permanents ».
+
 ```{r}
 # Construction de dat2
 dat2 <- dat %>%
@@ -958,7 +960,7 @@ write_rds(h3_staggered_static_tb, "paper/tables/h3_staggered_static_tb.rds")
 h3_staggered_static_tb
 ```
 
-Sous le design final (effets fixes de cohorte de traitement + année), le sous-échantillon strict ne comporte que les cohortes 2009 et 2015, et la cohorte 2015 n'a aucune observation non traitée : son effet fixe de cohorte n'est pas estimable et ses ménages traités (26) ne contribuent pas à l'identification. L'estimation stricte repose donc essentiellement sur la cohorte 2009 ; l'estimation multi-usages, mieux soutenue, couvre les cohortes 2009, 2014, 2015 et 2020. Les points estimates sont à lire avec cette limite de support à l'esprit.
+Sous le design final (effets fixes de cohorte de traitement + année), le sous-échantillon strict ne comporte que la cohorte 2015 (4 AP), qui dispose d'observations non traitées avant son entrée en vigueur (vagues 1997–2013) : son effet fixe de cohorte est estimable. L'estimation multi-usages, mieux soutenue, couvre les cohortes 2009, 2014, 2015 et 2020. Les points estimates sont à lire avec cette limite de support à l'esprit.
 
 ### Estimation en event-study par type d’aire protégée
 
