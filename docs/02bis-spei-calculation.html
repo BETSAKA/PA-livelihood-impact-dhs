@@ -330,67 +330,85 @@ div.csl-indent {
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr) <span class="co"># Lecture des données de texte rectangulaires</span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2) <span class="co"># visualisation</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Load data </span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>spatial_covars <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">"data/derived/spatial_covars_staggered.rds"</span>)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to compute SPEI</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>compute_spei_annual <span class="ot">&lt;-</span> <span class="cf">function</span>(tmin_tbl, tmax_tbl, prec_tbl, lat_deg) {</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># tmin_tbl/tmax_tbl/prec_tbl: tibbles avec colonnes `datetime` (Date) et `value` (num)</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  d_tmin <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">date =</span> tmin_tbl<span class="sc">$</span>datetime, <span class="at">tmin =</span> tmin_tbl<span class="sc">$</span>value)</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  d_tmax <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">date =</span> tmax_tbl<span class="sc">$</span>datetime, <span class="at">tmax =</span> tmax_tbl<span class="sc">$</span>value)</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  d_prec <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">date =</span> prec_tbl<span class="sc">$</span>datetime, <span class="at">prec =</span> prec_tbl<span class="sc">$</span>value)</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  d_merged <span class="ot">&lt;-</span> <span class="fu">reduce</span>(<span class="fu">list</span>(d_tmin, d_tmax, d_prec), left_join, <span class="at">by =</span> <span class="st">"date"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(date)</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  d_clean <span class="ot">&lt;-</span> <span class="fu">drop_na</span>(d_merged)  <span class="co"># supprime lignes avec NA</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Si séries trop courtes, renvoyer squelette 1981:2021 en NA</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(d_clean) <span class="sc">&lt;</span> <span class="dv">12</span>) {</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">tibble</span>(<span class="at">year =</span> <span class="dv">1981</span><span class="sc">:</span><span class="dv">2021</span>, <span class="at">spei_mean =</span> <span class="cn">NA_real_</span>))</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="co"># PET (Hargreaves), bilan hydrique et SPEI mensuel</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  pet <span class="ot">&lt;-</span> <span class="fu">hargreaves</span>(<span class="at">Tmin =</span> d_clean<span class="sc">$</span>tmin,</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>                    <span class="at">Tmax =</span> d_clean<span class="sc">$</span>tmax,</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>                    <span class="at">Pre  =</span> d_clean<span class="sc">$</span>prec,</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>                    <span class="at">lat  =</span> lat_deg)</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>  wb <span class="ot">&lt;-</span> d_clean<span class="sc">$</span>prec <span class="sc">-</span> pet</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Chargement et validation du produit spatial précalculé du chapitre 02</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># (aucune extraction mapme pendant le rendu normal)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>SPATIAL_COVARS_PATH <span class="ot">&lt;-</span> <span class="st">"data/derived/spatial_covars_staggered.rds"</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(SPATIAL_COVARS_PATH)) {</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Fichier spatial précalculé introuvable : "</span>, SPATIAL_COVARS_PATH,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="sc">\n</span><span class="st">Ne pas relancer l'extraction mapme.biodiversity : restaurer le fichier"</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="sc">\n</span><span class="st">depuis une sauvegarde locale, puis relancer le rendu."</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>spatial_covars <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(SPATIAL_COVARS_PATH)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"spatial_covars_staggered : doublons de clés DHSYEAR × DHSCLUST"</span> <span class="ot">=</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">anyDuplicated</span>(spatial_covars[, <span class="fu">c</span>(<span class="st">"DHSYEAR"</span>, <span class="st">"DHSCLUST"</span>)]) <span class="sc">==</span> <span class="dv">0</span>L,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="st">"spatial_covars_staggered : séries WorldClim absentes"</span> <span class="ot">=</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">all</span>(<span class="fu">c</span>(<span class="st">"temperature_max_wc"</span>, <span class="st">"temperature_min_wc"</span>, <span class="st">"precipitation_wc"</span>) <span class="sc">%in%</span> <span class="fu">names</span>(spatial_covars))</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to compute SPEI</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>compute_spei_annual <span class="ot">&lt;-</span> <span class="cf">function</span>(tmin_tbl, tmax_tbl, prec_tbl, lat_deg) {</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="co"># tmin_tbl/tmax_tbl/prec_tbl: tibbles avec colonnes `datetime` (Date) et `value` (num)</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  d_tmin <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">date =</span> tmin_tbl<span class="sc">$</span>datetime, <span class="at">tmin =</span> tmin_tbl<span class="sc">$</span>value)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  d_tmax <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">date =</span> tmax_tbl<span class="sc">$</span>datetime, <span class="at">tmax =</span> tmax_tbl<span class="sc">$</span>value)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>  d_prec <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">date =</span> prec_tbl<span class="sc">$</span>datetime, <span class="at">prec =</span> prec_tbl<span class="sc">$</span>value)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>  d_merged <span class="ot">&lt;-</span> <span class="fu">reduce</span>(<span class="fu">list</span>(d_tmin, d_tmax, d_prec), left_join, <span class="at">by =</span> <span class="st">"date"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(date)</span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>  wb_ts <span class="ot">&lt;-</span> <span class="fu">ts</span>(wb,</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>              <span class="at">start =</span> <span class="fu">c</span>(<span class="fu">year</span>(<span class="fu">min</span>(d_clean<span class="sc">$</span>date)), <span class="fu">month</span>(<span class="fu">min</span>(d_clean<span class="sc">$</span>date))),</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>              <span class="at">frequency =</span> <span class="dv">12</span>)</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>  spei_obj <span class="ot">&lt;-</span> <span class="fu">spei</span>(wb_ts,</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>                   <span class="at">scale =</span> <span class="dv">12</span>,</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>                   <span class="at">ref.start =</span> <span class="fu">c</span>(<span class="dv">1981</span>, <span class="dv">1</span>),</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>                   <span class="at">ref.end   =</span> <span class="fu">c</span>(<span class="dv">2021</span>, <span class="dv">12</span>))</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">datetime =</span> d_clean<span class="sc">$</span>date,</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>         <span class="at">spei      =</span> <span class="fu">as.numeric</span>(spei_obj<span class="sc">$</span>fitted)) <span class="sc">%&gt;%</span></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(datetime <span class="sc">&gt;=</span> <span class="fu">as.Date</span>(<span class="st">"1981-01-01"</span>),</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>           datetime <span class="sc">&lt;=</span> <span class="fu">as.Date</span>(<span class="st">"2021-12-31"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(datetime)) <span class="sc">%&gt;%</span></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">spei_mean =</span> <span class="fu">mean</span>(spei, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    <span class="fu">complete</span>(<span class="at">year =</span> <span class="dv">1981</span><span class="sc">:</span><span class="dv">2021</span>, <span class="at">fill =</span> <span class="fu">list</span>(<span class="at">spei_mean =</span> <span class="cn">NA_real_</span>))</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>  d_clean <span class="ot">&lt;-</span> <span class="fu">drop_na</span>(d_merged)  <span class="co"># supprime lignes avec NA</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Si séries trop courtes, renvoyer squelette 1981:2021 en NA</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(d_clean) <span class="sc">&lt;</span> <span class="dv">12</span>) {</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">tibble</span>(<span class="at">year =</span> <span class="dv">1981</span><span class="sc">:</span><span class="dv">2021</span>, <span class="at">spei_mean =</span> <span class="cn">NA_real_</span>))</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>  <span class="co"># PET (Hargreaves), bilan hydrique et SPEI mensuel</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>  pet <span class="ot">&lt;-</span> <span class="fu">hargreaves</span>(<span class="at">Tmin =</span> d_clean<span class="sc">$</span>tmin,</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>                    <span class="at">Tmax =</span> d_clean<span class="sc">$</span>tmax,</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>                    <span class="at">Pre  =</span> d_clean<span class="sc">$</span>prec,</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>                    <span class="at">lat  =</span> lat_deg)</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>  wb <span class="ot">&lt;-</span> d_clean<span class="sc">$</span>prec <span class="sc">-</span> pet</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>  wb_ts <span class="ot">&lt;-</span> <span class="fu">ts</span>(wb,</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>              <span class="at">start =</span> <span class="fu">c</span>(<span class="fu">year</span>(<span class="fu">min</span>(d_clean<span class="sc">$</span>date)), <span class="fu">month</span>(<span class="fu">min</span>(d_clean<span class="sc">$</span>date))),</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>              <span class="at">frequency =</span> <span class="dv">12</span>)</span>
 <span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a><span class="co"># Latitude géodésique depuis la géométrie (centroïde)</span></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>spatial_covars_spei <span class="ot">&lt;-</span> spatial_covars <span class="sc">%&gt;%</span></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">lat =</span> <span class="fu">st_coordinates</span>(<span class="fu">st_centroid</span>(geometry))[, <span class="dv">2</span>])</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>row1 <span class="ot">&lt;-</span> spatial_covars_spei[<span class="dv">1</span>, ]</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>spei_tbl_one <span class="ot">&lt;-</span> <span class="fu">compute_spei_annual</span>(</span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>  <span class="at">tmin_tbl =</span> row1<span class="sc">$</span>temperature_min_wc[[<span class="dv">1</span>]],</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>  <span class="at">tmax_tbl =</span> row1<span class="sc">$</span>temperature_max_wc[[<span class="dv">1</span>]],</span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>  <span class="at">prec_tbl =</span> row1<span class="sc">$</span>precipitation_wc[[<span class="dv">1</span>]],</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>  <span class="at">lat_deg  =</span> row1<span class="sc">$</span>lat</span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>  spei_obj <span class="ot">&lt;-</span> <span class="fu">spei</span>(wb_ts,</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>                   <span class="at">scale =</span> <span class="dv">12</span>,</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>                   <span class="at">ref.start =</span> <span class="fu">c</span>(<span class="dv">1981</span>, <span class="dv">1</span>),</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>                   <span class="at">ref.end   =</span> <span class="fu">c</span>(<span class="dv">2021</span>, <span class="dv">12</span>))</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">datetime =</span> d_clean<span class="sc">$</span>date,</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>         <span class="at">spei      =</span> <span class="fu">as.numeric</span>(spei_obj<span class="sc">$</span>fitted)) <span class="sc">%&gt;%</span></span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(datetime <span class="sc">&gt;=</span> <span class="fu">as.Date</span>(<span class="st">"1981-01-01"</span>),</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>           datetime <span class="sc">&lt;=</span> <span class="fu">as.Date</span>(<span class="st">"2021-12-31"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(datetime)) <span class="sc">%&gt;%</span></span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(year) <span class="sc">%&gt;%</span></span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">spei_mean =</span> <span class="fu">mean</span>(spei, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">.groups =</span> <span class="st">"drop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>    <span class="fu">complete</span>(<span class="at">year =</span> <span class="dv">1981</span><span class="sc">:</span><span class="dv">2021</span>, <span class="at">fill =</span> <span class="fu">list</span>(<span class="at">spei_mean =</span> <span class="cn">NA_real_</span>))</span>
+<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Illustration sur un seul cluster (calcul à la volée, coût négligeable)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>spatial_covars_spei_one <span class="ot">&lt;-</span> spatial_covars <span class="sc">%&gt;%</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">lat =</span> <span class="fu">st_coordinates</span>(<span class="fu">st_centroid</span>(geometry))[, <span class="dv">2</span>])</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>row1 <span class="ot">&lt;-</span> spatial_covars_spei_one[<span class="dv">1</span>, ]</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>spei_tbl_one <span class="ot">&lt;-</span> <span class="fu">compute_spei_annual</span>(</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">tmin_tbl =</span> row1<span class="sc">$</span>temperature_min_wc[[<span class="dv">1</span>]],</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">tmax_tbl =</span> row1<span class="sc">$</span>temperature_max_wc[[<span class="dv">1</span>]],</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">prec_tbl =</span> row1<span class="sc">$</span>precipitation_wc[[<span class="dv">1</span>]],</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">lat_deg  =</span> row1<span class="sc">$</span>lat</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Calculating reference evapotranspiration using the Hargreaves method. Using latitude (`lat`) to estimate extraterrestrial radiation. Using precipitation data, following Droogers and Allen (2002). Checking for missing values (`NA`): all the data must be complete. Input type is vector. Assuming the data are monthly time series starting in January, all regular (non-leap) years."
@@ -398,75 +416,111 @@ div.csl-indent {
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Graphique </span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>spei_2017 <span class="ot">&lt;-</span> spei_tbl_one <span class="sc">%&gt;%</span> </span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(year <span class="sc">==</span> <span class="dv">2017</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(spei_tbl_one, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> spei_mean)) <span class="sc">+</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="fu">aes</span>(<span class="at">y =</span> <span class="fu">pmax</span>(<span class="dv">0</span>, <span class="sc">-</span>spei_mean)), <span class="at">alpha =</span> <span class="fl">0.25</span>) <span class="sc">+</span>  <span class="co"># barres pour sécheresse (optionnel)</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">2017</span>, <span class="at">color =</span> <span class="st">"red"</span>, <span class="at">linetype =</span> <span class="st">"dotted"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_label</span>(</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> spei_2017, </span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">x =</span> <span class="dv">2017</span>, <span class="at">y =</span> spei_mean, </span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">label =</span> <span class="fu">paste0</span>(<span class="st">"Année: 2017</span><span class="sc">\n</span><span class="st">SPEI: "</span>, <span class="fu">round</span>(spei_mean, <span class="dv">2</span>))),</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">nudge_x =</span> <span class="dv">1</span>, </span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">nudge_y =</span> <span class="fl">0.3</span>,</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"white"</span>,</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"black"</span>,</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">label.size =</span> <span class="fl">0.4</span>, </span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">label.padding =</span> <span class="fu">unit</span>(<span class="fl">0.2</span>, <span class="st">"lines"</span>)</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Annual SPEI (scale=12) – Demonstration cluster"</span>,</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"SPEI (annual mean)"</span>) <span class="sc">+</span></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Graphique </span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>spei_2017 <span class="ot">&lt;-</span> spei_tbl_one <span class="sc">%&gt;%</span> </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(year <span class="sc">==</span> <span class="dv">2017</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(spei_tbl_one, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> spei_mean)) <span class="sc">+</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="fu">aes</span>(<span class="at">y =</span> <span class="fu">pmax</span>(<span class="dv">0</span>, <span class="sc">-</span>spei_mean)), <span class="at">alpha =</span> <span class="fl">0.25</span>) <span class="sc">+</span>  <span class="co"># barres pour sécheresse (optionnel)</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">2017</span>, <span class="at">color =</span> <span class="st">"red"</span>, <span class="at">linetype =</span> <span class="st">"dotted"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_label</span>(</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> spei_2017, </span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">x =</span> <span class="dv">2017</span>, <span class="at">y =</span> spei_mean, </span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">label =</span> <span class="fu">paste0</span>(<span class="st">"Année: 2017</span><span class="sc">\n</span><span class="st">SPEI: "</span>, <span class="fu">round</span>(spei_mean, <span class="dv">2</span>))),</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">nudge_x =</span> <span class="dv">1</span>, </span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">nudge_y =</span> <span class="fl">0.3</span>,</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"white"</span>,</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"black"</span>,</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">label.size =</span> <span class="fl">0.4</span>, </span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">label.padding =</span> <span class="fu">unit</span>(<span class="fl">0.2</span>, <span class="st">"lines"</span>)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Annual SPEI (scale=12) – Demonstration cluster"</span>,</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"SPEI (annual mean)"</span>) <span class="sc">+</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="02bis-spei-calculation_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="02bis-spei-calculation_files/figure-html/spei-one-cluster-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
 <p>Le graphique illustre l’évolution annuelle de l’indice SPEI moyen pour un cluster géographique entre 1981 et 2021. La courbe bleue représente la tendance annuelle du SPEI moyen, mettant en exergue les variations interannuelles du climat dans la zone étudiée. Les points rouges indiquent les valeurs du SPEI moyen pour chaque année. La ligne horizontale noire en pointillées, placées à y = 0, sert de référence pour les conditions climatiques neutres.</p>
 <p>On observe qu’entre 1980 et 2000, la majorité des années a un SPEI supérieur à 0, correspondant à des conditions normales ou légèrement humides, avec peu d’épisodes de sécheresse significative selon la classification de Mckee et al <span class="citation" data-cites="1993"><em>Deuxième Recensement Général de La Population Et de l’habita (<span>RGPH</span>-2)</em> (<a href="11-references.html#ref-1993" role="doc-biblioref">1993</a>)</span>. En revanche, à partir des années 2004, on obtient des SPEI inférieur à 0, marquant une augmentation de la fréquence des épisodes de sécheresse. En 2017, le SPEI a une valeur particulièrement basse (SPEI = -2.40012658), qui d’après la classification de Vicente-Serrano et al. <span class="citation" data-cites="2010">(<a href="11-references.html#ref-2010" role="doc-biblioref"><strong>2010?</strong></a>)</span> caractérise une sécheresse très sévère.</p>
-<p>Nous appliquons la même procédure pour l’ensemble des clusters étudiés.</p>
+<p>Nous appliquons la même procédure pour l’ensemble des grappes étudiées.</p>
+<p><strong>Important — précalcul SPEI.</strong> Le calcul du SPEI pour l’ensemble des grappes (boucle <code>pmap()</code> sur les séries WorldClim, plusieurs heures) a été exécuté une fois pour toutes et sauvegardé dans <code>data/derived/spatial_covars_spei_staggered.rds</code> (schéma long <code>spei_wc</code> : <code>{datetime, variable, unit, value}</code>). Ce produit est <strong>consommé</strong> par le chapitre 04 ; un rendu ordinaire doit le <strong>lire et le valider</strong>, jamais le recalculer. Le bloc historique de régénération est conservé plus bas à titre documentaire, <strong>non exécuté</strong> ; la régénération explicite (si le fichier est absent ou périmé) s’effectue dans la console R avec <code>source("utils/spei_precompute.R")</code>.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># SPEI for all clusters </span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>quiet <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  tmp <span class="ot">&lt;-</span> <span class="fu">capture.output</span>(res <span class="ot">&lt;-</span> x, <span class="at">file =</span> <span class="cn">NULL</span>)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  res</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>spatial_covars_spei <span class="ot">&lt;-</span> spatial_covars_spei <span class="sc">%&gt;%</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">spei_wc =</span> <span class="fu">pmap</span>(</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">list</span>(temperature_min_wc, temperature_max_wc, precipitation_wc, lat),</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>      <span class="sc">~</span> <span class="fu">quiet</span>(<span class="fu">compute_spei_annual</span>(..<span class="dv">1</span>, ..<span class="dv">2</span>, ..<span class="dv">3</span>, ..<span class="dv">4</span>))</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>spei_df <span class="ot">&lt;-</span> spatial_covars_spei <span class="sc">%&gt;%</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(DHSCLUST, spei_wc) <span class="sc">%&gt;%</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(spei_wc)</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(spei_df, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> spei_mean, <span class="at">group =</span> DHSCLUST)) <span class="sc">+</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">alpha =</span> <span class="fl">0.35</span>) <span class="sc">+</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Annual SPEI by cluster (1981–2021)"</span>,</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"SPEI (annual mean)"</span>) <span class="sc">+</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>SPEI_COVARS_PATH <span class="ot">&lt;-</span> <span class="st">"data/derived/spatial_covars_spei_staggered.rds"</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(SPEI_COVARS_PATH)) {</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Fichier SPEI précalculé introuvable : "</span>, SPEI_COVARS_PATH,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="sc">\n</span><span class="st">Le calcul du SPEI pour l'ensemble des grappes ne doit PAS être relancé"</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="sc">\n</span><span class="st">pendant un rendu ordinaire. Pour le régénérer explicitement (plusieurs"</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="sc">\n</span><span class="st">heures) : source(</span><span class="sc">\"</span><span class="st">utils/spei_precompute.R</span><span class="sc">\"</span><span class="st">)"</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>spatial_covars_spei <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(SPEI_COVARS_PATH)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"spatial_covars_spei_staggered : doublons de clés DHSYEAR × DHSCLUST"</span> <span class="ot">=</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">anyDuplicated</span>(spatial_covars_spei[, <span class="fu">c</span>(<span class="st">"DHSYEAR"</span>, <span class="st">"DHSCLUST"</span>)]) <span class="sc">==</span> <span class="dv">0</span>L,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"spatial_covars_spei_staggered : colonne spei_wc absente"</span> <span class="ot">=</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"spei_wc"</span> <span class="sc">%in%</span> <span class="fu">names</span>(spatial_covars_spei),</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"spatial_covars_spei_staggered : séries SPEI mal formées"</span> <span class="ot">=</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">all</span>(<span class="fu">map_lgl</span>(spatial_covars_spei<span class="sc">$</span>spei_wc,</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>                <span class="sc">~</span> <span class="fu">all</span>(<span class="fu">c</span>(<span class="st">"datetime"</span>, <span class="st">"variable"</span>, <span class="st">"unit"</span>, <span class="st">"value"</span>) <span class="sc">%in%</span> <span class="fu">names</span>(.x)))),</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">"spatial_covars_spei_staggered : périmètre grappes incohérent avec le produit spatial"</span> <span class="ot">=</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(spatial_covars_spei) <span class="sc">==</span> <span class="fu">nrow</span>(spatial_covars)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Empreintes md5 : le rendu ordinaire ne doit modifier aucun des deux artefacts</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"md5 spatial_covars_staggered.rds :"</span>,</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as.character</span>(tools<span class="sc">::</span><span class="fu">md5sum</span>(SPATIAL_COVARS_PATH)), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>md5 spatial_covars_staggered.rds : e6ad357990815f2f8fba47266b0209d3 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"md5 spatial_covars_spei_staggered.rds :"</span>,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as.character</span>(tools<span class="sc">::</span><span class="fu">md5sum</span>(SPEI_COVARS_PATH)), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>md5 spatial_covars_spei_staggered.rds : 32b14583810bb500146a60d7b0a2a1ba </code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"spatial_covars_spei_staggered.rds :"</span>, <span class="fu">nrow</span>(spatial_covars_spei),</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grappes,"</span>, <span class="fu">ncol</span>(spatial_covars_spei), <span class="st">"colonnes — validation OK</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>spatial_covars_spei_staggered.rds : 3175 grappes, 32 colonnes — validation OK</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reconstruction des données de tracé depuis les séries spei_wc sauvegardées</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>spei_df <span class="ot">&lt;-</span> spatial_covars_spei <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(DHSCLUST, spei_wc) <span class="sc">%&gt;%</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(spei_wc) <span class="sc">%&gt;%</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">year</span>(datetime), <span class="at">spei_mean =</span> value)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(spei_df, <span class="fu">aes</span>(<span class="at">x =</span> year, <span class="at">y =</span> spei_mean, <span class="at">group =</span> DHSCLUST)) <span class="sc">+</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">alpha =</span> <span class="fl">0.35</span>) <span class="sc">+</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Annual SPEI by cluster (1981–2021)"</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Year"</span>, <span class="at">y =</span> <span class="st">"SPEI (annual mean)"</span>) <span class="sc">+</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="02bis-spei-calculation_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="02bis-spei-calculation_files/figure-html/spei-load-precomputed-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -475,30 +529,13 @@ div.csl-indent {
 </section>
 <section id="transformation-de-la-colonne-spei_wc-en-format-wide" class="level2" data-number="4.4">
 <h2 data-number="4.4" class="anchored" data-anchor-id="transformation-de-la-colonne-spei_wc-en-format-wide"><span class="header-section-number">4.4</span> Transformation de la colonne spei_wc en format wide</h2>
+<p>Le bloc ci-dessous documente le précalcul historique (calcul du SPEI pour toutes les grappes, conversion de <code>spei_wc</code> au format long <code>{datetime, variable, unit, value}</code> et sauvegarde de l’artefact). Il est très coûteux et <strong>non exécuté</strong> (<code>eval: false</code>) : aucun rendu ordinaire ne doit le déclencher. La régénération explicite passe par le script versionné <code>utils/spei_precompute.R</code>, qui reproduit exactement cette chaîne :</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Chaque élément spei_wc devient une table {datetime, variable, unit, value}</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>spatial_covars_spei <span class="ot">&lt;-</span> spatial_covars_spei <span class="sc">%&gt;%</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">spei_wc =</span> <span class="fu">map</span>(spei_wc, <span class="sc">~</span> .x <span class="sc">%&gt;%</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">datetime =</span> <span class="fu">as.Date</span>(<span class="fu">paste0</span>(.data<span class="sc">$</span>year, <span class="st">"-01-01"</span>)),</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">variable =</span> <span class="st">"spei_scale12_mean"</span>,</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">unit     =</span> <span class="st">"annual"</span>,</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">value    =</span> .data<span class="sc">$</span>spei_mean</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(datetime, variable, unit, value))</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Sauvegarde (cohérente avec le reste de tes scripts)</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>spatial_covars_spei_df <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(spatial_covars_spei)</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(spatial_covars_spei_df, <span class="st">"data/derived/spatial_covars_spei_staggered.rds"</span>)</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"SPEI (annuel, 1981–2021) enregistré dans data/derived/spatial_covars_spei_staggered.rds</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Précalcul complet (plusieurs heures) — à n'exécuter qu'explicitement :</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"utils/spei_precompute.R"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div class="cell-output cell-output-stdout">
-<pre><code>SPEI (annuel, 1981–2021) enregistré dans data/derived/spatial_covars_spei_staggered.rds</code></pre>
-</div>
 </div>
 
 
