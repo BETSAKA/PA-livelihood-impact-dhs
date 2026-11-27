@@ -14,7 +14,7 @@ Le plan de pré-analyse (PAP, p. 7) définit le traitement comme "*an area that 
 
 Pour les nouvelles AP développées à Madagascar depuis 2000, la procédure décrite dans les [guides officiels de 2008](https://www.fapbm.org/app/uploads/2023/05/procedure_de_creation_des_ap.pdf) [et 2009](https://www.pnae.mg/docs/ee/guides-directives/one-20-guide_creation_sapm.pdf) décrivent un processus comprenant plusieurs étapes :
 
-- **Initiative de création :** un *promoteur* (ONG internationale, association malgache, MNP, etc.) propose une AP, réalise des études préliminaires et engage les consultations locales.
+- **Initiative de création :** un promoteur (ONG internationale, association malgache, MNP, etc.) propose une AP, réalise des études préliminaires et engage les consultations locales.
 - **Protection temporaire :** un arrêté instaure un premier statut juridique, avec des restrictions d'usage, pendant que se poursuit la préparation de l'AP. Ce statut peut être prorogé.
 - **Création définitive :** un décret pérennise la protection juridique.
 
@@ -32,27 +32,23 @@ La date de délégation de gestion n'est pas non plus un indicateur fiable du d�
 
 ### Pourquoi ne pas attribuer automatiquement la date de 2008 à toutes les AP ?
 
-L'arrêté interministériel n° 18633/2008 du 17 octobre 2008 a placé sous protection temporaire un grand ensemble de sites, puis des arrêtés de 2010 et 2013 ont prolongé ce dispositif. Cette protection était juridiquement réelle : elle pouvait déjà limiter certains usages des terres.
+L'arrêté interministériel n° 18633/2008 du 17 octobre 2008 s'inscrit dans une succession de mesures collectives engagées dès 2004 pour réserver de vastes territoires à la conservation. Ces mesures répondaient à l'engagement pris par le président Ravalomanana au Congrès mondial des parcs de Durban en 2003 de tripler la superficie des aires protégées en cinq ans.
 
-Le problème est **d'identifier précisément les AP concernées**. Les annexes de l'arrêté de 2008 sont principalement cartographiques. Elles ne permettent pas toujours de faire correspondre sans ambiguïté les sites de 2008 aux unités et aux limites géographiques que nous utilisons aujourd'hui. Pour certaines AP, la base historique leur attribue donc une protection dès 2008 par reconstruction, sans disposer d'un acte qui les identifie individuellement.
+Les travaux de Corson [@Corson2011, @Corson2012] montrent que cette expansion a été conduite sous une forte pression politique pour atteindre des objectifs quantitatifs de superficie. Le recours à la protection temporaire permettait d'afficher rapidement des progrès, alors même que les consultations locales, la délimitation précise des usages et les dispositifs de gestion restaient souvent inachevés. Gardner et al. (2018) confirment que cette expansion rapide a laissé de nombreux sites insuffisamment gérés, y compris après leur création définitive. L'arrêté de 2008 avait néanmoins une portée juridique réelle. Il pouvait réglementer les usages des ressources naturelles et les activités extractives, mais son application variait selon les sites. En particulier, il a également levé certaines interdictions minières et forestières antérieures [@Corson2011].
 
-Pour éviter de traiter une appartenance supposée à cet arrêté comme une date certaine, notre **spécification principale** privilégie le premier acte nominatif vérifiable pour chaque AP : arrêté de protection temporaire, décret de création définitive ou décision de délégation de gestion, selon l'événement le plus précoce ; les sites nommés dans un décret collectif sont également pris en compte. Nous conservons cependant la datation reconstituée de 2008 comme **test de sensibilité**. Les enquêtes de 2011 et 2013 peuvent ainsi être classées différemment selon la chronologie retenue.
+Pour notre analyse, deux difficultés se cumulent donc : les annexes cartographiques ne permettent pas toujours d'identifier avec certitude les AP concernées, et leur inclusion dans une mesure collective ne documente pas l'existence d'une gestion effective. Nous privilégions ainsi le premier acte nominatif vérifiable pour dater le traitement, tout en conservant la protection collective de 2008 comme variante de sensibilité.
 
-Cette règle ne signifie pas que les activités de conservation ont nécessairement débuté au premier acte nominatif : elles ont parfois commencé plus tôt. Elle signifie seulement que cette date est plus directement vérifiable dans nos sources. **Ces dates restent donc des approximations**, en particulier pour les observations des enquêtes de 2011 et 2013, qui peuvent être classées comme antérieures au traitement alors que certaines mesures de protection étaient déjà en vigueur.
-
-Cette définition opérationnelle et les tests associés constituent des analyses exploratoires. Ils ne modifient pas la stratégie principale en double différence enregistrée dans le PAP.
-
-
+Pour éviter de considérer une appartenance supposée à cet arrêté comme une date certaine de début du traitement, notre spécification principale retient le premier acte nominatif vérifiable pour chaque AP : arrêté de protection temporaire, décret de création définitive ou décision de délégation de gestion, selon l'événement le plus précoce. Les sites explicitement nommés dans un décret collectif sont également pris en compte. Nous conservons néanmoins la datation reconstituée à partir de la protection collective de 2008 comme test de sensibilité. Selon la chronologie retenue, certaines observations des enquêtes de 2011 et 2013 peuvent ainsi être considérées comme antérieures ou postérieures au début du traitement.
 
 ## Règles d'assignation des ménages
 
 Les clusters d'enquêtes DHS (1997, 2008 et 2021), MIS (2011, 2013, 2016) et MICS (2018) sont classés par rapport à leur distance aux aires protégées (AP) et à leur localisation en zone rurale ou urbaine. Le résultat attendu est le suivant :
 
--   [Groupe de traitement]{.underline}: Ménages localisées dans les clusters ruraux à moins de 10 km d'une AP de l'univers de traitement (créée à partir de 2008 pendant la période d'étude) — appartenance au groupe, y compris avant l'entrée en vigueur de l'AP
+-   **Groupe de traitement**: Ménages localisées dans les clusters ruraux à moins de 10 km d'une AP de l'univers de traitement (créée à partir de 2008 pendant la période d'étude) — appartenance au groupe, y compris avant l'entrée en vigueur de l'AP
 
--   [Groupe de contrôle]{.underline}: Ménages localisées dans les clusters ruraux à plus de 10 km des AP de l'univers de traitement
+-   **Groupe de contrôle**: Ménages localisées dans les clusters ruraux à plus de 10 km des AP de l'univers de traitement
 
--   [Groupe à exclure]{.underline}: Ménages localisées dans les clusters à moins de 10 km des AP créées avant 2008 et dans la zone urbaine
+-   **Groupe à exclure**: Ménages localisées dans les clusters à moins de 10 km des AP créées avant 2008 et dans la zone urbaine
 
 ### Chargement des coordonnées GPS des clusters d'enquête
 
@@ -171,7 +167,7 @@ La base `dynamic_wdpa.gpkg` est le produit consolidé du travail intitulé « Dy
 
 ### États successifs du réseau d'AP malgache aux dates des enquêtes
 
-Ces helpers reconstruisent l'état du réseau d'AP **valide à une date donnée** en filtrant les états temporels de `dynamic_wdpa` d'après `valid_from`/`valid_to`. Ils sont définis ici une seule fois et réutilisés par la classification des clusters (limites à date) et le test de sensibilité (limites fixes).
+Une série de fonctions génériques reconstruisent l'état du réseau d'AP **valide à une date donnée** en filtrant les états temporels de `dynamic_wdpa` d'après `valid_from`/`valid_to`. Elles sont définis ici et réutilisées par la classification des clusters (limites à date) et le test de sensibilité (limites fixes).
 
 ```{r}
 #| label: load-dynamic-wdpa
@@ -580,7 +576,7 @@ tab_pa |>
 
 ### Exclusion de la Rivière Nosivolo du groupe de traitement
 
-La définition de l'exposition retenue par le plan de pré-analyse repose sur la **proximité d'un point de 10 km** d'une aire protégée. Cette règle, conçue pour des AP à base territoriale (massifs forestiers, plaines, plateaux), perd son interprétation lorsqu'elle est appliquée à un objet linéaire : l'aire potégée Rivière Nosivolo (WDPAID 555697874), inscrite au SAPM puis érigée en Paysage Harmonieux Protégé, est un couloir fluvial étroit dont la « superficie » protégée se réduit à un ruban de faible largeur (140m en moyenne) le long du cours d'eau et de ses berges. Traiter la proximité de ce couloir comme équivalente à la proximité d'une AP de surface équivalente mais compacte revient à comparer des expositions d'ordre très différent : un cluster rural à 9 km du corridor n'a de relation avec l'AP ni en termes d'usage des terres, ni en termes de gestion, alors que la règle des 10 km le classe comme exposé. L'équipe de recherche a donc décidé d'**exclure la Rivière Nosivolo de l'univers de traitement**, dans toutes les variantes de datation du début de traitement (spécification principale et test de robustesse, cf. sections suivantes). Les ménages et grappes situés dans son buffer potentiel de 10 km sont retirés **à la fois** du pool des traités et de celui des contrôles éligibles : cette restriction d'échantillon est **documentée explicitement** et se distingue du périmètre initialement enregistré dans le plan de pré-analyse. Cette décision découle de la géométrie de l'AP elle-même ; elle n'est pas justifiée par les résultats empiriques (coefficients d'event-study ou tests de pré-tendance), qui ne doivent pas piloter les définitions.
+La définition de l'exposition retenue par le plan de pré-analyse repose sur la proximité d'un point de 10 km d'une aire protégée. Cette règle, conçue pour des AP à base territoriale (massifs forestiers, plaines, plateaux), perd son interprétation lorsqu'elle est appliquée à un objet linéaire : l'aire potégée Rivière Nosivolo (WDPAID 555697874), inscrite au SAPM puis établie en Paysage Harmonieux Protégé, est un couloir fluvial étroit dont la « superficie » protégée se réduit à un ruban de faible largeur (140m en moyenne) le long du cours d'eau et de ses berges. Traiter la proximité de ce couloir comme équivalente à la proximité d'une AP de surface équivalente mais compacte revient à comparer des expositions d'ordre très différent : un cluster rural à 9 km du corridor n'a de relation avec l'AP ni en termes d'usage des terres, ni en termes de gestion, alors que la règle des 10 km le classe comme exposé. L'équipe de recherche a donc décidé d'exclure la Rivière Nosivolo de l'univers de traitement, dans toutes les variantes de datation du début de traitement (spécification principale et test de robustesse, cf. sections suivantes). Les ménages et grappes situés dans son buffer potentiel de 10 km sont retirés à la fois du pool des traités et de celui des contrôles éligibles : cette restriction d'échantillon est documentée explicitement et se distingue du périmètre initialement enregistré dans le plan de pré-analyse. Cette décision découle de la géométrie de l'AP elle-même ; elle n'est pas justifiée par les résultats empiriques (coefficients d'event-study ou tests de pré-tendance), qui ne doivent pas piloter les définitions.
 
 NB : la Rivière Nosivolo (WDPAID 555697874) ne doit pas être confondue avec le site Ramsar distinct « Rivière Nosivolo et affluents » (WDPAID 555542728), hors du réseau national analysé ici. La carte ci-dessous utilise **la limite analytique réellement employée par le workflow d'assignation** : l'état de la base dynamique `dynamic_wdpa.gpkg` rattaché à ce WDPAID, avec la même logique d'états temporels que le reste du chapitre (les calculs de surface et de distance sont effectués en projection Laborde, EPSG : 29702, comme les buffers de 10 km).
 
