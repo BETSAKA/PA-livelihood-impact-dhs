@@ -709,28 +709,26 @@ Nous avons rapproché deux sources : la base historique des limites et statuts d
 
 Nous calculons **trois dates alternatives** :
 
-| Variante | Date retenue | Pourquoi la comparer ? |
+| Variante | Date retenue | Motivation |
 |---|---|---|
 | **Principale : premier acte nominatif** | Le plus ancien arrêté de protection temporaire, décret définitif ou acte de délégation de gestion identifiant explicitement l'AP. | Approcher le début de la protection ou de la gestion sur la base d'un document vérifiable. |
 | **Sensibilité : chronologie historique reconstituée** | Première date attribuée à l'AP dans la base historique, y compris lorsque le rattachement à la protection collective de 2008 est reconstruit. | Mesurer la sensibilité des résultats à une protection potentiellement plus précoce. |
-| **Sensibilité : décret définitif** | Premier décret de création définitive vérifié pour l'AP. | Mesurer la sensibilité des résultats à une datation souvent plus tardive. Ce n'est **pas** une estimation de l'effet propre du passage au statut permanent. |
+| **Sensibilité : décret définitif** | Premier décret de création définitive vérifié pour l'AP. | Mesurer la sensibilité des résultats à une datation souvent plus tardive. Ce n'est pas une estimation de l'effet propre du passage au statut permanent. |
 
-Pour chaque variante, une AP ne devient « déjà traitée » dans une vague d'enquête que si sa date de traitement est antérieure ou égale au **1er juin** de l'année considérée. Une décision prise après le 1er juin appartient donc à la cohorte effective de l'année suivante. Par exemple, un arrêté du 2 décembre 2008 entre dans la cohorte 2009. La date juridique et la cohorte utilisée pour l'estimation sont deux informations distinctes.
+Pour chaque variante, une AP ne devient « déjà traitée » dans une vague d'enquête que si sa date de traitement est antérieure ou égale au 1er juin de l'année considérée. Une décision prise après le 1er juin appartient donc à la cohorte effective de l'année suivante. Par exemple, un arrêté du 2 décembre 2008 entre dans la cohorte 2009. La date juridique et la cohorte utilisée pour l'estimation sont deux informations distinctes.
 
-#### Trois cas qui nécessitent une explication
+#### Trois cas particuliers
 
-| AP | Décision pour ce carnet de réplication |
-|---|---|
-| **Lac Kinkony / Complexe Mahavavy-Kinkony** | Le lac est inclus dans le complexe Mahavavy-Kinkony, protégé temporairement depuis **2007**. Nous ne comptons donc **que le complexe** comme AP analytique, et non le lac comme deuxième unité indépendante. Le complexe relève des AP protégées avant 2008. L'ancienne désignation du lac en réserve de chasse ne fait pas partie de notre univers analytique. |
-| **Ivohiboro** | Protection temporaire par arrêté **2645/2020 du 29 janvier 2020** : l'AP reçoit cette date dans la spécification principale. Aucun décret définitif applicable durant 1997–2021 n'est vérifié ; elle ne peut donc pas être considérée comme traitée sous la variante « décret définitif » pendant l'observation. |
-| **Tsinjoarivo Ambalaomby** | Protection temporaire par arrêté **2644/2020 du 29 janvier 2020** : c'est la date principale. Le décret définitif **2026-1529 du 15 juin 2026** intervient après la dernière enquête. L'absence de traitement permanent observé n'est donc pas une date inconnue. |
+- **Lac Kinkony / Complexe Mahavavy-Kinkony** : Le lac est inclus dans le complexe Mahavavy-Kinkony, protégé temporairement depuis **2007**. Nous ne comptons donc que le complexe comme AP analytique, et non le lac comme deuxième unité indépendante. Le complexe relève des AP protégées avant 2008. L'ancienne désignation du lac en réserve de chasse ne fait pas partie de notre univers analytique. 
+- **Ivohiboro** : Protection temporaire par arrêté 2645/2020 du 29 janvier 2020, l'AP reçoit cette date dans la spécification principale. Aucun décret définitif durant la période d'étude et elle n'est donc pas considérée comme traitée sous la variante « décret définitif » pendant l'observation. 
+- **Tsinjoarivo Ambalaomby** :  Protection temporaire par arrêté 2644/2020 du 29 janvier 2020. Le décret définitif 2026-1529 du 15 juin 2026 intervient après la dernière enquête. L'absence de traitement permanent observé n'est donc pas une date inconnue.
 
-Une AP sans décret définitif durant la période étudiée **n'est pas automatiquement un contrôle** dans la variante permanente. Son voisinage est traité selon les règles explicites d'exclusion, afin de ne pas comparer des ménages potentiellement exposés à une protection temporaire avec les contrôles.
+Une AP sans décret définitif durant la période étudiée n'est pas automatiquement un contrôle dans la variante permanente. Son voisinage est traité selon les règles explicites d'exclusion, afin de ne pas comparer des ménages potentiellement exposés à une protection temporaire avec les contrôles.
 
-Les situations sont distinguées par des statuts explicites plutôt que par un statut générique « non résolu » :
+Les situations sont distinguées par des statuts explicites plutôt que par un statut générique "non résolu" :
 
 - **Date établie** : un acte correspondant au site est identifié.
-- **Pas de décret définitif avant 2022** : la datation principale peut être connue, même si la variante « décret définitif » n'a aucune période traitée observable.
+- **Pas de décret définitif avant 2022** : la datation principale peut être connue, même si la variante "décret définitif" n'a aucune période traitée observable.
 - **Décret postérieur à 2021** : sa date est connue, mais hors de la fenêtre d'observation.
 - **Appariement réellement incertain** : on ne peut pas établir avec suffisamment de confiance que l'acte concerne l'unité géographique analysée.
 - **Exclusion méthodologique** : par exemple la Rivière Nosivolo, dont l'exclusion tient à la géométrie et non à un manque de date.
